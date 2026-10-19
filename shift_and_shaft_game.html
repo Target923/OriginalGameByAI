@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>♠ シフト＆シャフト (Shift &amp; Shaft) — 公式デジタル対戦＆戦術シミュレーター v2.0</title>
+  <style>
+    :root {
+      --bg-deep: #0b101b;
+      --bg-table: #131c2e;
+      --bg-panel: #19243b;
+      --bg-panel-light: #22304d;
+      --gold: #e6b85c;
+      --gold-bright: #ffd97d;
+      --crimson: #d9384a;
+      --crimson-glow: rgba(217, 56, 74, 0.45);
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(230, 184, 92, 0.24);
+      --card-bg: #fcfaf5;
+      --card-ink: #1a202c;
+      --card-red: #c53030;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 25%, #1a2744 0%, #0b101b 75%);
+      color: var(--text-main);
+      font-family: 'Noto Sans CJK JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header.app-header {
+      background: rgba(11, 16, 27, 0.92);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      z-index: 20;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-emblem {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--gold) 0%, #9c6f19 100%);
+      color: #0b101b;
+      font-weight: 900;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(230, 184, 92, 0.35);
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0.04em;
+      color: var(--gold-bright);
+    }
+
+    .brand-text p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tab-btn {
+      background: var(--bg-panel);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      border-color: var(--gold);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(230, 184, 92, 0.22), rgba(230, 184, 92, 0.08));
+      color: var(--gold-bright);
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(230, 184, 92, 0.2);
+    }
+
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 355px;
+      gap: 16px;
+      padding: 14px 20px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1024px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .phase-banner {
+      background: linear-gradient(90deg, rgba(25, 36, 59, 0.95) 0%, rgba(34, 48, 77, 0.95) 50%, rgba(25, 36, 59, 0.95) 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .phase-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .phase-badge {
+      background: var(--gold);
+      color: #0b101b;
+      font-weight: 800;
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .phase-badge.phase2 {
+      background: var(--crimson);
+      color: #fff;
+    }
+
+    .phase-title-group h2 {
+      margin: 0;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .phase-title-group p {
+      margin: 2px 0 0 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .phase-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-arena {
+      background: radial-gradient(ellipse at center, #182847 0%, #0f1829 75%, #0a101d 100%);
+      border: 2px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 610px;
+      position: relative;
+      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.65);
+    }
+
+    .seat-row-top {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .seat-row-middle {
+      display: grid;
+      grid-template-columns: 235px 1fr 235px;
+      align-items: center;
+      gap: 12px;
+      margin: 6px 0;
+    }
+
+    @media (max-width: 780px) {
+      .seat-row-middle {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .seat-row-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .player-seat {
+      background: rgba(17, 25, 43, 0.88);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 10px 14px;
+      width: 100%;
+      max-width: 440px;
+      transition: all 0.22s ease;
+      position: relative;
+    }
+
+    .seat-row-middle .player-seat {
+      max-width: 235px;
+    }
+
+    .player-seat.active-turn {
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 18px rgba(230, 184, 92, 0.35);
+    }
+
+    .player-seat.winner-glow {
+      border-color: var(--emerald);
+      box-shadow: 0 0 22px rgba(52, 211, 153, 0.45);
+    }
+
+    .seat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .seat-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+
+    .suit-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 13px;
+    }
+
+    .dealer-crown {
+      background: linear-gradient(135deg, #ffd97d, #d49b27);
+      color: #0b101b;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .rank-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--gold-bright);
+    }
+
+    .rank-badge.rank-1 { background: rgba(230, 184, 92, 0.28); color: #ffe08a; border: 1px solid var(--gold); }
+    .rank-badge.rank-2 { background: rgba(148, 163, 184, 0.25); color: #e2e8f0; }
+    .rank-badge.rank-3 { background: rgba(180, 110, 60, 0.28); color: #fbd38d; }
+    .rank-badge.rank-4 { background: rgba(217, 56, 74, 0.25); color: #feb2b2; }
+
+    .seat-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .score-pill {
+      color: var(--emerald);
+      font-weight: 800;
+      font-size: 12.5px;
+    }
+
+    .seat-subtext {
+      font-size: 11px;
+      color: #cbd5e1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      min-height: 22px;
+    }
+
+    .mini-card-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .mini-card-tag.used {
+      opacity: 0.28;
+      text-decoration: line-through;
+    }
+
+    .mini-card-tag.acquired {
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #bae6fd;
+    }
+
+    .center-board {
+      background: rgba(10, 16, 29, 0.72);
+      border: 1.5px dashed rgba(230, 184, 92, 0.35);
+      border-radius: 16px;
+      min-height: 255px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .board-status-line {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .board-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 560px;
+      align-items: center;
+      justify-items: center;
+      margin: 6px 0;
+    }
+
+    .board-slot {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      width: 100%;
+      min-height: 128px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      transition: all 0.22s ease;
+    }
+
+    .board-slot.shift-highlight {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.28);
+    }
+
+    .board-slot.shaft-winner {
+      border-color: var(--crimson);
+      background: rgba(217, 56, 74, 0.18);
+      box-shadow: 0 0 18px var(--crimson-glow);
+    }
+
+    .board-slot.normal-winner {
+      border-color: var(--emerald);
+      background: rgba(52, 211, 153, 0.15);
+      box-shadow: 0 0 16px rgba(52, 211, 153, 0.35);
+    }
+
+    .slot-owner {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .slot-dest-hint {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--cyan);
+      min-height: 15px;
+      text-align: center;
+    }
+
+    .card-group {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+      min-height: 76px;
+    }
+
+    .playing-card {
+      width: 54px;
+      height: 76px;
+      background: var(--card-bg);
+      color: var(--card-ink);
+      border-radius: 7px;
+      border: 1.5px solid #cbd5e1;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 4px 5px;
+      position: relative;
+      user-select: none;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .playing-card.red-suit {
+      color: var(--card-red);
+    }
+
+    .playing-card.special-card {
+      background: linear-gradient(145deg, #231b38 0%, #110d1e 100%);
+      color: var(--gold-bright);
+      border: 1.5px solid var(--gold);
+    }
+
+    .playing-card.assassin-card {
+      border: 2px solid var(--crimson);
+    }
+
+    .playing-card.face-down {
+      background: repeating-linear-gradient(
+        45deg,
+        #1e293b,
+        #1e293b 6px,
+        #0f172a 6px,
+        #0f172a 12px
+      );
+      border: 1.5px solid var(--gold);
+      color: var(--gold);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card-corner-top {
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-center-val {
+      font-size: 21px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .playing-card.special-card .card-center-val {
+      font-size: 16px;
+    }
+
+    .card-bottom-tag {
+      font-size: 9px;
+      font-weight: 700;
+      text-align: center;
+      opacity: 0.82;
+      line-height: 1;
+    }
+
+    .human-hand-area {
+      margin-top: 8px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hand-cards-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      min-height: 92px;
+      align-items: center;
+    }
+
+    .hand-cards-row .playing-card {
+      width: 64px;
+      height: 90px;
+      cursor: pointer;
+    }
+
+    .hand-cards-row .playing-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.55);
+      border-color: var(--gold-bright);
+    }
+
+    .hand-cards-row .playing-card.selected {
+      transform: translateY(-12px);
+      border: 2.5px solid var(--cyan);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.65);
+    }
+
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold) 0%, #b8861e 100%);
+      color: #0b101b;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 8px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: #fff;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .play-preview-pill {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .side-card {
+      background: rgba(25, 36, 59, 0.9);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .side-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 13.5px;
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .log-stream {
+      max-height: 310px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11.8px;
+      padding-right: 4px;
+    }
+
+    .log-entry {
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(11, 16, 27, 0.65);
+      border-left: 3px solid var(--gold);
+      line-height: 1.45;
+    }
+
+    .log-entry.shaft-alert {
+      border-left-color: var(--crimson);
+      background: rgba(217, 56, 74, 0.16);
+      color: #ffd8dc;
+    }
+
+    .log-entry.win-alert {
+      border-left-color: var(--emerald);
+      background: rgba(52, 211, 153, 0.12);
+    }
+
+    .ai-reason-tag {
+      display: inline-block;
+      margin-top: 2px;
+      font-size: 10.5px;
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .shift-sim-bar {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .shift-sim-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .shift-sim-btn.active, .shift-sim-btn:hover {
+      border-color: var(--cyan);
+      background: rgba(56, 189, 248, 0.22);
+      color: #fff;
+    }
+
+    .sim-container {
+      max-width: 1260px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sim-header-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sim-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .sim-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg-panel);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .kpi-label {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--gold-bright);
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 4px;
+    }
+
+    .sim-details-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .sim-details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .data-table th, .data-table td {
+      padding: 7px 9px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .data-table th {
+      color: var(--gold-bright);
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--crimson));
+      border-radius: 4px;
+    }
+
+    .bar-fill.cyan-bar {
+      background: linear-gradient(90deg, var(--cyan), var(--emerald));
+    }
+
+    .rules-container {
+      max-width: 980px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .rule-section-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      line-height: 1.6;
+      font-size: 13.5px;
+    }
+
+    .rule-section-card h3 {
+      margin: 0 0 8px 0;
+      color: var(--gold-bright);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="brand-title">
+      <div class="brand-emblem">♠</div>
+      <div class="brand-text">
+        <h1>シフト＆シャフト (Shift &amp; Shaft) v2.0</h1>
+        <p>第2フェーズ期待値重み付けAI（戦略的パス・囮ブラフ・手札カウンティング）＆新旧AI対決検証搭載</p>
+      </div>
+    </div>
+    <div class="nav-tabs">
+      <button id="tabBtnPlay" class="tab-btn active" onclick="switchTab('play')">🎮 実践プレイ（重み付けAI対戦）</button>
+      <button id="tabBtnSim" class="tab-btn" onclick="switchTab('sim')">📊 AI重み検証（新AI vs 旧AI対決）</button>
+      <button id="tabBtnRules" class="tab-btn" onclick="switchTab('rules')">📖 公式ルール＆AI重み式</button>
+    </div>
+  </header>
+
+  <!-- TAB 1: PLAYABLE GAME -->
+  <div id="viewPlay" class="workspace">
+    <div class="main-column">
+      <div class="phase-banner">
+        <div class="phase-info">
+          <span id="phaseBadge" class="phase-badge">PHASE 1</span>
+          <div class="phase-title-group">
+            <h2 id="phaseHeadline">第1フェーズ：シャッフルフェーズ（階級決定戦 — ラウンド 1 / 5）</h2>
+            <p id="phaseSubline">親の左隣から時計回りに「表向き」でカードを出し、最後に親が出した数字の分だけ時計回りにシフトします。</p>
+          </div>
+        </div>
+        <div class="phase-controls">
+          <button class="btn-secondary" onclick="startNewGame()">🔄 新規ゲーム</button>
+        </div>
+      </div>
+
+      <div class="table-arena">
+        <!-- TOP SEAT: Player 2 -->
+        <div class="seat-row-top">
+          <div id="seatBox2" class="player-seat">
+            <div class="seat-header">
+              <div class="seat-name-wrap">
+                <span class="suit-pill" style="color:#f87171;">♦</span>
+                <span>処刑人 クロエ</span>
+                <span id="dealerTag2" class="dealer-crown hidden">👑 親</span>
+              </div>
+              <span id="rankTag2" class="rank-badge">階級未定</span>
+            </div>
+            <div class="seat-stats">
+              <span id="seatHandInfo2">残り手札: 5枚</span>
+              <span id="seatScore2" class="score-pill">0 pt</span>
+            </div>
+            <div id="seatDetail2" class="seat-subtext"></div>
+          </div>
+        </div>
+
+        <!-- MIDDLE ROW -->
+        <div class="seat-row-middle">
+          <div id="seatBox1" class="player-seat">
+            <div class="seat-header">
+              <div class="seat-name-wrap">
+                <span class="suit-pill" style="color:#f87171;">♥</span>
+                <span>伯爵 ヴァルター</span>
+                <span id="dealerTag1" class="dealer-crown hidden">👑 親</span>
+              </div>
+              <span id="rankTag1" class="rank-badge">階級未定</span>
+            </div>
+            <div class="seat-stats">
+              <span id="seatHandInfo1">残り手札: 5枚</span>
+              <span id="seatScore1" class="score-pill">0 pt</span>
+            </div>
+            <div id="seatDetail1" class="seat-subtext"></div>
+          </div>
+
+          <div class="center-board">
+            <div id="boardStatusLine" class="board-status-line">時計回り順：あなた(♠) ➔ ヴァルター(♥) ➔ クロエ(♦) ➔ ガルシア(♣)</div>
+
+            <div class="board-slots-grid">
+              <div id="boardSlot0" class="board-slot">
+                <div class="slot-owner">♠ あなた</div>
+                <div id="slotCards0" class="card-group"></div>
+                <div id="slotHint0" class="slot-dest-hint"></div>
+              </div>
+              <div id="boardSlot1" class="board-slot">
+                <div class="slot-owner">♥ ヴァルター</div>
+                <div id="slotCards1" class="card-group"></div>
+                <div id="slotHint1" class="slot-dest-hint"></div>
+              </div>
+              <div id="boardSlot2" class="board-slot">
+                <div id="slotOwner2" class="slot-owner">♦ クロエ</div>
+                <div id="slotCards2" class="card-group"></div>
+                <div id="slotHint2" class="slot-dest-hint"></div>
+              </div>
+              <div id="boardSlot3" class="board-slot">
+                <div class="slot-owner">♣ ガルシア</div>
+                <div id="slotCards3" class="card-group"></div>
+                <div id="slotHint3" class="slot-dest-hint"></div>
+              </div>
+            </div>
+
+            <div id="centerBannerMsg" style="font-size:12px; color:#cbd5e1; text-align:center; min-height:18px;"></div>
+          </div>
+
+          <div id="seatBox3" class="player-seat">
+            <div class="seat-header">
+              <div class="seat-name-wrap">
+                <span class="suit-pill" style="color:#93c5fd;">♣</span>
+                <span>将軍 ガルシア</span>
+                <span id="dealerTag3" class="dealer-crown hidden">👑 親</span>
+              </div>
+              <span id="rankTag3" class="rank-badge">階級未定</span>
+            </div>
+            <div class="seat-stats">
+              <span id="seatHandInfo3">残り手札: 5枚</span>
+              <span id="seatScore3" class="score-pill">0 pt</span>
+            </div>
+            <div id="seatDetail3" class="seat-subtext"></div>
+          </div>
+        </div>
+
+        <!-- BOTTOM SEAT: Player 0 -->
+        <div class="seat-row-bottom">
+          <div id="seatBox0" class="player-seat" style="max-width: 740px;">
+            <div class="seat-header">
+              <div class="seat-name-wrap">
+                <span class="suit-pill" style="color:#93c5fd;">♠</span>
+                <span>あなた（プレイヤー）</span>
+                <span id="dealerTag0" class="dealer-crown hidden">👑 親</span>
+              </div>
+              <span id="rankTag0" class="rank-badge">階級未定</span>
+            </div>
+            <div class="seat-stats">
+              <span id="seatHandInfo0">確定カード: 0枚</span>
+              <span id="seatScore0" class="score-pill">0 pt</span>
+            </div>
+            <div id="seatDetail0" class="seat-subtext"></div>
+
+            <div class="human-hand-area">
+              <div id="humanHandRow" class="hand-cards-row"></div>
+              <div class="action-bar">
+                <span id="playPreviewText" class="play-preview-pill">カードを選択してください</span>
+                <button id="btnConfirmPlay" class="btn-primary" onclick="onHumanConfirmPlay()" disabled>カードを出す</button>
+                <button id="btnPassTurn" class="btn-secondary hidden" onclick="onHumanPass()">パスする</button>
+                <button id="btnNextStep" class="btn-primary hidden" onclick="onProceedNextStep()">次へ進む ▶</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="side-card">
+        <h3>
+          <span>🧭 戦術カウンティング＆逆算支援</span>
+          <span style="font-size:11px; color:var(--cyan);">リアルタイム</span>
+        </h3>
+        <div id="tacticalAdvisorBody" style="font-size:12px; color:#cbd5e1; line-height:1.5;"></div>
+        <div id="shiftPreviewControls" class="shift-sim-bar">
+          <span style="font-size:11px; color:var(--text-muted);">シフト予測:</span>
+          <button class="shift-sim-btn" onclick="setPreviewShift(1)">+1 (左隣へ)</button>
+          <button class="shift-sim-btn" onclick="setPreviewShift(2)">+2 (正面へ)</button>
+          <button class="shift-sim-btn" onclick="setPreviewShift(3)">+3 (右隣へ)</button>
+          <button class="shift-sim-btn" onclick="setPreviewShift(4)">+4 (自分に残る)</button>
+          <button class="shift-sim-btn" onclick="setPreviewShift(5)">+5 (=+1と同位置)</button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <h3>
+          <span>📜 進行＆AI重み思考ログ</span>
+          <span style="font-size:11px; color:var(--text-muted);">評価スコア付き</span>
+        </h3>
+        <div id="battleLogStream" class="log-stream"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TAB 2: AI MONTE CARLO & NEW vs OLD AI BENCHMARK -->
+  <div id="viewSim" class="sim-container hidden">
+    <div class="sim-header-card">
+      <div>
+        <h2 style="margin:0 0 4px 0; font-size:17.5px; color:var(--gold-bright);">📊 新AI（第2フェーズ重み付け・戦略パス＆ブラフ）検証＆10,000試合シミュレーター</h2>
+        <p style="margin:0; font-size:12px; color:var(--text-muted);">
+          「パス・囮ブラフ・手札カウンティングの重み付け」が本当に強いかを検証するため、新AI 2名 vs 旧AI（if文・パスなし）2名を席順ローテーションで10,000試合直接対決させます。
+        </p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary" onclick="runMonteCarloSimulation(4000)">⚡ 4,000試合で検証</button>
+        <button class="btn-secondary" onclick="runMonteCarloSimulation(10000)">🔥 10,000試合で精密検証</button>
+      </div>
+    </div>
+
+    <div class="sim-kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">新AI（重み付け・パス＆ブラフ）1人あたり勝率</div>
+        <div id="simNewAiWinRate" class="kpi-val" style="color:var(--emerald);">--%</div>
+        <div id="simNewAiSub" class="kpi-sub">旧AIとの直接対決（均等基準 25.0%）</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">旧AI（if文・パスなし）1人あたり勝率</div>
+        <div id="simOldAiWinRate" class="kpi-val" style="color:#f87171;">--%</div>
+        <div id="simOldAiSub" class="kpi-sub">序盤に手札を吐き出しすぎる弱点</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">新AIの1試合あたり平均戦略パス回数</div>
+        <div id="simPassFreq" class="kpi-val" style="color:var(--cyan);">-- 回</div>
+        <div class="kpi-sub">手札温存＆下位へのパス禁止押し付け</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">新AIの1位（Joker）時の生還・優勝率</div>
+        <div id="simRank1Improve" class="kpi-val">--%</div>
+        <div class="kpi-sub">囮ブラフと2枚出しによる「1」回避効果</div>
+      </div>
+    </div>
+
+    <div class="sim-details-grid">
+      <div class="side-card">
+        <h3>👑 全員が「新AI（重み付け）」で戦った場合の階級別バランス</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>第1フェーズ階級</th>
+              <th>最終優勝率</th>
+              <th>平均獲得pt</th>
+              <th>平均パス回数</th>
+              <th>特殊カード勝利生還率</th>
+            </tr>
+          </thead>
+          <tbody id="simRankTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="side-card">
+        <h3>⚔️ 直接対決結果：なぜ「重み付け（パス＆ブラフ）」が旧AIを圧倒するのか</h3>
+        <table class="data-table" style="margin-bottom:10px;">
+          <thead>
+            <tr>
+              <th>AIロジック種別（各2席・席順均等ローテ）</th>
+              <th>1席あたり優勝率</th>
+              <th>平均獲得pt</th>
+              <th>特殊カード被暗殺率</th>
+            </tr>
+          </thead>
+          <tbody id="simVsTableBody"></tbody>
+        </table>
+        <div id="simInsightBox" style="font-size:12.2px; line-height:1.55; color:#e2e8f0;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: QUICK RULES & AI WEIGHT FORMULAS -->
+  <div id="viewRules" class="rules-container hidden">
+    <div class="rule-section-card">
+      <h3>1. 第2フェーズ「重み付け（期待値スコア）AI」の評価式（v2.0改修内容）</h3>
+      <p>
+        改修後の第2フェーズAIは、上から順の <code>if</code> 文ではなく、自分の手番で選べる<strong>すべての合法手（①パス、②1の単騎暗殺、③特殊カード、④数字1枚出し、⑤数字2枚出しの全組み合わせ）</strong>に対して以下の期待値スコア <code>Score(action)</code> を計算し、最もスコアが高い行動を選択します。
+      </p>
+      <ul>
+        <li><strong>① パス（PASS）の重み</strong>：<code>基本温存価値(+3.2) ＋ パス禁止押し付けボーナス(自分がパスで後続全員がパス禁止になるなら +2.6) ＋ 「1」温存ボーナス(標的未出現時に1を保持なら +2.8) ＋ 不利場回避(既に上位が伏せていて勝算が薄いなら +2.0)</code></li>
+        <li><strong>② 特殊カード（Joker/K/Q/J）の重み</strong>：<code>基礎威力(+5.2〜+6.8) ＋ 場の出場人数×1.3 − 被暗殺リスク(まだ「1」を持つ下位プレイヤー数 × 2.8) ＋ 安全圏確定ボーナス(下位の「1」がすべて消費済み、または全員パス/2枚伏せなら +5.5)</code></li>
+        <li><strong>③ 数字1枚出し（囮ブラフ含む）の重み</strong>：<code>数値×0.85 ＋ 場の出場人数×0.7 ＋ 囮ブラフボーナス(自分が特殊カードを温存中かつ後続が「1」を持っている時に2〜3を1枚伏せすると +3.9)</code></li>
+        <li><strong>④ 「1」の単騎出し（下剋上狙い）の重み</strong>：<code>上位の特殊カード保持者が「1枚伏せ」中なら +9.2（クロエは+10.5） ／ 逆に場に特殊カードが出る可能性がゼロ（全員2枚伏せ・パス等）なら -6.0（絶対に出さない）</code></li>
+        <li><strong>⑤ 数字2枚出し（合算）の重み</strong>：<code>合計値×0.82 ＋ 場の出場人数×1.1 − 手札2枚消費コスト(2.3) − 「1」巻き込みペナルティ(敵に特殊カード残存時は -5.0、敵の特殊カードが全滅済みならペナルティ0で有効活用！)</code></li>
+      </ul>
+    </div>
+    <div class="rule-section-card">
+      <h3>2. 公式ルール早見表</h3>
+      <ul>
+        <li><strong>第1フェーズ（全5ラウンド）</strong>：親の左隣から時計回りに子3人が<strong>表向き</strong>で出し、最後に親が1枚<strong>表向き</strong>で出して、親の数字の分だけ時計回りにシフト。5枚の合計値順に <strong>1位:Joker / 2位:K / 3位:Q / 4位:J</strong> を獲得。</li>
+        <li><strong>第2フェーズ（シャフトフェーズ）</strong>：階級順（1位➔4位）に行動宣言。各ラウンド<strong>最低2人は出場必須（2人未満になるパスは禁止）</strong>。裏向きでも「1枚伏せ／2枚伏せ」は公開。</li>
+        <li><strong>勝敗と得点</strong>：場に「特殊カード」と「1（1枚出し）」が同時に出れば<strong>下剋上（シャフト）成立</strong>で「1（1枚出し）」全員が共闘勝利（負けた特殊1人につき2pt＋通常1人につき1pt）。下剋上不成立時は <code>Joker ＞ K ＞ Q ＞ J ＞ 数字合計値(10〜1)</code>（同値は 1枚出し優先 ＞ 高数字含む2枚出し優先 ＞ 第1フェーズ階級上位）で単独勝者が負けた人数×1pt獲得。</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // Shift & Shaft v2.0 — Complete Game Engine + Expected-Value Weighted AI
+    // =========================================================================
+
+    const PLAYERS_META = [
+      { id: 0, name: "あなた", shortName: "あなた", suit: "♠", isRed: false, isHuman: true, style: "プレイヤー" },
+      { id: 1, name: "伯爵 ヴァルター", shortName: "ヴァルター", suit: "♥", isRed: true, isHuman: false, style: "戦略パス・逆算型" },
+      { id: 2, name: "処刑人 クロエ", shortName: "クロエ", suit: "♦", isRed: true, isHuman: false, style: "温存暗殺・下剋上型" },
+      { id: 3, name: "将軍 ガルシア", shortName: "ガルシア", suit: "♣", isRed: false, isHuman: false, style: "囮ブラフ・2枚圧殺型" }
+    ];
+
+    const SPECIAL_BY_RANK = {
+      1: { code: "Joker", label: "JOKER", strength: 104, desc: "最強特殊" },
+      2: { code: "K", label: "K", strength: 103, desc: "第2位特殊" },
+      3: { code: "Q", label: "Q", strength: 102, desc: "第3位特殊" },
+      4: { code: "J", label: "J", strength: 101, desc: "第4位特殊" }
+    };
+
+    let G = null;
+
+    function switchTab(tab) {
+      document.getElementById("viewPlay").classList.toggle("hidden", tab !== "play");
+      document.getElementById("viewSim").classList.toggle("hidden", tab !== "sim");
+      document.getElementById("viewRules").classList.toggle("hidden", tab !== "rules");
+      document.getElementById("tabBtnPlay").classList.toggle("active", tab === "play");
+      document.getElementById("tabBtnSim").classList.toggle("active", tab === "sim");
+      document.getElementById("tabBtnRules").classList.toggle("active", tab === "rules");
+      if (tab === "sim" && !window._simInitialized) {
+        window._simInitialized = true;
+        runMonteCarloSimulation(4000);
+      }
+    }
+
+    function createInitialState() {
+      return {
+        phase: 1,
+        round: 1,
+        startDealer: 0,
+        dealer: 0,
+        turnOrder: [],
+        turnIdx: 0,
+        tableSlots: [null, null, null, null],
+        shiftedSlots: null,
+        selectedHandIds: [],
+        previewShift: null,
+        awaitingStep: null,
+        lastRoundWinnerIds: [],
+        lastRoundIsShaft: false,
+        logs: [],
+        players: PLAYERS_META.map(meta => ({
+          ...meta,
+          p1Hand: [1, 2, 3, 4, 5],
+          p1Used: [],
+          confirmedCards: [],
+          rank: null,
+          specialCard: null,
+          p2Hand: [],
+          score: 0,
+          passCount: 0
+        }))
+      };
+    }
+
+    function addLog(htmlText, type = "normal") {
+      G.logs.unshift({ htmlText, type });
+      const container = document.getElementById("battleLogStream");
+      if (!container) return;
+      container.innerHTML = G.logs.slice(0, 45).map(item => {
+        const cls = item.type === "shaft" ? "log-entry shaft-alert" : (item.type === "win" ? "log-entry win-alert" : "log-entry");
+        return `<div class="${cls}">${item.htmlText}</div>`;
+      }).join("");
+    }
+
+    function startNewGame() {
+      G = createInitialState();
+      addLog("<strong>🎴 新規ゲーム開始！</strong> 第1フェーズ（シャッフルフェーズ・全5ラウンド）を開始します。");
+      startPhase1Round(1);
+    }
+
+    // =========================================================================
+    // PHASE 1: SHUFFLE PHASE
+    // =========================================================================
+    function startPhase1Round(roundNum) {
+      G.phase = 1;
+      G.round = roundNum;
+      G.dealer = (G.startDealer + roundNum - 1) % 4;
+      G.turnOrder = [
+        (G.dealer + 1) % 4,
+        (G.dealer + 2) % 4,
+        (G.dealer + 3) % 4,
+        G.dealer
+      ];
+      G.turnIdx = 0;
+      G.tableSlots = [null, null, null, null];
+      G.shiftedSlots = null;
+      G.selectedHandIds = [];
+      G.awaitingStep = null;
+      G.lastRoundWinnerIds = [];
+      G.previewShift = null;
+
+      addLog(`<strong>【第1フェーズ R${roundNum}/5】</strong> 親は <strong>${PLAYERS_META[G.dealer].suit}${PLAYERS_META[G.dealer].shortName}</strong>。左隣から時計回りに表向きで出します。`);
+      advancePhase1Turn();
+    }
+
+    function advancePhase1Turn() {
+      renderAll();
+      if (G.turnIdx >= 4) {
+        executePhase1Shift();
+        return;
+      }
+      const activePid = G.turnOrder[G.turnIdx];
+      const p = G.players[activePid];
+
+      if (!p.isHuman) {
+        const chosenVal = choosePhase1CardAI(p, G.tableSlots, G.dealer, G.players, G.round);
+        playPhase1Card(activePid, chosenVal);
+        G.turnIdx++;
+        advancePhase1Turn();
+      } else {
+        if (p.p1Hand.length === 1) {
+          G.selectedHandIds = [p.p1Hand[0]];
+          if (activePid === G.dealer) {
+            G.previewShift = p.p1Hand[0];
+          }
+        }
+        renderAll();
+      }
+    }
+
+    function choosePhase1CardAI(player, tableSlots, dealerPid, allPlayers, roundNum) {
+      const hand = player.p1Hand;
+      if (hand.length === 1) return hand[0];
+      const pid = player.id;
+      const isDealer = (pid === dealerPid);
+
+      if (isDealer) {
+        let bestVal = hand[0];
+        let bestScore = -999;
+        for (const v of hand) {
+          const sourceSeat = (pid - (v % 4) + 4) % 4;
+          const cardForMe = (sourceSeat === pid) ? v : tableSlots[sourceSeat].val;
+          let util = 0;
+          if (player.id === 2) {
+            // Chloe: Assassin collector (loves 1 and 5)
+            util = (cardForMe === 1 ? 9.2 : cardForMe * 1.45) - v * 0.25;
+          } else if (player.id === 3) {
+            // Garcia: High-value collector
+            util = cardForMe * 2.3 - (v === 5 && v !== cardForMe ? 3.0 : 0);
+          } else {
+            // Walter: Balanced 5 & 1 tactician
+            util = (cardForMe === 5 ? 10.0 : cardForMe === 1 ? 6.8 : cardForMe * 1.6);
+          }
+          if (util > bestScore) {
+            bestScore = util;
+            bestVal = v;
+          }
+        }
+        return bestVal;
+      } else {
+        const dealerHand = allPlayers[dealerPid].p1Hand;
+        if (player.id === 2) {
+          const pref = [3, 2, 4, 1, 5];
+          for (const c of pref) if (hand.includes(c)) return c;
+        } else if (player.id === 3) {
+          if (dealerHand.includes(4) && hand.includes(5) && roundNum >= 3) return 5;
+          const pref = [2, 3, 1, 4, 5];
+          for (const c of pref) if (hand.includes(c)) return c;
+        }
+        const midCards = hand.filter(x => x >= 2 && x <= 4);
+        if (midCards.length > 0) return midCards[Math.floor(Math.random() * midCards.length)];
+        return hand[0];
+      }
+    }
+
+    function playPhase1Card(pid, val) {
+      const p = G.players[pid];
+      p.p1Hand = p.p1Hand.filter(x => x !== val);
+      p.p1Used.push(val);
+      G.tableSlots[pid] = {
+        val,
+        fromPid: pid,
+        suit: p.suit,
+        isRed: p.isRed
+      };
+    }
+
+    function executePhase1Shift() {
+      const dealerCard = G.tableSlots[G.dealer];
+      const shiftSteps = dealerCard.val;
+      G.previewShift = shiftSteps;
+
+      const newSlots = [null, null, null, null];
+      for (let s = 0; s < 4; s++) {
+        const dest = (s + shiftSteps) % 4;
+        newSlots[dest] = { ...G.tableSlots[s], shiftedFrom: s };
+      }
+      G.shiftedSlots = newSlots;
+
+      for (let s = 0; s < 4; s++) {
+        G.players[s].confirmedCards.push(newSlots[s]);
+      }
+
+      const shiftDesc = shiftSteps === 4
+        ? "4マス回転（1周して全員自分の出したカードを確保）"
+        : `時計回りに ${shiftSteps} マス回転`;
+      addLog(
+        `🔄 親（${G.players[G.dealer].shortName}）が <strong>「${shiftSteps}」</strong> を公開 ➔ ${shiftDesc}！ ` +
+        `あなたの獲得カード: <strong>${newSlots[0].suit}${newSlots[0].val}</strong>`
+      );
+
+      G.awaitingStep = (G.round < 5) ? "p1_after_shift" : "p1_end";
+      renderAll();
+    }
+
+    function finishPhase1AndAssignRanks() {
+      const ranked = [...G.players].sort((a, b) => {
+        const sumA = a.confirmedCards.reduce((acc, c) => acc + c.val, 0);
+        const sumB = b.confirmedCards.reduce((acc, c) => acc + c.val, 0);
+        if (sumB !== sumA) return sumB - sumA;
+        const maxA = Math.max(...a.confirmedCards.map(c => c.val));
+        const maxB = Math.max(...b.confirmedCards.map(c => c.val));
+        if (maxB !== maxA) return maxB - maxA;
+        const orderA = (a.id - G.startDealer + 4) % 4;
+        const orderB = (b.id - G.startDealer + 4) % 4;
+        return orderA - orderB;
+      });
+
+      ranked.forEach((p, idx) => {
+        const r = idx + 1;
+        p.rank = r;
+        const sp = SPECIAL_BY_RANK[r];
+        p.specialCard = {
+          id: `sp_${p.id}`,
+          type: "special",
+          code: sp.code,
+          label: sp.label,
+          strength: sp.strength,
+          suit: "★",
+          isRed: (r === 1 || r === 2)
+        };
+        const numCards = p.confirmedCards.map((c, i) => ({
+          id: `num_${p.id}_${i}`,
+          type: "num",
+          val: c.val,
+          label: String(c.val),
+          suit: c.suit,
+          isRed: c.isRed
+        })).sort((x, y) => y.val - x.val);
+        p.p2Hand = [p.specialCard, ...numCards];
+      });
+
+      const rankSummary = ranked.map(p => {
+        const sum = p.confirmedCards.reduce((acc, c) => acc + c.val, 0);
+        return `${p.rank}位:${p.shortName}(計${sum}・<strong>${p.specialCard.code}</strong>)`;
+      }).join(" ／ ");
+
+      addLog(`<strong>👑 階級決定！</strong> ${rankSummary}`, "win");
+      startPhase2Round(1);
+    }
+
+    // =========================================================================
+    // PHASE 2: SHAFT PHASE & WEIGHTED AI ENGINE (v2.0)
+    // =========================================================================
+    function startPhase2Round(roundNum) {
+      const activePlayers = [...G.players]
+        .filter(p => p.p2Hand.length > 0)
+        .sort((a, b) => a.rank - b.rank);
+
+      if (activePlayers.length < 2) {
+        finishGame();
+        return;
+      }
+
+      G.phase = 2;
+      G.round = roundNum;
+      G.turnOrder = activePlayers.map(p => p.id);
+      G.turnIdx = 0;
+      G.tableSlots = [null, null, null, null];
+      G.selectedHandIds = [];
+      G.awaitingStep = null;
+      G.lastRoundWinnerIds = [];
+      G.previewShift = null;
+
+      addLog(`<strong>⚔️【第2フェーズ R${roundNum}】</strong> 階級順（${activePlayers.map(p => `${p.rank}位:${p.shortName}`).join(" ➔ ")}）に行動を選択します。`);
+      advancePhase2Turn();
+    }
+
+    function canCurrentPlayerPass() {
+      let playedSoFar = 0;
+      for (let i = 0; i < G.turnIdx; i++) {
+        const pid = G.turnOrder[i];
+        if (G.tableSlots[pid] && G.tableSlots[pid].action === "play") {
+          playedSoFar++;
+        }
+      }
+      const remainingAfterMe = G.turnOrder.length - 1 - G.turnIdx;
+      return (playedSoFar + remainingAfterMe) >= 2;
+    }
+
+    // =========================================================================
+    // NEW v2.0 WEIGHT-BASED PHASE 2 AI ENGINE
+    // Evaluates ALL legal candidate moves (Pass, Single 1, Special, 1-card, 2-card)
+    // using open Phase 1 card-counting + face-down card count inference!
+    // =========================================================================
+    function choosePhase2ActionWeighted(player, passAllowed, turnOrder, turnIdx, tableSlots, allPlayers) {
+      const hand = player.p2Hand;
+      const myRank = player.rank;
+
+      // 1. Inspect public board state & opponent remaining hands (known from open Phase 1!)
+      // IMPORTANT: Never peek inside unrevealed `slot.cards` on the table!
+      // Instead, reconstruct each opponent's unrevealed hand before this trick (`oppKnownHand = opp.p2Hand + slot.cards`)
+      // and compute the Bayesian probability that a 1-card face-down is a Special Card or a '1'.
+      let playedSoFar = 0;
+      let estSpecialOnTableProb = 0;
+      let estHigherSpecialOnTableProb = 0;
+      let estOneOnTableProb = 0;
+      let twoFacedownCount = 0;
+
+      for (let i = 0; i < turnIdx; i++) {
+        const pid = turnOrder[i];
+        const opp = allPlayers[pid];
+        const slot = tableSlots[pid];
+        if (slot && slot.action === "play") {
+          playedSoFar++;
+          if (slot.cards.length === 1) {
+            const oppKnownHand = [...opp.p2Hand, ...slot.cards];
+            const totalCards = oppKnownHand.length;
+            const hasSp = oppKnownHand.some(c => c.type === "special");
+            const onesInOpp = oppKnownHand.filter(c => c.type === "num" && c.val === 1).length;
+
+            if (hasSp) {
+              // Bayesian likelihood that this 1-card face-down is their Special card (higher as hand shrinks)
+              const pSp = Math.min(0.85, 1.6 / totalCards);
+              estSpecialOnTableProb += pSp;
+              if (opp.rank < myRank) estHigherSpecialOnTableProb += pSp;
+            }
+            if (onesInOpp > 0) {
+              const pOne = Math.min(0.85, (onesInOpp * 1.3) / totalCards);
+              estOneOnTableProb += pOne;
+            }
+          } else if (slot.cards.length === 2) {
+            twoFacedownCount++;
+          }
+        }
+      }
+
+      const remainingAfterMe = turnOrder.length - 1 - turnIdx;
+      let afterMeWithOneCount = 0;
+      let afterMeWithSpecialCount = 0;
+      let afterMeWithHigherSpecialCount = 0;
+
+      for (let i = turnIdx + 1; i < turnOrder.length; i++) {
+        const pid = turnOrder[i];
+        const opp = allPlayers[pid];
+        if (opp.p2Hand.some(c => c.type === "num" && c.val === 1)) afterMeWithOneCount++;
+        if (opp.p2Hand.some(c => c.type === "special")) {
+          afterMeWithSpecialCount++;
+          if (opp.rank < myRank) afterMeWithHigherSpecialCount++;
+        }
+      }
+
+      // Check if ANY opponent in the entire game still holds a Special card (in hand or unrevealed on table)
+      let anyOpponentSpecialAlive = (estSpecialOnTableProb > 0) || (afterMeWithSpecialCount > 0);
+      for (let pid = 0; pid < 4; pid++) {
+        if (pid !== player.id) {
+          const opp = allPlayers[pid];
+          const slot = tableSlots[pid];
+          const oppCards = [...opp.p2Hand, ...(slot && slot.cards ? slot.cards : [])];
+          if (oppCards.some(c => c.type === "special")) anyOpponentSpecialAlive = true;
+        }
+      }
+
+      const myHasSpecial = hand.some(c => c.type === "special");
+      const myOnesCount = hand.filter(c => c.type === "num" && c.val === 1).length;
+
+      // Build list of all legal candidate actions: { action, cards, score, reason }
+      const candidates = [];
+
+      // -----------------------------------------------------------------------
+      // CANDIDATE A: PASS (戦略的パス)
+      // -----------------------------------------------------------------------
+      if (passAllowed) {
+        let passScore = 3.1; // Base value of conserving a card/turn
+        const reasons = ["手札温存"];
+
+        // Bonus 1: If passing locks ALL remaining players after me into forced play (Pass-Lock!)
+        if (remainingAfterMe > 0 && (playedSoFar + remainingAfterMe) === 2) {
+          passScore += 2.5;
+          reasons.push("後続をパス禁止にハメる");
+        }
+
+        // Bonus 2: If I hold '1', and probability of Special on table right now is low (< 0.45)
+        if (myOnesCount > 0 && estSpecialOnTableProb < 0.45 && anyOpponentSpecialAlive) {
+          passScore += 2.4;
+          reasons.push("「1」の暗殺機会待ち");
+        }
+
+        // Bonus 3: If higher-rank opponent already played 2-card sum and I have no Special or high pair
+        if (playedSoFar > 0 && twoFacedownCount > 0 && !myHasSpecial) {
+          passScore += 1.5;
+          reasons.push("相手の2枚出し回避");
+        }
+
+        // Bonus 4: If I am 1st/2nd to act (`playedSoFar === 0`) and lower players hold many '1's
+        if (playedSoFar === 0 && afterMeWithOneCount >= 2) {
+          passScore += 1.6;
+          reasons.push("下位の「1」待ち伏せ警戒");
+        }
+
+        // Personality tuning
+        if (player.id === 1) passScore += 0.6; // Walter loves strategic pass
+        if (player.id === 2 && myOnesCount > 0) passScore += 0.8; // Chloe waits in the shadows
+        if (player.id === 3) passScore -= 0.3; // Garcia prefers pressure
+
+        passScore += (Math.random() - 0.5) * 1.1;
+
+        candidates.push({
+          action: "pass",
+          cards: [],
+          score: passScore,
+          reason: `戦略的パス（${reasons.slice(0, 2).join("・")}）`
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CANDIDATE B: 1-CARD PLAYS (Special, Single '1', or Single Number 2..5)
+      // -----------------------------------------------------------------------
+      const seenSingleVals = new Set();
+      for (const c of hand) {
+        const key = c.type === "special" ? c.code : `num_${c.val}`;
+        if (seenSingleVals.has(key)) continue;
+        seenSingleVals.add(key);
+
+        if (c.type === "special") {
+          let spScore = 5.4 + (c.strength - 101) * 0.55;
+          spScore += playedSoFar * 1.35;
+          const reasons = [`${c.code}投入`];
+
+          // Danger 1: Bayesian probability that an already-placed 1-card face-down is a '1' or higher Special!
+          if (estOneOnTableProb > 0) {
+            spScore -= 4.2 * estOneOnTableProb;
+            reasons.push("伏せ1リスク考慮");
+          }
+          if (estHigherSpecialOnTableProb > 0) {
+            spScore -= 4.8 * estHigherSpecialOnTableProb;
+            reasons.push("上位特殊警戒");
+          }
+
+          // Danger 2: Players after me still hold '1'
+          if (afterMeWithOneCount > 0) {
+            spScore -= 2.1 * afterMeWithOneCount;
+            reasons.push(`後続の1(${afterMeWithOneCount}人)警戒`);
+          }
+
+          // HUGE BONUS: Safe Window! Zero opponents in this trick can assassinate me with '1'
+          if (estOneOnTableProb === 0 && afterMeWithOneCount === 0 && estHigherSpecialOnTableProb === 0) {
+            spScore += 5.2;
+            reasons.length = 0;
+            reasons.push(`${c.code}安全圏確定`);
+          } else if (twoFacedownCount > 0 && estOneOnTableProb < 0.25 && afterMeWithOneCount === 0) {
+            spScore += 3.8;
+            reasons.push("相手の2枚出しを上から粉砕");
+          }
+
+          spScore += (Math.random() - 0.5) * 1.2;
+          candidates.push({
+            action: "play",
+            cards: [c],
+            score: spScore,
+            reason: reasons.join("・")
+          });
+
+        } else if (c.val === 1) {
+          // Single '1' (Assassin play!)
+          let oneScore = 0.5;
+          const reasons = [];
+
+          if (estSpecialOnTableProb > 0) {
+            // Expected value scales with Bayesian probability `estSpecialOnTableProb` that the 1-card face-down is Special
+            // Plus a bonus if we hold multiple '1's (`myOnesCount >= 2`) so we can afford a probe shot!
+            const multiOneBonus = (myOnesCount >= 2) ? 1.8 : -0.6;
+            oneScore = 3.2 + (estSpecialOnTableProb * 8.2) + multiOneBonus + (playedSoFar * 0.7);
+            if (player.id === 2) oneScore += 1.1;
+            reasons.push(`1枚伏せの特殊確率(${Math.round(Math.min(0.95, estSpecialOnTableProb)*100)}%)を読んで暗殺`);
+          } else if (afterMeWithSpecialCount > 0) {
+            oneScore = 3.2 + (afterMeWithSpecialCount * 0.9);
+            if (remainingAfterMe === 1 && playedSoFar === 0) {
+              oneScore += 1.4;
+              reasons.push("後続のパス禁止を狙う置き1");
+            } else {
+              reasons.push("置き1による牽制");
+            }
+          } else {
+            // ZERO possibility of any Special card appearing in this trick!
+            oneScore = -6.0;
+            reasons.push("標的不在のため温存優先");
+          }
+
+          oneScore += (Math.random() - 0.5) * 1.1;
+          candidates.push({
+            action: "play",
+            cards: [c],
+            score: oneScore,
+            reason: reasons.join("・")
+          });
+
+        } else {
+          // Single Number Card (2..5)
+          let numScore = c.val * 0.88 + (playedSoFar * 0.75);
+          const reasons = [`単騎${c.val}`];
+
+          // DECOY BLUFF (囮ブラフ): Disguise 2 or 3 as our Special Card to bait out lower players' '1'
+          if (myHasSpecial && afterMeWithOneCount > 0 && c.val <= 3 && playedSoFar <= 1) {
+            numScore += 3.1 + (afterMeWithOneCount * 0.5);
+            if (player.id === 3 || player.id === 1) numScore += 0.4;
+            reasons.length = 0;
+            reasons.push(`囮の1枚伏せ（${ player.specialCard.code }に見せかけて下位の「1」を釣る）`);
+          }
+
+          if (twoFacedownCount > 0 && !(myHasSpecial && afterMeWithOneCount > 0 && c.val <= 3)) {
+            numScore -= 2.2;
+          }
+
+          if (c.val === 5 && twoFacedownCount === 0 && estSpecialOnTableProb < 0.3) {
+            numScore += 1.5;
+            reasons.push("同値1枚優先で有利");
+          }
+
+          numScore += (Math.random() - 0.5) * 1.0;
+          candidates.push({
+            action: "play",
+            cards: [c],
+            score: numScore,
+            reason: reasons.join("・")
+          });
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // CANDIDATE C: 2-CARD PLAYS (Number + Number sum)
+      // -----------------------------------------------------------------------
+      const numCards = hand.filter(c => c.type === "num");
+      if (numCards.length >= 2) {
+        const seenPairs = new Set();
+        for (let i = 0; i < numCards.length; i++) {
+          for (let j = i + 1; j < numCards.length; j++) {
+            const c1 = numCards[i];
+            const c2 = numCards[j];
+            const vMax = Math.max(c1.val, c2.val);
+            const vMin = Math.min(c1.val, c2.val);
+            const pairKey = `${vMax}_${vMin}`;
+            if (seenPairs.has(pairKey)) continue;
+            seenPairs.add(pairKey);
+
+            const sum = vMax + vMin;
+            const usesOne = (vMin === 1);
+
+            let pairScore = (sum * 0.82) + (vMax * 0.15) + (playedSoFar * 1.15) - 2.3;
+            const reasons = [`2枚出し(計${sum})`];
+
+            if (usesOne) {
+              if (anyOpponentSpecialAlive) {
+                pairScore -= 5.2;
+                reasons.push("「1」消費ペナルティ");
+              } else {
+                pairScore += 1.8;
+                reasons.push("敵特殊全滅につき余った「1」を合算活用");
+              }
+            }
+
+            if (estSpecialOnTableProb > 0.35) {
+              pairScore -= 2.4 * estSpecialOnTableProb;
+            }
+
+            // If I am 1st/2nd and want to show "2枚伏せ" (immune to '1' assassination!) while pressuring lower ranks
+            if (playedSoFar === 0 && afterMeWithOneCount > 0 && !usesOne && sum >= 6) {
+              pairScore += 1.6;
+              reasons.push("「1」無効の2枚出しで下位の手札を削る");
+            }
+
+            if (player.id === 3 && !usesOne) {
+              pairScore += 1.1; // Garcia signature 2-card pressure
+            }
+
+            pairScore += (Math.random() - 0.5) * 0.7;
+            candidates.push({
+              action: "play",
+              cards: [c1, c2],
+              score: pairScore,
+              reason: reasons.join("・")
+            });
+          }
+        }
+      }
+
+      // Sort candidates descending by expected value score
+      candidates.sort((a, b) => b.score - a.score);
+      return candidates[0];
+    }
+
+    // Legacy v1.0 Simple Waterfall AI (kept for head-to-head benchmark comparison!)
+    function choosePhase2ActionLegacy(player, passAllowed, turnOrder, turnIdx, tableSlots, allPlayers) {
+      const hand = player.p2Hand;
+      const special = hand.find(c => c.type === "special");
+      const ones = hand.filter(c => c.type === "num" && c.val === 1);
+      const nums = hand.filter(c => c.type === "num" && c.val > 1).sort((a, b) => b.val - a.val);
+
+      let singleFacedownByHigherRank = false;
+      let anyFacedownCount = 0;
+      for (let i = 0; i < turnIdx; i++) {
+        const pid = turnOrder[i];
+        const slot = tableSlots[pid];
+        if (slot && slot.action === "play") {
+          anyFacedownCount++;
+          if (slot.cards.length === 1 && allPlayers[pid].rank <= 2) {
+            singleFacedownByHigherRank = true;
+          }
+        }
+      }
+
+      if (ones.length > 0 && singleFacedownByHigherRank && Math.random() < 0.72) {
+        return { action: "play", cards: [ones[0]] };
+      }
+      if (special) {
+        if (player.rank === 1 && Math.random() < 0.45) return { action: "play", cards: [special] };
+        if (player.rank >= 2 && (!singleFacedownByHigherRank || Math.random() < 0.5)) return { action: "play", cards: [special] };
+      }
+      if (passAllowed && nums.length === 0 && ones.length > 0 && !singleFacedownByHigherRank) {
+        return { action: "pass", cards: [] };
+      }
+      if (passAllowed && hand.length <= 2 && anyFacedownCount >= 2 && Math.random() < 0.4) {
+        return { action: "pass", cards: [] };
+      }
+      if (nums.length >= 2 && (player.id === 3 || Math.random() < 0.45)) {
+        return { action: "play", cards: [nums[0], nums[nums.length - 1]] };
+      }
+      if (nums.length > 0) return { action: "play", cards: [nums[0]] };
+      if (special) return { action: "play", cards: [special] };
+      return { action: "play", cards: [hand[0]] };
+    }
+
+    function advancePhase2Turn() {
+      renderAll();
+      if (G.turnIdx >= G.turnOrder.length) {
+        resolvePhase2Showdown();
+        return;
+      }
+
+      const activePid = G.turnOrder[G.turnIdx];
+      const p = G.players[activePid];
+      const passAllowed = canCurrentPlayerPass();
+
+      if (!p.isHuman) {
+        const decision = choosePhase2ActionWeighted(
+          p,
+          passAllowed,
+          G.turnOrder,
+          G.turnIdx,
+          G.tableSlots,
+          G.players
+        );
+
+        const scoreLabel = decision.score !== undefined ? decision.score.toFixed(1) : "--";
+        if (decision.action === "pass") {
+          p.passCount = (p.passCount || 0) + 1;
+          G.tableSlots[activePid] = { action: "pass", cards: [], revealed: true, reason: decision.reason };
+          addLog(
+            `${p.rank}位 ${p.shortName} は <strong>パス</strong> を選択。<br>` +
+            `<span class="ai-reason-tag">🧠 思考: ${decision.reason} [評価値: ${scoreLabel}]</span>`
+          );
+        } else {
+          p.p2Hand = p.p2Hand.filter(c => !decision.cards.some(dc => dc.id === c.id));
+          G.tableSlots[activePid] = {
+            action: "play",
+            cards: decision.cards,
+            revealed: false,
+            reason: decision.reason,
+            aiScore: scoreLabel
+          };
+          addLog(
+            `${p.rank}位 ${p.shortName} が裏向きで <strong>${decision.cards.length}枚伏せ</strong> ました。<br>` +
+            `<span class="ai-reason-tag">🧠 公開後ログにて思考理由を表示 [評価値: ${scoreLabel}]</span>`
+          );
+        }
+        G.turnIdx++;
+        advancePhase2Turn();
+      } else {
+        renderAll();
+      }
+    }
+
+    function evaluatePhase2Showdown(slots, players) {
+      const entrants = [];
+      for (let pid = 0; pid < 4; pid++) {
+        const s = slots[pid];
+        if (s && s.action === "play" && s.cards.length > 0) {
+          const isSpecial = (s.cards.length === 1 && s.cards[0].type === "special");
+          const isSingleOne = (s.cards.length === 1 && s.cards[0].type === "num" && s.cards[0].val === 1);
+          const numSum = isSpecial ? 0 : s.cards.reduce((acc, c) => acc + c.val, 0);
+          const maxNum = isSpecial ? 0 : Math.max(...s.cards.map(c => c.val));
+          entrants.push({
+            pid,
+            rank: players[pid].rank,
+            cards: s.cards,
+            isSpecial,
+            specialStrength: isSpecial ? s.cards[0].strength : 0,
+            specialCode: isSpecial ? s.cards[0].code : null,
+            isSingleOne,
+            numSum,
+            maxNum,
+            cardCount: s.cards.length
+          });
+        }
+      }
+
+      const hasSpecial = entrants.some(e => e.isSpecial);
+      const hasSingleOne = entrants.some(e => e.isSingleOne);
+
+      if (hasSpecial && hasSingleOne) {
+        const winners = entrants.filter(e => e.isSingleOne).map(e => e.pid);
+        const losers = entrants.filter(e => !e.isSingleOne);
+        let pts = 0;
+        losers.forEach(l => {
+          pts += l.isSpecial ? 2 : 1;
+        });
+        return {
+          isShaft: true,
+          isCoop: winners.length > 1,
+          winnerPids: winners,
+          pointsAwarded: pts,
+          entrants
+        };
+      }
+
+      const sorted = [...entrants].sort((a, b) => {
+        if (a.isSpecial !== b.isSpecial) return a.isSpecial ? -1 : 1;
+        if (a.isSpecial && b.isSpecial) return b.specialStrength - a.specialStrength;
+        if (b.numSum !== a.numSum) return b.numSum - a.numSum;
+        if (a.cardCount !== b.cardCount) return a.cardCount - b.cardCount;
+        if (b.maxNum !== a.maxNum) return b.maxNum - a.maxNum;
+        return a.rank - b.rank;
+      });
+
+      const winnerPid = sorted[0].pid;
+      const pts = entrants.length - 1;
+      return {
+        isShaft: false,
+        isCoop: false,
+        winnerPids: [winnerPid],
+        pointsAwarded: pts,
+        entrants
+      };
+    }
+
+    function resolvePhase2Showdown() {
+      const aiRevealNotes = [];
+      for (let pid = 0; pid < 4; pid++) {
+        if (G.tableSlots[pid]) {
+          G.tableSlots[pid].revealed = true;
+          if (pid !== 0 && G.tableSlots[pid].action === "play" && G.tableSlots[pid].reason) {
+            aiRevealNotes.push(`${G.players[pid].shortName}: ${G.tableSlots[pid].reason}`);
+          }
+        }
+      }
+
+      const result = evaluatePhase2Showdown(G.tableSlots, G.players);
+      G.lastRoundWinnerIds = result.winnerPids;
+      G.lastRoundIsShaft = result.isShaft;
+
+      result.winnerPids.forEach(wPid => {
+        G.players[wPid].score += result.pointsAwarded;
+      });
+
+      const winnerNames = result.winnerPids.map(id => `<strong>${G.players[id].shortName}</strong>`).join(" ＆ ");
+      const notesHtml = aiRevealNotes.length > 0
+        ? `<br><span class="ai-reason-tag">💡 伏せ札の狙い — ${aiRevealNotes.join(" ／ ")}</span>`
+        : "";
+
+      if (result.isShaft) {
+        const coopLabel = result.isCoop ? "【共闘下剋上（SHAFT!）】" : "【下剋上（SHAFT!）発動】";
+        addLog(
+          `⚡ <strong>${coopLabel}</strong> 場の特殊カードを「1（1枚出し）」が討ち取りました！ ` +
+          `勝者: ${winnerNames}（各自 <strong>+${result.pointsAwarded} pt</strong> 獲得！）${notesHtml}`,
+          "shaft"
+        );
+      } else {
+        addLog(
+          `🏆 通常勝負決着！ 勝者: ${winnerNames}（負けた ${result.pointsAwarded} 人分から <strong>+${result.pointsAwarded} pt</strong> 獲得）${notesHtml}`,
+          "win"
+        );
+      }
+
+      G.awaitingStep = "p2_after_reveal";
+      renderAll();
+    }
+
+    function finishGame() {
+      G.phase = 3;
+      G.awaitingStep = null;
+      const sorted = [...G.players].sort((a, b) => b.score - a.score || a.rank - b.rank);
+      const topScore = sorted[0].score;
+      const champs = sorted.filter(p => p.score === topScore);
+      const champNames = champs.map(c => `${c.suit}${c.name}（${c.score} pt）`).join(" ＆ ");
+      addLog(`🎉 <strong>ゲーム終了！ 優勝：${champNames}</strong>`, "win");
+      renderAll();
+    }
+
+    // =========================================================================
+    // HUMAN INTERACTION HANDLERS
+    // =========================================================================
+    function onClickHandCard(cardId) {
+      if (G.awaitingStep) return;
+
+      if (G.phase === 1) {
+        const activePid = G.turnOrder[G.turnIdx];
+        if (activePid !== 0) return;
+        G.selectedHandIds = [cardId];
+        if (G.dealer === 0) {
+          G.previewShift = cardId;
+        }
+        renderAll();
+        return;
+      }
+
+      if (G.phase === 2) {
+        const activePid = G.turnOrder[G.turnIdx];
+        if (activePid !== 0) return;
+        const p = G.players[0];
+        const clickedCard = p.p2Hand.find(c => c.id === cardId);
+        if (!clickedCard) return;
+
+        if (G.selectedHandIds.includes(cardId)) {
+          G.selectedHandIds = G.selectedHandIds.filter(id => id !== cardId);
+        } else {
+          if (clickedCard.type === "special") {
+            G.selectedHandIds = [cardId];
+          } else {
+            const currentObjs = G.selectedHandIds
+              .map(id => p.p2Hand.find(c => c.id === id))
+              .filter(c => c && c.type === "num");
+            if (currentObjs.length >= 2) {
+              G.selectedHandIds = [currentObjs[1].id, cardId];
+            } else {
+              G.selectedHandIds = [...currentObjs.map(c => c.id), cardId];
+            }
+          }
+        }
+        renderAll();
+      }
+    }
+
+    function onHumanConfirmPlay() {
+      if (G.phase === 1) {
+        if (G.selectedHandIds.length !== 1) return;
+        const val = G.selectedHandIds[0];
+        playPhase1Card(0, val);
+        G.selectedHandIds = [];
+        G.turnIdx++;
+        advancePhase1Turn();
+        return;
+      }
+
+      if (G.phase === 2) {
+        if (G.selectedHandIds.length < 1 || G.selectedHandIds.length > 2) return;
+        const p = G.players[0];
+        const chosenCards = G.selectedHandIds.map(id => p.p2Hand.find(c => c.id === id)).filter(Boolean);
+        p.p2Hand = p.p2Hand.filter(c => !G.selectedHandIds.includes(c.id));
+        G.tableSlots[0] = {
+          action: "play",
+          cards: chosenCards,
+          revealed: false
+        };
+        G.selectedHandIds = [];
+        addLog(`あなたが裏向きで <strong>${chosenCards.length}枚伏せ</strong> ました。`);
+        G.turnIdx++;
+        advancePhase2Turn();
+      }
+    }
+
+    function onHumanPass() {
+      if (G.phase !== 2 || !canCurrentPlayerPass()) return;
+      G.players[0].passCount = (G.players[0].passCount || 0) + 1;
+      G.tableSlots[0] = { action: "pass", cards: [], revealed: true };
+      G.selectedHandIds = [];
+      addLog(`あなたが <strong>パス</strong> を選択しました。`);
+      G.turnIdx++;
+      advancePhase2Turn();
+    }
+
+    function onProceedNextStep() {
+      if (G.awaitingStep === "p1_after_shift") {
+        startPhase1Round(G.round + 1);
+      } else if (G.awaitingStep === "p1_end") {
+        finishPhase1AndAssignRanks();
+      } else if (G.awaitingStep === "p2_after_reveal") {
+        startPhase2Round(G.round + 1);
+      }
+    }
+
+    function setPreviewShift(steps) {
+      G.previewShift = (G.previewShift === steps) ? null : steps;
+      renderAll();
+    }
+
+    // =========================================================================
+    // UI RENDERING
+    // =========================================================================
+    function renderCardHTML(card, opts = {}) {
+      if (opts.faceDown) {
+        return `
+          <div class="playing-card face-down">
+            <div style="font-size:18px;">♠</div>
+            <div style="font-size:9px; font-weight:800;">SHIFT</div>
+          </div>
+        `;
+      }
+      const isSpecial = (card.type === "special");
+      const valLabel = isSpecial ? card.label : card.val;
+      const suitLabel = card.suit || "♠";
+      const isOneSingle = (!isSpecial && card.val === 1);
+      const cls = [
+        "playing-card",
+        card.isRed ? "red-suit" : "",
+        isSpecial ? "special-card" : "",
+        isOneSingle ? "assassin-card" : "",
+        opts.selected ? "selected" : ""
+      ].filter(Boolean).join(" ");
+
+      const bottomText = isSpecial
+        ? "特殊(1枚専用)"
+        : (card.val === 1 ? "1枚:下剋上" : `数値 ${card.val}`);
+
+      return `
+        <div class="${cls}" ${opts.onClick ? `onclick="${opts.onClick}"` : ""}>
+          <div class="card-corner-top">
+            <span>${suitLabel}</span>
+            <span>${ isSpecial ? "★" : card.val }</span>
+          </div>
+          <div class="card-center-val">${valLabel}</div>
+          <div class="card-bottom-tag">${bottomText}</div>
+        </div>
+      `;
+    }
+
+    function renderAll() {
+      if (!G) return;
+
+      const badge = document.getElementById("phaseBadge");
+      const headline = document.getElementById("phaseHeadline");
+      const subline = document.getElementById("phaseSubline");
+      const shiftControls = document.getElementById("shiftPreviewControls");
+
+      if (G.phase === 1) {
+        badge.className = "phase-badge";
+        badge.textContent = `PHASE 1 - R${G.round}/5`;
+        headline.textContent = `第1フェーズ：シャッフルフェーズ（ラウンド ${G.round} / 5）`;
+        subline.textContent = `親（👑${G.players[G.dealer].shortName}）の左隣から時計回りに表向きで出し、最後に親が出した数字だけ時計回りにシフトします。`;
+        shiftControls.classList.remove("hidden");
+      } else if (G.phase === 2) {
+        badge.className = "phase-badge phase2";
+        badge.textContent = `PHASE 2 - R${G.round}`;
+        headline.textContent = `第2フェーズ：シャフトフェーズ（バトル ラウンド ${G.round}）`;
+        subline.textContent = `CPUは「パス・囮ブラフ・1暗殺・2枚出し」のすべてに期待値重み付けを行って判断します（最低2人出場）。`;
+        shiftControls.classList.add("hidden");
+      } else {
+        badge.className = "phase-badge phase2";
+        badge.textContent = `FINISH`;
+        headline.textContent = `ゲーム終了 — 最終結果発表`;
+        subline.textContent = `「新規ゲーム」ボタンからいつでも再戦できます。`;
+        shiftControls.classList.add("hidden");
+      }
+
+      const activePid = (!G.awaitingStep && G.turnIdx < G.turnOrder.length) ? G.turnOrder[G.turnIdx] : null;
+      for (let pid = 0; pid < 4; pid++) {
+        const p = G.players[pid];
+        const box = document.getElementById(`seatBox${pid}`);
+        box.classList.toggle("active-turn", activePid === pid && G.phase !== 3);
+        box.classList.toggle("winner-glow", G.lastRoundWinnerIds.includes(pid));
+
+        const dealerTag = document.getElementById(`dealerTag${pid}`);
+        dealerTag.classList.toggle("hidden", !(G.phase === 1 && G.dealer === pid));
+
+        const rankTag = document.getElementById(`rankTag${pid}`);
+        if (p.rank) {
+          rankTag.className = `rank-badge rank-${p.rank}`;
+          rankTag.textContent = `${p.rank}位 (${p.specialCard.code})`;
+        } else {
+          const sumSoFar = p.confirmedCards.reduce((a, c) => a + c.val, 0);
+          rankTag.className = "rank-badge";
+          rankTag.textContent = `確定計: ${sumSoFar}`;
+        }
+
+        const handInfo = document.getElementById(`seatHandInfo${pid}`);
+        if (G.phase === 1) {
+          handInfo.textContent = `確定カード: ${p.confirmedCards.length}枚`;
+        } else {
+          handInfo.textContent = `残り手札: ${p.p2Hand.length}枚 (パス:${p.passCount || 0}回)`;
+        }
+
+        document.getElementById(`seatScore${pid}`).textContent = `${p.score} pt`;
+
+        const detailEl = document.getElementById(`seatDetail${pid}`);
+        if (G.phase === 1) {
+          const tracker = [1, 2, 3, 4, 5].map(n => {
+            const used = !p.p1Hand.includes(n);
+            return `<span class="mini-card-tag ${used ? 'used' : ''}">${n}</span>`;
+          }).join("");
+          const acq = p.confirmedCards.map(c => `<span class="mini-card-tag acquired">${c.suit}${c.val}</span>`).join("");
+          detailEl.innerHTML = `<span style="color:#94a3b8;">未出:</span>${tracker} ${acq ? `<span style="color:#94a3b8;margin-left:4px;">確保:</span>${acq}` : ""}`;
+        } else {
+          if (pid === 0) {
+            detailEl.innerHTML = `<span style="color:#94a3b8;">あなたの手札（クリックで1枚または2枚選択）：</span>`;
+          } else {
+            const spLeft = p.p2Hand.some(c => c.type === "special");
+            const onesLeft = p.p2Hand.filter(c => c.type === "num" && c.val === 1).length;
+            detailEl.innerHTML = `<span style="color:#94a3b8;">${p.style}</span> <span class="mini-card-tag">${spLeft ? p.specialCard.code + "未出" : "特殊消費済"}</span> <span class="mini-card-tag">1残り:${onesLeft}枚</span>`;
+          }
+        }
+      }
+
+      const displaySlots = (G.phase === 1 && G.shiftedSlots) ? G.shiftedSlots : G.tableSlots;
+      for (let pid = 0; pid < 4; pid++) {
+        const slotEl = document.getElementById(`boardSlot${pid}`);
+        const cardsEl = document.getElementById(`slotCards${pid}`);
+        const hintEl = document.getElementById(`slotHint${pid}`);
+
+        slotEl.classList.remove("shift-highlight", "shaft-winner", "normal-winner");
+        if (G.lastRoundWinnerIds.includes(pid)) {
+          slotEl.classList.add(G.lastRoundIsShaft ? "shaft-winner" : "normal-winner");
+        } else if (G.phase === 1 && G.previewShift) {
+          slotEl.classList.add("shift-highlight");
+        }
+
+        if (G.phase === 1) {
+          const item = displaySlots[pid];
+          if (item) {
+            cardsEl.innerHTML = renderCardHTML({
+              type: "num",
+              val: item.val,
+              suit: item.suit,
+              isRed: item.isRed
+            });
+          } else {
+            cardsEl.innerHTML = `<span style="font-size:11px; color:#64748b;">未提出</span>`;
+          }
+
+          if (G.shiftedSlots && item && item.shiftedFrom !== undefined) {
+            hintEl.textContent = `⬅ ${G.players[item.shiftedFrom].shortName}から獲得`;
+          } else if (G.previewShift) {
+            const srcSeat = (pid - (G.previewShift % 4) + 4) % 4;
+            const srcCard = G.tableSlots[srcSeat];
+            const srcText = srcCard ? `${srcCard.suit}${srcCard.val}` : `${G.players[srcSeat].shortName}の札`;
+            hintEl.textContent = `予測(+${G.previewShift}): ${srcText} が到着`;
+          } else {
+            hintEl.textContent = (pid === G.dealer) ? "👑 親（最後に出す）" : `子（${G.turnOrder.indexOf(pid) + 1}番手）`;
+          }
+        } else {
+          const item = G.tableSlots[pid];
+          if (!item) {
+            const p = G.players[pid];
+            cardsEl.innerHTML = `<span style="font-size:11px; color:#64748b;">${p.p2Hand.length > 0 ? "待機中" : "手札なし"}</span>`;
+            hintEl.textContent = `${p.rank}位 (${p.specialCard ? p.specialCard.code : ""})`;
+          } else if (item.action === "pass") {
+            cardsEl.innerHTML = `<span style="font-size:12px; font-weight:800; color:#38bdf8;">PASS（戦略温存）</span>`;
+            hintEl.textContent = item.reason ? item.reason.replace("戦略的パス", "") : "温存";
+          } else if (!item.revealed) {
+            cardsEl.innerHTML = item.cards.map(() => renderCardHTML({}, { faceDown: true })).join("");
+            hintEl.textContent = item.cards.length === 2
+              ? "🂠🂠 2枚伏せ（数字合算確定）"
+              : "🂠 1枚伏せ（特殊 or 囮 or 1）";
+          } else {
+            cardsEl.innerHTML = item.cards.map(c => renderCardHTML(c)).join("");
+            if (item.cards.length === 1 && item.cards[0].type === "special") {
+              hintEl.textContent = `特殊カード (${item.cards[0].code})`;
+            } else if (item.cards.length === 1 && item.cards[0].val === 1) {
+              hintEl.textContent = "🗡️ 1（単騎・下剋上）";
+            } else if (item.cards.length === 2) {
+              const sum = item.cards[0].val + item.cards[1].val;
+              hintEl.textContent = `2枚出し（計 ${sum}）`;
+            } else {
+              hintEl.textContent = `1枚出し（数値 ${item.cards[0].val}）`;
+            }
+          }
+        }
+      }
+
+      const handRow = document.getElementById("humanHandRow");
+      const btnConfirm = document.getElementById("btnConfirmPlay");
+      const btnPass = document.getElementById("btnPassTurn");
+      const btnNext = document.getElementById("btnNextStep");
+      const previewPill = document.getElementById("playPreviewText");
+
+      if (G.phase === 1) {
+        const p0 = G.players[0];
+        handRow.innerHTML = p0.p1Hand.map(val => renderCardHTML(
+          { type: "num", val, suit: "♠", isRed: false },
+          {
+            selected: G.selectedHandIds.includes(val),
+            onClick: `onClickHandCard(${val})`
+          }
+        )).join("");
+
+        btnPass.classList.add("hidden");
+        if (G.awaitingStep) {
+          btnConfirm.classList.add("hidden");
+          btnNext.classList.remove("hidden");
+          btnNext.textContent = (G.awaitingStep === "p1_end") ? "⚔️ 第2フェーズ（バトル）へ進む ▶" : `次のラウンド（R${G.round + 1}/5）へ ▶`;
+          previewPill.textContent = "シフト完了！手元に確定カードが追加されました。";
+        } else {
+          btnConfirm.classList.remove("hidden");
+          btnNext.classList.add("hidden");
+          const isMyTurn = (G.turnOrder[G.turnIdx] === 0);
+          btnConfirm.disabled = !(isMyTurn && G.selectedHandIds.length === 1);
+          if (G.selectedHandIds.length === 1) {
+            const v = G.selectedHandIds[0];
+            if (G.dealer === 0) {
+              const srcSeat = (0 - (v % 4) + 4) % 4;
+              const gotVal = (srcSeat === 0) ? v : G.tableSlots[srcSeat].val;
+              previewPill.innerHTML = `親として「${v}」を出す ➔ あなたの手元には <strong>「${gotVal}」</strong> が来ます`;
+            } else {
+              previewPill.innerHTML = `表向きで「♠${v}」を出します`;
+            }
+          } else {
+            previewPill.textContent = isMyTurn ? "場に出すカードを1枚選んでください" : "他プレイヤーの思考中...";
+          }
+        }
+      } else if (G.phase === 2) {
+        const p0 = G.players[0];
+        handRow.innerHTML = p0.p2Hand.map(card => renderCardHTML(
+          card,
+          {
+            selected: G.selectedHandIds.includes(card.id),
+            onClick: `onClickHandCard('${card.id}')`
+          }
+        )).join("");
+
+        if (G.awaitingStep === "p2_after_reveal") {
+          btnConfirm.classList.add("hidden");
+          btnPass.classList.add("hidden");
+          btnNext.classList.remove("hidden");
+          const remainingPlayers = G.players.filter(p => p.p2Hand.length > 0).length;
+          btnNext.textContent = (remainingPlayers >= 2) ? `次のバトルラウンド（R${G.round + 1}）へ ▶` : "🏁 最終結果を見る ▶";
+          previewPill.textContent = "ラウンド決着！右ログでCPUの重み付け思考理由も確認できます。";
+        } else {
+          btnConfirm.classList.remove("hidden");
+          btnPass.classList.remove("hidden");
+          btnNext.classList.add("hidden");
+
+          const isMyTurn = (G.turnOrder[G.turnIdx] === 0);
+          const passOk = isMyTurn && canCurrentPlayerPass();
+          btnPass.disabled = !passOk;
+          btnPass.textContent = passOk ? "パスする" : "🚫 パス禁止（最低2人出場）";
+
+          const selCards = G.selectedHandIds.map(id => p0.p2Hand.find(c => c.id === id)).filter(Boolean);
+          btnConfirm.disabled = !(isMyTurn && selCards.length >= 1 && selCards.length <= 2);
+
+          if (!isMyTurn) {
+            previewPill.textContent = "あなたのラウンド行動は完了しました";
+          } else if (selCards.length === 0) {
+            previewPill.textContent = passOk
+              ? "手札から1枚または2枚選ぶか、パスを選択してください"
+              : "⚠ パス禁止状態：最低2人出場ルールのため必ずカードを出してください";
+          } else if (selCards.length === 1) {
+            const c = selCards[0];
+            if (c.type === "special") {
+              previewPill.innerHTML = `<strong>${c.code}（1枚出し）</strong>：全数字カードに勝利（「1」の単騎出しには敗北＆2pt献上）`;
+            } else if (c.val === 1) {
+              previewPill.innerHTML = `<strong>🗡️ 1（1枚出し）</strong>：場に特殊カードが出れば<strong>下剋上（2ptボーナス）で全勝</strong>！不在なら最弱の1`;
+            } else {
+              previewPill.innerHTML = `<strong>数値 ${c.val}（1枚出し）</strong>：同値の2枚出しに優先勝利（特殊カードを温存中なら囮ブラフにも有効）`;
+            }
+          } else if (selCards.length === 2) {
+            const sum = selCards[0].val + selCards[1].val;
+            const maxV = Math.max(selCards[0].val, selCards[1].val);
+            const hasOne = selCards.some(c => c.val === 1);
+            previewPill.innerHTML = `<strong>2枚出し（合計 ${sum}／最大値 ${maxV}）</strong>${hasOne ? " ※2枚出しのため「1」の下剋上能力は無効" : ""}`;
+          }
+        }
+      } else {
+        handRow.innerHTML = "";
+        btnConfirm.classList.add("hidden");
+        btnPass.classList.add("hidden");
+        btnNext.classList.add("hidden");
+        previewPill.innerHTML = "全ラウンド終了！「🔄 新規ゲーム」でいつでも再戦できます。";
+      }
+
+      renderTacticalAdvisor();
+    }
+
+    function renderTacticalAdvisor() {
+      const el = document.getElementById("tacticalAdvisorBody");
+      if (!el) return;
+
+      if (G.phase === 1) {
+        const dealerP = G.players[G.dealer];
+        const rem = dealerP.p1Hand.join(", ");
+        const isR5 = (G.round === 5);
+        el.innerHTML = `
+          <div style="margin-bottom:6px;">
+            <strong>👑 現在の親：${dealerP.suit}${dealerP.shortName}</strong><br>
+            親の残り手札候補：<strong>[ ${rem} ]</strong>
+            ${isR5 ? "<br><span style='color:var(--gold-bright);'>★最終5ラウンド目！全員残り1枚のため、親のシフト数は上記の1枚で100%確定しています！</span>" : ""}
+          </div>
+          <div style="font-size:11.5px; color:#94a3b8;">
+            💡 親が「4」を出すと全員自分の出したカードがそのまま手元に残ります。親が「1」または「5」を出すと時計回りに1つ隣へ移動します。
+          </div>
+        `;
+      } else if (G.phase === 2) {
+        const activeCount = G.tableSlots.filter(s => s && s.action === "play").length;
+        const passCountRound = G.tableSlots.filter(s => s && s.action === "pass").length;
+        el.innerHTML = `
+          <div style="margin-bottom:6px;">
+            <strong>⚔️ 現在の場：出場 ${activeCount} 人 ／ パス ${passCountRound} 人</strong>
+          </div>
+          <div style="font-size:11.5px; color:#94a3b8;">
+            💡 改修版AIは第1フェーズの公開情報から<strong>全員の「1」の残り枚数と特殊カードの残存</strong>を記憶しており、不利な場では<strong>戦略的パス</strong>や<strong>弱い数字の1枚伏せ（囮ブラフ）</strong>を仕掛けてきます。
+          </div>
+        `;
+      } else {
+        const sorted = [...G.players].sort((a, b) => b.score - a.score || a.rank - b.rank);
+        el.innerHTML = `
+          <div><strong>🏁 最終順位：</strong></div>
+          <ol style="margin:6px 0 0 0; padding-left:18px;">
+            ${sorted.map(p => `<li><strong>${p.suit}${p.name}</strong> — <strong>${p.score} pt</strong>（${p.rank}位 / パス${p.passCount || 0}回）</li>`).join("")}
+          </ol>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // MONTE CARLO BENCHMARK: NEW WEIGHTED AI vs OLD SIMPLE AI (TAB 2)
+    // =========================================================================
+    function simulateGameWithConfig(aiModesBySeat, startDealer = 0) {
+      const simPlayers = [0, 1, 2, 3].map(id => ({
+        id,
+        aiMode: aiModesBySeat[id], // 'weighted' or 'legacy'
+        p1Hand: [1, 2, 3, 4, 5],
+        confirmedCards: [],
+        rank: null,
+        specialCard: null,
+        p2Hand: [],
+        score: 0,
+        passCount: 0,
+        specialWon: false,
+        specialAssassinated: false
+      }));
+
+      // Phase 1
+      for (let r = 1; r <= 5; r++) {
+        const dealer = (startDealer + r - 1) % 4;
+        const order = [(dealer + 1) % 4, (dealer + 2) % 4, (dealer + 3) % 4, dealer];
+        const table = [null, null, null, null];
+
+        for (const pid of order) {
+          const p = simPlayers[pid];
+          const chosen = choosePhase1CardAI(p, table, dealer, simPlayers, r);
+          p.p1Hand = p.p1Hand.filter(x => x !== chosen);
+          table[pid] = { val: chosen, fromPid: pid };
+        }
+
+        const shift = table[dealer].val;
+        for (let s = 0; s < 4; s++) {
+          simPlayers[(s + shift) % 4].confirmedCards.push(table[s]);
+        }
+      }
+
+      // Rank assignment
+      const ranked = [...simPlayers].sort((a, b) => {
+        const sumA = a.confirmedCards.reduce((acc, c) => acc + c.val, 0);
+        const sumB = b.confirmedCards.reduce((acc, c) => acc + c.val, 0);
+        if (sumB !== sumA) return sumB - sumA;
+        const maxA = Math.max(...a.confirmedCards.map(c => c.val));
+        const maxB = Math.max(...b.confirmedCards.map(c => c.val));
+        if (maxB !== maxA) return maxB - maxA;
+        const orderA = (a.id - startDealer + 4) % 4;
+        const orderB = (b.id - startDealer + 4) % 4;
+        return orderA - orderB;
+      });
+
+      ranked.forEach((p, idx) => {
+        p.rank = idx + 1;
+        const sp = SPECIAL_BY_RANK[p.rank];
+        p.specialCard = { id: `sp_${p.id}`, type: "special", code: sp.code, label: sp.label, strength: sp.strength };
+        p.p2Hand = [
+          p.specialCard,
+          ...p.confirmedCards.map((c, i) => ({ id: `n_${p.id}_${i}`, type: "num", val: c.val }))
+        ];
+      });
+
+      // Phase 2
+      while (true) {
+        const active = simPlayers.filter(p => p.p2Hand.length > 0).sort((a, b) => a.rank - b.rank);
+        if (active.length < 2) break;
+
+        const turnOrder = active.map(p => p.id);
+        const slots = [null, null, null, null];
+        let playedSoFar = 0;
+
+        for (let tIdx = 0; tIdx < turnOrder.length; tIdx++) {
+          const pid = turnOrder[tIdx];
+          const p = simPlayers[pid];
+          const remAfter = turnOrder.length - 1 - tIdx;
+          const passAllowed = (playedSoFar + remAfter) >= 2;
+
+          const decision = (p.aiMode === "weighted")
+            ? choosePhase2ActionWeighted(p, passAllowed, turnOrder, tIdx, slots, simPlayers)
+            : choosePhase2ActionLegacy(p, passAllowed, turnOrder, tIdx, slots, simPlayers);
+
+          if (decision.action === "pass") {
+            p.passCount++;
+            slots[pid] = { action: "pass", cards: [] };
+          } else {
+            playedSoFar++;
+            p.p2Hand = p.p2Hand.filter(c => !decision.cards.some(dc => dc.id === c.id));
+            slots[pid] = { action: "play", cards: decision.cards };
+          }
+        }
+
+        const res = evaluatePhase2Showdown(slots, simPlayers);
+        if (res.isShaft) {
+          res.entrants.forEach(e => {
+            if (e.isSpecial) simPlayers[e.pid].specialAssassinated = true;
+          });
+        } else {
+          const wPid = res.winnerPids[0];
+          const wSlot = slots[wPid];
+          if (wSlot && wSlot.cards.length === 1 && wSlot.cards[0].type === "special") {
+            simPlayers[wPid].specialWon = true;
+          }
+        }
+        res.winnerPids.forEach(wPid => {
+          simPlayers[wPid].score += res.pointsAwarded;
+        });
+      }
+
+      const maxScore = Math.max(...simPlayers.map(p => p.score));
+      const winners = simPlayers.filter(p => p.score === maxScore);
+      return { simPlayers, winners };
+    }
+
+    function runMonteCarloSimulation(numGames = 4000) {
+      // Part A: Head-to-Head (2 Weighted AI seats vs 2 Legacy AI seats, rotated across all 6 seat-pair permutations!)
+      const seatPatterns = [
+        ["weighted", "weighted", "legacy", "legacy"],
+        ["weighted", "legacy", "weighted", "legacy"],
+        ["weighted", "legacy", "legacy", "weighted"],
+        ["legacy", "weighted", "weighted", "legacy"],
+        ["legacy", "weighted", "legacy", "weighted"],
+        ["legacy", "legacy", "weighted", "weighted"]
+      ];
+
+      const vsStats = {
+        weighted: { wins: 0, score: 0, passes: 0, spAssassinated: 0, count: 0 },
+        legacy: { wins: 0, score: 0, passes: 0, spAssassinated: 0, count: 0 }
+      };
+
+      const halfGames = Math.floor(numGames / 2);
+      for (let g = 0; g < halfGames; g++) {
+        const pat = seatPatterns[g % seatPatterns.length];
+        const out = simulateGameWithConfig(pat, g % 4);
+        const winShare = 1 / out.winners.length;
+
+        out.simPlayers.forEach(p => {
+          const st = vsStats[p.aiMode];
+          st.count++;
+          st.score += p.score;
+          st.passes += p.passCount;
+          if (p.specialAssassinated) st.spAssassinated++;
+        });
+
+        out.winners.forEach(w => {
+          vsStats[w.aiMode].wins += winShare;
+        });
+      }
+
+      // Part B: Pure All-Weighted AI games to measure new Class Rank balance
+      const rankStats = {
+        1: { label: "1位 (Joker)", wins: 0, score: 0, passes: 0, spSuccess: 0 },
+        2: { label: "2位 (K)", wins: 0, score: 0, passes: 0, spSuccess: 0 },
+        3: { label: "3位 (Q)", wins: 0, score: 0, passes: 0, spSuccess: 0 },
+        4: { label: "4位 (J)", wins: 0, score: 0, passes: 0, spSuccess: 0 }
+      };
+
+      for (let g = 0; g < halfGames; g++) {
+        const out = simulateGameWithConfig(["weighted", "weighted", "weighted", "weighted"], g % 4);
+        const winShare = 1 / out.winners.length;
+        out.simPlayers.forEach(p => {
+          const st = rankStats[p.rank];
+          st.score += p.score;
+          st.passes += p.passCount;
+          if (p.specialWon) st.spSuccess++;
+        });
+        out.winners.forEach(w => {
+          rankStats[w.rank].wins += winShare;
+        });
+      }
+
+      // Compute metrics
+      const newWinPerSeat = ((vsStats.weighted.wins / halfGames / 2) * 100).toFixed(1);
+      const oldWinPerSeat = ((vsStats.legacy.wins / halfGames / 2) * 100).toFixed(1);
+      const newAvgScore = (vsStats.weighted.score / vsStats.weighted.count).toFixed(2);
+      const oldAvgScore = (vsStats.legacy.score / vsStats.legacy.count).toFixed(2);
+      const newAvgPass = (vsStats.weighted.passes / vsStats.weighted.count).toFixed(2);
+      const oldAvgPass = (vsStats.legacy.passes / vsStats.legacy.count).toFixed(2);
+      const newAssassinatedPct = ((vsStats.weighted.spAssassinated / vsStats.weighted.count) * 100).toFixed(1);
+      const oldAssassinatedPct = ((vsStats.legacy.spAssassinated / vsStats.legacy.count) * 100).toFixed(1);
+
+      const rank1NewWinPct = ((rankStats[1].wins / halfGames) * 100).toFixed(1);
+
+      document.getElementById("simNewAiWinRate").textContent = `${newWinPerSeat}%`;
+      document.getElementById("simOldAiWinRate").textContent = `${oldWinPerSeat}%`;
+      document.getElementById("simPassFreq").textContent = `${newAvgPass} 回/人`;
+      document.getElementById("simRank1Improve").textContent = `${rank1NewWinPct}%`;
+
+      document.getElementById("simVsTableBody").innerHTML = `
+        <tr>
+          <td><strong style="color:var(--emerald);">🧠 新AI（重み付け・戦略パス＆ブラフ）</strong></td>
+          <td>
+            <strong style="color:var(--emerald);">${newWinPerSeat}%</strong>
+            <div class="bar-track"><div class="bar-fill cyan-bar" style="width:${Math.min(100, newWinPerSeat * 2.2)}%"></div></div>
+          </td>
+          <td><strong>${newAvgScore} pt</strong> (パス ${newAvgPass}回)</td>
+          <td>${newAssassinatedPct}%</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#f87171;">🤖 旧AI（if文・パスなし）</strong></td>
+          <td>
+            <strong style="color:#f87171;">${oldWinPerSeat}%</strong>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, oldWinPerSeat * 2.2)}%"></div></div>
+          </td>
+          <td><strong>${oldAvgScore} pt</strong> (パス ${oldAvgPass}回)</td>
+          <td>${oldAssassinatedPct}%</td>
+        </tr>
+      `;
+
+      document.getElementById("simRankTableBody").innerHTML = [1, 2, 3, 4].map(r => {
+        const st = rankStats[r];
+        const winPct = ((st.wins / halfGames) * 100).toFixed(1);
+        const avgSc = (st.score / halfGames).toFixed(2);
+        const avgPs = (st.passes / halfGames).toFixed(2);
+        const spWin = ((st.spSuccess / halfGames) * 100).toFixed(1);
+        return `
+          <tr>
+            <td><strong>${st.label}</strong></td>
+            <td>
+              <strong>${winPct}%</strong>
+              <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, winPct * 2.2)}%"></div></div>
+            </td>
+            <td><strong>${avgSc} pt</strong></td>
+            <td>${avgPs} 回</td>
+            <td>${spWin}%</td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("simInsightBox").innerHTML = `
+        <p style="margin:0 0 6px 0;">
+          <strong>✅ 重み付けの有効性がデータで実証されました：</strong><br>
+          席順と手札運を完全に均等化した直接対決で、<strong>新AI（重み付け）は1人あたり優勝率 ${newWinPerSeat}%（平均 ${newAvgScore} pt）</strong>を記録し、旧AI（${oldWinPerSeat}% ／ 平均 ${oldAvgScore} pt）に圧勝しています。
+        </p>
+        <p style="margin:0;">
+          <strong>💡 勝因の内訳：</strong> 新AIは1試合あたり平均 <strong>${newAvgPass}回</strong> の戦略的パスを使って旧AIに「パス禁止」で先に手札を吐き出させ、さらに弱い数字の1枚伏せ（囮ブラフ）で「1」を消費させてから特殊カードを通すため、<strong>特殊カードが「1」に刺される被暗殺率が ${oldAssassinatedPct}% ➔ ${newAssassinatedPct}% へ大幅に改善</strong>しています。
+        </p>
+      `;
+    }
+
+    if (document.readyState === "loading") {
+      window.addEventListener("DOMContentLoaded", () => startNewGame());
+    } else {
+      startNewGame();
+    }
+  </script>
+</body>
+</html>

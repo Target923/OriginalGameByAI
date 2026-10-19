@@ -1,0 +1,3263 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>色彩陣取り</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: 盤を画面の中央に。左＝得点と在庫、右＝ラウンド・指示・記録（左右同じ幅）。手札とアイテムは盤の上下で点対称。狭い画面では縦1列。 */
+:root {
+  --paper: #e9ece8;
+  --sheet: #f8f9f7;
+  --ink: #1c2321;
+  --ink-2: #4c5753;
+  --ink-3: #6f7a76;
+  --rule: #d2d8d4;
+  --mat: #2d5c4d;
+  --mat-deep: #254d40;
+  --mat-line: rgba(226, 242, 233, 0.17);
+  --mat-ink: #cbe0d4;
+  --act: #1f5a4a;
+  --act-ink: #f3faf6;
+  --glow: #ffe07a;
+  --warn: #b3261e;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s0: #a2a8a5;
+  --track: #e2e6e3;
+  --on-s1: #ffffff;
+  --on-s2: #ffffff;
+  --on-s0: #1c2321;
+
+  --c-red: #d4382d;
+  --c-blue: #2b56ad;
+  --c-yellow: #f3bb1c;
+  --c-white: #f7f6f0;
+  --c-purple: #6d41a6;
+  --c-orange: #ee7b20;
+  --c-green: #2c8a4d;
+  --c-pink: #f39abb;
+  --c-aqua: #79cfe5;
+  --c-lemon: #f1ec86;
+  --c-black: #1f1f24;
+  --c-lime: #a2cd3b;
+  --c-gray: #8a8f93;
+  --on-light: #1b1d1c;
+  --on-dark: #ffffff;
+  --kraft: #a77c4f;
+  --kraft-line: #8f673d;
+
+  --f-display: "Yusei Magic", "Hiragino Maru Gothic ProN", "Zen Maru Gothic", sans-serif;
+  --f-body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Meiryo", sans-serif;
+  --card-shadow: 0 1px 0 rgba(0, 0, 0, 0.22), 0 3px 6px rgba(0, 0, 0, 0.22);
+  --cell: clamp(38px, min(calc((100vw - 32px) / 8), calc((100vh - 486px) / 8)), 64px);
+  --center: max(calc(var(--cell) * 8), 540px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121715; --sheet: #1b2220; --ink: #e5ebe8; --ink-2: #b0bcb7; --ink-3: #8b9792; --rule: #2d3734;
+    --mat: #1f4438; --mat-deep: #1a3a30; --mat-line: rgba(214, 238, 226, 0.12); --mat-ink: #a6c8b8;
+    --act: #63b398; --act-ink: #0d1613; --glow: #ffd65a; --warn: #ff8a80;
+    --s1: #3987e5; --s2: #d95926; --s0: #6b7370; --track: #26302d; --on-s1: #ffffff; --on-s2: #ffffff; --on-s0: #ffffff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121715; --sheet: #1b2220; --ink: #e5ebe8; --ink-2: #b0bcb7; --ink-3: #8b9792; --rule: #2d3734;
+  --mat: #1f4438; --mat-deep: #1a3a30; --mat-line: rgba(214, 238, 226, 0.12); --mat-ink: #a6c8b8;
+  --act: #63b398; --act-ink: #0d1613; --glow: #ffd65a; --warn: #ff8a80;
+  --s1: #3987e5; --s2: #d95926; --s0: #6b7370; --track: #26302d; --on-s1: #ffffff; --on-s2: #ffffff; --on-s0: #ffffff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 500;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px 24px;
+}
+button { font: inherit; color: inherit; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+:focus-visible { outline: 3px solid var(--glow); outline-offset: 2px; }
+.wrap { max-width: 1380px; margin: 0 auto; }
+#scr-setup, #scr-sim { max-width: 1180px; margin: 0 auto; }
+
+/* ---------- 汎用 ---------- */
+.btn {
+  appearance: none; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink);
+  padding: 7px 14px; border-radius: 8px; cursor: pointer; font-weight: 700; line-height: 1.3;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--act); border-color: var(--act); color: var(--act-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+.btn.small { min-height: 30px; padding: 4px 10px; font-size: 13px; }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; }
+.panel h3 { font-size: 13px; letter-spacing: 0.08em; color: var(--ink-2); margin-bottom: 8px; font-weight: 700; }
+.muted { color: var(--ink-3); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- 絵の具カード ---------- */
+.card {
+  --card: 52px;
+  position: relative; width: var(--card); height: var(--card); flex: none;
+  border-radius: calc(var(--card) * 0.1);
+  background: var(--paint);
+  background-image: radial-gradient(130% 100% at 28% 18%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 58%);
+  color: var(--on);
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  box-shadow: var(--card-shadow);
+  display: grid; place-items: center;
+  user-select: none; -webkit-user-select: none;
+}
+.card .nm { font-weight: 900; font-size: calc(var(--card) * 0.3); line-height: 1; letter-spacing: -0.02em; }
+.card .nm.long { font-size: calc(var(--card) * 0.24); }
+.card .pt { position: absolute; top: calc(var(--card) * 0.05); left: calc(var(--card) * 0.08); font-size: calc(var(--card) * 0.2); font-weight: 900; line-height: 1; }
+.card .chip {
+  position: absolute; top: calc(var(--card) * 0.07); right: calc(var(--card) * 0.07);
+  width: calc(var(--card) * 0.22); height: calc(var(--card) * 0.22); border-radius: calc(var(--card) * 0.055);
+  background: var(--chip);
+}
+.card .bar { position: absolute; left: 26%; right: 26%; bottom: calc(var(--card) * 0.06); height: max(2px, calc(var(--card) * 0.05)); border-radius: 2px; background: currentColor; opacity: 0.5; }
+.card.rot { transform: rotate(180deg); }
+.card.back {
+  background: var(--kraft);
+  background-image: repeating-linear-gradient(45deg, var(--kraft-line) 0 2px, transparent 2px 7px);
+  border-color: rgba(0, 0, 0, 0.35);
+}
+.p-red { --paint: var(--c-red); --on: var(--on-dark); }
+.p-blue { --paint: var(--c-blue); --on: var(--on-dark); }
+.p-yellow { --paint: var(--c-yellow); --on: var(--on-light); }
+.p-white { --paint: var(--c-white); --on: var(--on-light); }
+.p-purple { --paint: var(--c-purple); --on: var(--on-dark); }
+.p-orange { --paint: var(--c-orange); --on: var(--on-light); }
+.p-green { --paint: var(--c-green); --on: var(--on-dark); }
+.p-pink { --paint: var(--c-pink); --on: var(--on-light); }
+.p-aqua { --paint: var(--c-aqua); --on: var(--on-light); }
+.p-lemon { --paint: var(--c-lemon); --on: var(--on-light); }
+.p-black { --paint: var(--c-black); --on: var(--on-dark); }
+.p-lime { --paint: var(--c-lime); --on: var(--on-light); }
+.p-gray { --paint: var(--c-gray); --on: var(--on-dark); }
+.q-red { --chip: var(--c-red); } .q-blue { --chip: var(--c-blue); } .q-yellow { --chip: var(--c-yellow); }
+.q-white { --chip: var(--c-white); }
+.card .chip.q-white { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3); }
+
+/* ---------- 設定画面 ---------- */
+.hero { display: grid; gap: 6px; padding-block: 28px 22px; }
+.hero h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(40px, 8vw, 64px); line-height: 1.05; letter-spacing: 0.02em; }
+.hero p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.swatchrow { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.swatchrow .card { --card: 30px; }
+.setup-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .setup-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.modes { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.mode {
+  border: 1.5px solid var(--rule); border-radius: 12px; padding: 12px 14px; cursor: pointer; background: var(--sheet);
+  display: grid; gap: 2px; text-align: left;
+}
+.mode b { font-size: 16px; }
+.mode span { color: var(--ink-3); font-size: 12.5px; line-height: 1.5; }
+.mode[aria-pressed="true"] { border-color: var(--act); box-shadow: inset 0 0 0 1.5px var(--act); }
+.field { display: grid; gap: 8px; padding-block: 14px; border-top: 1px solid var(--rule); }
+.field:first-of-type { border-top: 0; }
+.field > label, .field > .lbl { font-weight: 700; }
+.field .hint { color: var(--ink-3); font-size: 12.5px; margin: 0; }
+.setlist { display: grid; gap: 6px; }
+.setopt { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 6px 8px 6px 10px; border-radius: 8px; border: 1px solid var(--rule); }
+.setchk { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.setchk input { margin: 0; accent-color: var(--act); width: 16px; height: 16px; }
+.setitems { display: flex; gap: 6px; }
+.setitems .btn { min-width: 84px; justify-content: center; }
+.setitems .btn[aria-pressed="true"] { border-color: var(--act); box-shadow: inset 0 0 0 1.5px var(--act); }
+.side-stack { display: grid; gap: 20px; align-content: start; min-width: 0; }
+/* アイテムの効果プレビュー */
+.ipreview { display: grid; gap: 10px; }
+.iphead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.iphead b { font-family: var(--f-display); font-weight: 400; font-size: 24px; line-height: 1.1; }
+.iphead .tag { color: var(--ink-3); font-size: 12.5px; font-weight: 700; }
+.ipdesc { margin: 0; color: var(--ink-2); }
+.ipreview { container-type: inline-size; }
+.demo { display: grid; grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr); gap: 8px; align-items: start; }
+.demo figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.demo figcaption { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+.demo figcaption b { display: block; font-size: 11.5px; color: var(--ink-3); letter-spacing: 0.06em; }
+.darrow { align-self: center; justify-self: center; color: var(--ink-3); font-size: 18px; padding-bottom: 28px; }
+@container (max-width: 470px) {
+  .demo { grid-template-columns: minmax(0, 1fr); }
+  .darrow { transform: rotate(90deg); padding-bottom: 0; }
+}
+.dwrap { display: flex; gap: 8px; align-items: flex-start; }
+.dmat { --cell: 34px; display: grid; width: max-content; background: var(--mat); border-radius: 10px; padding: 5px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25); }
+.dside { display: grid; gap: 4px; justify-items: center; font-size: 11px; color: var(--ink-3); min-width: 56px; }
+.dside .card { --card: 30px; }
+.dnone { font-size: 11px; color: var(--ink-3); padding-block: 6px; }
+.card.new { outline: 3px solid var(--glow); outline-offset: 1px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.seg { justify-self: start; display: inline-flex; border: 1px solid var(--rule); border-radius: 9px; overflow: hidden; flex-wrap: wrap; }
+.seg button { appearance: none; border: 0; background: transparent; padding: 7px 12px; cursor: pointer; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--act); color: var(--act-ink); }
+input[type="number"] { font: inherit; width: 96px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); }
+.recipes { display: grid; gap: 6px; }
+.recipe { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.recipe .card { --card: 36px; }
+.recipe .how { color: var(--ink-2); font-size: 13px; }
+.recipe .pp { font-weight: 900; font-variant-numeric: tabular-nums; }
+
+/* ---------- 対戦画面 ---------- */
+.topbar { display: flex; gap: 8px; align-items: center; padding-block: 0 8px; }
+.topbar .name { font-family: var(--f-display); font-size: 24px; line-height: 1; margin-right: auto; }
+.rounds { display: flex; gap: 4px; flex-wrap: wrap; }
+.rounds span { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--rule); font-size: 12px; white-space: nowrap; color: var(--ink-3); font-weight: 700; background: var(--sheet); }
+.rounds span.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.rounds span.done { color: var(--ink-2); }
+
+/* 盤を中心に置き、左右の列は同じ幅：左＝得点と在庫、右＝進行・指示・記録 */
+.table { display: grid; gap: 12px 18px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "status" "center" "scores" "log" "stock"; }
+.col-l, .col-r { display: contents; }
+.a-center { grid-area: center; display: grid; gap: 8px; align-content: center; min-width: 0; }
+.a-status { grid-area: status; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.a-scores { grid-area: scores; min-width: 0; }
+.a-stock { grid-area: stock; min-width: 0; }
+.a-log { grid-area: log; min-width: 0; }
+@media (min-width: 1080px) {
+  /* 左右の2段目（在庫と記録）の上端をそろえる */
+  .table {
+    grid-template-columns: minmax(250px, 1fr) var(--center) minmax(250px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "scores center status" "stock center log";
+    align-items: stretch;
+  }
+  .a-scores > .panel, .a-stock > .panel { height: 100%; }
+  .a-status { display: flex; flex-direction: column; }
+  .a-status .status { flex: 1 1 auto; min-height: 140px; align-content: start; }
+  .a-log { position: relative; min-height: 220px; }
+  .a-log > .panel { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .a-log .log { flex: 1 1 0; min-height: 0; max-height: none; }
+}
+
+.status { border-radius: 12px; padding: 10px 14px; background: var(--sheet); border: 1px solid var(--rule); display: grid; gap: 6px; }
+.status .who { font-weight: 900; font-size: 15px; }
+.status .say { color: var(--ink-2); }
+.status .say b { color: var(--ink); }
+.status .err { color: var(--warn); font-weight: 700; }
+.status .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 手札とアイテム（相手側は左右反転して点対称に） */
+.seat { --items-w: 184px; display: grid; gap: 10px; align-items: stretch; }
+.seat.me { grid-template-columns: minmax(0, 1fr) var(--items-w); }
+.seat.opp { grid-template-columns: var(--items-w) minmax(0, 1fr); }
+@media (max-width: 560px) { .seat { --items-w: 150px; } .item { font-size: 12px; padding-inline: 3px; } .item small { display: none; } }
+.hblock, .iblock { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 8px 10px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.hblock.active { border-color: var(--act); box-shadow: inset 0 0 0 1px var(--act); }
+.hblock .head, .iblock .head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; min-height: 20px; }
+.hblock .head b, .iblock .head b { font-size: 14px; }
+.hblock .head .tag, .iblock .head .tag { font-size: 11.5px; color: var(--ink-3); }
+.opp .head, .opp .hand, .opp .acts { justify-content: flex-end; }
+.hand { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; min-height: 52px; padding-top: 4px; }
+.hand .card { --card: 46px; cursor: default; transition: transform 0.12s ease; }
+.hand .card.can { cursor: pointer; }
+.hand .card.can:hover { transform: translateY(-3px); }
+.hand .card.sel { transform: translateY(-4px); outline: 3px solid var(--glow); outline-offset: 2px; }
+.hand .card.dim { opacity: 0.45; }
+.hand .empty { color: var(--ink-3); font-size: 13px; align-self: center; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: 32px; }
+.acts .btn { min-height: 32px; padding: 4px 11px; font-size: 13px; }
+.ilist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.item {
+  appearance: none; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+  padding: 4px 6px; min-height: 30px; font-size: 12.5px; font-weight: 700; line-height: 1.2; cursor: default; white-space: nowrap;
+  display: flex; gap: 4px; align-items: center; justify-content: center; text-align: center;
+}
+.item small { font-size: 10.5px; color: var(--ink-3); font-weight: 500; }
+.item.can { cursor: pointer; border-color: var(--act); color: var(--ink); }
+.item.can:hover { background: var(--sheet); }
+.item.used { opacity: 0.5; text-decoration: line-through; }
+.item.on { box-shadow: inset 0 0 0 2px var(--glow); }
+.iblock .small { font-size: 12.5px; }
+
+/* 盤 */
+.board-wrap { display: grid; justify-content: center; }
+.mat {
+  position: relative;
+  display: grid; grid-template-columns: repeat(8, var(--cell)); grid-template-rows: repeat(8, var(--cell));
+  background: var(--mat);
+  border-radius: 14px; padding: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+.cell { position: relative; display: grid; place-items: center; }
+.cell.main, .cell.wide { box-shadow: inset 0 0 0 0.5px var(--mat-line); }
+.cell.wide { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0 4px, transparent 4px 9px); }
+.cell .lab { color: var(--mat-ink); font-size: calc(var(--cell) * 0.24); font-weight: 700; opacity: 0.85; }
+.cell > .card { --card: calc(var(--cell) * 0.84); }
+.cell .stack2 { position: absolute; inset: 0; }
+.cell .stack2 > .card { --card: calc(var(--cell) * 0.62); position: absolute; }
+.cell .stack2 > .card:first-child { left: 5%; top: 5%; }
+.cell .stack2 > .card:last-child { right: 5%; bottom: 5%; }
+.cell.click { cursor: pointer; }
+.cell.legal::after {
+  content: ""; position: absolute; width: 26%; height: 26%; border-radius: 50%;
+  background: var(--glow); box-shadow: 0 0 0 4px rgba(255, 224, 122, 0.25); pointer-events: none;
+}
+.cell.legal:hover::after { width: 34%; height: 34%; }
+/* 置けるマスの点線は、仮置きカードの点線（カードの外側1〜3px）と同じ位置・同じ角の丸みにそろえる */
+.cell.free::before, .cell.spot::before { content: ""; position: absolute; inset: calc(8% - 3px); border-radius: calc(var(--cell) * 0.084 + 3px); border: 2px dashed var(--glow); pointer-events: none; }
+/* パレットで選んでいない色の置き場は薄い点線 */
+.cell.free.alt::before { opacity: 0.5; }
+/* 点線・変化の枠はカードより手前に描く（カードのあるマスでも見えるように） */
+.cell.free::before, .cell.spot::before, .cell.changed::before { z-index: 2; }
+.card.back .who { font-size: calc(var(--card) * 0.2); font-weight: 900; line-height: 1.2; color: #fff6e8; background: rgba(40, 24, 8, 0.5); padding: 1px 5px; border-radius: 4px; }
+.cell.last { background: rgba(255, 224, 122, 0.13); }
+.cell.changed::before { content: ""; position: absolute; inset: 3%; border-radius: 8px; border: 2px solid var(--glow); pointer-events: none; }
+/* ワイドの辺を選ぶ：盤のまわりの座標の枠を押せる。指した辺の6マスをまとめて明るくする */
+.cell.side-pick { cursor: pointer; border-radius: 6px; }
+.cell.side-pick::before { content: ""; position: absolute; inset: 10%; border-radius: 6px; border: 1.5px dashed var(--glow); opacity: 0.55; pointer-events: none; }
+.cell.side-pick:hover, .cell.side-pick:focus-visible,
+.mat:has(.side-pick[data-side="top"]:hover) .side-pick[data-side="top"],
+.mat:has(.side-pick[data-side="bottom"]:hover) .side-pick[data-side="bottom"],
+.mat:has(.side-pick[data-side="left"]:hover) .side-pick[data-side="left"],
+.mat:has(.side-pick[data-side="right"]:hover) .side-pick[data-side="right"],
+.mat:has(.side-pick[data-side="top"]:focus-visible) .side-pick[data-side="top"],
+.mat:has(.side-pick[data-side="bottom"]:focus-visible) .side-pick[data-side="bottom"],
+.mat:has(.side-pick[data-side="left"]:focus-visible) .side-pick[data-side="left"],
+.mat:has(.side-pick[data-side="right"]:focus-visible) .side-pick[data-side="right"] { background: rgba(255, 224, 122, 0.18); }
+.cell.side-pick:focus-visible { outline: none; }
+.cell.target > .card, .cell.target .stack2 > .card { cursor: pointer; }
+.card.away { opacity: 0.78; filter: saturate(0.7); }
+.card.away.cand, .card.away.pick { opacity: 1; filter: none; }
+.card.pick { outline: 3px solid var(--glow); outline-offset: 1px; }
+.card.cand { box-shadow: var(--card-shadow), 0 0 0 3px rgba(255, 224, 122, 0.85); cursor: pointer; }
+.card.tent { outline: 2px dashed var(--glow); outline-offset: 1px; opacity: 0.92; }
+.card.ghost { opacity: 0.25; }
+.card.fresh { animation: drop 0.35s ease-out; }
+@keyframes drop { from { transform: translateY(-8px) scale(1.06); opacity: 0.2; } }
+.card.rot.fresh { animation-name: droprot; }
+@keyframes droprot { from { transform: rotate(180deg) translateY(8px) scale(1.06); opacity: 0.2; } }
+.card.flip { animation: flip 0.7s ease-out; }
+@keyframes flip { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0); } }
+.card.rot.flip { animation-name: fliprot; }
+@keyframes fliprot { 0% { transform: rotate(180deg) rotateY(90deg); } 100% { transform: rotate(180deg) rotateY(0); } }
+.obj { width: 72%; height: 72%; color: var(--mat-ink); }
+.obj.mine { color: var(--glow); }
+.obj.rot { transform: rotate(180deg); }
+.lockmark { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  background: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.22) 0 3px, transparent 3px 8px); border-radius: 4px; }
+.lockmark svg { width: 44%; height: 44%; color: var(--mat-ink); opacity: 0.9; }
+.lockmark.rot svg { transform: rotate(180deg); }
+/* カードの上のロック：持ち主から見て左下の角に小さな印（相手のロックは盤上で右上） */
+.lockmark.on-card { inset: auto; left: 0; bottom: 0; width: 38%; height: 38%; z-index: 3;
+  background: var(--mat); border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.35); }
+.lockmark.on-card.rot { left: auto; bottom: auto; right: 0; top: 0; }
+.lockmark.on-card svg { width: 64%; height: 64%; }
+.preview-tag {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--glow); color: #1b1d1c; font-weight: 900; font-size: 12px; padding: 2px 10px; border-radius: 999px; z-index: 2;
+  pointer-events: none;
+}
+
+/* パレット（作れる色の候補） */
+.palette .tray {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 5px 8px; border-radius: 14px;
+  background: var(--sheet); border: 1px solid var(--rule); min-height: 52px;
+}
+.palette.opp .tray { justify-content: flex-end; }
+.palette .tray .muted { padding-inline: 6px; font-size: 13px; }
+.palette .tray .cap { font-size: 12px; }
+.well {
+  appearance: none; border: 1.5px solid var(--rule); background: var(--paper); border-radius: 12px;
+  padding: 3px 10px 3px 4px; display: flex; gap: 8px; align-items: center; cursor: pointer; text-align: left; min-height: 40px;
+}
+.well .blob { width: 28px; height: 28px; border-radius: 50%; background: var(--paint); border: 1px solid rgba(0, 0, 0, 0.3); flex: none;
+  background-image: radial-gradient(90% 80% at 32% 25%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 60%); }
+.well .t { display: grid; line-height: 1.25; }
+.well .t b { font-size: 13.5px; }
+.well .t small { color: var(--ink-3); font-size: 11.5px; }
+.well.active { border-color: var(--act); box-shadow: inset 0 0 0 1.5px var(--act); }
+.well.done { border-style: dashed; }
+.well.done .blob { box-shadow: 0 0 0 3px var(--glow); }
+.well.off { opacity: 0.45; cursor: not-allowed; }
+.well.must b::after { content: "必須"; margin-left: 6px; font-size: 11px; color: var(--sheet); background: var(--warn); padding: 0 6px; border-radius: 999px; }
+.well.mini { cursor: default; min-height: 34px; padding: 2px 8px 2px 3px; gap: 6px; }
+.well.mini .blob { width: 22px; height: 22px; }
+
+/* 左右の列 */
+.scores { display: grid; gap: 10px; }
+.score { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; }
+.score .nm { font-weight: 900; }
+.score .nm small { font-weight: 500; color: var(--ink-3); margin-left: 6px; }
+.score .tot { font-size: 26px; font-weight: 900; line-height: 1; }
+.score .br { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+.score.turn .nm::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--act); margin-right: 6px; vertical-align: 2px; }
+.log { max-height: 280px; overflow: auto; display: grid; gap: 4px; align-content: start; font-size: 12.5px; color: var(--ink-2); padding-right: 4px; }
+.log p { margin: 0; }
+.log .r { display: inline-block; min-width: 30px; font-weight: 700; color: var(--ink-3); }
+
+/* 在庫（カードは手札と同じ大きさ。2列に並べる） */
+.piles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; }
+.piles .sep { grid-column: 1 / -1; border-top: 1px solid var(--rule); }
+.pile { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 6px; align-items: center; min-height: 46px; }
+.pile .lbl { font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+.pile .lbl small { display: block; color: var(--ink-3); font-weight: 500; }
+.fan { display: flex; align-items: center; }
+.fan .card { --card: 46px; }
+.fan .card + .card { margin-left: -20px; }
+.fan .card:first-child { z-index: 3; }
+.fan .card:nth-child(2) { z-index: 2; }
+.fan .none { font-size: 12px; color: var(--ink-3); }
+
+/* 重ねる画面 */
+.overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px));
+  background: rgba(10, 16, 14, 0.55); }
+.dialog { background: var(--sheet); color: var(--ink); border-radius: 16px; padding: 20px; max-width: 640px; width: 100%; max-height: 90vh; overflow: auto; display: grid; gap: 14px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
+.dialog h2 { font-family: var(--f-display); font-weight: 400; font-size: 28px; }
+.dialog p { margin: 0; }
+.dialog.wide { max-width: 760px; }
+.draftset { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: center; padding-block: 8px; border-top: 1px solid var(--rule); }
+.draftset .sn { font-size: 13px; color: var(--ink-2); font-weight: 700; }
+.draftpair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dpick { appearance: none; text-align: left; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); color: var(--ink); padding: 7px 10px; display: grid; gap: 2px; cursor: pointer; align-content: start; }
+.dpick b { font-size: 14px; }
+.dpick small { color: var(--ink-3); font-size: 12px; line-height: 1.45; }
+.dpick:hover { border-color: var(--ink-3); }
+.dpick[aria-pressed="true"] { border-color: var(--act); box-shadow: inset 0 0 0 2px var(--act); background: var(--sheet); }
+@media (max-width: 560px) { .draftset { grid-template-columns: minmax(0, 1fr); gap: 6px; } }
+.result { display: grid; gap: 6px; }
+.result table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.result th, .result td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+.result th:first-child, .result td:first-child { text-align: left; }
+.rules { display: grid; gap: 10px; }
+.rules ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.rules h3 { font-size: 15px; }
+
+/* シミュレーション */
+.sim-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding-block: 8px 16px; }
+.sim-head h2 { font-family: var(--f-display); font-weight: 400; font-size: 30px; margin-right: auto; }
+.progress { height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--act); width: 0; transition: width 0.2s; }
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.tile { display: grid; gap: 2px; }
+.tile .lab { color: var(--ink-3); font-size: 12.5px; font-weight: 700; }
+.tile .val { font-size: 30px; font-weight: 900; line-height: 1.1; }
+.tile .sub { color: var(--ink-3); font-size: 12px; }
+.simgrid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); margin-top: 14px; }
+@media (min-width: 900px) { .simgrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .simgrid .wide2 { grid-column: 1 / -1; } }
+.hbar { display: flex; gap: 2px; height: 24px; }
+.hbar span { min-width: 3px; display: flex; align-items: center; padding-inline: 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.hbar span:first-child { border-radius: 4px 0 0 4px; }
+.hbar span:last-child { border-radius: 0 4px 4px 0; }
+.vchart { padding-left: 30px; }
+.vchart .plot { position: relative; height: 170px; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--ink-3); }
+.vchart .gl { position: absolute; left: 0; right: 0; border-top: 1px solid var(--rule); }
+.vchart .gl span { position: absolute; right: calc(100% + 6px); top: -8px; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.vchart .bin { position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: flex; justify-content: center; align-items: flex-end; gap: 2px; }
+.vchart .bin i { display: block; width: 100%; max-width: 24px; border-radius: 4px 4px 0 0; }
+.vchart .bin.grp i { max-width: 24px; }
+.vchart .xl { display: flex; gap: 2px; margin-top: 4px; }
+.vchart .xl span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); margin-bottom: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.tbl { overflow-x: auto; }
+.tbl table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tbl th { text-align: left; font-weight: 700; color: var(--ink-3); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+.tbl td { padding: 6px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.tbl td.r, .tbl th.r { text-align: right; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--paint); border: 1px solid rgba(0, 0, 0, 0.25); margin-right: 6px; vertical-align: -1px; }
+.wr { position: relative; display: inline-block; width: 120px; height: 12px; vertical-align: -2px; }
+.wr::before { content: ""; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--track); border-radius: 2px; }
+.wr .mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--ink-3); }
+.wr .dot { position: absolute; top: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--s1); transform: translateX(-5px); box-shadow: 0 0 0 2px var(--sheet); }
+.flag { color: var(--warn); font-weight: 700; }
+.note { color: var(--ink-3); font-size: 12.5px; margin: 6px 0 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card.fresh, .card.flip, .card.rot.fresh { animation: none; }
+  .hand .card, .progress i { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <section id="scr-setup"></section>
+  <section id="scr-game" hidden></section>
+  <section id="scr-sim" hidden></section>
+</div>
+<div id="overlay" class="overlay" hidden></div>
+
+<script>/* 色彩陣取り — ゲームエンジン・CPU・シミュレーション
+ * ブラウザでは window.Iro、Node では module.exports として公開する。
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.Iro = api;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // ------------------------------------------------------------------
+  // 定数
+  // ------------------------------------------------------------------
+  const COLOR_ORDER = ['red', 'blue', 'yellow', 'white', 'purple', 'orange', 'green',
+    'pink', 'aqua', 'lemon', 'black', 'lime', 'gray'];
+  const COLOR = {
+    red: { name: '赤', pts: 1 },
+    blue: { name: '青', pts: 1 },
+    yellow: { name: '黄', pts: 1 },
+    white: { name: '白', pts: 1 },
+    purple: { name: '紫', pts: 3, from: ['red', 'blue'] },
+    orange: { name: '橙', pts: 3, from: ['red', 'yellow'] },
+    green: { name: '緑', pts: 3, from: ['blue', 'yellow'] },
+    pink: { name: '桃', pts: 3, from: ['red', 'white'] },
+    aqua: { name: '水', pts: 3, from: ['blue', 'white'] },
+    lemon: { name: '檸檬', pts: 3, from: ['yellow', 'white'] },
+    black: { name: '黒', pts: 6, from: ['red', 'blue', 'yellow'] },
+    lime: { name: '黄緑', pts: 6, from: ['green', 'white'] },
+    gray: { name: '灰色', pts: -3, from: ['black', 'white'] },
+  };
+  const PRIMARY = { red: true, blue: true, yellow: true };
+  // 手札から最初から使える基本の色（原色と白）。R1・R3・初期配置で置けるのはこれだけ
+  const isBase = color => !!PRIMARY[color] || color === 'white';
+  // 2色を混ぜた3点の色には、元の2色のチップが1枚ずつと無地が1枚
+  const CHIPS = {
+    purple: ['red', 'blue', null], orange: ['red', 'yellow', null], green: ['blue', 'yellow', null],
+    pink: ['red', 'white', null], aqua: ['blue', 'white', null], lemon: ['yellow', 'white', null],
+  };
+  const GEN_COLORS = ['purple', 'orange', 'green', 'pink', 'aqua', 'lemon', 'black', 'lime', 'gray'];
+  const RECIPE = {};
+  COLOR_ORDER.forEach(c => { if (COLOR[c].from) RECIPE[COLOR[c].from.slice().sort().join('|')] = c; });
+
+  const ITEM = {
+    all: { name: 'オール', kind: 'turn', desc: 'この手番の合成判定を、斜めを含む8方向で行う' },
+    double: { name: 'ダブル', kind: 'turn', desc: 'この手番、生成した色をカードのあるマスに重ねて置ける（1マス2枚まで）' },
+    spin: { name: 'スピン', kind: 'instant', desc: '自分と相手の同じ点数のカードを1枚ずつ選び、所有者を入れ替える' },
+    change: { name: 'チェンジ', kind: 'instant', desc: '盤上のカード1枚を、在庫にある同じ点数の別の色の山の一番上と交換する（所有者はそのまま）' },
+    reset: { name: 'リターン', kind: 'instant', desc: '盤上のカード1枚を所有者の手札に戻す' },
+    slide: { name: 'スライド', kind: 'instant', desc: '盤上のカード1枚を上下左右に1マス動かす（合成は起きない）' },
+    lock: { name: 'ロック', kind: 'permanent', desc: '空きマス1つを、相手だけが設置・移動・生成できないマスにする。そのマスのカードは、相手のリターン・スライド・チェンジ・スピンの対象にもならない' },
+    wide: { name: 'ワイド', kind: 'permanent', desc: '盤の1辺の外側に、自分専用の1列（6マス）を追加する' },
+    remote: { name: 'リモート', kind: 'permanent', desc: '空きマスに設置。自分だけ、このマスを透過して合成の並びにできる（盤の端なら反対側の端とつながる）。リモートに触れる並びで作った色は、周り8マスにも置ける' },
+    portal: { name: 'ポータル', kind: 'permanent', desc: '空きマスに設置。自分が生成した色を、ポータルの上下左右にも置ける' },
+  };
+  const ITEM_ORDER = ['all', 'double', 'spin', 'change', 'reset', 'slide', 'lock', 'wide', 'remote', 'portal'];
+  const SETS = [
+    { id: '1', name: '空間拡張と密度突破', items: ['all', 'double'] },
+    { id: '2', name: '価値の交換と属性の置換', items: ['spin', 'change'] },
+    { id: '3', name: '空間の再定義と安全確保', items: ['reset', 'slide'] },
+    { id: '4', name: '絶対領域と拒絶の空間', items: ['lock', 'wide'] },
+    { id: '5', name: '位相と跳躍', items: ['remote', 'portal'] },
+  ];
+  const ROUND_LABEL = ['', 'R1 設置', 'R2 移動', 'R3 設置', 'R4 最終決戦'];
+
+  // ------------------------------------------------------------------
+  // 盤の座標（外周1マスを含む 8×8。本盤は x,y = 0..5）
+  // ------------------------------------------------------------------
+  const GW = 8, GN = GW * GW;
+  const idx = (x, y) => (y + 1) * GW + (x + 1);
+  const X = i => (i % GW) - 1;
+  const Y = i => ((i / GW) | 0) - 1;
+  const inMain = (x, y) => x >= 0 && x < 6 && y >= 0 && y < 6;
+  const inGrid = (x, y) => x >= -1 && x <= 6 && y >= -1 && y <= 6;
+  const ORTH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const AXES4 = [[1, 0], [0, 1]];
+  const AXES8 = [[1, 0], [0, 1], [1, 1], [1, -1]];
+  const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const START = [idx(3, 3), idx(2, 2)]; // 手前のプレイヤー0 は D-4、奥のプレイヤー1 は C-3（盤の中心について点対称）
+  const EMPTY = [];
+
+  function inWide(side, x, y) {
+    if (side === 'top') return y === -1 && x >= 0 && x < 6;
+    if (side === 'bottom') return y === 6 && x >= 0 && x < 6;
+    if (side === 'left') return x === -1 && y >= 0 && y < 6;
+    if (side === 'right') return x === 6 && y >= 0 && y < 6;
+    return false;
+  }
+  function wideCells(side) {
+    const out = [];
+    for (let k = 0; k < 6; k++) {
+      if (side === 'top') out.push(idx(k, -1));
+      if (side === 'bottom') out.push(idx(k, 6));
+      if (side === 'left') out.push(idx(-1, k));
+      if (side === 'right') out.push(idx(6, k));
+    }
+    return out;
+  }
+  function cellName(i) {
+    const x = X(i), y = Y(i), C = 'ABCDEF';
+    if (inMain(x, y)) return C[x] + '-' + (y + 1);
+    if (y === -1) return C[x] + '-上';
+    if (y === 6) return C[x] + '-下';
+    if (x === -1) return '左-' + (y + 1);
+    return '右-' + (y + 1);
+  }
+  function cellExists(s, i) {
+    const x = X(i), y = Y(i);
+    if (inMain(x, y)) return true;
+    return !!(s.wide && inWide(s.wide.side, x, y));
+  }
+  // プレイヤー p がこのマスにカードを置けるか（設置・移動・生成・スライド先）
+  function canPutFor(s, i, p) {
+    const x = X(i), y = Y(i);
+    if (!inMain(x, y)) {
+      if (!s.wide || !inWide(s.wide.side, x, y) || s.wide.owner !== p) return false;
+    }
+    const c = s.cells[i];
+    if (c.obj) return false;
+    if (c.lock !== null && c.lock !== p) return false;
+    return true;
+  }
+
+  // ------------------------------------------------------------------
+  // 乱数
+  // ------------------------------------------------------------------
+  function rng32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(a, rng) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // ------------------------------------------------------------------
+  // 状態
+  // ------------------------------------------------------------------
+  const ok = (extra) => Object.assign({ ok: true }, extra || {});
+  const fail = (error) => ({ ok: false, error });
+
+  function newGame(opts, seed) {
+    opts = opts || {};
+    const settings = {
+      sets: Array.isArray(opts.sets) ? opts.sets.slice() : ['1', '2', '3', '4', '5'],
+      komi: Number(opts.komi) || 0,
+      gray: opts.gray !== false,
+      names: opts.names ? opts.names.slice() : ['P1', 'P2'],
+    };
+    if (seed === undefined || seed === null) seed = Math.floor(Math.random() * 4294967296);
+    seed = seed >>> 0;
+    const rng = rng32(seed);
+    const cards = [];
+    const mk = (color, chip) => { cards.push({ id: cards.length, color, chip: chip || null, owner: null }); return cards.length - 1; };
+    const piles = {};
+    COLOR_ORDER.forEach(k => { piles[k] = []; });
+    const prim = [];
+    ['red', 'blue', 'yellow'].forEach(k => { for (let i = 0; i < 3; i++) prim.push(mk(k)); });
+    const whites = [mk('white'), mk('white'), mk('white')];
+    Object.keys(CHIPS).forEach(k => CHIPS[k].forEach(ch => piles[k].push(mk(k, ch))));
+    ['black', 'lime', 'gray'].forEach(k => { for (let i = 0; i < 3; i++) piles[k].push(mk(k)); });
+    shuffle(prim, rng);
+    const hands = [prim.slice(0, 4), prim.slice(4, 8)];
+    piles[cards[prim[8]].color].push(prim[8]); // 公共の原色
+    hands[0].push(whites[0]);
+    hands[1].push(whites[1]);
+    piles.white.push(whites[2]);
+    hands.forEach((h, p) => h.forEach(id => { cards[id].owner = p; }));
+    COLOR_ORDER.forEach(k => shuffle(piles[k], rng));
+    const first = (opts.first === 0 || opts.first === 1) ? opts.first : (rng() < 0.5 ? 0 : 1);
+    const cells = [];
+    for (let i = 0; i < GN; i++) cells.push({ stack: [], lock: null, obj: null });
+    const s = {
+      settings, seed, cards, cells, piles, hands,
+      items: [[], []], wide: null,
+      first, draftFirst: 1 - first,
+      phase: settings.sets.length ? 'draft' : 'initial',
+      round: 0, turnPos: 0, turn: null,
+      log: [], result: null,
+    };
+    sortHands(s);
+    log(s, `${pname(s, first)}が先攻、${pname(s, 1 - first)}がドラフトの先手です。`);
+    return s;
+  }
+
+  function clone(s, keepLog) {
+    const piles = {};
+    for (const k of COLOR_ORDER) piles[k] = s.piles[k].slice();
+    const cells = new Array(GN);
+    for (let i = 0; i < GN; i++) { const c = s.cells[i]; cells[i] = { stack: c.stack.slice(), lock: c.lock, obj: c.obj }; }
+    return {
+      settings: s.settings, seed: s.seed,
+      cards: s.cards.map(c => ({ id: c.id, color: c.color, chip: c.chip, owner: c.owner })),
+      cells, piles,
+      hands: [s.hands[0].slice(), s.hands[1].slice()],
+      items: [s.items[0].map(o => Object.assign({}, o)), s.items[1].map(o => Object.assign({}, o))],
+      wide: s.wide, first: s.first, draftFirst: s.draftFirst,
+      phase: s.phase, round: s.round, turnPos: s.turnPos,
+      turn: s.turn ? { player: s.turn.player, itemsUsed: s.turn.itemsUsed, flags: Object.assign({}, s.turn.flags), actionStarted: false } : null,
+      log: keepLog ? s.log.slice() : null,
+      result: s.result,
+    };
+  }
+
+  const pname = (s, p) => s.settings.names[p];
+  const cname = (s, id) => { const c = s.cards[id]; return COLOR[c.color].name + (c.chip ? `(${COLOR[c.chip].name}チップ)` : ''); };
+  function log(s, msg) { if (s.log) s.log.push({ round: s.round, msg }); }
+
+  function sortHands(s) {
+    const ord = c => COLOR_ORDER.indexOf(c.color) * 10 + (c.chip ? COLOR_ORDER.indexOf(c.chip) + 1 : 0);
+    for (const h of s.hands) h.sort((a, b) => ord(s.cards[a]) - ord(s.cards[b]) || a - b);
+  }
+
+  function findCard(s, id) {
+    for (let i = 0; i < GN; i++) { const k = s.cells[i].stack.indexOf(id); if (k >= 0) return { where: 'cell', idx: i, pos: k }; }
+    for (const p of [0, 1]) if (s.hands[p].includes(id)) return { where: 'hand', p };
+    for (const k of COLOR_ORDER) if (s.piles[k].includes(id)) return { where: 'pile', color: k };
+    return null;
+  }
+
+  const currentPlayer = s => (s.turnPos === 0 ? s.first : 1 - s.first);
+  function roundKinds(round) {
+    if (round === 1) return { place: 'base', move: false };
+    if (round === 2) return { place: null, move: true };
+    if (round === 3) return { place: 'base', move: false };
+    return { place: 'any', move: true };
+  }
+
+  function startTurn(s) {
+    s.turn = { player: currentPlayer(s), itemsUsed: 0, flags: { all: false, double: false } };
+  }
+  function endTurn(s) {
+    if (s.turnPos === 0) s.turnPos = 1;
+    else { s.turnPos = 0; s.round++; }
+    if (s.round > 4) {
+      s.phase = 'end'; s.turn = null;
+      s.result = finalResult(s);
+      const r = s.result;
+      log(s, r.winner === null ? `引き分け（${r.scores[0].total} 対 ${r.scores[1].total}）`
+        : `${pname(s, r.winner)}の勝ち（${r.scores[0].total} 対 ${r.scores[1].total}）`);
+    } else startTurn(s);
+  }
+
+  // ------------------------------------------------------------------
+  // ドラフト・初期配置
+  // ------------------------------------------------------------------
+  function draftSets(s) { return s.settings.sets.map(id => SETS.find(t => t.id === id)); }
+
+  function applyDraft(s, picks) {
+    if (s.phase !== 'draft') return fail('ドラフト中ではありません');
+    const sets = draftSets(s);
+    if (!Array.isArray(picks) || picks.length !== sets.length) return fail('各セットから1つずつ選んでください');
+    const df = s.draftFirst, other = 1 - df;
+    const mine = [], rest = [];
+    for (let k = 0; k < sets.length; k++) {
+      if (!sets[k].items.includes(picks[k])) return fail('不正な選択です');
+      mine.push({ type: picks[k], set: sets[k].id, used: false, round: null });
+      rest.push({ type: sets[k].items.find(t => t !== picks[k]), set: sets[k].id, used: false, round: null });
+    }
+    s.items[df] = mine; s.items[other] = rest;
+    s.phase = 'initial';
+    log(s, `ドラフト：${pname(s, df)}は ${mine.map(o => ITEM[o.type].name).join('・')}、${pname(s, other)}は ${rest.map(o => ITEM[o.type].name).join('・')}`);
+    return ok();
+  }
+
+  function applyInitial(s, ids) {
+    if (s.phase !== 'initial') return fail('初期配置の段階ではありません');
+    for (const p of [0, 1]) {
+      const id = ids[p];
+      if (!s.hands[p].includes(id)) return fail('手札にないカードです');
+      if (!isBase(s.cards[id].color)) return fail('初期配置には原色か白を出せます');
+    }
+    for (const p of [0, 1]) {
+      s.hands[p].splice(s.hands[p].indexOf(ids[p]), 1);
+      s.cells[START[p]].stack.push(ids[p]);
+    }
+    const fp = s.first, sp = 1 - s.first;
+    s.phase = 'play'; s.round = 1; s.turnPos = 0;
+    log(s, `初期配置：${pname(s, fp)}が ${cellName(START[fp])} に${cname(s, ids[fp])}、${pname(s, sp)}が ${cellName(START[sp])} に${cname(s, ids[sp])}`);
+    startTurn(s);
+    return ok();
+  }
+
+  // ------------------------------------------------------------------
+  // 合成判定
+  // ------------------------------------------------------------------
+  // ctx: 設置・移動を仮に反映した見え方 { placedIdx, placedId, removedIdx, removedId }
+  function ctxOf(act) {
+    if (act.type === 'move') return { placedIdx: act.to, placedId: act.cardId, removedIdx: act.from, removedId: act.cardId };
+    return { placedIdx: act.to, placedId: act.cardId, removedIdx: -1, removedId: -1 };
+  }
+  function stackAt(s, ctx, i) {
+    let st = s.cells[i].stack;
+    if (ctx) {
+      if (ctx.removedIdx === i) st = st.filter(id => id !== ctx.removedId);
+      if (ctx.placedIdx === i) st = st.concat([ctx.placedId]);
+    }
+    return st;
+  }
+
+  // i から (dx,dy) 方向へ最大 n マス。自分のリモートは透過し、壁・相手のリモート・ポータルで止まる。
+  // ループ：盤の端に自分のリモートがある直線は、両端がつながって輪になる（どちら向きにたどっても、リモートを通ってつながる）。
+  // out.via[k]：out[k] に着く手前で自分のリモートを通ったか
+  // out.tail：最後のマスの先で自分のリモートを通り、その先で止まったか（リモートの向こうに置き場がない）
+  function walk(s, p, i, dx, dy, n) {
+    const out = [];
+    const via = [];
+    let skipped = false;
+    let x = X(i), y = Y(i);
+    let wrapped = false;
+    for (let g = 0; g < 20 && out.length < n; g++) {
+      let nx = x + dx, ny = y + dy;
+      let j = inGrid(nx, ny) ? idx(nx, ny) : -1;
+      if (j < 0 || !cellExists(s, j)) {
+        if (wrapped) break;
+        // 反対側の端（同じ直線で、盤の外に出る直前のマス）
+        let bx = x, by = y;
+        for (;;) {
+          const px = bx - dx, py = by - dy;
+          if (!inGrid(px, py) || !cellExists(s, idx(px, py))) break;
+          bx = px; by = py;
+        }
+        // 出ていく端か、入ってくる端のどちらかが自分のリモートなら、リモートを通ってつながる
+        const isMine = (cx, cy) => { const ob = s.cells[idx(cx, cy)].obj; return !!ob && ob.type === 'remote' && ob.owner === p; };
+        if (!isMine(x, y) && !isMine(bx, by)) break;
+        wrapped = true;
+        nx = bx; ny = by; j = idx(bx, by);
+      }
+      x = nx; y = ny;
+      if (j === i) break; // 一周して置いたマスに戻った
+      const ob = s.cells[j].obj;
+      if (ob) {
+        if (ob.type === 'remote' && ob.owner === p) { skipped = true; continue; }
+        break;
+      }
+      out.push(j);
+      via.push(skipped);
+      skipped = false;
+    }
+    out.via = via;
+    out.tail = skipped;
+    return out;
+  }
+
+  // 自分のリモートの上下左右のマス（ここにカードがある並びは「リモートに触れる並び」）
+  function remoteSide(s, p) {
+    const out = new Set();
+    for (let i = 0; i < GN; i++) {
+      const ob = s.cells[i].obj;
+      if (!ob || ob.type !== 'remote' || ob.owner !== p) continue;
+      for (const [dx, dy] of ORTH) {
+        const nx = X(i) + dx, ny = Y(i) + dy;
+        if (inGrid(nx, ny)) out.add(idx(nx, ny));
+      }
+    }
+    return out;
+  }
+  // 自分のリモートの周り8マス（リモートに触れる並びで作った色の置き場所）
+  function remoteRing(s, p) {
+    const out = [];
+    for (let i = 0; i < GN; i++) {
+      const ob = s.cells[i].obj;
+      if (!ob || ob.type !== 'remote' || ob.owner !== p) continue;
+      const x = X(i), y = Y(i);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = x + dx, ny = y + dy;
+        if (!inGrid(nx, ny)) continue;
+        const j = idx(nx, ny);
+        if (canPutFor(s, j, p) && !out.includes(j)) out.push(j);
+      }
+    }
+    return out;
+  }
+
+  function portalCells(s, p) {
+    const out = [];
+    for (let i = 0; i < GN; i++) {
+      const ob = s.cells[i].obj;
+      if (!ob || ob.type !== 'portal' || ob.owner !== p) continue;
+      const x = X(i), y = Y(i);
+      for (const [dx, dy] of ORTH) {
+        const nx = x + dx, ny = y + dy;
+        if (!inGrid(nx, ny)) continue;
+        const j = idx(nx, ny);
+        if (canPutFor(s, j, p) && !out.includes(j)) out.push(j);
+      }
+    }
+    return out;
+  }
+
+  function readingsOf(s, id, p) {
+    const c = s.cards[id];
+    return (c.chip && c.owner === p) ? [c.color, c.chip] : [c.color];
+  }
+
+  // 置いた（動かした）カードを含む、連続2〜3枚の並びから作れる色をすべて列挙する
+  function enumerateOptions(s, p, ctx, flags) {
+    const e = ctx.placedIdx, pid = ctx.placedId;
+    const axes = flags && flags.all ? AXES8 : AXES4;
+    const out = [];
+    const seen = new Set();
+    const has = j => stackAt(s, ctx, j).length > 0;
+    const nearR = remoteSide(s, p);
+    for (const [dx, dy] of axes) {
+      const f = walk(s, p, e, dx, dy, 3);
+      const b = walk(s, p, e, -dx, -dy, 3);
+      let L = 0; while (L < 2 && L < b.length && has(b[L])) L++;
+      let R = 0; while (R < 2 && R < f.length && has(f[R])) R++;
+      const segs = [];
+      if (L >= 1) segs.push([1, 0]);
+      if (R >= 1) segs.push([0, 1]);
+      if (L >= 2) segs.push([2, 0]);
+      if (L >= 1 && R >= 1) segs.push([1, 1]);
+      if (R >= 2) segs.push([0, 2]);
+      for (const [bc, fc] of segs) {
+        const seq = b.slice(0, bc).reverse().concat([e], f.slice(0, fc));
+        // リモートに触れる並び：並びのカードがリモートの上下左右にある／カードどうしの間にリモートがある／
+        // 並びの端の先がリモート（置き場がリモートの向こう側。ループも含む）
+        const viaR = seq.some(j => nearR.has(j))
+          || f.via.slice(0, fc).some(Boolean) || b.via.slice(0, bc).some(Boolean)
+          || (f.length > fc ? f.via[fc] : f.tail) || (b.length > bc ? b.via[bc] : b.tail);
+        const ends = [];
+        if (b.length > bc) ends.push(b[bc]);
+        if (f.length > fc) ends.push(f[fc]);
+        const lists = seq.map(j => (j === e ? [pid] : stackAt(s, ctx, j)));
+        const n = seq.length;
+        const pick = new Array(n);
+        const rd = new Array(n);
+        const emitReadings = (rl, t) => {
+          if (t === n) {
+            const color = RECIPE[rd.slice().sort().join('|')];
+            if (!color) return;
+            if (n === 3 && color !== 'black') return;
+            if (color === 'gray' && !s.settings.gray) return;
+            const ids = pick.slice();
+            const dk = ids.slice().sort((a, c) => a - c).join(',') + '>' + color;
+            if (seen.has(dk)) return;
+            seen.add(dk);
+            out.push({ color, cardIds: ids, readings: rd.slice(), seq, ends, axis: [dx, dy], via: viaR });
+            return;
+          }
+          for (const r of rl[t]) { rd[t] = r; emitReadings(rl, t + 1); }
+        };
+        const chooseCards = (t) => {
+          if (t === n) { emitReadings(pick.map(id => readingsOf(s, id, p)), 0); return; }
+          for (const id of lists[t]) { pick[t] = id; chooseCards(t + 1); }
+        };
+        chooseCards(0);
+      }
+    }
+    const pc = portalCells(s, p);
+    const rc = remoteRing(s, p);
+    for (const o of out) {
+      const cs = [];
+      for (const j of o.ends) if (canPutFor(s, j, p) && !cs.includes(j)) cs.push(j);
+      for (const j of pc) if (!cs.includes(j)) cs.push(j);
+      if (o.via) for (const j of rc) if (!cs.includes(j)) cs.push(j);
+      o.cells = cs;
+    }
+    return out;
+  }
+
+  const capOf = flags => (flags && flags.double ? 2 : 1);
+  function countAt(s, ctx, i) { return stackAt(s, ctx, i).length; }
+
+  function anyPlaceable(s, ctx, opts, cap) {
+    for (const o of opts) {
+      if (!s.piles[o.color].length) continue;
+      for (const j of o.cells) if (countAt(s, ctx, j) < cap) return true;
+    }
+    return false;
+  }
+
+  // 灰色を同時に置ける最大枚数（灰色の強制ルールの基準）
+  function maxGray(s, p, ctx, opts, cap, assigns) {
+    const extra = {};
+    let pile = s.piles.gray.length;
+    const usedOpt = new Set();
+    let placed = 0;
+    for (const a of (assigns || [])) {
+      extra[a.cell] = (extra[a.cell] || 0) + 1;
+      usedOpt.add(a.opt);
+      if (opts[a.opt].color === 'gray') { placed++; pile--; }
+    }
+    const grays = [];
+    opts.forEach((o, k) => { if (o.color === 'gray' && !usedOpt.has(k)) grays.push(k); });
+    let best = 0;
+    const dfs = (t, n) => {
+      if (n + (grays.length - t) <= best) return;
+      if (t === grays.length) { if (n > best) best = n; return; }
+      const o = opts[grays[t]];
+      if (pile > 0) {
+        for (const j of o.cells) {
+          if (countAt(s, ctx, j) + (extra[j] || 0) >= cap) continue;
+          extra[j] = (extra[j] || 0) + 1; pile--;
+          dfs(t + 1, n + 1);
+          extra[j]--; pile++;
+        }
+      }
+      dfs(t + 1, n);
+    };
+    dfs(0, 0);
+    return placed + best;
+  }
+
+  function validateAssigns(s, p, ctx, opts, assigns, flags) {
+    const cap = capOf(flags);
+    const used = new Set();
+    const extra = {};
+    const pileUse = {};
+    for (const a of assigns) {
+      const o = opts[a.opt];
+      if (!o) return fail('不正な合成です');
+      if (used.has(a.opt)) return fail('同じ合成は1回しか使えません');
+      if (!o.cells.includes(a.cell)) return fail(`${cellName(a.cell)}には置けません`);
+      if (countAt(s, ctx, a.cell) + (extra[a.cell] || 0) >= cap) return fail(`${cellName(a.cell)}は埋まっています`);
+      if ((pileUse[o.color] || 0) >= s.piles[o.color].length) return fail(`${COLOR[o.color].name}の在庫がありません`);
+      used.add(a.opt);
+      extra[a.cell] = (extra[a.cell] || 0) + 1;
+      pileUse[o.color] = (pileUse[o.color] || 0) + 1;
+    }
+    const need = maxGray(s, p, ctx, opts, cap, []);
+    const have = assigns.filter(a => opts[a.opt].color === 'gray').length;
+    if (have < need) return fail(`灰色をあと${need - have}枚置く必要があります`);
+    return ok({ grayNeed: need });
+  }
+
+  // UI 用：仮置き状態で、合成 k を置けるマス
+  function freeCells(s, p, act, opts, assigns, k) {
+    const flags = s.turn ? s.turn.flags : {};
+    const cap = capOf(flags);
+    const ctx = ctxOf(act);
+    const o = opts[k];
+    if (!o) return [];
+    if (assigns.some(a => a.opt === k)) return [];
+    const pileUse = assigns.filter(a => opts[a.opt].color === o.color).length;
+    if (pileUse >= s.piles[o.color].length) return [];
+    const extra = {};
+    assigns.forEach(a => { extra[a.cell] = (extra[a.cell] || 0) + 1; });
+    const need = maxGray(s, p, ctx, opts, cap, []);
+    const out = [];
+    for (const j of o.cells) {
+      if (countAt(s, ctx, j) + (extra[j] || 0) >= cap) continue;
+      if (o.color !== 'gray' && need > 0) {
+        // 灰色の置き場をふさぐ配置は許さない
+        if (maxGray(s, p, ctx, opts, cap, assigns.concat([{ opt: k, cell: j }])) < need) continue;
+      }
+      out.push(j);
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------------
+  // 手番の行動
+  // ------------------------------------------------------------------
+  function emptyPutCells(s, p) {
+    const out = [];
+    for (let i = 0; i < GN; i++) if (s.cells[i].stack.length === 0 && canPutFor(s, i, p)) out.push(i);
+    return out;
+  }
+
+  function mainActions(s, p, round) {
+    const kinds = roundKinds(round || s.round);
+    const acts = [];
+    const empties = emptyPutCells(s, p);
+    if (kinds.place) {
+      const seen = new Set();
+      for (const id of s.hands[p]) {
+        const c = s.cards[id];
+        if (kinds.place === 'base' && !isBase(c.color)) continue;
+        const key = c.color + '/' + c.chip;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        for (const i of empties) acts.push({ type: 'place', cardId: id, to: i });
+      }
+    }
+    if (kinds.move) {
+      for (let i = 0; i < GN; i++) {
+        for (const id of s.cells[i].stack) {
+          if (s.cards[id].owner !== p) continue;
+          for (const j of empties) acts.push({ type: 'move', cardId: id, from: i, to: j });
+        }
+      }
+    }
+    return acts;
+  }
+
+  function flagsFor(s, p) {
+    return (s.turn && s.turn.player === p) ? s.turn.flags : { all: false, double: false };
+  }
+
+  function isLegalAction(s, p, act) {
+    const flags = flagsFor(s, p);
+    const ctx = ctxOf(act);
+    const opts = enumerateOptions(s, p, ctx, flags);
+    return opts.length > 0 && anyPlaceable(s, ctx, opts, capOf(flags));
+  }
+
+  function hasLegalAction(s, p) {
+    for (const act of mainActions(s, p)) if (isLegalAction(s, p, act)) return true;
+    return false;
+  }
+
+  // UI 用：手札のカードを置けるマス
+  function legalPlaceCells(s, p, cardId) {
+    const kinds = roundKinds(s.round);
+    if (!kinds.place || !s.hands[p].includes(cardId)) return [];
+    if (kinds.place === 'base' && !isBase(s.cards[cardId].color)) return [];
+    return emptyPutCells(s, p).filter(i => isLegalAction(s, p, { type: 'place', cardId, to: i }));
+  }
+  // UI 用：盤上の自分のカードの移動先
+  function legalMoveCells(s, p, cardId) {
+    const kinds = roundKinds(s.round);
+    if (!kinds.move) return [];
+    const loc = findCard(s, cardId);
+    if (!loc || loc.where !== 'cell' || s.cards[cardId].owner !== p) return [];
+    return emptyPutCells(s, p).filter(i => isLegalAction(s, p, { type: 'move', cardId, from: loc.idx, to: i }));
+  }
+
+  function optionsFor(s, p, act) {
+    return enumerateOptions(s, p, ctxOf(act), flagsFor(s, p));
+  }
+  function grayNeed(s, p, act, opts) {
+    return maxGray(s, p, ctxOf(act), opts, capOf(flagsFor(s, p)), []);
+  }
+
+  function commitTurn(s, p, act, assigns) {
+    assigns = assigns || [];
+    if (s.phase !== 'play') return fail('対戦中ではありません');
+    if (currentPlayer(s) !== p) return fail('手番ではありません');
+    const kinds = roundKinds(s.round);
+    if (act.type === 'place') {
+      if (!kinds.place) return fail('このラウンドは設置できません');
+      if (!s.hands[p].includes(act.cardId)) return fail('手札にないカードです');
+      if (kinds.place === 'base' && !isBase(s.cards[act.cardId].color)) return fail('R1・R3 は手札の原色か白しか置けません');
+    } else if (act.type === 'move') {
+      if (!kinds.move) return fail('このラウンドは移動できません');
+      const loc = findCard(s, act.cardId);
+      if (!loc || loc.where !== 'cell' || loc.idx !== act.from) return fail('盤上にないカードです');
+      if (s.cards[act.cardId].owner !== p) return fail('自分のカードしか動かせません');
+    } else return fail('不明な行動です');
+    if (!canPutFor(s, act.to, p) || s.cells[act.to].stack.length) return fail(`${cellName(act.to)}には置けません`);
+    const flags = s.turn.flags;
+    const ctx = ctxOf(act);
+    const opts = enumerateOptions(s, p, ctx, flags);
+    if (!opts.length || !anyPlaceable(s, ctx, opts, capOf(flags))) return fail('合成が起きないマスです');
+    const v = validateAssigns(s, p, ctx, opts, assigns, flags);
+    if (!v.ok) return v;
+    if (act.type === 'place') s.hands[p].splice(s.hands[p].indexOf(act.cardId), 1);
+    else { const st = s.cells[act.from].stack; st.splice(st.indexOf(act.cardId), 1); }
+    s.cells[act.to].stack.push(act.cardId);
+    const created = [];
+    for (const a of assigns) {
+      const o = opts[a.opt];
+      const id = s.piles[o.color].shift();
+      s.cards[id].owner = p;
+      s.cells[a.cell].stack.push(id);
+      created.push({ id, cell: a.cell, color: o.color });
+    }
+    if (s.log) {
+      const verb = act.type === 'place' ? `${cellName(act.to)}に${cname(s, act.cardId)}を設置`
+        : `${cname(s, act.cardId)}を${cellName(act.from)}から${cellName(act.to)}へ移動`;
+      const made = created.length ? ` → ${created.map(c => `${cname(s, c.id)}(${cellName(c.cell)})`).join('、')}` : ' → 合成なし';
+      log(s, `${pname(s, p)}：${verb}${made}`);
+    }
+    endTurn(s);
+    return ok({ created, opts });
+  }
+
+  function passTurn(s, p) {
+    if (s.phase !== 'play' || currentPlayer(s) !== p) return fail('手番ではありません');
+    if (hasLegalAction(s, p)) return fail('置ける手があるのでパスできません');
+    log(s, `${pname(s, p)}：合法手がないためパス`);
+    endTurn(s);
+    return ok();
+  }
+
+  // ------------------------------------------------------------------
+  // アイテム
+  // ------------------------------------------------------------------
+  function canUseItems(s, p) {
+    return s.phase === 'play' && currentPlayer(s) === p && (s.round >= 4 || s.turn.itemsUsed < 1);
+  }
+  function unusedItems(s, p) {
+    const seen = new Set();
+    return s.items[p].filter(o => !o.used && !seen.has(o.type) && seen.add(o.type)).map(o => o.type);
+  }
+  function boardLoc(s, id) {
+    const loc = findCard(s, id);
+    return loc && loc.where === 'cell' ? loc : null;
+  }
+  // 相手がロックしたマスのカード（p のリターン・スライド・チェンジ・スピンの対象にできない）
+  function isGuarded(s, p, id) {
+    const loc = boardLoc(s, id);
+    if (!loc) return false;
+    const lk = s.cells[loc.idx].lock;
+    return lk !== null && lk !== p;
+  }
+  const GUARD_MSG = '相手がロックしたマスのカードは選べません';
+
+  function useItem(s, p, type, params) {
+    params = params || {};
+    if (s.phase !== 'play' || currentPlayer(s) !== p) return fail('手番ではありません');
+    if (!(s.round >= 4 || s.turn.itemsUsed < 1)) return fail('R1〜R3 はアイテムを1手番に1つまでしか使えません');
+    const it = s.items[p].find(o => o.type === type && !o.used);
+    if (!it) return fail('そのアイテムは持っていません');
+    const opp = 1 - p;
+    let msg = '';
+    switch (type) {
+      case 'all':
+      case 'double':
+        if (s.turn.flags[type]) return fail('すでに使っています');
+        s.turn.flags[type] = true;
+        msg = 'この手番に適用';
+        break;
+      case 'spin': {
+        const a = boardLoc(s, params.mine), b = boardLoc(s, params.theirs);
+        if (!a || !b) return fail('盤上のカードを選んでください');
+        const A = s.cards[params.mine], B = s.cards[params.theirs];
+        if (A.owner !== p || B.owner !== opp) return fail('自分のカードと相手のカードを1枚ずつ選んでください');
+        if (isGuarded(s, p, A.id) || isGuarded(s, p, B.id)) return fail(GUARD_MSG);
+        if (COLOR[A.color].pts !== COLOR[B.color].pts) return fail('同じ点数のカードを選んでください');
+        A.owner = opp; B.owner = p;
+        msg = `${cellName(a.idx)}の${cname(s, A.id)}と${cellName(b.idx)}の${cname(s, B.id)}の所有者を交換`;
+        break;
+      }
+      case 'change': {
+        const a = boardLoc(s, params.cardId);
+        if (!a) return fail('盤上のカードを選んでください');
+        if (isGuarded(s, p, params.cardId)) return fail(GUARD_MSG);
+        const A = s.cards[params.cardId];
+        const col = params.color;
+        if (!COLOR[col] || col === A.color) return fail('別の色を選んでください');
+        if (COLOR[col].pts !== COLOR[A.color].pts) return fail('同じ点数の色しか選べません');
+        if (!s.piles[col].length) return fail(`${COLOR[col].name}の在庫がありません`);
+        const nid = s.piles[col].shift();
+        s.cards[nid].owner = A.owner;
+        s.cells[a.idx].stack[a.pos] = nid;
+        A.owner = null;
+        s.piles[A.color].unshift(A.id);
+        msg = `${cellName(a.idx)}の${cname(s, A.id)}を${cname(s, nid)}と交換`;
+        break;
+      }
+      case 'reset': {
+        const a = boardLoc(s, params.cardId);
+        if (!a) return fail('盤上のカードを選んでください');
+        if (isGuarded(s, p, params.cardId)) return fail(GUARD_MSG);
+        const A = s.cards[params.cardId];
+        s.cells[a.idx].stack.splice(a.pos, 1);
+        s.hands[A.owner].push(A.id);
+        sortHands(s);
+        msg = `${cellName(a.idx)}の${cname(s, A.id)}を${pname(s, A.owner)}の手札に戻す`;
+        break;
+      }
+      case 'slide': {
+        const a = boardLoc(s, params.cardId);
+        const d = DIRS[params.dir];
+        if (!a || !d) return fail('盤上のカードと方向を選んでください');
+        if (isGuarded(s, p, params.cardId)) return fail(GUARD_MSG);
+        const nx = X(a.idx) + d[0], ny = Y(a.idx) + d[1];
+        if (!inGrid(nx, ny)) return fail('その方向には動かせません');
+        const j = idx(nx, ny);
+        if (!canPutFor(s, j, p) || s.cells[j].stack.length) return fail('その方向には動かせません');
+        s.cells[a.idx].stack.splice(a.pos, 1);
+        s.cells[j].stack.push(params.cardId);
+        msg = `${cname(s, params.cardId)}を${cellName(a.idx)}から${cellName(j)}へ`;
+        break;
+      }
+      case 'lock': {
+        const i = params.idx;
+        if (!(i >= 0 && i < GN) || !cellExists(s, i)) return fail('盤上のマスを選んでください');
+        const c = s.cells[i];
+        if (c.stack.length || c.obj || c.lock !== null) return fail('空きマスを選んでください');
+        c.lock = p;
+        msg = `${cellName(i)}をロック`;
+        break;
+      }
+      case 'wide': {
+        if (s.wide) return fail('すでにワイドが使われています');
+        if (!['top', 'bottom', 'left', 'right'].includes(params.side)) return fail('辺を選んでください');
+        s.wide = { owner: p, side: params.side };
+        msg = { top: '上', bottom: '下', left: '左', right: '右' }[params.side] + '側に1列を追加';
+        break;
+      }
+      case 'remote':
+      case 'portal': {
+        const i = params.idx;
+        if (!(i >= 0 && i < GN) || !canPutFor(s, i, p) || s.cells[i].stack.length) return fail('自分が置ける空きマスを選んでください');
+        s.cells[i].obj = { type, owner: p };
+        msg = `${cellName(i)}に設置`;
+        break;
+      }
+      default:
+        return fail('不明なアイテムです');
+    }
+    it.used = true;
+    it.round = s.round;
+    s.turn.itemsUsed++;
+    log(s, `${pname(s, p)}：${ITEM[type].name}（${msg}）`);
+    return ok();
+  }
+
+  function tryItem(s, p, type, params) {
+    return useItem(clone(s), p, type, params);
+  }
+
+  // ------------------------------------------------------------------
+  // 得点
+  // ------------------------------------------------------------------
+  // 同じ色でつながったかたまり（上下左右のマス、または同じマスに重なったカード）のボーナス
+  // 2枚なら1枚につき2点、3枚以上なら1枚につき3点を、それぞれのカードの持ち主に
+  const groupPer = n => (n >= 3 ? 3 : n === 2 ? 2 : 0);
+  // stFn(マス) のカードで色ごとのかたまりを作り、visit(大きさ, [持ち主0の枚数, 持ち主1の枚数]) を呼ぶ
+  function eachGroup(s, stFn, visit) {
+    const byColor = new Map();
+    for (let i = 0; i < GN; i++) {
+      const st = stFn(i);
+      if (!st.length) continue;
+      for (const id of st) {
+        const c = s.cards[id];
+        let m = byColor.get(c.color);
+        if (!m) byColor.set(c.color, m = new Map());
+        let tt = m.get(i);
+        if (!tt) m.set(i, tt = [0, 0]);
+        tt[c.owner === 1 ? 1 : 0]++;
+      }
+    }
+    for (const m of byColor.values()) {
+      const visited = new Set();
+      for (const start of m.keys()) {
+        if (visited.has(start)) continue;
+        const cnt = [0, 0];
+        const q = [start];
+        visited.add(start);
+        while (q.length) {
+          const j = q.pop();
+          const tt = m.get(j);
+          cnt[0] += tt[0]; cnt[1] += tt[1];
+          const x = X(j), y = Y(j);
+          for (const [dx, dy] of ORTH) {
+            const nx = x + dx, ny = y + dy;
+            if (!inGrid(nx, ny)) continue;
+            const k = idx(nx, ny);
+            if (!visited.has(k) && m.has(k)) { visited.add(k); q.push(k); }
+          }
+        }
+        visit(cnt[0] + cnt[1], cnt);
+      }
+    }
+  }
+  function score(s) {
+    const r = [0, 1].map(() => ({ board: 0, bonus: 0, hand: 0, komi: 0, total: 0 }));
+    for (let i = 0; i < GN; i++) {
+      if (!cellExists(s, i)) continue;
+      for (const id of s.cells[i].stack) r[s.cards[id].owner].board += COLOR[s.cards[id].color].pts;
+    }
+    eachGroup(s, j => s.cells[j].stack, (n, cnt) => {
+      const per = groupPer(n);
+      r[0].bonus += per * cnt[0];
+      r[1].bonus += per * cnt[1];
+    });
+    for (const p of [0, 1]) for (const id of s.hands[p]) r[p].hand += COLOR[s.cards[id].color].pts;
+    r[1 - s.first].komi = s.settings.komi;
+    for (const x of r) x.total = x.board + x.bonus + x.hand + x.komi;
+    return r;
+  }
+  function finalResult(s) {
+    const sc = score(s);
+    const winner = sc[0].total === sc[1].total ? null : (sc[0].total > sc[1].total ? 0 : 1);
+    return { scores: sc, winner };
+  }
+  function evalDiff(s, p) {
+    const sc = score(s);
+    return sc[p].total - sc[1 - p].total;
+  }
+  // CPU 用の重み付き評価：カードの点数はそのまま、かたまりボーナスは adjW 倍
+  function evalW(s, p, adjW) {
+    const sc = score(s), q = 1 - p;
+    return (sc[p].board + sc[p].hand + sc[p].komi) - (sc[q].board + sc[q].hand + sc[q].komi) + adjW * (sc[p].bonus - sc[q].bonus);
+  }
+
+  // CPU の考え方の設定
+  //  adjW : かたまりボーナスの重み（1 = 得点どおり）
+  //  mob  : 次のラウンドに自分の合法手がなくなる手への減点（0 = 考えない）
+  //  pick : 'best' 最善手 / 'prop' 上位 k 手を評価値の比率で抽選 / 'soft' 上位 k 手を最善手との差で抽選
+  const BASE_AI = { adjW: 1, mob: 0, pick: 'best', k: 3, temp: 1 };
+  // CPU の強さ。どれもかたまりボーナスを 0.7 倍で評価する（R1 で同色を並べて R2 に詰まる癖がなくなる）
+  const AI_LEVELS = {
+    easy: { adjW: 0.7, mob: 0, pick: 'prop', k: 3, temp: 1 },
+    normal: { adjW: 0.7, mob: 0, pick: 'soft', k: 3, temp: 1 },
+    hard: { adjW: 0.7, mob: 0, pick: 'best', k: 3, temp: 1 },
+  };
+  const AI_LABEL = { easy: 'やさしい', normal: 'ふつう', hard: 'つよい' };
+  const DEFAULT_AI = Object.assign({}, AI_LEVELS.normal);
+
+  // ------------------------------------------------------------------
+  // CPU（貪欲法：この手番の得点差を最大化）
+  // ------------------------------------------------------------------
+  // 盤全体のかたまりボーナスの差（p 視点：自分 − 相手）
+  function groupBonusDiff(s, p, stFn) {
+    let d = 0;
+    eachGroup(s, stFn, (n, cnt) => { d += groupPer(n) * (p === 0 ? cnt[0] - cnt[1] : cnt[1] - cnt[0]); });
+    return d;
+  }
+  // カード（color, owner）を i に足したときの、かたまりボーナスの得点差（p 視点）の変化
+  // stFn：仮の盤のマスのカード、exFn：この手番に仮置きした生成カード（{color, owner}）
+  function addGroupDiff(s, p, i, color, owner, stFn, exFn) {
+    const tally = j => {
+      let n = 0, net = 0;
+      for (const id of stFn(j)) { const c = s.cards[id]; if (c.color === color) { n++; net += c.owner === p ? 1 : -1; } }
+      for (const e of exFn(j)) if (e.color === color) { n++; net += e.owner === p ? 1 : -1; }
+      return [n, net];
+    };
+    const neighbors = j => {
+      const out = [], x = X(j), y = Y(j);
+      for (const [dx, dy] of ORTH) {
+        const nx = x + dx, ny = y + dy;
+        if (inGrid(nx, ny)) out.push(idx(nx, ny));
+      }
+      return out;
+    };
+    const visited = new Set();
+    let totalN = 1, totalNet = owner === p ? 1 : -1, oldVal = 0;
+    for (const st of [i].concat(neighbors(i))) {
+      if (visited.has(st) || tally(st)[0] === 0) continue;
+      let n = 0, net = 0;
+      const q = [st];
+      visited.add(st);
+      while (q.length) {
+        const j = q.pop();
+        const [a, b] = tally(j);
+        n += a; net += b;
+        for (const k of neighbors(j)) if (!visited.has(k) && tally(k)[0] > 0) { visited.add(k); q.push(k); }
+      }
+      oldVal += groupPer(n) * net;
+      totalN += n; totalNet += net;
+    }
+    return groupPer(totalN) * totalNet - oldVal;
+  }
+  const noExtra = () => EMPTY;
+
+  // 置いた・動かしたカード自身による、かたまりボーナスの変化（base：手を打つ前の値）
+  function selfDelta(s, p, act, base) {
+    if (base === undefined) base = groupBonusDiff(s, p, j => s.cells[j].stack);
+    const ctx = ctxOf(act);
+    return groupBonusDiff(s, p, j => stackAt(s, ctx, j)) - base;
+  }
+
+  // 生成カードの配置（灰色は最大枚数を優先、それ以外は貪欲）
+  function planOutputs(s, p, ctx, opts, flags, adjW) {
+    if (adjW === undefined) adjW = 1;
+    const cap = capOf(flags);
+    const extra = new Map();
+    const exFn = j => extra.get(j) || EMPTY;
+    const stFn = j => stackAt(s, ctx, j);
+    const cnt = j => stackAt(s, ctx, j).length + (extra.has(j) ? extra.get(j).length : 0);
+    const pileLeft = {};
+    const left = c => (pileLeft[c] === undefined ? s.piles[c].length : pileLeft[c]);
+    const assigns = [];
+    let value = 0, grays = 0;
+    const valueAt = (o, j) => COLOR[o.color].pts + adjW * addGroupDiff(s, p, j, o.color, p, stFn, exFn);
+    const push = (k, j) => {
+      if (!extra.has(j)) extra.set(j, []);
+      extra.get(j).push({ color: opts[k].color, owner: p });
+      pileLeft[opts[k].color] = left(opts[k].color) - 1;
+    };
+    const pop = (k, j) => {
+      extra.get(j).pop();
+      if (!extra.get(j).length) extra.delete(j);
+      pileLeft[opts[k].color] = left(opts[k].color) + 1;
+    };
+    const grayKs = [];
+    opts.forEach((o, k) => { if (o.color === 'gray') grayKs.push(k); });
+    if (grayKs.length) {
+      let best = { n: -1, v: -Infinity, list: [] };
+      const cur = [];
+      const dfs = (t, n, v) => {
+        if (t === grayKs.length) {
+          if (n > best.n || (n === best.n && v > best.v)) best = { n, v, list: cur.slice() };
+          return;
+        }
+        const k = grayKs[t];
+        if (left('gray') > 0) {
+          for (const j of opts[k].cells) {
+            if (cnt(j) >= cap) continue;
+            const dv = valueAt(opts[k], j);
+            push(k, j); cur.push({ k, j });
+            dfs(t + 1, n + 1, v + dv);
+            cur.pop(); pop(k, j);
+          }
+        }
+        dfs(t + 1, n, v);
+      };
+      dfs(0, 0, 0);
+      for (const { k, j } of best.list) {
+        value += valueAt(opts[k], j);
+        push(k, j);
+        assigns.push({ opt: k, cell: j });
+        grays++;
+      }
+    }
+    const rest = [];
+    opts.forEach((o, k) => { if (o.color !== 'gray') rest.push(k); });
+    const done = new Set();
+    for (;;) {
+      let best = null;
+      for (const k of rest) {
+        if (done.has(k)) continue;
+        const o = opts[k];
+        if (left(o.color) <= 0) continue;
+        for (const j of o.cells) {
+          if (cnt(j) >= cap) continue;
+          let contention = 0;
+          for (const k2 of rest) if (k2 !== k && !done.has(k2) && opts[k2].cells.includes(j)) contention++;
+          const v = valueAt(o, j) - contention * 0.01;
+          if (!best || v > best.v) best = { k, j, v };
+        }
+      }
+      if (!best) break;
+      done.add(best.k);
+      value += valueAt(opts[best.k], best.j);
+      push(best.k, best.j);
+      assigns.push({ opt: best.k, cell: best.j });
+    }
+    return { assigns, value, grays };
+  }
+
+  // UI 用：CPU と同じ考え方で生成カードの置き場所を決める
+  function autoAssign(s, p, act) {
+    const flags = flagsFor(s, p);
+    const ctx = ctxOf(act);
+    return planOutputs(s, p, ctx, enumerateOptions(s, p, ctx, flags), flags, DEFAULT_AI.adjW).assigns;
+  }
+  // UI 用：仮置きの内容で決定できるか
+  function checkAssigns(s, p, act, opts, assigns) {
+    return validateAssigns(s, p, ctxOf(act), opts, assigns, flagsFor(s, p));
+  }
+
+  const NOFLAGS = { all: false, double: false };
+
+  // この手を打った後、次のラウンドに自分の合法手が残るか（相手の手は考えない近似）
+  function keepsMoves(s, p, act, assigns, round) {
+    if (round >= 4) return true;
+    const c = clone(s);
+    if (!commitTurn(c, p, act, assigns).ok) return true;
+    for (const a of mainActions(c, p, round + 1)) {
+      const ctx = ctxOf(a);
+      const opts = enumerateOptions(c, p, ctx, NOFLAGS);
+      if (opts.length && anyPlaceable(c, ctx, opts, 1)) return true;
+    }
+    return false;
+  }
+
+  // 1手先の最善手を探す。value はこの手の評価値（p 視点の重み付き得点差の変化）。
+  function searchBest(s, p, o) {
+    o = o || {};
+    const ai = Object.assign({}, DEFAULT_AI, o.ai || {});
+    const round = o.round || s.round;
+    const flags = o.flags || flagsFor(s, p);
+    const cap = capOf(flags);
+    const acts = mainActions(s, p, round);
+    const base0 = groupBonusDiff(s, p, j => s.cells[j].stack);
+    const cands = [];
+    let legal = 0, nonGray = 0;
+    for (const act of acts) {
+      const ctx = ctxOf(act);
+      const opts = enumerateOptions(s, p, ctx, flags);
+      if (!opts.length || !anyPlaceable(s, ctx, opts, cap)) continue;
+      legal++;
+      const plan = planOutputs(s, p, ctx, opts, flags, ai.adjW);
+      if (plan.grays === 0) nonGray++;
+      const v = ai.adjW * selfDelta(s, p, act, base0) + plan.value + (o.rng ? o.rng() * (o.noise || 0) : 0);
+      cands.push({ value: v, act, assigns: plan.assigns, grays: plan.grays });
+    }
+    if (ai.mob > 0 && round < 4 && cands.length > 1 && s.phase === 'play' && currentPlayer(s) === p) {
+      cands.sort((a, b) => b.value - a.value);
+      for (const c of cands.slice(0, 6)) if (!keepsMoves(s, p, c.act, c.assigns, round)) c.value -= ai.mob;
+    }
+    let best = null;
+    for (const c of cands) if (!best || c.value > best.value) best = c;
+    return { best, legal, grayForced: legal > 0 && nonGray === 0, cands };
+  }
+
+  // 最終的な手の選び方
+  function pickMove(cands, ai, rng) {
+    const top = cands.slice().sort((a, b) => b.value - a.value).slice(0, Math.max(1, ai.k || 3));
+    let ws;
+    if (ai.pick === 'prop') ws = top.map(c => Math.max(0.1, c.value));
+    else { const vmax = top[0].value; ws = top.map(c => Math.exp((c.value - vmax) / (ai.temp || 1))); }
+    const sum = ws.reduce((a, b) => a + b, 0);
+    let r = rng() * sum;
+    for (let i = 0; i < top.length; i++) { r -= ws[i]; if (r <= 0) return top[i]; }
+    return top[0];
+  }
+
+  // アイテムの使用候補（全候補を静的な得点差で並べ、上位だけ深く読む）
+  function itemCandidates(s, p, type, rng, ai) {
+    const adjW = ai ? ai.adjW : 1;
+    const opp = 1 - p;
+    const out = [];
+    const boardCards = [];
+    for (let i = 0; i < GN; i++) for (const id of s.cells[i].stack) if (!isGuarded(s, p, id)) boardCards.push({ id, i });
+    const nearCards = () => {
+      const res = [];
+      for (const i of emptyPutCells(s, p)) {
+        const x = X(i), y = Y(i);
+        let near = false;
+        for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx, ny = y + dy;
+          if (inGrid(nx, ny) && s.cells[idx(nx, ny)].stack.length) near = true;
+        }
+        if (near) res.push(i);
+      }
+      return res;
+    };
+    switch (type) {
+      case 'all': case 'double': out.push({}); break;
+      case 'wide': if (!s.wide) ['top', 'bottom', 'left', 'right'].forEach(side => out.push({ side })); break;
+      case 'spin':
+        for (const a of boardCards) for (const b of boardCards) {
+          const A = s.cards[a.id], B = s.cards[b.id];
+          if (A.owner === p && B.owner === opp && COLOR[A.color].pts === COLOR[B.color].pts) out.push({ mine: a.id, theirs: b.id });
+        }
+        break;
+      case 'change':
+        for (const a of boardCards) {
+          const A = s.cards[a.id];
+          for (const col of COLOR_ORDER) {
+            if (col !== A.color && COLOR[col].pts === COLOR[A.color].pts && s.piles[col].length) out.push({ cardId: a.id, color: col });
+          }
+        }
+        break;
+      case 'reset':
+        for (const a of boardCards) out.push({ cardId: a.id });
+        break;
+      case 'slide':
+        for (const a of boardCards) for (const dir of Object.keys(DIRS)) {
+          const nx = X(a.i) + DIRS[dir][0], ny = Y(a.i) + DIRS[dir][1];
+          if (!inGrid(nx, ny)) continue;
+          const j = idx(nx, ny);
+          if (canPutFor(s, j, p) && !s.cells[j].stack.length) out.push({ cardId: a.id, dir });
+        }
+        break;
+      case 'remote': case 'portal': {
+        const cs = shuffle(nearCards(), rng);
+        if (type === 'remote') {
+          // 盤の端（ループの起点）で、その列か行にカードがあるマス
+          const lineHas = (i) => {
+            const x = X(i), y = Y(i);
+            for (let k = 0; k < 6; k++) if (s.cells[idx(x, k)].stack.length || s.cells[idx(k, y)].stack.length) return true;
+            return false;
+          };
+          const edges = emptyPutCells(s, p).filter(i => { const x = X(i), y = Y(i); return inMain(x, y) && (x === 0 || x === 5 || y === 0 || y === 5) && lineHas(i) && !cs.includes(i); });
+          shuffle(edges, rng).slice(0, 6).forEach(i => cs.push(i));
+        }
+        cs.forEach(i => out.push({ idx: i }));
+        break;
+      }
+      default: break;
+    }
+    if (['spin', 'change', 'reset', 'slide'].includes(type) && out.length > 3) {
+      const base = evalW(s, p, adjW);
+      const scored = out.map(params => {
+        const c = clone(s);
+        const r = useItem(c, p, type, params);
+        return { params, v: r.ok ? evalW(c, p, adjW) - base + rng() * 0.2 : -Infinity };
+      }).sort((a, b) => b.v - a.v);
+      return scored.slice(0, 3).map(x => x.params);
+    }
+    return out;
+  }
+
+  // ロック：自分の手の後に相手が狙う最善のマスをふさいだ場合の、相手の得点の減り方
+  function lockCandidates(s, p, base, rng, ai) {
+    if (!base.best) return [];
+    const nextExists = !(s.round === 4 && s.turnPos === 1);
+    if (!nextExists) return [];
+    const after = clone(s);
+    if (!commitTurn(after, p, base.best.act, base.best.assigns).ok) return [];
+    const opp = 1 - p;
+    const oppRes = searchBest(after, opp, { rng, noise: 0, ai });
+    if (!oppRes.best) return [];
+    const cells = [oppRes.best.act.to].concat(oppRes.best.assigns.map(a => a.cell));
+    const out = [];
+    for (const i of cells) {
+      if (out.some(c => c.idx === i)) continue;
+      const c = s.cells[i];
+      if (!cellExists(s, i) || c.stack.length || c.obj || c.lock !== null) continue;
+      if (i === base.best.act.to || base.best.assigns.some(a => a.cell === i)) continue;
+      out.push({ idx: i, oppValue: oppRes.best.value });
+      if (out.length >= 3) break;
+    }
+    return out;
+  }
+
+  const ITEM_THRESHOLD = [0, 6, 5, 4, 0.01];
+
+  function cpuPlan(s, p, rng, opt) {
+    opt = opt || {};
+    rng = rng || Math.random;
+    const noise = opt.noise === undefined ? 0.3 : opt.noise;
+    const ai = Object.assign({}, DEFAULT_AI, opt.ai || {});
+    let cur = clone(s);
+    let base = searchBest(cur, p, { rng, noise, ai });
+    const legalAtStart = base.legal;
+    const items = [];
+    const th = ITEM_THRESHOLD[s.round] || 0.01;
+    for (let guard = 0; guard < 8; guard++) {
+      if (!canUseItems(cur, p)) break;
+      const avail = unusedItems(cur, p);
+      if (!avail.length) break;
+      const baseVal = base.best ? base.best.value : 0;
+      const baseEval = evalW(cur, p, ai.adjW);
+      let pick = null;
+      for (const t of avail) {
+        if (t === 'lock') {
+          for (const cand of lockCandidates(cur, p, base, rng, ai)) {
+            const c2 = clone(cur);
+            if (!useItem(c2, p, 'lock', { idx: cand.idx }).ok) continue;
+            const r = searchBest(c2, p, { rng, noise, ai });
+            if (!r.best) continue;
+            const after = clone(c2);
+            if (!commitTurn(after, p, r.best.act, r.best.assigns).ok) continue;
+            const oppRes = searchBest(after, 1 - p, { rng, noise: 0, ai });
+            const oppVal = oppRes.best ? oppRes.best.value : 0;
+            const gain = (r.best.value - baseVal) + (cand.oppValue - oppVal);
+            if (!pick || gain > pick.gain) pick = { t, params: { idx: cand.idx }, gain, state: c2, res: r };
+          }
+          continue;
+        }
+        for (const params of itemCandidates(cur, p, t, rng, ai)) {
+          const c2 = clone(cur);
+          if (!useItem(c2, p, t, params).ok) continue;
+          const r = searchBest(c2, p, { rng, noise, ai });
+          const gain = (evalW(c2, p, ai.adjW) - baseEval) + (r.best ? r.best.value : 0) - baseVal;
+          if (!pick || gain > pick.gain) pick = { t, params, gain, state: c2, res: r };
+        }
+      }
+      if (pick && pick.gain >= th) {
+        items.push({ type: pick.t, params: pick.params, gain: pick.gain });
+        cur = pick.state;
+        base = pick.res;
+        if (s.round < 4) break;
+      } else break;
+    }
+    let chosen = base.best;
+    if (chosen && ai.pick !== 'best' && base.cands.length > 1) chosen = pickMove(base.cands, ai, rng);
+    return {
+      items,
+      act: chosen ? chosen.act : null,
+      assigns: chosen ? chosen.assigns : [],
+      legal: legalAtStart,
+      grayForced: base.grayForced,
+      value: chosen ? chosen.value : 0,
+    };
+  }
+
+  function cpuDraft(s, rng) {
+    return draftSets(s).map(set => set.items[rng() < 0.5 ? 0 : 1]);
+  }
+  // 初期配置は読み合い。つよい同士で初期カードだけを変えたときの先攻の勝率：
+  //   先攻＼後攻   白    原色
+  //   白          46%   57%
+  //   原色        54%   47%
+  // 先攻は相手と違う種類、後攻は同じ種類を出したい。決め打ちすると読まれるので、つよいは混ぜる：
+  // 先攻は白4割・原色6割、後攻は白5割・原色5割（原色は手札でいちばん少ない色）。こうすると先攻の勝率はほぼ5割。
+  // ふつうは6割、やさしいは3割でこの選び方をし、それ以外は手札の原色か白から均等に選ぶ。
+  function cpuInitial(s, p, rng, ai) {
+    const hand = s.hands[p];
+    const opts = [];
+    for (const id of hand) { const c = s.cards[id].color; if (isBase(c) && !opts.some(o => s.cards[o].color === c)) opts.push(id); }
+    if (!opts.length) return hand[0];
+    const pick = (ai && ai.pick) || 'best';
+    const pStrong = pick === 'best' ? 1 : pick === 'soft' ? 0.6 : 0.3;
+    if (rng() >= pStrong) return opts[Math.floor(rng() * opts.length)];
+    const white = hand.find(id => s.cards[id].color === 'white');
+    const cnt = {};
+    for (const id of hand) { const c = s.cards[id].color; if (PRIMARY[c]) cnt[c] = (cnt[c] || 0) + 1; }
+    const cols = Object.keys(cnt);
+    if (!cols.length) return white !== undefined ? white : opts[0];
+    const min = Math.min.apply(null, cols.map(c => cnt[c]));
+    const rare = cols.filter(c => cnt[c] === min);
+    const col = rare[Math.floor(rng() * rare.length)];
+    const prim = hand.find(id => s.cards[id].color === col);
+    if (white === undefined) return prim;
+    return rng() < (p === s.first ? 0.4 : 0.5) ? white : prim;
+  }
+
+  // CPU の計画を実際の状態に適用する
+  function applyPlan(s, p, plan) {
+    for (const it of plan.items) {
+      const r = useItem(s, p, it.type, it.params);
+      if (!r.ok) return r;
+    }
+    if (plan.act) return commitTurn(s, p, plan.act, plan.assigns);
+    return passTurn(s, p);
+  }
+
+  // ------------------------------------------------------------------
+  // シミュレーション
+  // ------------------------------------------------------------------
+  function simulateGame(settings, seed, ais) {
+    const rng = rng32((seed ^ 0x9E3779B9) >>> 0);
+    const s = newGame(Object.assign({}, settings, { first: undefined }), seed);
+    s.log = null;
+    const rec = { legal: [], grays: [], items: [], stockout: {} };
+    if (s.phase === 'draft') applyDraft(s, cpuDraft(s, rng));
+    applyInitial(s, [cpuInitial(s, 0, rng, ais ? ais[0] : undefined), cpuInitial(s, 1, rng, ais ? ais[1] : undefined)]);
+    while (s.phase === 'play') {
+      const p = currentPlayer(s);
+      const round = s.round;
+      const seat = p === s.first ? 0 : 1;
+      const plan = cpuPlan(s, p, rng, { noise: 0.3, ai: ais ? ais[p] : undefined });
+      rec.legal.push({ round, seat, n: plan.legal });
+      for (const it of plan.items) rec.items.push({ seat, type: it.type, round });
+      const r = applyPlan(s, p, plan);
+      if (!r.ok) throw new Error('simulation: ' + r.error);
+      if (r.created) {
+        const g = r.created.filter(c => c.color === 'gray').length;
+        if (g) rec.grays.push({ round, seat, n: g, forced: plan.grayForced });
+      }
+      for (const k of GEN_COLORS) if (rec.stockout[k] === undefined && s.piles[k].length === 0) rec.stockout[k] = round;
+    }
+    const res = s.result;
+    rec.scores = [res.scores[s.first].total, res.scores[1 - s.first].total]; // [先攻, 後攻]
+    rec.winnerSeat = res.winner === null ? null : (res.winner === s.first ? 0 : 1);
+    rec.held = [s.items[s.first].map(o => ({ type: o.type, used: o.used, round: o.round })),
+      s.items[1 - s.first].map(o => ({ type: o.type, used: o.used, round: o.round }))];
+    return rec;
+  }
+
+  function aggregate(recs, settings) {
+    const n = recs.length;
+    const out = { n, settings };
+    const wins = [0, 0], draws = { n: 0 };
+    let sum = [0, 0];
+    const diffs = [];
+    for (const r of recs) {
+      if (r.winnerSeat === null) draws.n++; else wins[r.winnerSeat]++;
+      sum[0] += r.scores[0]; sum[1] += r.scores[1];
+      diffs.push(r.scores[0] - r.scores[1]);
+    }
+    out.wins = wins; out.draws = draws.n;
+    out.avgScore = [sum[0] / n, sum[1] / n];
+    out.avgDiff = diffs.reduce((a, b) => a + b, 0) / n;
+    out.diffs = diffs;
+    // 合法手
+    const leg = {};
+    for (const r of recs) for (const l of r.legal) {
+      const k = l.round + '-' + l.seat;
+      if (!leg[k]) leg[k] = { sum: 0, n: 0, zero: 0 };
+      leg[k].sum += l.n; leg[k].n++; if (!l.n) leg[k].zero++;
+    }
+    out.legal = [];
+    for (let rd = 1; rd <= 4; rd++) for (const seat of [0, 1]) {
+      const v = leg[rd + '-' + seat] || { sum: 0, n: 0, zero: 0 };
+      out.legal.push({ round: rd, seat, avg: v.n ? v.sum / v.n : 0, passRate: v.n ? v.zero / v.n : 0 });
+    }
+    // 灰色
+    let gTotal = 0, gForced = 0, gGames = 0;
+    for (const r of recs) {
+      if (r.grays.length) gGames++;
+      for (const g of r.grays) { gTotal += g.n; if (g.forced) gForced += g.n; }
+    }
+    out.gray = { total: gTotal, forced: gForced, chosen: gTotal - gForced, games: gGames };
+    // 在庫切れ
+    out.stockout = GEN_COLORS.map(k => {
+      const rs = recs.map(r => r.stockout[k]).filter(v => v !== undefined);
+      return { color: k, rate: rs.length / n, avgRound: rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null };
+    });
+    // アイテム
+    const items = {};
+    ITEM_ORDER.forEach(t => { items[t] = { held: 0, points: 0, used: 0, rounds: [0, 0, 0, 0, 0] }; });
+    for (const r of recs) for (const seat of [0, 1]) {
+      const pts = r.winnerSeat === null ? 0.5 : (r.winnerSeat === seat ? 1 : 0);
+      for (const h of r.held[seat]) {
+        const it = items[h.type];
+        it.held++; it.points += pts;
+        if (h.used) { it.used++; it.rounds[h.round]++; }
+      }
+    }
+    out.items = ITEM_ORDER.filter(t => items[t].held).map(t => {
+      const it = items[t];
+      return { type: t, held: it.held, winRate: it.points / it.held, useRate: it.used / it.held, rounds: it.rounds.slice(1) };
+    });
+    out.sets = settings.sets.map(id => {
+      const set = SETS.find(x => x.id === id);
+      const a = out.items.find(x => x.type === set.items[0]);
+      const b = out.items.find(x => x.type === set.items[1]);
+      return { id, name: set.name, a: set.items[0], b: set.items[1], aRate: a ? a.winRate : null, bRate: b ? b.winRate : null, diff: (a && b) ? a.winRate - b.winRate : null };
+    });
+    return out;
+  }
+
+  return {
+    COLOR, COLOR_ORDER, PRIMARY, isBase, CHIPS, GEN_COLORS, ITEM, ITEM_ORDER, SETS, ROUND_LABEL, START, DIRS,
+    idx, X, Y, inMain, inGrid, cellName, cellExists, canPutFor, wideCells, GN,
+    rng32, shuffle, newGame, clone, findCard, currentPlayer, roundKinds, draftSets,
+    applyDraft, applyInitial, enumerateOptions, ctxOf, optionsFor, grayNeed, freeCells,
+    validateAssigns, legalPlaceCells, legalMoveCells, isLegalAction, hasLegalAction, mainActions,
+    commitTurn, passTurn, canUseItems, unusedItems, useItem, tryItem, isGuarded,
+    score, finalResult, evalDiff,
+    searchBest, cpuPlan, cpuDraft, cpuInitial, applyPlan, simulateGame, aggregate,
+    autoAssign, checkAssigns, evalW, BASE_AI, AI_LEVELS, AI_LABEL, DEFAULT_AI, pickMove,
+    _test: { groupBonusDiff, addGroupDiff },
+  };
+});
+</script>
+<script>(function () {
+  'use strict';
+  const I = window.Iro;
+  const C = I.COLOR;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pct = v => (v * 100).toFixed(0) + '%';
+  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v).toFixed(1).replace(/\.0$/, '');
+  const ptsText = n => (n < 0 ? '−' + Math.abs(n) : String(n));
+
+  const ICON = {
+    remote: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="4 3"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/><path d="M2 12h5M17 12h5M12 2v5M12 17v5"/></svg>',
+    // ポータル：ワープの魔法陣（二重の円と、上下左右を指す星）
+    portal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.6" stroke-width="1.6"/><circle cx="12" cy="12" r="6.4" stroke-width="1.4" stroke-dasharray="2 1.8"/><path d="M12 7.4L13.4 10.6L16.6 12L13.4 13.4L12 16.6L10.6 13.4L7.4 12L10.6 10.6Z" fill="currentColor" stroke-width="1"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  };
+
+  // ------------------------------------------------------------------
+  // 状態
+  // ------------------------------------------------------------------
+  const DEFAULT_SETUP = { mode: 'cpu', sets: ['1', '2', '3', '4', '5'], komi: 0, gray: true, draftOrder: 'random', games: 200, level: 'normal' };
+  function loadSetup() {
+    try {
+      const raw = localStorage.getItem('shikisai-setup');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        // 旧番号（4A・4B）は新しい番号（4・5）に読み替える
+        if (Array.isArray(saved.sets)) saved.sets = saved.sets.map(id => ({ '4A': '4', '4B': '5' }[id] || id)).filter(id => I.SETS.some(s => s.id === id));
+        return Object.assign({}, DEFAULT_SETUP, saved);
+      }
+    } catch (e) { /* 保存できない環境では既定値 */ }
+    return Object.assign({}, DEFAULT_SETUP);
+  }
+  function saveSetup() {
+    try { localStorage.setItem('shikisai-setup', JSON.stringify(app.setup)); } catch (e) { /* 無視 */ }
+  }
+
+  const app = {
+    screen: 'setup',
+    setup: loadSetup(),
+    g: null,
+    humans: [true, false],
+    snap: null,
+    sel: null,
+    draft: {},
+    init: null,
+    busy: false,
+    last: [],
+    fresh: new Set(),
+    flip: false,
+    noLegal: false,
+    made: [[], []],
+    revealPause: false,
+    preview: 'all',
+    setupMsg: '',
+    msg: '',
+    dialog: null,
+    rng: I.rng32((Date.now() ^ 0x5bd1e995) >>> 0),
+    sim: null,
+  };
+  const emptySel = () => ({ card: null, from: null, legal: [], act: null, opts: [], assigns: [], active: null, need: 0, item: null });
+  app.sel = emptySel();
+
+  const curP = () => (app.g && app.g.phase === 'play' ? I.currentPlayer(app.g) : null);
+  const humanTurn = () => { const p = curP(); return p !== null && app.humans[p] && !app.busy; };
+  const nameOf = p => app.g.settings.names[p];
+
+  // ------------------------------------------------------------------
+  // 部品
+  // ------------------------------------------------------------------
+  function cardHTML(s, id, cls, attrs, upright) {
+    const c = s.cards[id];
+    const nm = C[c.color].name;
+    const rot = c.owner === 1 && !upright ? ' rot' : '';
+    const owner = c.owner === null ? '在庫' : s.settings.names[c.owner];
+    const tip = `${nm}（${ptsText(C[c.color].pts)}点）${c.chip ? '・' + C[c.chip].name + 'チップ' : ''}・${owner}`;
+    return `<div class="card p-${c.color}${rot}${cls ? ' ' + cls : ''}" ${attrs || ''} title="${esc(tip)}">` +
+      `<span class="pt">${ptsText(C[c.color].pts)}</span>` +
+      (c.chip ? `<span class="chip q-${c.chip}"></span>` : '') +
+      `<span class="nm${nm.length > 1 ? ' long' : ''}">${nm}</span>` +
+      (c.owner !== null ? '<span class="bar"></span>' : '') + '</div>';
+  }
+  function swatchCard(color, size) {
+    const nm = C[color].name;
+    return `<div class="card p-${color}" style="--card:${size}px"><span class="pt">${ptsText(C[color].pts)}</span><span class="nm${nm.length > 1 ? ' long' : ''}">${nm}</span></div>`;
+  }
+  const recipeText = color => (C[color].from ? C[color].from.map(c => C[c].name).join('＋') : '原色');
+
+  // ------------------------------------------------------------------
+  // アイテムの効果プレビュー（設定画面）
+  // ------------------------------------------------------------------
+  const ITEM_DETAIL = {
+    all: { when: 'この手番だけ有効', text: 'この手番の合成判定を、上下左右に加えて斜めでも行います。斜めに連続する2〜3枚がレシピに合えば、その斜めの並びの端に色を置けます。' },
+    double: { when: 'この手番だけ有効', text: 'この手番に生成する色を、すでにカードがあるマスに重ねて置けます（1マス2枚まで）。置いたり動かしたりするカード自体は空きマスにしか置けません。重なった2枚はどちらも点数になり、その後の合成にも使えます。' },
+    spin: { when: 'すぐに効く', text: '自分と相手の、同じ点数のカードを1枚ずつ選び、持ち主を入れ替えます。カードの向きも変わり、チップを使う権利や移動させる権利も一緒に移ります。' },
+    change: { when: 'すぐに効く', text: '盤上のカード1枚を、在庫にある同じ点数の別の色の山の一番上と交換します。持ち主はそのままです。外したカードは、その色の山の一番上に戻ります。' },
+    reset: { when: 'すぐに効く', text: '盤上のカード1枚（相手のカードも可）を、持ち主の手札に戻します。手札のカードも点数に入るので、点数は減りません。' },
+    slide: { when: 'すぐに効く', text: '盤上のカード1枚（相手のカードも可）を、上下左右の空きマスへ1マス動かします。動かしても合成は起きません。' },
+    lock: { when: '盤に残る', text: '空きマス1つを、相手だけが設置・移動・生成できないマスにします。自分は普通に使えます。あとでこのマスに置いたカードは、相手のリターン・スライド・チェンジ・スピンの対象にもなりません。' },
+    wide: { when: '盤に残る', text: '盤の上下左右のどれか1辺の外側に、6マスの列を足します。この列に置いたり色を生成したりできるのは自分だけです。' },
+    remote: { when: '盤に残る', text: '空きマスに置きます。自分だけ、このマスを飛び越えて合成の並びとみなせます。盤の端に置くと、その列（行）は反対側の端とつながり、輪のように使えます（角に置けば列と行の両方）。リモートに触れる並び（リモートの上下左右のカードを使う並び、リモートを通る並び、端の先がリモートの並び）で作った色は、並びの端のほか、リモートの周り8マス（斜めも含む）の空きマスにも置けます。相手にとっては通れない壁になり、誰もこのマスにカードを置けません。' },
+    portal: { when: '盤に残る', text: '空きマスに置きます。自分が色を生成するとき、並びの端の代わりに、ポータルの上下左右の空きマスにも置けます。誰もこのマスにカードを置けません。' },
+  };
+  // 例の盤：cards は [x, y, 色, 持ち主(0=自分 1=相手), チップ, 強調]
+  const DEMO = {
+    all: {
+      before: { w: 4, h: 4, cards: [[1, 1, 'red', 0], [2, 2, 'blue', 0, null, 'tent']], free: [[0, 0], [3, 3]], cap: '赤の斜め下に青を置く。いつもは斜めでは合成しない' },
+      after: { w: 4, h: 4, cards: [[1, 1, 'red', 0], [2, 2, 'blue', 0], [3, 3, 'purple', 0, null, 'new']], cap: '斜めの並びの端に紫ができる' },
+    },
+    double: {
+      before: { w: 5, h: 3, cards: [[0, 1, 'white', 1], [1, 1, 'red', 0], [2, 1, 'blue', 0], [3, 1, 'yellow', 0, null, 'tent'], [4, 1, 'orange', 1]], free: [[0, 1], [4, 1]], cap: '黄を置くと黒と緑が作れるが、並びの両端がふさがっている' },
+      after: { w: 5, h: 3, cards: [[0, 1, 'white', 1], [0, 1, 'black', 0, null, 'new'], [1, 1, 'red', 0], [2, 1, 'blue', 0], [3, 1, 'yellow', 0], [4, 1, 'orange', 1], [4, 1, 'green', 0, null, 'new']], cap: '端のカードの上に、黒と緑を重ねて置ける' },
+    },
+    spin: {
+      before: { w: 4, h: 3, cards: [[0, 0, 'purple', 0, 'red', 'pick'], [1, 2, 'red', 0], [3, 1, 'green', 1, 'blue', 'pick']], cap: '自分の紫と相手の緑（どちらも3点）を選ぶ' },
+      after: { w: 4, h: 3, cards: [[0, 0, 'purple', 1, 'red', 'new'], [1, 2, 'red', 0], [3, 1, 'green', 0, 'blue', 'new']], cap: '持ち主と向きが入れ替わる。緑の青チップも自分が使えるようになる' },
+    },
+    change: {
+      before: { w: 3, h: 3, cards: [[1, 1, 'black', 0, null, 'pick'], [0, 2, 'red', 1]], side: { label: '在庫の一番上', cards: [['lime', null]] }, cap: '盤上の黒（6点）を選び、在庫の黄緑（6点）と交換する' },
+      after: { w: 3, h: 3, cards: [[1, 1, 'lime', 0, null, 'new'], [0, 2, 'red', 1]], side: { label: '在庫に戻る', cards: [['black', null]] }, cap: '持ち主はそのまま。外した黒は黒の山の一番上に戻る' },
+    },
+    reset: {
+      before: { w: 3, h: 3, cards: [[1, 1, 'red', 0, null, 'pick'], [2, 1, 'blue', 1]], side: { label: '自分の手札', cards: [] }, cap: '盤上の自分の赤を選ぶ（相手のカードも選べる）' },
+      after: { w: 3, h: 3, cards: [[2, 1, 'blue', 1]], side: { label: '自分の手札', cards: [['red', 0, 'new']] }, cap: '赤は持ち主の手札へ。別の場所でもう一度、合成の種にできる' },
+    },
+    slide: {
+      before: { w: 4, h: 3, cards: [[0, 1, 'red', 0, null, 'pick'], [2, 1, 'blue', 1]], legal: [[1, 1]], cap: '赤を右へ1マス動かす' },
+      after: { w: 4, h: 3, cards: [[1, 1, 'red', 0, null, 'new'], [2, 1, 'blue', 1]], cap: '青の隣に来ても紫はできない（合成は起きない）' },
+    },
+    lock: {
+      before: { w: 4, h: 3, cards: [[1, 1, 'red', 1]], legal: [[2, 1]], cap: '相手が青を置いて紫を作りたいマス' },
+      after: { w: 4, h: 3, cards: [[1, 1, 'red', 1]], locks: [[2, 1, 0]], legal: [[0, 1], [1, 0], [1, 2]], cap: 'ロックしたマスには相手だけ置けない。相手は別のマスを探すことになる' },
+    },
+    wide: {
+      before: { w: 4, h: 3, cards: [[1, 0, 'green', 1], [1, 1, 'yellow', 0], [1, 2, 'red', 0, null, 'tent']], cap: '黄の下に赤を置く。上はふさがり、下は盤の外なので橙を置けない' },
+      after: { w: 4, h: 4, wideRow: 3, cards: [[1, 0, 'green', 1], [1, 1, 'yellow', 0], [1, 2, 'red', 0], [1, 3, 'orange', 0, null, 'new']], cap: '下に自分専用の列が増え、そこに橙を置ける' },
+    },
+    remote: {
+      before: { w: 6, h: 3, cards: [[1, 1, 'white', 0, null, 'tent'], [5, 1, 'red', 1]], objs: [[0, 1, 'remote', 0]], free: [[2, 1], [4, 1], [0, 0], [1, 0], [0, 2], [1, 2]], cap: '端のリモートの先は、同じ行の反対側の端につながる。白と右端の赤で桃が作れる' },
+      after: { w: 6, h: 3, cards: [[1, 0, 'pink', 0, null, 'new'], [1, 1, 'white', 0], [5, 1, 'red', 1]], objs: [[0, 1, 'remote', 0]], cap: 'リモートに触れる並びで作った色は、並びの端（白の右・赤の左）のほか、リモートの周り（斜めも）に置ける' },
+    },
+    portal: {
+      before: { w: 5, h: 4, cards: [[0, 0, 'red', 0], [1, 0, 'blue', 0, null, 'tent'], [2, 0, 'purple', 1]], objs: [[3, 2, 'portal', 0]], free: [[3, 1], [2, 2], [4, 2], [3, 3]], cap: '赤と青で紫ができるが、並びの両端は盤の外とカード' },
+      after: { w: 5, h: 4, cards: [[0, 0, 'red', 0], [1, 0, 'blue', 0], [2, 0, 'purple', 1], [3, 1, 'purple', 0, null, 'new']], objs: [[3, 2, 'portal', 0]], cap: 'ポータルの上下左右に紫を送れる' },
+    },
+  };
+
+  function paintCard(color, owner, chip, cls) {
+    const nm = C[color].name;
+    return `<div class="card p-${color}${owner === 1 ? ' rot' : ''}${cls ? ' ' + cls : ''}"><span class="pt">${ptsText(C[color].pts)}</span>` +
+      (chip ? `<span class="chip q-${chip}"></span>` : '') + `<span class="nm${nm.length > 1 ? ' long' : ''}">${nm}</span>` +
+      (owner === 0 || owner === 1 ? '<span class="bar"></span>' : '') + '</div>';
+  }
+  function demoBoard(d) {
+    const at = (list, x, y) => (list || []).some(a => a[0] === x && a[1] === y);
+    let html = '';
+    for (let y = 0; y < d.h; y++) {
+      for (let x = 0; x < d.w; x++) {
+        const cls = ['cell', d.wideRow === y ? 'wide' : 'main'];
+        if (at(d.free, x, y)) cls.push('free');
+        if (at(d.legal, x, y)) cls.push('legal');
+        const cards = d.cards.filter(c => c[0] === x && c[1] === y).map(c => paintCard(c[2], c[3], c[4], c[5]));
+        let inner = cards.length === 1 ? cards[0] : cards.length > 1 ? `<div class="stack2">${cards.join('')}</div>` : '';
+        const ob = (d.objs || []).find(o => o[0] === x && o[1] === y);
+        if (ob) inner += `<div class="obj${ob[3] === 1 ? ' rot' : ' mine'}">${ICON[ob[2]]}</div>`;
+        const lk = (d.locks || []).find(o => o[0] === x && o[1] === y);
+        if (lk) inner += `<div class="lockmark${lk[2] === 1 ? ' rot' : ''}">${ICON.lock}</div>`;
+        html += `<div class="${cls.join(' ')}">${inner}</div>`;
+      }
+    }
+    const side = d.side ? `<div class="dside"><small>${d.side.label}</small>${d.side.cards.length ? d.side.cards.map(c => paintCard(c[0], c[1], null, c[2])).join('') : '<span class="dnone">なし</span>'}</div>` : '';
+    return `<div class="dwrap"><div class="dmat" style="grid-template-columns:repeat(${d.w}, var(--cell));grid-template-rows:repeat(${d.h}, var(--cell))">${html}</div>${side}</div>`;
+  }
+  function itemPreviewHTML() {
+    const t = app.preview || 'all';
+    const info = I.ITEM[t], det = ITEM_DETAIL[t], dd = DEMO[t];
+    const set = I.SETS.find(s => s.items.includes(t));
+    return `<section class="panel ipreview" id="ipreview" aria-live="polite"><h3>アイテムの効果</h3>
+      <div class="iphead"><b>${info.name}</b><span class="tag">セット${set.id}・${det.when}</span></div>
+      <p class="ipdesc">${det.text}</p>
+      <div class="demo">
+        <figure>${demoBoard(dd.before)}<figcaption><b>使う前</b>${dd.before.cap}</figcaption></figure>
+        <span class="darrow" aria-hidden="true">→</span>
+        <figure>${demoBoard(dd.after)}<figcaption><b>使った後</b>${dd.after.cap}</figcaption></figure>
+      </div>
+      <p class="note">アイテムは手番の設置・移動の前に使います。R1〜R3は1手番に1つまで、R4は無制限。どれも1回きりです。盤の例は、手前（文字が正位置）が自分、上下逆さが相手のカードです。</p></section>`;
+  }
+
+  // ------------------------------------------------------------------
+  // 設定画面
+  // ------------------------------------------------------------------
+  function renderSetup() {
+    const st = app.setup;
+    const mode = (id, title, desc) => `<button class="mode" data-mode="${id}" aria-pressed="${st.mode === id}"><b>${title}</b><span>${desc}</span></button>`;
+    const seg = (key, val, label) => `<button data-seg="${key}" data-val="${val}" aria-pressed="${String(st[key]) === String(val)}">${label}</button>`;
+    const sets = I.SETS.map(set => `<div class="setopt"><label class="setchk"><input type="checkbox" id="set-${set.id}" data-set="${set.id}" ${st.sets.includes(set.id) ? 'checked' : ''}><b>セット${set.id}</b></label>` +
+      `<div class="setitems">${set.items.map(t => `<button class="btn small" data-preview="${t}" aria-pressed="${app.preview === t}">${I.ITEM[t].name}</button>`).join('')}</div></div>`).join('');
+    const recipes = I.COLOR_ORDER.map(k => `<div class="recipe">${swatchCard(k, 36)}<div class="how"><b>${C[k].name}</b>　${recipeText(k)}${I.CHIPS[k] ? '<br><small class="muted">チップ：' + I.CHIPS[k].map(c => c ? C[c].name : '無地').join('・') + '</small>' : ''}</div><span class="pp">${ptsText(C[k].pts)}点</span></div>`).join('');
+    const sim = st.mode === 'sim';
+    $('scr-setup').innerHTML = `
+      <header class="hero">
+        <h1>色彩陣取り</h1>
+        <p>混ぜることで増殖し、向きによって牙を剥く。6×6の盤で色を合成し合う、2人用の陣取りゲーム。</p>
+        <div class="swatchrow">${['red', 'blue', 'yellow', 'white', 'purple', 'orange', 'green', 'black', 'lime', 'gray'].map(k => swatchCard(k, 30)).join('')}</div>
+      </header>
+      <div class="setup-grid">
+        <div class="panel">
+          <div class="field">
+            <span class="lbl">遊び方</span>
+            <div class="modes">
+              ${mode('cpu', 'CPU戦', 'あなた（手前）対 CPU（奥）')}
+              ${mode('hotseat', '1対1', '1台の画面を交代で操作する')}
+              ${mode('sim', 'シミュレーション', 'CPU同士を自動で対戦させ、勝率や偏りを集計する')}
+            </div>
+          </div>
+          <div class="field">
+            <span class="lbl">使用するアイテムセット</span>
+            <div class="setlist">${sets}</div>
+            <p class="hint">アイテム名を押すと、効果と使い方の例を表示します。ドラフトの先手は、選んだ各セットから1つずつ取り、残りは相手に渡ります。相手は毎ラウンド先攻になります。</p>
+          </div>
+          <div class="field">
+            <label for="komi">コミ（後攻に加える点数）</label>
+            <div class="row"><input type="number" id="komi" step="0.5" min="-30" max="30" value="${st.komi}"><span class="hint">0.5刻みにすると引き分けがなくなります</span></div>
+          </div>
+          <div class="field">
+            <span class="lbl">灰色ルール</span>
+            <div class="seg">${seg('gray', true, 'オン')}${seg('gray', false, 'オフ（黒＋白は合成なし）')}</div>
+          </div>
+          ${st.mode !== 'hotseat' ? `<div class="field"><span class="lbl">CPUの強さ</span>
+            <div class="seg">${seg('level', 'easy', 'やさしい')}${seg('level', 'normal', 'ふつう')}${seg('level', 'hard', 'つよい')}</div>
+            <p class="hint">どれも1手先を読み、確定する点数を重く、崩されやすいかたまりボーナスを0.7倍で見ます。やさしいは上位3手から評価値の比率で、ふつうは最善手との差に応じて抽選し、つよいは常に最善手を選びます。</p></div>` : ''}
+          ${st.mode === 'cpu' ? `<div class="field"><span class="lbl">ドラフト順</span>
+            <div class="seg">${seg('draftOrder', 'random', 'ランダム')}${seg('draftOrder', 'me', '自分が先に選ぶ（後攻）')}${seg('draftOrder', 'cpu', 'CPUが先に選ぶ（自分が先攻）')}</div></div>` : ''}
+          ${sim ? `<div class="field"><span class="lbl">対戦回数</span>
+            <div class="seg">${[50, 100, 200, 500, 1000].map(n => seg('games', n, n + '回')).join('')}</div>
+            <p class="hint">1試合およそ0.1秒。両方のCPUが、上で選んだ強さで対戦します。</p></div>` : ''}
+          <div class="row" style="padding-top:10px"><button class="btn primary" data-do="start">${sim ? 'シミュレーションを開始' : '対戦をはじめる'}</button><button class="btn" data-do="reset-setup">初期設定に戻す</button>${app.setupMsg ? `<span class="hint" role="status">${app.setupMsg}</span>` : ''}</div>
+        </div>
+        <aside class="side-stack">
+          ${itemPreviewHTML()}
+          <section class="panel">
+            <h3>色のレシピ</h3>
+            <div class="recipes">${recipes}</div>
+            <p class="note">同じ色が上下左右につながると、2枚なら1枚につき2点、3枚（L字も可）なら1枚につき3点が、それぞれのカードの持ち主に入ります。灰色は作った人が−3点。</p>
+          </section>
+        </aside>
+      </div>`;
+  }
+
+  // ------------------------------------------------------------------
+  // 対戦の進行
+  // ------------------------------------------------------------------
+  function startGame() {
+    const st = app.setup;
+    const hot = st.mode === 'hotseat';
+    app.humans = hot ? [true, true] : [true, false];
+    const names = hot ? ['P1', 'P2'] : ['あなた', 'CPU'];
+    let first;
+    if (!hot && st.draftOrder === 'me') first = 1;
+    if (!hot && st.draftOrder === 'cpu') first = 0;
+    app.g = I.newGame({ sets: st.sets, komi: st.komi, gray: st.gray, names, first });
+    Object.assign(app, { screen: 'game', sel: emptySel(), draft: {}, init: null, busy: false, last: [], fresh: new Set(), snap: null, msg: '', dialog: null, flip: false, made: [[], []], revealPause: false });
+    proceed();
+  }
+
+  function proceed() {
+    const g = app.g;
+    if (g.phase === 'draft') {
+      if (!app.humans[g.draftFirst]) { I.applyDraft(g, I.cpuDraft(g, app.rng)); return proceed(); }
+      return render();
+    }
+    if (g.phase === 'initial') {
+      if (!app.init) app.init = { picks: [null, null], order: [g.first, 1 - g.first], step: 0, blind: false, chosen: null };
+      const ini = app.init;
+      for (const p of [0, 1]) if (!app.humans[p] && ini.picks[p] === null) ini.picks[p] = I.cpuInitial(g, p, app.rng, I.AI_LEVELS[app.setup.level] || I.DEFAULT_AI);
+      while (ini.step < 2 && ini.picks[ini.order[ini.step]] !== null) ini.step++;
+      if (ini.picks[0] !== null && ini.picks[1] !== null) {
+        const r = I.applyInitial(g, ini.picks);
+        app.init = null;
+        if (r.ok) { app.flip = true; app.last = [I.START[0], I.START[1]]; app.revealPause = true; }
+        return proceed();
+      }
+      return render();
+    }
+    if (g.phase === 'play') {
+      const p = I.currentPlayer(g);
+      app.sel = emptySel();
+      app.msg = '';
+      if (app.humans[p]) {
+        app.revealPause = false;
+        app.snap = I.clone(g, true);
+        app.noLegal = !I.hasLegalAction(g, p);
+        render();
+      } else {
+        app.busy = true;
+        render();
+        setTimeout(runCpu, app.revealPause ? 1800 : 600);
+        app.revealPause = false;
+      }
+      return;
+    }
+    render();
+    if (g.phase === 'end') { app.dialog = 'result'; render(); }
+  }
+
+  function runCpu() {
+    const g = app.g;
+    if (!g || g.phase !== 'play') return;
+    const p = I.currentPlayer(g);
+    if (app.humans[p]) return;
+    const plan = I.cpuPlan(g, p, app.rng, { ai: I.AI_LEVELS[app.setup.level] || I.DEFAULT_AI });
+    const items = plan.items.slice();
+    const step = () => {
+      if (app.g !== g) return;
+      if (items.length) {
+        const it = items.shift();
+        const before = I.clone(g);
+        const r = I.useItem(g, p, it.type, it.params);
+        if (r.ok) { app.last = changedCells(before, g); app.flip = false; }
+        render();
+        setTimeout(step, 700);
+        return;
+      }
+      let act = plan.act, assigns = plan.assigns, r = null;
+      if (act) r = I.commitTurn(g, p, act, assigns);
+      if (!r || !r.ok) {
+        const sb = I.searchBest(g, p, {});
+        if (sb.best) { act = sb.best.act; assigns = sb.best.assigns; r = I.commitTurn(g, p, act, assigns); }
+        else { act = null; r = I.passTurn(g, p); }
+      }
+      if (!r.ok) { console.error('CPU could not move:', r.error); app.busy = false; app.msg = 'CPUの手番でエラーが起きました: ' + r.error; return render(); }
+      if (act && r.created) {
+        app.made[p] = r.created.map(c => ({ color: c.color, cell: c.cell }));
+        app.last = [act.to].concat(r.created.map(c => c.cell));
+        app.fresh = new Set([act.cardId].concat(r.created.map(c => c.id)));
+      } else app.last = [];
+      app.flip = false;
+      app.busy = false;
+      proceed();
+    };
+    step();
+  }
+
+  // ------------------------------------------------------------------
+  // 手番の操作
+  // ------------------------------------------------------------------
+  function onHand(p, id) {
+    const g = app.g;
+    if (g.phase === 'initial') {
+      const ini = app.init;
+      if (!ini || ini.blind || ini.order[ini.step] !== p || !app.humans[p]) return;
+      if (!I.isBase(g.cards[id].color)) { app.msg = '初期配置には原色か白を出せます'; return render(); }
+      ini.chosen = ini.chosen === id ? null : id;
+      app.msg = '';
+      return render();
+    }
+    if (!humanTurn() || p !== curP()) return;
+    const sel = app.sel;
+    if (sel.item) { app.msg = '先にアイテムを使うか、やめるを選んでください'; return render(); }
+    if (sel.card === id) { app.sel = emptySel(); app.msg = ''; return render(); }
+    const kinds = I.roundKinds(g.round);
+    if (!kinds.place) { app.msg = 'R2 は盤上の自分のカードを動かすラウンドです'; return render(); }
+    if (kinds.place === 'base' && !I.isBase(g.cards[id].color)) { app.msg = 'R1・R3 は手札の原色か白しか置けません'; return render(); }
+    const legal = I.legalPlaceCells(g, p, id);
+    app.sel = Object.assign(emptySel(), { card: id, legal });
+    app.msg = legal.length ? '' : 'このカードで合成できるマスはありません';
+    render();
+  }
+
+  function onBoard(i, info) {
+    const g = app.g;
+    if (!humanTurn()) return;
+    const p = curP();
+    const sel = app.sel;
+    if (sel.item) return onItemBoard(i, info);
+    if (info.tent !== undefined) { sel.assigns.splice(info.tent, 1); autoActive(); return render(); }
+    if (info.main) { Object.assign(sel, { act: null, opts: [], assigns: [], active: null, need: 0 }); return render(); }
+    if (sel.act) {
+      const cands = [];
+      sel.opts.forEach((o, k) => {
+        if (!sel.assigns.some(a => a.opt === k) && I.freeCells(g, p, sel.act, sel.opts, sel.assigns, k).includes(i)) cands.push(k);
+      });
+      if (cands.length) {
+        let k = cands.includes(sel.active) ? sel.active : null;
+        if (k === null) {
+          const cols = [...new Set(cands.map(c => sel.opts[c].color))];
+          if (cols.length === 1) k = cands[0];
+          else {
+            sel.active = cands[0];
+            app.msg = `${I.cellName(i)}には${cols.map(c => C[c].name).join('・')}を置けます。パレットで色を選んでから、もう一度マスを押してください`;
+            return render();
+          }
+        }
+        sel.assigns.push({ opt: k, cell: i });
+        autoActive();
+        app.msg = '';
+        return render();
+      }
+    }
+    if (sel.card !== null && sel.legal.includes(i) && !(sel.act && sel.act.to === i)) return setAct(i);
+    if (info.cardId !== undefined) {
+      const kinds = I.roundKinds(g.round);
+      const c = g.cards[info.cardId];
+      if (kinds.move && c.owner === p) {
+        if (sel.card === info.cardId && !sel.act) { app.sel = emptySel(); return render(); }
+        const legal = I.legalMoveCells(g, p, info.cardId);
+        app.sel = Object.assign(emptySel(), { card: info.cardId, from: i, legal });
+        app.msg = legal.length ? '' : 'このカードを動かして合成できるマスはありません';
+        return render();
+      }
+      if (kinds.move && c.owner !== p) { app.msg = '相手のカードは動かせません（スピンで奪えば動かせます）'; return render(); }
+    }
+  }
+
+  function setAct(i) {
+    const sel = app.sel, g = app.g, p = curP();
+    sel.act = sel.from === null ? { type: 'place', cardId: sel.card, to: i } : { type: 'move', cardId: sel.card, from: sel.from, to: i };
+    sel.opts = I.optionsFor(g, p, sel.act);
+    sel.assigns = [];
+    sel.need = I.grayNeed(g, p, sel.act, sel.opts);
+    app.msg = '';
+    autoActive();
+    render();
+  }
+
+  function autoActive() {
+    const sel = app.sel, g = app.g, p = curP();
+    sel.active = null;
+    if (!sel.act) return;
+    const order = sel.opts.map((o, k) => k).sort((a, b) => (sel.opts[b].color === 'gray') - (sel.opts[a].color === 'gray') || a - b);
+    for (const k of order) {
+      if (sel.assigns.some(a => a.opt === k)) continue;
+      if (I.freeCells(g, p, sel.act, sel.opts, sel.assigns, k).length) { sel.active = k; return; }
+    }
+  }
+
+  function onWell(k) {
+    const sel = app.sel, g = app.g, p = curP();
+    if (!humanTurn() || !sel.act) return;
+    const ai = sel.assigns.findIndex(a => a.opt === k);
+    if (ai >= 0) { sel.assigns.splice(ai, 1); sel.active = k; return render(); }
+    if (!I.freeCells(g, p, sel.act, sel.opts, sel.assigns, k).length) return;
+    sel.active = sel.active === k ? null : k;
+    render();
+  }
+
+  function commit() {
+    const sel = app.sel, g = app.g, p = curP();
+    if (!humanTurn() || !sel.act) return;
+    const r = I.commitTurn(g, p, sel.act, sel.assigns);
+    if (!r.ok) { app.msg = r.error; return render(); }
+    app.made[p] = r.created.map(c => ({ color: c.color, cell: c.cell }));
+    app.last = [sel.act.to].concat(r.created.map(c => c.cell));
+    app.fresh = new Set([sel.act.cardId].concat(r.created.map(c => c.id)));
+    app.flip = false;
+    proceed();
+  }
+
+  function undoTurn() {
+    if (!app.snap || !humanTurn()) return;
+    app.g = I.clone(app.snap, true);
+    app.sel = emptySel();
+    app.msg = '';
+    app.noLegal = !I.hasLegalAction(app.g, curP());
+    render();
+  }
+
+  // ------------------------------------------------------------------
+  // アイテム
+  // ------------------------------------------------------------------
+  function boardCards(s) {
+    const out = [];
+    for (let i = 0; i < I.GN; i++) for (const id of s.cells[i].stack) out.push({ id, i });
+    return out;
+  }
+  function changeColors(s, id) {
+    const c = s.cards[id];
+    return I.COLOR_ORDER.filter(k => k !== c.color && C[k].pts === C[c.color].pts && s.piles[k].length);
+  }
+  function slideCells(s, p, id) {
+    const loc = I.findCard(s, id);
+    const out = new Map();
+    if (!loc || loc.where !== 'cell') return out;
+    for (const dir of Object.keys(I.DIRS)) {
+      const nx = I.X(loc.idx) + I.DIRS[dir][0], ny = I.Y(loc.idx) + I.DIRS[dir][1];
+      if (!I.inGrid(nx, ny)) continue;
+      const j = I.idx(nx, ny);
+      if (I.canPutFor(s, j, p) && !s.cells[j].stack.length) out.set(j, dir);
+    }
+    return out;
+  }
+  function itemTargets() {
+    const it = app.sel.item, g = app.g, p = curP(), opp = 1 - p;
+    const cards = new Set(), cells = new Set();
+    if (!it) return { cards, cells };
+    // 相手がロックしたマスのカードは、リターン・スライド・チェンジ・スピンの対象にできない
+    const bc = boardCards(g).filter(a => !I.isGuarded(g, p, a.id));
+    switch (it.type) {
+      case 'spin':
+        if (it.step === 0) {
+          for (const a of bc) if (g.cards[a.id].owner === p && bc.some(b => g.cards[b.id].owner === opp && C[g.cards[b.id].color].pts === C[g.cards[a.id].color].pts)) cards.add(a.id);
+        } else {
+          const m = g.cards[it.params.mine];
+          cards.add(it.params.mine);
+          for (const b of bc) if (g.cards[b.id].owner === opp && C[g.cards[b.id].color].pts === C[m.color].pts) cards.add(b.id);
+        }
+        break;
+      case 'change': for (const a of bc) if (changeColors(g, a.id).length) cards.add(a.id); break;
+      case 'reset': for (const a of bc) cards.add(a.id); break;
+      case 'slide':
+        for (const a of bc) if (slideCells(g, p, a.id).size) cards.add(a.id);
+        if (it.step >= 1) for (const j of slideCells(g, p, it.params.cardId).keys()) cells.add(j);
+        break;
+      case 'lock':
+        for (let i = 0; i < I.GN; i++) { const c = g.cells[i]; if (I.cellExists(g, i) && !c.stack.length && !c.obj && c.lock === null) cells.add(i); }
+        break;
+      case 'remote': case 'portal':
+        for (let i = 0; i < I.GN; i++) if (I.canPutFor(g, i, p) && !g.cells[i].stack.length) cells.add(i);
+        break;
+      default: break;
+    }
+    return { cards, cells };
+  }
+  function changedCells(a, b) {
+    const out = [];
+    for (let i = 0; i < I.GN; i++) {
+      const x = a.cells[i], y = b.cells[i];
+      const ex = I.cellExists(a, i), ey = I.cellExists(b, i);
+      let diff = ex !== ey || x.lock !== y.lock || (x.obj ? x.obj.type : '') !== (y.obj ? y.obj.type : '') || x.stack.join() !== y.stack.join();
+      if (!diff) for (const id of y.stack) if (a.cards[id].owner !== b.cards[id].owner) diff = true;
+      if (diff && ey) out.push(i);
+    }
+    return out;
+  }
+  function legalUnion(s, p) {
+    const set = new Set();
+    const kinds = I.roundKinds(s.round);
+    if (kinds.place) {
+      const seen = new Set();
+      for (const id of s.hands[p]) {
+        const c = s.cards[id];
+        if (kinds.place === 'base' && !I.isBase(c.color)) continue;
+        const key = c.color + c.chip;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        I.legalPlaceCells(s, p, id).forEach(x => set.add(x));
+      }
+    }
+    if (kinds.move) for (const a of boardCards(s)) if (s.cards[a.id].owner === p) I.legalMoveCells(s, p, a.id).forEach(x => set.add(x));
+    return set;
+  }
+  function buildPreview() {
+    const it = app.sel.item, g = app.g, p = curP();
+    const c = I.clone(g, false);
+    const r = I.useItem(c, p, it.type, it.params);
+    if (!r.ok) { it.error = r.error; it.preview = null; return; }
+    it.error = '';
+    it.preview = c;
+    it.changed = changedCells(g, c);
+    const before = legalUnion(g, p), after = legalUnion(c, p);
+    it.newLegal = [...after].filter(x => !before.has(x));
+    it.legalCount = after.size;
+  }
+  function onItem(type) {
+    const g = app.g, p = curP();
+    if (!humanTurn()) return;
+    if (app.sel.item && app.sel.item.type === type) { app.sel = emptySel(); return render(); }
+    if (!I.canUseItems(g, p)) { app.msg = 'R1〜R3 はアイテムを1手番に1つまでです'; return render(); }
+    if (app.sel.act) { app.msg = 'アイテムは設置・移動の前に使います。置いたカードを戻してから選んでください'; return render(); }
+    app.sel = emptySel();
+    app.sel.item = { type, step: 0, params: {}, preview: null, error: '' };
+    app.msg = '';
+    if (type === 'all' || type === 'double') buildPreview();
+    render();
+  }
+  function onItemBoard(i, info) {
+    const it = app.sel.item, g = app.g, p = curP();
+    const tg = itemTargets();
+    const id = info.cardId;
+    switch (it.type) {
+      case 'spin':
+        if (it.step === 0 && id !== undefined && tg.cards.has(id)) { it.params = { mine: id }; it.step = 1; }
+        else if (it.step >= 1 && id === it.params.mine) { it.params = {}; it.step = 0; it.preview = null; }
+        else if (it.step >= 1 && id !== undefined && tg.cards.has(id) && g.cards[id].owner !== p) { it.params.theirs = id; it.step = 2; buildPreview(); }
+        break;
+      case 'change':
+        if (id !== undefined && tg.cards.has(id)) { it.params = { cardId: id }; it.step = 1; it.preview = null; }
+        break;
+      case 'reset':
+        if (id !== undefined && tg.cards.has(id)) { it.params = { cardId: id }; it.step = 1; buildPreview(); }
+        break;
+      case 'slide':
+        if (it.step >= 1 && tg.cells.has(i)) { it.params.dir = slideCells(g, p, it.params.cardId).get(i); it.step = 2; buildPreview(); }
+        else if (id !== undefined && tg.cards.has(id)) { it.params = { cardId: id }; it.step = 1; it.preview = null; }
+        break;
+      case 'lock': case 'remote': case 'portal':
+        if (tg.cells.has(i)) { it.params = { idx: i }; it.step = 1; buildPreview(); }
+        break;
+      default: break;
+    }
+    render();
+  }
+  function confirmItem() {
+    const it = app.sel.item, g = app.g, p = curP();
+    if (!it || !it.preview) return;
+    const before = I.clone(g);
+    const r = I.useItem(g, p, it.type, it.params);
+    if (!r.ok) { app.msg = r.error; return render(); }
+    app.last = changedCells(before, g);
+    app.flip = false;
+    app.sel = emptySel();
+    app.noLegal = !I.hasLegalAction(g, p);
+    render();
+  }
+
+  // ------------------------------------------------------------------
+  // 対戦画面の描画
+  // ------------------------------------------------------------------
+  function viewState() {
+    const it = app.sel && app.sel.item;
+    return it && it.preview ? it.preview : app.g;
+  }
+
+  const SIDE_JA = { top: '上', bottom: '下', left: '左', right: '右' };
+  // 盤のまわりの座標の枠。ワイドの辺を選んでいるときは、押すとその辺を選べる
+  function ringHTML(x, y, pickWide) {
+    const corner = (x === -1 || x === 6) && (y === -1 || y === 6);
+    if (corner) return '<div class="cell"></div>';
+    const lab = `<span class="lab">${y === -1 || y === 6 ? 'ABCDEF'[x] : y + 1}</span>`;
+    if (!pickWide) return `<div class="cell">${lab}</div>`;
+    const sd = y === -1 ? 'top' : y === 6 ? 'bottom' : x === -1 ? 'left' : 'right';
+    const first = (sd === 'top' || sd === 'bottom') ? x === 0 : y === 0;
+    return `<div class="cell side-pick" data-side="${sd}" role="button" tabindex="${first ? 0 : -1}" title="${SIDE_JA[sd]}側に列を足す" aria-label="${SIDE_JA[sd]}側に列を足す">${lab}</div>`;
+  }
+
+  function boardHTML() {
+    const g = app.g, v = viewState(), sel = app.sel, p = curP();
+    const hum = humanTurn();
+    const it = sel.item;
+    const legal = new Set(hum && !it ? sel.legal : []);
+    const free = new Set(), freeAlt = new Set();
+    if (hum && sel.act && !it) {
+      sel.opts.forEach((o, k) => {
+        if (sel.assigns.some(a => a.opt === k)) return;
+        for (const c of I.freeCells(g, p, sel.act, sel.opts, sel.assigns, k)) (k === sel.active ? free : freeAlt).add(c);
+      });
+    }
+    const tg = hum && it && !it.preview ? itemTargets() : { cards: new Set(), cells: new Set() };
+    const changed = new Set(it && it.preview ? it.changed : []);
+    const newLegal = new Set(it && it.preview ? it.newLegal : []);
+    const last = new Set(it ? [] : app.last);
+    const picked = new Set();
+    if (it) { if (it.params.mine !== undefined) picked.add(it.params.mine); if (it.params.cardId !== undefined && !it.preview) picked.add(it.params.cardId); }
+    // 仮置き
+    const tent = {};
+    const addT = (i, h) => { (tent[i] = tent[i] || []).push(h); };
+    if (sel.act && !it) {
+      addT(sel.act.to, cardHTML(g, sel.act.cardId, 'tent', 'data-main="1"'));
+      const used = {};
+      sel.assigns.forEach((a, k) => {
+        const col = sel.opts[a.opt].color;
+        const n = used[col] || 0;
+        used[col] = n + 1;
+        const id = g.piles[col][n];
+        if (id === undefined) return;
+        const fake = { cards: g.cards.map(c => (c.id === id ? Object.assign({}, c, { owner: p }) : c)), settings: g.settings };
+        addT(a.cell, cardHTML(fake, id, 'tent', `data-tent="${k}"`));
+      });
+    }
+    // 初期配置中の裏向きカード
+    const backs = {};
+    let spot = -1, spotP = null, spotChosen = false;
+    if (g.phase === 'initial' && app.init) {
+      const ini = app.init;
+      [0, 1].forEach(pp => { if (ini.picks[pp] !== null) backs[I.START[pp]] = pp; });
+      // 今選んでいるプレイヤーのカードが置かれるマスに目印を出す
+      const cp = ini.order[ini.step];
+      if (!ini.blind && cp !== undefined && app.humans[cp] && ini.picks[cp] === null) { spot = I.START[cp]; spotP = cp; spotChosen = ini.chosen !== null; }
+    }
+    const backHTML = (pp, cls) => `<div class="card back${pp === 1 ? ' rot' : ''}${cls ? ' ' + cls : ''}" title="${esc(nameOf(pp))}の裏向きのカード"><span class="who">${esc(nameOf(pp))}</span></div>`;
+    const pickWide = hum && it && it.type === 'wide' && !g.wide;
+    let html = '';
+    for (let y = -1; y <= 6; y++) {
+      for (let x = -1; x <= 6; x++) {
+        const i = I.idx(x, y);
+        if (!I.cellExists(v, i)) { html += ringHTML(x, y, pickWide); continue; }
+        const c = v.cells[i];
+        const cls = ['cell', I.inMain(x, y) ? 'main' : 'wide'];
+        if (legal.has(i) && !(sel.act && sel.act.to === i) && !free.has(i) && !freeAlt.has(i)) cls.push('legal', 'click');
+        if (free.has(i)) cls.push('free', 'click');
+        else if (freeAlt.has(i)) cls.push('free', 'alt', 'click');
+        if (tg.cells.has(i)) cls.push('legal', 'click');
+        if (newLegal.has(i)) cls.push('legal');
+        if (changed.has(i)) cls.push('changed');
+        if (last.has(i)) cls.push('last');
+        if (i === spot) cls.push('spot');
+        const cards = [];
+        for (const id of c.stack) {
+          const extra = [];
+          if (sel.act && !it && sel.act.type === 'move' && sel.act.cardId === id) extra.push('ghost');
+          if (tg.cards.has(id)) extra.push('cand');
+          if (picked.has(id) || (sel.card === id && !it)) extra.push('pick');
+          if (app.fresh.has(id) && !it) extra.push('fresh');
+          if (app.flip && (i === I.START[0] || i === I.START[1])) extra.push('flip');
+          if (I.roundKinds(g.round).move && hum && !it && g.cards[id].owner === p) extra.push('cand');
+          if (g.phase === 'play' && p !== null && v.cards[id].owner !== p) extra.push('away');
+          cards.push(cardHTML(v, id, extra.join(' '), `data-card="${id}"`));
+        }
+        if (tent[i]) cards.push(...tent[i]);
+        if (backs[i] !== undefined) cards.push(backHTML(backs[i], ''));
+        if (i === spot && spotChosen) cards.push(backHTML(spotP, 'tent'));
+        let inner = '';
+        const visible = cards.filter(h => !h.includes('ghost'));
+        const list = visible.length && cards.length > 2 ? visible : cards;
+        if (list.length === 1) inner = list[0];
+        else if (list.length >= 2) inner = `<div class="stack2">${list.slice(0, 2).join('')}</div>`;
+        if (c.obj) inner += `<div class="obj${c.obj.owner === 1 ? ' rot' : ''}${c.obj.owner === p ? ' mine' : ''}" title="${esc(I.ITEM[c.obj.type].name + '（' + v.settings.names[c.obj.owner] + '）')}">${ICON[c.obj.type]}</div>`;
+        // カードのあるロックマスは、カードを隠さないよう角の小さな印にする（カードは相手のアイテムの対象外）
+        if (c.lock !== null) inner += `<div class="lockmark${c.lock === 1 ? ' rot' : ''}${list.length ? ' on-card' : ''}" title="${esc('ロック（' + v.settings.names[c.lock] + '）' + (list.length ? '：このマスのカードは相手のアイテムの対象外' : ''))}">${ICON.lock}</div>`;
+        html += `<div class="${cls.join(' ')}" data-cell="${i}" title="${I.cellName(i)}">${inner}</div>`;
+      }
+    }
+    const tag = it && it.preview ? '<span class="preview-tag">プレビュー</span>' : '';
+    return `<div class="board-wrap"><div class="mat" role="grid" aria-label="盤面">${tag}${html}</div></div>`;
+  }
+
+  const sideOf = p => (p === 1 ? 'opp' : 'me');
+  const sbtn = (doId, label, cls, dis) => `<button class="btn ${cls || ''}" data-do="${doId}" ${dis ? 'disabled' : ''}>${label}</button>`;
+
+  function handHTML(p) {
+    const g = app.g;
+    const role = [];
+    if (g.phase !== 'draft') role.push(p === g.first ? '先攻' : '後攻');
+    let canPick = () => false;
+    let selId = null;
+    if (g.phase === 'initial' && app.init && !app.init.blind) {
+      const ini = app.init;
+      if (ini.order[ini.step] === p && app.humans[p]) { canPick = id => I.isBase(g.cards[id].color); selId = ini.chosen; }
+    } else if (humanTurn() && curP() === p && !app.sel.item) {
+      const kinds = I.roundKinds(g.round);
+      canPick = id => !!kinds.place && (kinds.place === 'any' || I.isBase(g.cards[id].color));
+      selId = app.sel.from === null ? app.sel.card : null;
+    }
+    const myTurn = g.phase === 'play' && humanTurn() && curP() === p;
+    const cards = g.hands[p].map(id => {
+      const cls = [];
+      if (canPick(id)) cls.push('can');
+      else if (myTurn) cls.push('dim');
+      if (selId === id) cls.push('sel');
+      return cardHTML(g, id, cls.join(' '), `data-hand="${p}:${id}" role="button" tabindex="0"`, true);
+    }).join('');
+    const total = g.hands[p].reduce((a, id) => a + C[g.cards[id].color].pts, 0);
+    const active = (g.phase === 'play' && curP() === p) || (g.phase === 'initial' && app.init && !app.init.blind && app.init.order[app.init.step] === p);
+    return `<div class="hblock ${sideOf(p)}${active ? ' active' : ''}">` +
+      `<div class="head"><b>${esc(nameOf(p))}の手札</b><span class="tag">${role.join('・')}${role.length ? '・' : ''}${g.hands[p].length}枚 ${ptsText(total)}点</span></div>` +
+      `<div class="hand">${cards || '<span class="empty">手札はありません</span>'}</div>` +
+      `<div class="acts">${actionButtons(p)}</div></div>`;
+  }
+
+  // 手番の操作ボタン（その手番のプレイヤーの手札の下に出す）
+  function actionButtons(p) {
+    const g = app.g;
+    if (g.phase === 'initial') {
+      const ini = app.init;
+      if (ini && !ini.blind && ini.order[ini.step] === p && app.humans[p]) return sbtn('init-ok', '裏向きで出す', 'primary', ini.chosen === null);
+      return '';
+    }
+    if (g.phase !== 'play' || curP() !== p || !humanTurn()) return '';
+    const sel = app.sel;
+    const undo = app.snap && changedSinceSnap() ? sbtn('undo', '手番を戻す') : '';
+    if (sel.item) {
+      const it = sel.item, nm = I.ITEM[it.type].name;
+      let out = '';
+      if (it.type === 'change' && it.step >= 1) {
+        out += changeColors(g, it.params.cardId).map(col => {
+          const top = g.piles[col][0];
+          const ch = g.cards[top].chip ? `・${C[g.cards[top].chip].name}` : '';
+          return `<button class="btn" data-color="${col}" aria-pressed="${it.params.color === col}"><span class="sw p-${col}"></span>${C[col].name}${ch}</button>`;
+        }).join('');
+      }
+      return out + sbtn('item-ok', `${nm}を使う`, 'primary', !it.preview) + sbtn('item-cancel', 'やめる');
+    }
+    if (app.noLegal) return sbtn('pass', 'パス', 'primary') + undo;
+    if (!sel.act) return undo;
+    const chk = I.checkAssigns(g, p, sel.act, sel.opts, sel.assigns);
+    return sbtn('commit', '決定', 'primary', !chk.ok) + sbtn('auto', 'おまかせ') + sbtn('clear', '置き直す') + undo;
+  }
+
+  function itemsHTML(p) {
+    const g = app.g;
+    const list = g.items[p];
+    let body;
+    if (!g.settings.sets.length) body = '<span class="muted small">アイテムなし</span>';
+    else if (!list.length) body = '<span class="muted small">ドラフト前です</span>';
+    else {
+      const can = humanTurn() && curP() === p && I.canUseItems(g, p) && !app.sel.act;
+      body = '<div class="ilist">' + list.map(o => {
+        const info = I.ITEM[o.type];
+        const cls = ['item'];
+        if (o.used) cls.push('used');
+        else if (can) cls.push('can');
+        if (app.sel.item && app.sel.item.type === o.type && curP() === p) cls.push('on');
+        const attr = !o.used && curP() === p && humanTurn() ? `data-item="${o.type}"` : 'tabindex="-1" aria-disabled="true"';
+        const tip = `${info.name}：${info.desc}${o.used ? `（R${o.round}で使用）` : ''}`;
+        return `<button class="${cls.join(' ')}" ${attr} title="${esc(tip)}">${info.name}${o.used ? `<small>R${o.round}</small>` : ''}</button>`;
+      }).join('') + '</div>';
+    }
+    const left = list.filter(o => !o.used).length;
+    return `<div class="iblock ${sideOf(p)}"><div class="head"><b>アイテム</b><span class="tag">${list.length ? `残り${left}` : ''}</span></div>${body}</div>`;
+  }
+
+  function wellsHTML() {
+    const sel = app.sel, g = app.g, p = curP();
+    const wells = sel.opts.map((o, k) => {
+      const ai = sel.assigns.findIndex(a => a.opt === k);
+      const free = ai < 0 ? I.freeCells(g, p, sel.act, sel.opts, sel.assigns, k) : [];
+      const cls = ['well', 'p-' + o.color];
+      if (ai >= 0) cls.push('done');
+      else if (!free.length) cls.push('off');
+      if (sel.active === k) cls.push('active');
+      if (o.color === 'gray') cls.push('must');
+      const before = ai >= 0 ? sel.assigns.slice(0, ai) : sel.assigns;
+      const nextId = g.piles[o.color][before.filter(a => sel.opts[a.opt].color === o.color).length];
+      const chip = nextId !== undefined && g.cards[nextId].chip ? `・${C[g.cards[nextId].chip].name}チップ` : '';
+      const reads = o.readings.map(r => C[r].name).join('＋');
+      const dir = o.axis[1] === 0 ? 'よこ' : o.axis[0] === 0 ? 'たて' : 'ななめ';
+      let state;
+      if (ai >= 0) state = `${I.cellName(sel.assigns[ai].cell)}に置く`;
+      else if (!g.piles[o.color].length) state = '在庫切れ';
+      else if (!free.length) state = '置けるマスなし';
+      else state = `${ptsText(C[o.color].pts)}点${chip}`;
+      const tip = free.length ? `置けるマス：${free.map(I.cellName).join('、')}` : '';
+      return `<button class="${cls.join(' ')}" data-well="${k}" ${!free.length && ai < 0 ? 'disabled' : ''} title="${esc(tip)}"><span class="blob"></span><span class="t"><b>${C[o.color].name}</b><small>${reads}・${dir}・${state}</small></span></button>`;
+    }).join('');
+    return wells || '<span class="muted">作れる色はありません</span>';
+  }
+
+  // 各プレイヤーのパレット：自分の手番は作れる色の候補、それ以外は前の手番で作った色
+  function paletteHTML(p) {
+    const g = app.g, sel = app.sel;
+    const turn = g.phase === 'play' && curP() === p;
+    let inner;
+    if (turn && humanTurn() && sel.act && !sel.item) inner = wellsHTML();
+    else if (turn && !app.humans[p]) inner = '<span class="muted">CPUが考えています…</span>';
+    else if (turn && humanTurn()) inner = '<span class="muted">置くマスを決めると、作れる色がここに並びます</span>';
+    else if (app.made[p] && app.made[p].length) {
+      inner = `<span class="muted cap">${esc(nameOf(p))}が前の手番で作った色</span>` + app.made[p].map(m =>
+        `<span class="well mini p-${m.color}"><span class="blob"></span><span class="t"><b>${C[m.color].name}</b><small>${I.cellName(m.cell)}</small></span></span>`).join('');
+    } else inner = `<span class="muted">${esc(nameOf(p))}の手番に、作れる色がここに並びます</span>`;
+    return `<div class="palette ${sideOf(p)}"><div class="tray" aria-label="${esc(nameOf(p))}のパレット">${inner}</div></div>`;
+  }
+
+  function roundsHTML() {
+    const g = app.g;
+    return `<div class="rounds" aria-label="ラウンド">${[1, 2, 3, 4].map(r => `<span class="${g.round === r && g.phase === 'play' ? 'on' : g.round > r || g.phase === 'end' ? 'done' : ''}">${I.ROUND_LABEL[r]}</span>`).join('')}</div>`;
+  }
+
+  function statusHTML() {
+    const g = app.g;
+    let who = '', say = '', acts = '';
+    if (g.phase === 'draft') {
+      who = 'アイテムのドラフト';
+      say = `${esc(nameOf(g.draftFirst))}が選んでいます。`;
+    } else if (g.phase === 'initial') {
+      const ini = app.init;
+      const p = ini ? ini.order[ini.step] : null;
+      who = '初期配置';
+      if (p !== null && p !== undefined) {
+        say = `${esc(nameOf(p))}：手札から原色か白を1枚選び、手札の下の「裏向きで出す」を押してください。${I.cellName(I.START[p])}（${p === 0 ? '手前' : '奥'}側）に裏向きで置かれ、両者がそろってから公開します。`;
+      }
+    } else if (g.phase === 'end') {
+      const r = g.result;
+      who = r.winner === null ? '引き分け' : `${esc(nameOf(r.winner))}の勝ち`;
+      say = `${r.scores[0].total} 対 ${r.scores[1].total}`;
+      acts = sbtn('show-result', '結果を見る', 'primary') + sbtn('again', '同じ設定でもう一度') + sbtn('to-setup', '設定に戻る');
+    } else {
+      const p = curP();
+      const role = p === g.first ? '先攻' : '後攻';
+      who = `${esc(nameOf(p))}（${role}）の手番`;
+      if (!app.humans[p] || app.busy) {
+        say = 'CPUが考えています…';
+      } else {
+        const sel = app.sel;
+        const left = I.unusedItems(g, p).length;
+        const canItem = left && I.canUseItems(g, p);
+        if (sel.item) {
+          const it = sel.item, nm = I.ITEM[it.type].name;
+          const guide = {
+            all: '使うと、この手番は斜め方向でも合成できます。',
+            double: '使うと、この手番は生成した色をカードのあるマスに重ねて置けます。',
+            spin: it.step === 0 ? '自分のカードを選んでください（相手に同じ点数のカードがあるもの）。' : it.step === 1 ? '入れ替える相手のカードを選んでください。' : '所有者が入れ替わります。',
+            change: it.step === 0 ? '交換する盤上のカードを選んでください。' : '手札の下で交換する色を選んでください（在庫の山の一番上と入れ替えます）。',
+            reset: it.step === 0 ? '手札に戻すカードを選んでください。' : '選んだカードを持ち主の手札に戻します。',
+            slide: it.step === 0 ? '動かすカードを選んでください。' : it.step === 1 ? '動かす先のマスを選んでください。' : '1マス動かします（合成は起きません）。',
+            lock: it.step === 0 ? 'ロックする空きマスを選んでください。' : '相手はこのマスに設置・移動・生成できなくなります。',
+            wide: it.step === 0 ? '盤のまわりの座標の枠を押して、列を足す辺（上下左右）を選んでください。' : `${SIDE_JA[it.params.side]}側に自分専用の列が増えます。ほかの辺の枠を押すと選び直せます。`,
+            remote: it.step === 0 ? 'リモートを置く空きマスを選んでください。' : 'このマスを透過して合成できます。このマスに触れる並び（上下左右のカードを使う並びや、このマスを通る並び）で作った色は、周り8マスにも置けます。',
+            portal: it.step === 0 ? 'ポータルを置く空きマスを選んでください。' : '生成した色をこのマスの上下左右にも置けるようになります。',
+          }[it.type];
+          say = `<b>${nm}</b>：${guide}`;
+          if (it.preview) say += ` 使った後に合成できるマス：${it.legalCount}か所${it.newLegal.length ? `（新たに${it.newLegal.length}か所）` : ''}。`;
+          if (it.error) say += `<br><span class="err">${esc(it.error)}</span>`;
+        } else if (app.noLegal) {
+          say = '合成できるマスがありません。アイテムで状況を変えるか、パスしてください。';
+        } else if (!sel.act) {
+          const what = { 1: '手札の原色か白を1枚選んでください', 2: '動かす自分のカードを盤上から選んでください', 3: '手札の原色か白を1枚選んでください', 4: '手札のカード、または盤上の自分のカードを選んでください' }[g.round];
+          say = sel.card !== null ? `光っているマスに置けます（${sel.legal.length}か所）。` : `${what}。` + (canItem ? `アイテムはその前に使えます（残り${left}個${g.round < 4 ? '、この手番は1つまで' : '、R4は無制限'}）。` : '');
+        } else {
+          const placed = sel.assigns.length;
+          const grays = sel.assigns.filter(a => sel.opts[a.opt].color === 'gray').length;
+          say = `作れる色が${sel.opts.length}つあります。点線のマスを押すと、そこに作れる色を置きます（濃い点線はパレットで選んでいる色の置き場）。同じ色は置いた順に在庫の山の上から使うので、チップ付きのカードをどこに置くかも順番で決められます。置き終えたら「決定」を押してください（今は${placed}枚。置かない色があってもかまいません）。`;
+          if (sel.need > grays) say += `<br><span class="err">灰色をあと${sel.need - grays}枚置く必要があります。</span>`;
+          const chk = I.checkAssigns(g, p, sel.act, sel.opts, sel.assigns);
+          const proj = chk.ok ? projected() : null;
+          if (proj) say += `<br>決定後の得点：${esc(nameOf(0))} ${proj[0].total}・${esc(nameOf(1))} ${proj[1].total}`;
+        }
+      }
+    }
+    const err = app.msg ? `<div class="err">${esc(app.msg)}</div>` : '';
+    return `<div class="status" aria-live="polite"><div class="who">${who}</div><div class="say">${say}</div>${err}${acts ? `<div class="acts">${acts}</div>` : ''}</div>`;
+  }
+  function changedSinceSnap() {
+    const g = app.g, s = app.snap;
+    return g.turn && s.turn && (g.turn.itemsUsed !== s.turn.itemsUsed);
+  }
+  function projected() {
+    const sel = app.sel;
+    const c = I.clone(app.g);
+    const r = I.commitTurn(c, curP(), sel.act, sel.assigns);
+    return r.ok ? I.score(c) : null;
+  }
+
+  function scoresHTML() {
+    const g = app.g;
+    const sc = I.score(g);
+    const p = curP();
+    return `<div class="panel"><h3>得点</h3><div class="scores">${[0, 1].map(k => {
+      const s = sc[k];
+      const br = `盤面 ${s.board}・ボーナス ${s.bonus}・手札 ${s.hand}${s.komi ? '・コミ ' + s.komi : ''}`;
+      const role = g.phase === 'draft' ? '' : (k === g.first ? '先攻' : '後攻');
+      return `<div class="score${p === k ? ' turn' : ''}"><span class="nm">${esc(nameOf(k))}<small>${role}</small></span><span class="tot">${s.total}</span><span class="br">${br}</span></div>`;
+    }).join('')}</div></div>`;
+  }
+
+  function logHTML() {
+    const g = app.g;
+    const rows = g.log.slice(-120).map(l => `<p><span class="r">${l.round > 4 ? '終了' : l.round ? 'R' + l.round : '準備'}</span>${esc(l.msg)}</p>`).join('');
+    return `<div class="panel"><h3>記録</h3><div class="log" id="log">${rows}</div></div>`;
+  }
+
+  function stockHTML() {
+    const g = viewState();
+    const groups = [['red', 'blue', 'yellow', 'white'], ['purple', 'orange', 'green', 'pink', 'aqua', 'lemon'], ['black', 'lime'], ['gray']];
+    const rows = groups.map(gr => gr.map(col => {
+      const pile = g.piles[col];
+      const fan = pile.length ? pile.map(id => cardHTML(g, id, '', '')).join('') : '<span class="none">なし</span>';
+      return `<div class="pile"><span class="lbl">${C[col].name}<small>${pile.length}枚</small></span><div class="fan">${fan}</div></div>`;
+    }).join('')).join('<div class="sep" role="presentation"></div>');
+    return `<div class="panel"><h3>在庫（左端が次に引くカード）</h3><div class="piles">${rows}</div><p class="note">右上の四角がチップ。公共の原色と残りの白も、チェンジで盤に出せます。</p></div>`;
+  }
+
+  function topbarHTML() {
+    return `<div class="topbar"><span class="name">色彩陣取り</span><button class="btn small" data-do="rules">ルール</button><button class="btn small" data-do="to-setup">設定に戻る</button></div>`;
+  }
+
+  function renderGame() {
+    $('scr-game').innerHTML = topbarHTML() +
+      `<div class="table">
+        <div class="col-l"><div class="a-scores">${scoresHTML()}</div><div class="a-stock">${stockHTML()}</div></div>
+        <div class="a-center">
+          <div class="seat opp">${itemsHTML(1)}${handHTML(1)}</div>
+          ${paletteHTML(1)}
+          ${boardHTML()}
+          ${paletteHTML(0)}
+          <div class="seat me">${handHTML(0)}${itemsHTML(0)}</div>
+        </div>
+        <div class="col-r"><div class="a-status">${roundsHTML()}${statusHTML()}</div><div class="a-log">${logHTML()}</div></div>
+      </div>`;
+    const lg = $('log');
+    if (lg) lg.scrollTop = lg.scrollHeight;
+    renderOverlay();
+  }
+
+  // ------------------------------------------------------------------
+  // 重ねる画面（ドラフト・目隠し・結果・ルール）
+  // ------------------------------------------------------------------
+  function renderOverlay() {
+    const ov = $('overlay');
+    const g = app.g;
+    let html = '';
+    if (app.dialog === 'leave') html = leaveHTML();
+    else if (app.dialog === 'rules') html = rulesHTML();
+    else if (app.screen === 'game' && g && g.phase === 'draft' && app.humans[g.draftFirst]) html = draftHTML();
+    else if (app.screen === 'game' && g && g.phase === 'initial' && app.init && app.init.blind) {
+      const p = app.init.order[app.init.step];
+      html = `<div class="dialog" role="dialog" aria-modal="true"><h2>${esc(nameOf(p))}の番です</h2><p>${esc(nameOf(1 - p))}の選んだカードは裏向きで伏せてあります。${esc(nameOf(p))}に画面を渡してください。</p><div class="row"><button class="btn primary" data-do="blind-ok">${esc(nameOf(p))}が選ぶ</button></div></div>`;
+    } else if (app.dialog === 'result' && g && g.phase === 'end') html = resultHTML();
+    ov.innerHTML = html;
+    ov.hidden = !html;
+  }
+
+  function leaveHTML() {
+    const sim = app.screen === 'sim';
+    const title = sim ? 'シミュレーションを中止しますか？' : '対戦を終了しますか？';
+    const body = sim ? '集計の途中で設定画面に戻ります。ここまでの結果は残りません。' : '設定画面に戻ると、いまの対戦の進行は失われます。';
+    return `<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="leave-t"><h2 id="leave-t">${title}</h2><p>${body}</p>
+      <div class="row"><button class="btn primary" data-do="leave-ok">設定に戻る</button><button class="btn" data-do="close-dialog">${sim ? '続ける' : '対戦を続ける'}</button></div></div>`;
+  }
+
+  function draftHTML() {
+    const g = app.g, df = g.draftFirst, other = 1 - df;
+    const sets = I.draftSets(g);
+    const rows = sets.map(set => `<div class="draftset"><span class="sn">セット${set.id}</span><div class="draftpair">${set.items.map(t =>
+      `<button class="dpick" data-draft="${set.id}|${t}" aria-pressed="${app.draft[set.id] === t}"><b>${I.ITEM[t].name}</b><small>${I.ITEM[t].desc}</small></button>`).join('')}</div></div>`).join('');
+    const done = sets.every(set => app.draft[set.id]);
+    return `<div class="dialog wide" role="dialog" aria-modal="true"><h2>アイテムのドラフト</h2>
+      <p>${esc(nameOf(df))}がドラフトの先手です。各セットから1つずつ選んでください。選ばなかった方は${esc(nameOf(other))}のものになり、${esc(nameOf(other))}は毎ラウンド先攻になります。</p>
+      ${rows}
+      <div class="row"><button class="btn primary" data-do="draft-ok" ${done ? '' : 'disabled'}>この組み合わせで決定</button><button class="btn" data-do="draft-random">おまかせ</button></div></div>`;
+  }
+
+  function resultHTML() {
+    const g = app.g, r = g.result;
+    const head = r.winner === null ? '引き分け' : `${esc(nameOf(r.winner))}の勝ち`;
+    const row = (label, key) => `<tr><td>${label}</td><td>${r.scores[0][key]}</td><td>${r.scores[1][key]}</td></tr>`;
+    return `<div class="dialog" role="dialog" aria-modal="true"><h2>${head}</h2>
+      <div class="result"><table><thead><tr><th></th><th>${esc(nameOf(0))}</th><th>${esc(nameOf(1))}</th></tr></thead><tbody>
+      ${row('盤面', 'board')}${row('かたまりボーナス', 'bonus')}${row('手札', 'hand')}${row('コミ', 'komi')}${row('合計', 'total')}</tbody></table></div>
+      <div class="row"><button class="btn primary" data-do="again">同じ設定でもう一度</button><button class="btn" data-do="close-dialog">盤面を見る</button><button class="btn" data-do="to-setup">設定に戻る</button></div></div>`;
+  }
+
+  function rulesHTML() {
+    const recipes = I.GEN_COLORS.map(k => `<div class="recipe">${swatchCard(k, 32)}<div class="how"><b>${C[k].name}</b>　${recipeText(k)}</div><span class="pp">${ptsText(C[k].pts)}点</span></div>`).join('');
+    return `<div class="dialog" role="dialog" aria-modal="true"><h2>ルール早見</h2><div class="rules">
+      <ul>
+        <li>全4ラウンド。R1とR3は手札の原色か白を設置、R2は盤上の自分のカードを移動、R4は手札のどのカードでも設置するか、移動。白は初期配置から使えます。</li>
+        <li>設置も移動も、合成が起きるマスにしか行えません（移動はどこへでもワープ可）。</li>
+        <li>置いたカードを含む、縦か横に連続した2〜3枚がレシピに合うと、その並びの端の空きマスに新しい色を置けます。元のカードは残り、生成した色は連鎖しません。</li>
+        <li>2色を混ぜた3点の色（紫・橙・緑・桃・水・檸檬）にはチップ付きのカードがあり、持ち主だけがチップの色としても使えます。</li>
+        <li>灰色（黒＋白）は置けるなら必ず作ります。作った人の向きで置かれ、−3点です。</li>
+        <li>同じ色が上下左右につながると、かたまりボーナス。2枚なら1枚につき2点、3枚（一直線でもL字でも）なら1枚につき3点が、それぞれのカードの持ち主に入ります。重なった同じ色もつながりに数えます。手札のカードも点数に入ります。</li>
+        <li>アイテムは設置・移動の前に使います。R1〜R3は1手番に1つまで、R4は無制限。</li>
+      </ul>
+      <div class="recipes">${recipes}</div>
+      <h3>アイテム</h3>
+      <ul>${I.ITEM_ORDER.map(t => `<li><b>${I.ITEM[t].name}</b>：${I.ITEM[t].desc}</li>`).join('')}</ul>
+      <div class="row"><button class="btn primary" data-do="close-dialog">閉じる</button></div></div></div>`;
+  }
+
+  // ------------------------------------------------------------------
+  // シミュレーション
+  // ------------------------------------------------------------------
+  function startSim() {
+    const st = app.setup;
+    const settings = { sets: st.sets.slice(), komi: st.komi, gray: st.gray, names: ['先攻', '後攻'] };
+    const level = I.AI_LEVELS[st.level] ? st.level : 'normal';
+    app.sim = { settings, level, total: Number(st.games) || 200, done: 0, recs: [], running: true, agg: null, seed0: (Date.now() >>> 0) % 1000000000, t0: performance.now() };
+    app.screen = 'sim';
+    render();
+    setTimeout(simStep, 30);
+  }
+  function simStep() {
+    const sm = app.sim;
+    if (!sm || !sm.running || app.screen !== 'sim') return;
+    const t0 = performance.now();
+    while (performance.now() - t0 < 45 && sm.done < sm.total) {
+      try { const ai = I.AI_LEVELS[sm.level]; sm.recs.push(I.simulateGame(sm.settings, sm.seed0 + sm.done, [ai, ai])); } catch (e) { console.error(e); }
+      sm.done++;
+    }
+    if (sm.done >= sm.total) { sm.running = false; sm.agg = I.aggregate(sm.recs, sm.settings); render(); return; }
+    const bar = document.querySelector('#simprog i');
+    const txt = $('simtxt');
+    if (bar) bar.style.width = (sm.done / sm.total * 100) + '%';
+    if (txt) txt.textContent = `${sm.done} / ${sm.total} 試合`;
+    setTimeout(simStep, 0);
+  }
+  function stopSim() {
+    const sm = app.sim;
+    if (!sm || !sm.running) return;
+    sm.running = false;
+    sm.agg = sm.recs.length ? I.aggregate(sm.recs, sm.settings) : null;
+    render();
+  }
+
+  function winBarHTML(a) {
+    const parts = [
+      { v: a.wins[0], key: 's1', label: '先攻の勝ち' },
+      { v: a.draws, key: 's0', label: '引き分け' },
+      { v: a.wins[1], key: 's2', label: '後攻の勝ち' },
+    ].filter(x => x.v > 0);
+    return `<div class="hbar" role="img" aria-label="勝敗の内訳">${parts.map(pt =>
+      `<span style="flex:${pt.v} 1 0;background:var(--${pt.key});color:var(--on-${pt.key})" title="${pt.label}：${pt.v}試合（${pct(pt.v / a.n)}）">${pt.v / a.n >= 0.15 ? pct(pt.v / a.n) : ''}</span>`).join('')}</div>`;
+  }
+
+  function niceMax(v) {
+    if (v <= 4) return 4;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) { const r = m * p; return r % 2 ? r + 1 : r; }
+    return v;
+  }
+  function gridHTML(yMax) {
+    return [0, yMax / 2, yMax].map(v => `<div class="gl" style="bottom:${v / yMax * 100}%"><span>${v}</span></div>`).join('');
+  }
+
+  function histogramHTML(diffs) {
+    const step = 3;
+    const bins = new Map();
+    let lo = -1, hi = 1;
+    for (const d of diffs) { const k = Math.round(d / step); bins.set(k, (bins.get(k) || 0) + 1); lo = Math.min(lo, k); hi = Math.max(hi, k); }
+    const yMax = niceMax(Math.max(1, ...bins.values()));
+    const nb = hi - lo + 1;
+    const every = nb > 24 ? 4 : nb > 12 ? 2 : 1;
+    let bars = '', labels = '';
+    for (let k = lo; k <= hi; k++) {
+      const c = bins.get(k) || 0;
+      const key = k > 0 ? 's1' : k < 0 ? 's2' : 's0';
+      const range = `${sgn(k * step - 1)}〜${sgn(k * step + 1)}`;
+      bars += `<div class="bin">${c ? `<i style="height:${c / yMax * 100}%;background:var(--${key})" title="得点差 ${range}：${c}試合"></i>` : ''}</div>`;
+      labels += `<span>${(k - lo) % every === 0 || k === 0 ? (k === 0 ? '0' : sgn(k * step)) : ''}</span>`;
+    }
+    return `<div class="vchart" role="img" aria-label="得点差の分布"><div class="plot">${gridHTML(yMax)}${bars}</div><div class="xl">${labels}</div></div>`;
+  }
+
+  function legalHTML(rows) {
+    const yMax = niceMax(Math.max(1, ...rows.map(r => r.avg)));
+    let bars = '', labels = '';
+    for (let rd = 1; rd <= 4; rd++) {
+      const f = rows.find(x => x.round === rd && x.seat === 0), s = rows.find(x => x.round === rd && x.seat === 1);
+      bars += `<div class="bin grp"><i style="height:${f.avg / yMax * 100}%;background:var(--s1)" title="R${rd} 先攻：平均 ${f.avg.toFixed(1)}手"></i><i style="height:${s.avg / yMax * 100}%;background:var(--s2)" title="R${rd} 後攻：平均 ${s.avg.toFixed(1)}手"></i></div>`;
+      labels += `<span>${I.ROUND_LABEL[rd]}</span>`;
+    }
+    return `<div class="vchart" role="img" aria-label="ラウンドごとの合法手の数"><div class="plot">${gridHTML(yMax)}${bars}</div><div class="xl">${labels}</div></div>`;
+  }
+
+  function renderSim() {
+    const sm = app.sim;
+    const st = sm.settings;
+    const summary = `アイテム：${st.sets.length ? st.sets.map(s => 'セット' + s).join('・') : 'なし'}　コミ：${st.komi}　灰色ルール：${st.gray ? 'オン' : 'オフ'}　CPUの強さ：${I.AI_LABEL[sm.level] || 'ふつう'}`;
+    const head = `<div class="sim-head"><h2>シミュレーション</h2>
+      ${sm.running ? '<button class="btn" data-do="sim-stop">中止して集計</button>' : '<button class="btn primary" data-do="sim-again">もう一度</button>'}
+      <button class="btn" data-do="to-setup">設定に戻る</button></div>
+      <p class="muted" style="margin:0 0 10px">${summary}</p>`;
+    if (sm.running || !sm.agg) {
+      $('scr-sim').innerHTML = head + `<div class="panel"><div class="progress" id="simprog"><i style="width:${sm.done / sm.total * 100}%"></i></div><p class="muted" id="simtxt" style="margin:8px 0 0">${sm.done} / ${sm.total} 試合</p>${!sm.running && !sm.agg ? '<p>集計できる試合がありません。</p>' : ''}</div>`;
+      return;
+    }
+    const a = sm.agg;
+    const komiSuggest = Math.round((st.komi + a.avgDiff) * 2) / 2;
+    const balanced = Math.abs(a.avgDiff) < 0.5;
+    const tiles = `<div class="tiles">
+      <div class="panel tile"><span class="lab">先攻の勝率</span><span class="val">${pct(a.wins[0] / a.n)}</span><span class="sub">${a.wins[0]}勝（ドラフト後手）</span></div>
+      <div class="panel tile"><span class="lab">後攻の勝率</span><span class="val">${pct(a.wins[1] / a.n)}</span><span class="sub">${a.wins[1]}勝（ドラフト先手）</span></div>
+      <div class="panel tile"><span class="lab">平均得点差（先攻−後攻）</span><span class="val">${sgn(a.avgDiff)}</span><span class="sub">先攻 ${a.avgScore[0].toFixed(1)}点・後攻 ${a.avgScore[1].toFixed(1)}点（コミ込み）</span></div>
+      <div class="panel tile"><span class="lab">コミの目安</span><span class="val">${balanced ? st.komi : komiSuggest}</span><span class="sub">${balanced ? '今のコミでほぼ釣り合っています' : `平均得点差が0になる値（今は${st.komi}）`}</span></div>
+    </div>`;
+    const legalTable = `<div class="tbl"><table><thead><tr><th>ラウンド</th><th class="r">先攻の平均</th><th class="r">後攻の平均</th><th class="r">パス率</th></tr></thead><tbody>${[1, 2, 3, 4].map(rd => {
+      const f = a.legal.find(x => x.round === rd && x.seat === 0), s = a.legal.find(x => x.round === rd && x.seat === 1);
+      return `<tr><td>${I.ROUND_LABEL[rd]}</td><td class="r">${f.avg.toFixed(1)}</td><td class="r">${s.avg.toFixed(1)}</td><td class="r">${pct((f.passRate + s.passRate) / 2)}</td></tr>`;
+    }).join('')}</tbody></table></div>`;
+    const itemRows = a.items.map(it => {
+      const rs = it.rounds;
+      const tot = rs.reduce((x, y) => x + y, 0) || 1;
+      const dist = rs.map((v, k) => `R${k + 1} ${pct(v / tot)}`).join('・');
+      return `<tr><td>${I.ITEM[it.type].name}</td><td class="r">${it.held}</td><td><span class="wr" title="${pct(it.winRate)}"><span class="mid"></span><span class="dot" style="left:${it.winRate * 100}%"></span></span> <span class="num">${pct(it.winRate)}</span></td><td class="r">${pct(it.useRate)}</td><td class="muted">${dist}</td></tr>`;
+    }).join('');
+    const setRows = a.sets.map(s => {
+      const flag = s.diff !== null && Math.abs(s.diff) >= 0.08;
+      return `<tr><td>セット${s.id}</td><td>${I.ITEM[s.a].name} ${s.aRate === null ? '—' : pct(s.aRate)}</td><td>${I.ITEM[s.b].name} ${s.bRate === null ? '—' : pct(s.bRate)}</td><td class="r${flag ? ' flag' : ''}">${s.diff === null ? '—' : sgn(s.diff * 100) + 'pt'}</td></tr>`;
+    }).join('');
+    const stockRows = a.stockout.map(s => `<tr><td><span class="sw p-${s.color}"></span>${C[s.color].name}</td><td class="r">${pct(s.rate)}</td><td class="r">${s.avgRound === null ? '—' : 'R' + s.avgRound.toFixed(1)}</td></tr>`).join('');
+    const g = a.gray;
+    $('scr-sim').innerHTML = head + tiles + `<div class="simgrid">
+      <div class="panel wide2"><h3>勝敗の内訳（${a.n}試合）</h3>
+        <div class="legend"><span><i style="background:var(--s1)"></i>先攻の勝ち ${a.wins[0]}</span><span><i style="background:var(--s0)"></i>引き分け ${a.draws}</span><span><i style="background:var(--s2)"></i>後攻の勝ち ${a.wins[1]}</span></div>
+        ${winBarHTML(a)}</div>
+      <div class="panel"><h3>得点差の分布（先攻−後攻、3点刻み）</h3>
+        <div class="legend"><span><i style="background:var(--s1)"></i>先攻が上回った</span><span><i style="background:var(--s0)"></i>ほぼ同点</span><span><i style="background:var(--s2)"></i>後攻が上回った</span></div>
+        ${histogramHTML(a.diffs)}</div>
+      <div class="panel"><h3>ラウンドごとの合法手の数（平均）</h3>
+        <div class="legend"><span><i style="background:var(--s1)"></i>先攻</span><span><i style="background:var(--s2)"></i>後攻</span></div>
+        ${legalHTML(a.legal)}${legalTable}</div>
+      <div class="panel"><h3>灰色</h3><div class="tiles">
+        <div class="tile"><span class="lab">発生した枚数</span><span class="val">${g.total}</span><span class="sub">${a.n}試合中 ${g.games}試合で発生</span></div>
+        <div class="tile"><span class="lab">強制（避ける手がなかった）</span><span class="val">${g.forced}</span><span class="sub">選択（ほかの手もあった）${g.chosen}</span></div></div>
+        <p class="note">強制が少なければ、灰色を相手に押し付ける展開は起きていません。</p></div>
+      <div class="panel"><h3>在庫切れ</h3><div class="tbl"><table><thead><tr><th>色</th><th class="r">切れた試合</th><th class="r">平均ラウンド</th></tr></thead><tbody>${stockRows}</tbody></table></div></div>
+      <div class="panel wide2"><h3>アイテム（所持していた側の勝率。中央の線が50%）</h3><div class="tbl"><table><thead><tr><th>アイテム</th><th class="r">所持</th><th>所持側の勝率</th><th class="r">使用率</th><th>使ったラウンド</th></tr></thead><tbody>${itemRows || '<tr><td colspan="5" class="muted">アイテムなし</td></tr>'}</tbody></table></div></div>
+      <div class="panel wide2"><h3>セットの対の差（ドラフト後手が残り物を引く不利の大きさ）</h3><div class="tbl"><table><thead><tr><th>セット</th><th>1つ目の勝率</th><th>2つ目の勝率</th><th class="r">差</th></tr></thead><tbody>${setRows || '<tr><td colspan="4" class="muted">アイテムなし</td></tr>'}</tbody></table></div>
+        <p class="note">差が8pt以上のセットは赤で示しています。CPUはドラフトをランダムに選び、1手先だけを読んで判断するので、人間同士の対戦とは傾向が違う可能性があります。</p></div>
+    </div>`;
+  }
+
+  // ------------------------------------------------------------------
+  // 描画とイベント
+  // ------------------------------------------------------------------
+  function render() {
+    $('scr-setup').hidden = app.screen !== 'setup';
+    $('scr-game').hidden = app.screen !== 'game';
+    $('scr-sim').hidden = app.screen !== 'sim';
+    if (app.screen === 'setup') renderSetup();
+    else if (app.screen === 'game') renderGame();
+    else renderSim();
+    if (app.screen !== 'game') renderOverlay();
+  }
+
+  function leave() {
+    if (app.sim) app.sim.running = false;
+    app.dialog = null; app.busy = false; app.screen = 'setup'; app.g = null; app.sim = null;
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    const pv = t.closest('[data-preview]');
+    if (pv) {
+      app.preview = pv.dataset.preview;
+      renderSetup();
+      const el = $('ipreview');
+      if (el && window.innerWidth < 900) {
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      }
+      return;
+    }
+    const mode = t.closest('[data-mode]');
+    if (mode) { app.setup.mode = mode.dataset.mode; app.setupMsg = ''; saveSetup(); return render(); }
+    const seg = t.closest('[data-seg]');
+    if (seg) {
+      const key = seg.dataset.seg;
+      let val = seg.dataset.val;
+      if (key === 'gray') val = val === 'true';
+      if (key === 'games') val = Number(val);
+      app.setup[key] = val; app.setupMsg = ''; saveSetup(); return render();
+    }
+    const hand = t.closest('[data-hand]');
+    if (hand) { const [p, id] = hand.dataset.hand.split(':').map(Number); return onHand(p, id); }
+    const well = t.closest('[data-well]');
+    if (well) return onWell(Number(well.dataset.well));
+    const item = t.closest('[data-item]');
+    if (item) return onItem(item.dataset.item);
+    const col = t.closest('[data-color]');
+    if (col && app.sel.item) { app.sel.item.params.color = col.dataset.color; buildPreview(); return render(); }
+    const side = t.closest('[data-side]');
+    if (side && app.sel.item) { app.sel.item.params = { side: side.dataset.side }; app.sel.item.step = 1; buildPreview(); return render(); }
+    const dr = t.closest('[data-draft]');
+    if (dr) { const [sid, type] = dr.dataset.draft.split('|'); app.draft[sid] = type; return renderOverlay(); }
+    const cell = t.closest('[data-cell]');
+    if (cell) {
+      const cardEl = t.closest('[data-card],[data-tent],[data-main]');
+      const info = {};
+      if (cardEl && cardEl.dataset.card !== undefined) info.cardId = Number(cardEl.dataset.card);
+      if (cardEl && cardEl.dataset.tent !== undefined) info.tent = Number(cardEl.dataset.tent);
+      if (cardEl && cardEl.dataset.main !== undefined) info.main = true;
+      return onBoard(Number(cell.dataset.cell), info);
+    }
+    const act = t.closest('[data-do]');
+    if (!act) return;
+    const g = app.g;
+    switch (act.dataset.do) {
+      case 'reset-setup':
+        app.setup = Object.assign({}, DEFAULT_SETUP, { mode: app.setup.mode });
+        saveSetup();
+        app.setupMsg = 'アイテムセット・コミ・灰色ルール・CPUの強さ・ドラフト順・対戦回数を初期設定に戻しました';
+        render();
+        break;
+      case 'start':
+        if (app.setup.mode === 'sim') startSim(); else startGame();
+        break;
+      case 'commit': commit(); break;
+      case 'auto':
+        if (app.sel.act) { app.sel.assigns = I.autoAssign(g, curP(), app.sel.act); autoActive(); render(); }
+        break;
+      case 'clear':
+        Object.assign(app.sel, { act: null, opts: [], assigns: [], active: null, need: 0 }); app.msg = ''; render();
+        break;
+      case 'undo': undoTurn(); break;
+      case 'pass': { const r = I.passTurn(g, curP()); if (!r.ok) { app.msg = r.error; render(); } else { app.last = []; proceed(); } break; }
+      case 'item-ok': confirmItem(); break;
+      case 'item-cancel': app.sel = emptySel(); app.msg = ''; render(); break;
+      case 'draft-ok': {
+        const picks = I.draftSets(g).map(set => app.draft[set.id]);
+        const r = I.applyDraft(g, picks);
+        if (r.ok) proceed();
+        break;
+      }
+      case 'draft-random': I.draftSets(g).forEach(set => { app.draft[set.id] = set.items[app.rng() < 0.5 ? 0 : 1]; }); renderOverlay(); break;
+      case 'init-ok': {
+        const ini = app.init;
+        if (!ini || ini.chosen === null) break;
+        const p = ini.order[ini.step];
+        ini.picks[p] = ini.chosen; ini.chosen = null; ini.step++;
+        if (ini.step < 2 && app.humans[ini.order[ini.step]] && ini.picks[ini.order[ini.step]] === null) ini.blind = true;
+        proceed();
+        break;
+      }
+      case 'blind-ok': if (app.init) app.init.blind = false; render(); break;
+      case 'again': app.dialog = null; startGame(); break;
+      case 'to-setup': {
+        const inGame = app.screen === 'game' && g && g.phase !== 'end';
+        const inSim = app.screen === 'sim' && app.sim && app.sim.running;
+        if (inGame || inSim) { app.dialog = 'leave'; renderOverlay(); break; }
+        leave();
+        break;
+      }
+      case 'leave-ok': leave(); break;
+      case 'rules': app.dialog = 'rules'; renderOverlay(); break;
+      case 'show-result': app.dialog = 'result'; renderOverlay(); break;
+      case 'close-dialog': app.dialog = null; renderOverlay(); break;
+      case 'sim-stop': stopSim(); break;
+      case 'sim-again': startSim(); break;
+      default: break;
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-hand], [data-side]')) { e.preventDefault(); e.target.click(); }
+    if (e.key === 'Escape' && app.dialog) { app.dialog = null; renderOverlay(); }
+  });
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.matches('[data-set]')) {
+      const id = t.dataset.set;
+      const sets = new Set(app.setup.sets);
+      if (t.checked) sets.add(id); else sets.delete(id);
+      app.setup.sets = I.SETS.map(s => s.id).filter(x => sets.has(x));
+      saveSetup();
+    }
+  });
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'komi') {
+      const v = Number(e.target.value);
+      app.setup.komi = Number.isFinite(v) ? v : 0;
+      saveSetup();
+    }
+  });
+
+  // 開いたまま更新されたときに対戦を引き継ぐ
+  function start(data) {
+    if (data && data.g) {
+      app.screen = 'game';
+      app.g = data.g; app.humans = data.humans || [true, false]; app.snap = data.snap || null;
+      app.setup = Object.assign({}, DEFAULT_SETUP, data.setup || {});
+      proceed();
+      return;
+    }
+    render();
+  }
+  const hot = window.claude && window.claude.hot;
+  if (hot && hot.snapshot) hot.snapshot(() => (app.screen === 'game' && app.g && !app.busy && app.g.phase === 'play' ? { g: app.g, humans: app.humans, snap: app.snap, setup: app.setup } : {}));
+  if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+})();
+</script>
+
+</body></html>
