@@ -523,6 +523,81 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
 .pm-btn.home:hover{background:#88aaff;color:var(--bg);box-shadow:0 0 18px rgba(136,170,255,.4)}
 #pauseBtn:hover{color:var(--cyan)!important}
 
+/* ══ UNSPLASH API & ATTRIBUTION UI ══ */
+#unsplash-credit-bar{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  z-index:35;background:rgba(4,6,20,.88);border:1px solid rgba(0,255,204,.45);
+  border-radius:4px;padding:4px 12px;font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:#d0d8ff;white-space:nowrap;display:none;
+  align-items:center;gap:6px;box-shadow:0 2px 14px rgba(0,0,0,.85);
+  backdrop-filter:blur(4px);pointer-events:auto;
+}
+#unsplash-credit-bar.show{display:inline-flex;animation:fi .28s ease forwards}
+#unsplash-credit-bar a,#go-unsplash-credit a,.us-credit-link{
+  color:var(--cyan);text-decoration:underline;text-underline-offset:2px;font-weight:700;
+}
+#unsplash-credit-bar a:hover,#go-unsplash-credit a:hover,.us-credit-link:hover{
+  color:#ffe88a;
+}
+#go-unsplash-credit{
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:#b8b8dc;
+  background:rgba(10,10,28,.85);border:1px solid rgba(255,255,255,.15);
+  padding:4px 12px;border-radius:4px;margin-top:2px;
+}
+.us-api-bar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:7px 14px;background:#060a1c;border-bottom:1px solid var(--bd);
+  font-size:9.5px;color:#b0b8e0;flex-shrink:0;
+}
+.us-status-pill{
+  padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;
+  border:1px solid rgba(0,255,204,.4);background:rgba(0,255,204,.08);color:var(--cyan);
+}
+.us-search-box{
+  margin-top:8px;padding:10px;background:#040613;border:1px solid #1e2452;
+  border-radius:4px;display:flex;flex-direction:column;gap:8px;
+}
+.us-search-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.us-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));
+  gap:8px;max-height:250px;overflow-y:auto;padding:4px 2px;
+}
+.us-grid::-webkit-scrollbar{width:4px}.us-grid::-webkit-scrollbar-thumb{background:var(--bd)}
+.us-card{
+  background:#090c22;border:1px solid #222858;border-radius:4px;overflow:hidden;
+  cursor:pointer;display:flex;flex-direction:column;transition:all .14s;position:relative;
+}
+.us-card:hover{
+  border-color:var(--cyan);transform:translateY(-2px);
+  box-shadow:0 4px 14px rgba(0,255,204,.22);
+}
+.us-card img{width:100%;height:78px;object-fit:cover;display:block;background:#111}
+.us-card-meta{
+  padding:4px 6px;font-size:8.5px;color:#cbd5e1;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;background:rgba(4,6,18,.95);
+}
+.us-credit-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 9px;
+  border-radius:3px;background:rgba(0,255,204,.07);border:1px solid rgba(0,255,204,.3);
+  font-size:9.5px;color:#d0f0ea;margin-top:4px;flex-wrap:wrap;
+}
+.ei-credit-dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:4px;vertical-align:middle;
+}
+.ei-credit-dot.ok{background:#00ffcc;box-shadow:0 0 6px #00ffcc}
+.ei-credit-dot.Wait{background:#666688}
+#us-export-modal{
+  position:fixed;inset:0;background:rgba(2,4,16,.92);z-index:2600;
+  display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+}
+#us-export-modal.active{display:flex}
+.us-modal-box{
+  background:#070a1e;border:1.5px solid var(--cyan);border-radius:8px;
+  width:680px;max-width:95vw;max-height:86vh;display:flex;flex-direction:column;
+  padding:18px 22px;gap:12px;box-shadow:0 0 40px rgba(0,255,204,.22);
+}
+
+
 </style>
 </head>
 <body>
@@ -582,10 +657,46 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
 
 <!-- EDITOR -->
 <div id="editor">
-  <div class="eh"><h2>✦ QUESTION EDITOR</h2><button class="eh-x" onclick="closeEditor()">✕ CLOSE</button></div>
+  <div class="eh">
+    <div style="display:flex;align-items:center;gap:12px">
+      <h2>✦ QUESTION EDITOR</h2>
+      <span id="us-rate-badge" class="us-status-pill" title="Unsplash API ステータス">📸 Unsplash API: READY</span>
+      <span id="us-credit-count" style="font-size:9.5px;color:#94a3b8"></span>
+    </div>
+    <button class="eh-x" onclick="closeEditor()">✕ CLOSE</button>
+  </div>
+  <div class="us-api-bar">
+    <span style="color:#ffd866;font-weight:700">🔑 Access Key:</span>
+    <input id="us-key-inp" type="password" class="efi" style="width:210px;padding:3px 7px;font-size:10px" placeholder="Unsplash Access Key" onchange="onChangeUnsplashKey(this.value)">
+    <button class="eb2" style="padding:3px 8px;font-size:9px" onclick="toggleUnsplashKeyVis()">👁 表示切替</button>
+    <button id="btn-batch-sync" class="eb2 p" style="padding:4px 10px;font-size:9.5px" onclick="batchSyncUnsplashCredits(false)" title="未取得の問題の撮影者クレジットをUnsplash APIから自動取得します（1回最大25問）">⚡ 未取得クレジットを一括API取得</button>
+    <button id="btn-batch-replace" class="eb2" style="padding:4px 10px;font-size:9.5px;border-color:#ffcc00;color:#ffcc00" onclick="batchSyncUnsplashCredits(true)" title="未取得またはPremium画像をUnsplash API公式URL＋撮影者クレジットに一括更新します（1回最大25問）">🔄 公式API画像＋クレジットに一括同期</button>
+    <button class="eb2" style="padding:4px 10px;font-size:9.5px;border-color:#88aaff;color:#88aaff" onclick="openExportDefaultQModal()" title="方法A：取得したクレジットを埋め込んだ DEFAULT_Q コードを書き出します">📋 DEFAULT_Q コード書き出し(方法A)</button>
+  </div>
   <div class="eb">
     <div class="el" id="elist"></div>
     <div class="ef" id="eform"><div style="color:var(--dim);font-size:10px;margin-top:24px;text-align:center;line-height:2">左から問題を選択するか<br>「＋ 新しい問題を追加」してください</div></div>
+  </div>
+</div>
+
+<!-- UNSPLASH DEFAULT_Q EXPORT MODAL (方法A用) -->
+<div id="us-export-modal">
+  <div class="us-modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:2px">📋 DEFAULT_Q EXPORT (方法A：クレジット事前埋め込みコード)</div>
+      <button class="eh-x" onclick="closeExportDefaultQModal()">✕ CLOSE</button>
+    </div>
+    <div style="font-size:10px;color:#b8c0e0;line-height:1.7">
+      以下のコードをコピーして <code>imagine_tile.html</code> 内の <code>const DEFAULT_Q=[...];</code> と差し替えると、<strong>APIキーを空欄（削除）にしてGitHub等で一般公開しても、全問題に正規のUnsplash撮影者クレジットが最初から組み込まれた状態</strong>になります。
+    </div>
+    <textarea id="us-export-textarea" readonly style="width:100%;height:300px;background:#03040c;border:1px solid var(--bd);color:#00ffcc;font-family:'Share Tech Mono',monospace;font-size:10px;padding:10px;border-radius:4px;outline:none;resize:vertical"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <button class="eb2 d" onclick="clearUnsplashKeyForPublic()">🔒 公開用に保存済みAccess Keyをブラウザから消去</button>
+      <div style="display:flex;gap:8px">
+        <button class="eb2 p" onclick="copyExportedDefaultQ()">📋 コードをクリップボードにコピー</button>
+        <button class="eb2" onclick="downloadExportedDefaultQ()">💾 default_q_credits.js を保存</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -620,6 +731,7 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
         <div id="spec-cost-overlay">
           <div class="sco-val" id="sco-val">💎0</div>
         </div>
+        <div id="unsplash-credit-bar"></div>
       </div>
     </div>
     <div id="rpanel">
@@ -647,6 +759,7 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
     <div style="font-size:9px;color:#5a3a5a;letter-spacing:3px;text-transform:uppercase;font-family:'Share Tech Mono',monospace">CORRECT ANSWER WAS</div>
     <div id="go-ans-txt" style="font-family:'Orbitron',sans-serif;font-size:28px;color:#ff9090;text-shadow:0 0 20px #ff444488;letter-spacing:4px"></div>
     <img id="go-ans-img" src="" alt="" style="width:200px;height:134px;object-fit:cover;border-radius:4px;border:2px solid rgba(255,68,68,.4);box-shadow:0 0 24px rgba(255,0,0,.15)">
+    <div id="go-unsplash-credit" style="display:none"></div>
   </div>
   <button class="sb r" onclick="retryGame()">RETRY MISSION</button></div>
 <div id="mcs" class="scr">
@@ -974,7 +1087,7 @@ const DEFAULT_Q=[
   {answer:"ピザ",        img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80",hint:"食べ物"},
   {answer:"パスタ",      img:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80",hint:"食べ物"},
   {answer:"ハンバーガー",img:"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80",hint:"食べ物"},
-  {answer:"ホットドッグ",img:"https://images.unsplash.com/photo-1612392062631-94dd858cba88?w=600&q=80",hint:"食べ物"},
+  {answer:"ホットドッグ",img:"https://plus.unsplash.com/premium_photo-1713793236003-bf10d934825e?w=600&q=80",hint:"食べ物"},
   {answer:"タコス",      img:"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&q=80",hint:"食べ物"},
   {answer:"サンドイッチ",img:"https://images.unsplash.com/photo-1553909489-cd47e0907980?w=600&q=80",hint:"食べ物"},
   {answer:"クロワッサン",img:"https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&q=80",hint:"食べ物"},
@@ -1372,37 +1485,579 @@ const totE=()=>G.players.reduce((s,p)=>s+p.energy,0);
 const totCore=()=>G.players.reduce((s,p)=>s+(p.core||0),0);
 const getAnsCost=p=>(p&&p.ansCost)?p.ansCost:1;
 
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── UNSPLASH API INTEGRATION (Method A: Pre-embedded/Auto Attribution + Method B: Live Editor Search & Download Trigger) ──
+// ══════════════════════════════════════════════════════════════════════════
+const DEFAULT_UNSPLASH_ACCESS_KEY = 'WpMxqT4UP9mIaZX1eLdqtUrdWkalnpxk8ecxZfch5U8';
+const UNSPLASH_KEY_STORAGE = 'imagine_tile_unsplash_key_v1';
+const UNSPLASH_CREDIT_CACHE_KEY = 'imagine_tile_unsplash_credits_v1';
+const UNSPLASH_DL_TRIGGERED_KEY = 'imagine_tile_unsplash_dl_v1';
+const UNSPLASH_UTM = 'utm_source=imagine_tile&utm_medium=referral';
+
+// 日本語問題タイトル ➔ 英語Unsplash検索クエリ変換辞書（高精度マッチ用）
+const JP_TO_EN_QUERY = {
+  'ピザ':'pizza', 'パスタ':'pasta', 'ハンバーガー':'hamburger burger', 'ホットドッグ':'hot dog',
+  'タコス':'tacos', 'サンドイッチ':'sandwich', 'クロワッサン':'croissant', 'パン':'bread loaf',
+  'バゲット':'baguette', 'ステーキ':'beef steak', 'フライドチキン':'fried chicken', 'フライドポテト':'french fries',
+  'クラムチャウダー':'clam chowder soup', 'シーザーサラダ':'caesar salad', 'パンケーキ':'pancakes',
+  'ワッフル':'belgian waffle', 'フレンチトースト':'french toast', 'チーズ':'cheese',
+  '寿司':'sushi nigiri', 'ラーメン':'ramen noodles', 'うどん':'udon noodles', 'そば':'soba buckwheat noodles',
+  '天ぷら':'tempura japanese', '焼き鳥':'yakitori chicken skewers', '刺身':'sashimi',
+  'カレーライス':'japanese curry rice', 'とんかつ':'tonkatsu pork cutlet', '海鮮丼':'sashimi rice bowl kaisendon',
+  '牛丼':'gyudon beef bowl', '天丼':'tempura rice bowl tendon', 'お好み焼き':'okonomiyaki',
+  'たこ焼き':'takoyaki octopus balls', '焼きそば':'yakisoba fried noodles', 'おでん':'oden japanese hotpot',
+  'チャーハン':'fried rice', '餃子':'gyoza dumplings', '春巻き':'spring rolls',
+  '冷麺':'cold noodles naengmyeon', 'ビビンバ':'bibimbap korean rice', 'グリーンカレー':'thai green curry',
+  'バインミー':'banh mi vietnamese sandwich', 'ナン':'naan bread', 'バターチキンカレー':'butter chicken curry',
+  'ケーキ':'shortcake cake', 'チョコレート':'chocolate', 'アイスクリーム':'ice cream scoop',
+  'ドーナツ':'donut doughnut', 'マカロン':'macarons', 'クッキー':'chocolate chip cookies',
+  'チーズケーキ':'cheesecake', 'ティラミス':'tiramisu', 'プリン':'caramel pudding flan',
+  'クレープ':'crepe dessert', 'エクレア':'eclair pastry', 'シュークリーム':'cream puff choux',
+  'ブラウニー':'chocolate brownie', 'マフィン':'blueberry muffin', 'カップケーキ':'cupcake frosting',
+  'タルト':'fruit tart', 'ゼリー':'fruit jelly dessert', 'たい焼き':'taiyaki fish pastry',
+  'かき氷':'shaved ice dessert kakigori', 'ソフトクリーム':'soft serve ice cream cone',
+  'パフェ':'parfait dessert glass', 'フルーツポンチ':'fruit punch bowl', 'ポップコーン':'popcorn',
+  'プレッツェル':'pretzel', 'キャンディ':'colorful candy lollipop', 'グミ':'gummy bears candy',
+  'マシュマロ':'marshmallows',
+  'リンゴ':'red apple fruit', 'いちご':'strawberry fruit', 'バナナ':'banana fruit',
+  'スイカ':'watermelon', 'ブドウ':'grapes fruit', 'レモン':'lemon fruit', 'オレンジ':'orange fruit',
+  'パイナップル':'pineapple', 'さくらんぼ':'cherries fruit', 'キウイ':'kiwi fruit',
+  'マンゴー':'mango fruit', '桃':'peach fruit', '栗':'chestnuts', 'ブルーベリー':'blueberries',
+  'ラズベリー':'raspberries', 'メロン':'cantaloupe melon', 'ライチ':'lychee fruit',
+  'パパイヤ':'papaya fruit', 'ドラゴンフルーツ':'dragon fruit pitaya', 'アボカド':'avocado',
+  'コーヒー':'coffee cup', 'カプチーノ':'cappuccino latte art', 'エスプレッソ':'espresso shot',
+  'タピオカミルクティー':'bubble tea boba', '緑茶':'green tea japanese', '抹茶':'matcha whisk tea',
+  'ワイン':'red wine glass', 'ビール':'beer mug', 'オレンジジュース':'orange juice glass',
+  'レモネード':'lemonade glass', 'スムージー':'berry smoothie', 'シェイク':'milkshake',
+  'ホットチョコレート':'hot chocolate mug', '牛乳':'milk glass'
+};
+
+let _unsplashCreditCache = {};
+let _unsplashDlTriggered = {};
+let _unsplashRateRemaining = null;
+
+function loadUnsplashCaches(){
+  try{
+    const c = localStorage.getItem(UNSPLASH_CREDIT_CACHE_KEY);
+    if(c) _unsplashCreditCache = JSON.parse(c) || {};
+  }catch(e){}
+  try{
+    const d = localStorage.getItem(UNSPLASH_DL_TRIGGERED_KEY);
+    if(d) _unsplashDlTriggered = JSON.parse(d) || {};
+  }catch(e){}
+  // キャッシュ済みのクレジット情報をQSに反映
+  QS.forEach(q => applyCachedCreditToQuestion(q));
+}
+
+function saveUnsplashCreditCache(){
+  try{
+    localStorage.setItem(UNSPLASH_CREDIT_CACHE_KEY, JSON.stringify(_unsplashCreditCache));
+  }catch(e){}
+}
+
+function getUnsplashKey(){
+  try{
+    const saved = localStorage.getItem(UNSPLASH_KEY_STORAGE);
+    if(saved !== null) return saved.trim();
+  }catch(e){}
+  return DEFAULT_UNSPLASH_ACCESS_KEY;
+}
+
+function onChangeUnsplashKey(val){
+  try{
+    localStorage.setItem(UNSPLASH_KEY_STORAGE, (val||'').trim());
+  }catch(e){}
+  updateUnsplashEditorStatus();
+  toast('Unsplash Access Key を保存しました');
+}
+
+function toggleUnsplashKeyVis(){
+  const inp = document.getElementById('us-key-inp');
+  if(!inp) return;
+  inp.type = (inp.type === 'password') ? 'text' : 'password';
+}
+
+function clearUnsplashKeyForPublic(){
+  try{
+    localStorage.setItem(UNSPLASH_KEY_STORAGE, '');
+  }catch(e){}
+  const inp = document.getElementById('us-key-inp');
+  if(inp) inp.value = '';
+  updateUnsplashEditorStatus();
+  toast('ブラウザ保存のAccess Keyを消去しました');
+}
+
+function extractUnsplashSlug(url){
+  if(!url) return '';
+  const m = url.match(/((?:premium_)?photo-[0-9]+-[0-9a-fA-F]+)/);
+  return m ? m[1] : '';
+}
+
+function withUnsplashUtm(url){
+  if(!url) return 'https://unsplash.com/?' + UNSPLASH_UTM;
+  try{
+    const u = new URL(url);
+    u.searchParams.set('utm_source', 'imagine_tile');
+    u.searchParams.set('utm_medium', 'referral');
+    return u.toString();
+  }catch(e){
+    return url + (url.includes('?') ? '&' : '?') + UNSPLASH_UTM;
+  }
+}
+
+function applyCachedCreditToQuestion(q){
+  if(!q || !q.img) return false;
+  if(q.author && q.authorUrl) return true;
+  const slug = extractUnsplashSlug(q.img);
+  const hit = (slug && _unsplashCreditCache[slug]) || _unsplashCreditCache['ans:' + q.answer];
+  if(hit && hit.author){
+    q.author = hit.author;
+    q.authorUrl = hit.authorUrl;
+    if(hit.photoLink) q.photoLink = hit.photoLink;
+    if(hit.downloadLocation) q.downloadLocation = hit.downloadLocation;
+    return true;
+  }
+  return false;
+}
+
+function storeCreditForQuestion(q, creditObj){
+  if(!q || !creditObj || !creditObj.author) return;
+  q.author = creditObj.author;
+  q.authorUrl = creditObj.authorUrl;
+  if(creditObj.photoLink) q.photoLink = creditObj.photoLink;
+  if(creditObj.downloadLocation) q.downloadLocation = creditObj.downloadLocation;
+  const slug = extractUnsplashSlug(q.img);
+  if(slug) _unsplashCreditCache[slug] = creditObj;
+  if(q.answer) _unsplashCreditCache['ans:' + q.answer] = creditObj;
+  saveUnsplashCreditCache();
+  saveQuestionsToStorage();
+}
+
+// Unsplash API 規約③: Triggering a Download (https://help.unsplash.com/en/articles/2511258-guideline-triggering-a-download)
+async function triggerUnsplashDownload(downloadLocation){
+  if(!downloadLocation) return false;
+  const key = getUnsplashKey();
+  if(!key) return false;
+  const cleanKey = downloadLocation.split('?')[0];
+  if(_unsplashDlTriggered[cleanKey]) return true;
+  try{
+    const sep = downloadLocation.includes('?') ? '&' : '?';
+    const dlPath = downloadLocation.replace(/^https:\/\/api\.unsplash\.com\//, '');
+    const res = await fetch(`https://api.unsplash.com/${dlPath}${sep}client_id=${encodeURIComponent(key)}`);
+    const rem = res.headers.get('X-Ratelimit-Remaining');
+    if(rem !== null) _unsplashRateRemaining = rem;
+    if(res.ok){
+      _unsplashDlTriggered[cleanKey] = Date.now();
+      try{ localStorage.setItem(UNSPLASH_DL_TRIGGERED_KEY, JSON.stringify(_unsplashDlTriggered)); }catch(e){}
+      updateUnsplashEditorStatus();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+// Unsplash API 規約②: Attribution HTML生成 (Photo by [Name] on Unsplash)
+function buildUnsplashAttributionHtml(q){
+  if(!q || q.video) return '';
+  const imgUrl = q.img || '';
+  const isUnsplash = imgUrl.includes('unsplash.com') || !!(q.author && q.authorUrl);
+  if(!isUnsplash) return '';
+  const unsplashHome = withUnsplashUtm(q.photoLink || 'https://unsplash.com/');
+  if(q.author && q.authorUrl){
+    const authorHref = withUnsplashUtm(q.authorUrl);
+    const safeAuthor = String(q.author).replace(/[<>&"']/g, '');
+    return `📷 Photo by <a href="${authorHref}" target="_blank" rel="noopener noreferrer">${safeAuthor}</a> on <a href="${unsplashHome}" target="_blank" rel="noopener noreferrer">Unsplash</a>`;
+  }
+  return `📷 Photo on <a href="${unsplashHome}" target="_blank" rel="noopener noreferrer">Unsplash</a>`;
+}
+
+function showBoardUnsplashCredit(q){
+  const bar = document.getElementById('unsplash-credit-bar');
+  if(!bar) return;
+  const html = buildUnsplashAttributionHtml(q);
+  if(!html){
+    bar.classList.remove('show');
+    bar.innerHTML = '';
+    return;
+  }
+  bar.innerHTML = html;
+  bar.classList.add('show');
+}
+
+function hideBoardUnsplashCredit(){
+  const bar = document.getElementById('unsplash-credit-bar');
+  if(!bar) return;
+  bar.classList.remove('show');
+}
+
+// 単一問題のクレジットをUnsplash APIから非同期解決（出題中バックグラウンド＆一括同期用）
+async function ensureQuestionUnsplashCredit(qIdx, replaceUrlWithOfficial=false){
+  const q = QS[qIdx];
+  if(!q || q.video || !q.img) return false;
+  if(applyCachedCreditToQuestion(q) && !replaceUrlWithOfficial) return true;
+  const key = getUnsplashKey();
+  if(!key) return false;
+
+  const slug = extractUnsplashSlug(q.img);
+  const enQuery = JP_TO_EN_QUERY[q.answer] || q.answer || q.hint || 'food';
+  try{
+    const isAscii = /^[\x00-\x7F]+$/.test(enQuery);
+    const langParam = isAscii ? '' : '&lang=ja';
+    const apiUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(enQuery)}&per_page=30${langParam}&client_id=${encodeURIComponent(key)}`;
+    const res = await fetch(apiUrl);
+    const rem = res.headers.get('X-Ratelimit-Remaining');
+    if(rem !== null) _unsplashRateRemaining = rem;
+    updateUnsplashEditorStatus();
+    if(!res.ok) return false;
+    const data = await res.json();
+    const results = (data && data.results) || [];
+    if(!results.length) return false;
+
+    // 1. まず現在の画像URLのスラッグ(photo-xxx)と完全一致する写真を探す
+    let matched = null;
+    if(slug){
+      matched = results.find(item => {
+        const raw = (item.urls && (item.urls.raw || item.urls.regular)) || '';
+        return raw.includes(slug);
+      });
+    }
+    // 2. 見つからない場合は検索トップの写真を割り当て
+    const chosen = matched || results[0];
+    if(!chosen || !chosen.user) return false;
+
+    if(replaceUrlWithOfficial || (!matched && q.img.includes('plus.unsplash.com'))){
+      // 公式APIが返すhotlink URL (urls.regular または raw + w=600&q=80) を使用
+      const rawBase = (chosen.urls && chosen.urls.raw) ? (chosen.urls.raw + (chosen.urls.raw.includes('?') ? '&' : '?') + 'w=600&q=80') : chosen.urls.regular;
+      if(rawBase) q.img = rawBase;
+    }
+
+    const creditObj = {
+      author: chosen.user.name || chosen.user.username || 'Unsplash Photographer',
+      authorUrl: (chosen.user.links && chosen.user.links.html) || `https://unsplash.com/@${chosen.user.username || ''}`,
+      photoLink: (chosen.links && chosen.links.html) || 'https://unsplash.com/',
+      downloadLocation: (chosen.links && chosen.links.download_location) || ''
+    };
+    storeCreditForQuestion(q, creditObj);
+    if(creditObj.downloadLocation){
+      triggerUnsplashDownload(creditObj.downloadLocation);
+    }
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function updateUnsplashEditorStatus(){
+  const badge = document.getElementById('us-rate-badge');
+  const cntEl = document.getElementById('us-credit-count');
+  const keyInp = document.getElementById('us-key-inp');
+  const key = getUnsplashKey();
+  if(keyInp && document.activeElement !== keyInp){
+    keyInp.value = key;
+  }
+  if(badge){
+    if(!key){
+      badge.textContent = '📸 Unsplash API: KEY未設定(埋め込みクレジットのみ)';
+      badge.style.borderColor = '#64748b';
+      badge.style.color = '#94a3b8';
+    } else {
+      const remTxt = _unsplashRateRemaining !== null ? ` (残 ${_unsplashRateRemaining}/50 req)` : '';
+      badge.textContent = `📸 Unsplash API: ON${remTxt}`;
+      badge.style.borderColor = 'rgba(0,255,204,.45)';
+      badge.style.color = 'var(--cyan)';
+    }
+  }
+  if(cntEl){
+    const imgQs = QS.filter(q => !q.video && q.img);
+    const credited = imgQs.filter(q => q.author && q.authorUrl).length;
+    cntEl.textContent = `クレジット登録済: ${credited} / ${imgQs.length}問`;
+  }
+}
+
+let _batchSyncRunning = false;
+async function batchSyncUnsplashCredits(replaceUrlWithOfficial=false){
+  if(_batchSyncRunning){
+    toast('現在API同期を実行中です…');
+    return;
+  }
+  const key = getUnsplashKey();
+  if(!key){
+    toast('Access Key を入力してください', true);
+    return;
+  }
+  // 未取得の問題（またはreplaceUrlWithOfficial時はplus.unsplash.comを含む問題も対象）を抽出
+  const targets = [];
+  QS.forEach((q, idx) => {
+    if(q.video || !q.img) return;
+    applyCachedCreditToQuestion(q);
+    if(!q.author || !q.authorUrl || (replaceUrlWithOfficial && q.img.includes('plus.unsplash.com'))){
+      targets.push(idx);
+    }
+  });
+  if(!targets.length){
+    toast('全問題の撮影者クレジットが既に取得済みです！');
+    updateUnsplashEditorStatus();
+    return;
+  }
+  // Demoモード(50req/h)を考慮し、1回のバッチで最大25問ずつ安全に取得
+  const batch = targets.slice(0, 25);
+  _batchSyncRunning = true;
+  const btn = document.getElementById(replaceUrlWithOfficial ? 'btn-batch-replace' : 'btn-batch-sync');
+  const origTxt = btn ? btn.textContent : '';
+  let okCount = 0;
+  for(let i=0; i<batch.length; i++){
+    const qIdx = batch[i];
+    if(btn) btn.textContent = `⏳ 取得中 (${i+1}/${batch.length}) : ${QS[qIdx].answer}`;
+    const ok = await ensureQuestionUnsplashCredit(qIdx, replaceUrlWithOfficial);
+    if(ok) okCount++;
+    if(_unsplashRateRemaining !== null && parseInt(_unsplashRateRemaining, 10) <= 2){
+      toast('APIの残りリクエスト数が少なくなったため一時停止しました', true);
+      break;
+    }
+    await new Promise(r => setTimeout(r, 180));
+  }
+  if(btn) btn.textContent = origTxt;
+  _batchSyncRunning = false;
+  renderEList();
+  if(esel >= 0 && esel < QS.length) selQ(esel);
+  updateUnsplashEditorStatus();
+  const remTargets = QS.filter(q => !q.video && q.img && (!q.author || !q.authorUrl)).length;
+  toast(`${okCount}問の撮影者クレジットをAPI取得しました！（未取得残り: ${remTargets}問）`);
+}
+
+function openExportDefaultQModal(){
+  QS.forEach(q => applyCachedCreditToQuestion(q));
+  const lines = ['const DEFAULT_Q=['];
+  QS.forEach(q => {
+    const obj = { answer: q.answer, img: q.img || '', hint: q.hint || '—' };
+    if(q.video) obj.video = q.video;
+    if(q.author) obj.author = q.author;
+    if(q.authorUrl) obj.authorUrl = q.authorUrl;
+    if(q.photoLink) obj.photoLink = q.photoLink;
+    lines.push('  ' + JSON.stringify(obj) + ',');
+  });
+  lines.push('];');
+  const code = lines.join('\n');
+  const ta = document.getElementById('us-export-textarea');
+  if(ta) ta.value = code;
+  document.getElementById('us-export-modal').classList.add('active');
+}
+
+function closeExportDefaultQModal(){
+  document.getElementById('us-export-modal').classList.remove('active');
+}
+
+function copyExportedDefaultQ(){
+  const ta = document.getElementById('us-export-textarea');
+  if(!ta) return;
+  ta.select();
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(()=>toast('DEFAULT_Q コードをコピーしました！')).catch(()=>{
+        document.execCommand('copy');
+        toast('DEFAULT_Q コードをコピーしました！');
+      });
+    } else {
+      document.execCommand('copy');
+      toast('DEFAULT_Q コードをコピーしました！');
+    }
+  }catch(e){
+    toast('テキストエリアから手動でコピーしてください');
+  }
+}
+
+function downloadExportedDefaultQ(){
+  const ta = document.getElementById('us-export-textarea');
+  if(!ta) return;
+  const blob = new Blob([ta.value], {type:'text/javascript;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'default_q_credits.js';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+  toast('default_q_credits.js を保存しました');
+}
+
+// 方法B：エディタ内でのUnsplashキーワード検索＆ワンクリック画像・クレジット・DLトリガー反映
+let _lastEditorSearchResults = [];
+async function searchUnsplashInEditor(qIdx){
+  const key = getUnsplashKey();
+  if(!key){
+    toast('上部のバーに Unsplash Access Key を入力してください', true);
+    return;
+  }
+  const inp = document.getElementById('ef-us-query');
+  const rawQuery = (inp ? inp.value.trim() : '') || (document.getElementById('ef-a') ? document.getElementById('ef-a').value.trim() : '');
+  if(!rawQuery){
+    toast('検索キーワード（または答え）を入力してください', true);
+    return;
+  }
+  const grid = document.getElementById('ef-us-grid');
+  if(grid) grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--cyan);padding:12px;text-align:center">⏳ Unsplash API で検索中…</div>';
+
+  const mappedQuery = JP_TO_EN_QUERY[rawQuery] || rawQuery;
+  const isAscii = /^[\x00-\x7F]+$/.test(mappedQuery);
+  const langParam = isAscii ? '' : '&lang=ja';
+  try{
+    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(mappedQuery)}&per_page=12${langParam}&client_id=${encodeURIComponent(key)}`);
+    const rem = res.headers.get('X-Ratelimit-Remaining');
+    if(rem !== null) _unsplashRateRemaining = rem;
+    updateUnsplashEditorStatus();
+    if(!res.ok){
+      if(grid) grid.innerHTML = `<div style="grid-column:1/-1;font-size:10px;color:var(--red);padding:10px">APIエラー (HTTP ${res.status}) — Access Key またはレート制限を確認してください</div>`;
+      return;
+    }
+    const data = await res.json();
+    _lastEditorSearchResults = (data && data.results) || [];
+    if(!_lastEditorSearchResults.length){
+      if(grid) grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--dim);padding:10px;text-align:center">該当する写真が見つかりませんでした（英語キーワードでの検索もおすすめです）</div>';
+      return;
+    }
+    if(grid){
+      grid.innerHTML = _lastEditorSearchResults.map((item, idx) => {
+        const thumb = (item.urls && (item.urls.small || item.urls.thumb)) || '';
+        const uName = (item.user && (item.user.name || item.user.username)) || 'Unknown';
+        const safeName = String(uName).replace(/[<>&"']/g, '');
+        return `
+          <div class="us-card" onclick="selectUnsplashSearchResult(${qIdx}, ${idx})" title="クリックでこの画像を採用＆DLカウント通知＆クレジット自動設定">
+            <img src="${thumb}" alt="" loading="lazy">
+            <div class="us-card-meta">📷 ${safeName}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }catch(e){
+    if(grid) grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--red);padding:10px">通信エラーが発生しました（インターネット接続を確認してください）</div>';
+  }
+}
+
+async function selectUnsplashSearchResult(qIdx, resultIdx){
+  const item = _lastEditorSearchResults[resultIdx];
+  if(!item) return;
+  const q = QS[qIdx];
+  if(!q) return;
+
+  // Hotlink URL (公式API urls.raw + w=600&q=80 または urls.regular)
+  const hotlinkUrl = (item.urls && item.urls.raw)
+    ? `${item.urls.raw}${item.urls.raw.includes('?') ? '&' : '?'}w=600&q=80`
+    : ((item.urls && item.urls.regular) || '');
+
+  const author = (item.user && (item.user.name || item.user.username)) || 'Unsplash Photographer';
+  const authorUrl = (item.user && item.user.links && item.user.links.html) || `https://unsplash.com/@${(item.user && item.user.username) || ''}`;
+  const photoLink = (item.links && item.links.html) || 'https://unsplash.com/';
+  const downloadLocation = (item.links && item.links.download_location) || '';
+
+  const imgInp = document.getElementById('ef-i');
+  if(imgInp){
+    imgInp.value = hotlinkUrl;
+    imgInp.dispatchEvent(new Event('input'));
+  }
+  const authInp = document.getElementById('ef-author');
+  if(authInp) authInp.value = author;
+  const authUrlInp = document.getElementById('ef-author-url');
+  if(authUrlInp) authUrlInp.value = authorUrl;
+
+  q.img = hotlinkUrl;
+  storeCreditForQuestion(q, { author, authorUrl, photoLink, downloadLocation });
+
+  const badge = document.getElementById('ef-credit-preview');
+  if(badge) badge.innerHTML = buildUnsplashAttributionHtml(q);
+
+  // Unsplash 規約③: Trigger Download
+  if(downloadLocation){
+    await triggerUnsplashDownload(downloadLocation);
+  }
+  renderEList();
+  updateUnsplashEditorStatus();
+  toast(`採用＆DL通知完了: Photo by ${author}`);
+}
+
+async function fetchSingleQuestionCreditInEditor(qIdx){
+  toast('Unsplash API から撮影者情報を取得中…');
+  const ok = await ensureQuestionUnsplashCredit(qIdx, false);
+  if(ok){
+    selQ(qIdx);
+    renderEList();
+    updateUnsplashEditorStatus();
+    toast(`クレジット取得完了: Photo by ${QS[qIdx].author}`);
+  } else {
+    toast('クレジット情報を取得できませんでした（キーワード検索からお選びください）', true);
+  }
+}
+
+loadUnsplashCaches();
+
 // ── EDITOR ──
 let esel=-1;
-function openEditor(){document.getElementById('editor').style.display='flex';renderEList();}
+let _delConfirmIdx=-1;
+function openEditor(){
+  document.getElementById('editor').style.display='flex';
+  QS.forEach(q => applyCachedCreditToQuestion(q));
+  updateUnsplashEditorStatus();
+  renderEList();
+}
 function closeEditor(){document.getElementById('editor').style.display='none';}
 function renderEList(){
-  const el=document.getElementById('elist');el.innerHTML='<div class="esec">問題一覧 ('+QS.length+'問)</div>';
+  const el=document.getElementById('elist');el.innerHTML='<div class="esec">問題一覧 ('+QS.length+'問) <span style="font-size:7.5px;color:#00ffcc">●=クレジット済</span></div>';
   QS.forEach((q,i)=>{
+    applyCachedCreditToQuestion(q);
     const d=document.createElement('div');d.className='ei'+(i===esel?' active':'');
     const thumbSrc=q.video?'':q.img; const isVid=!!q.video;
-    d.innerHTML=`<div style="width:34px;height:24px;flex:0 0 34px;background:#111;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden">${isVid?'🎬':`<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.background='#181830'">`}</div><div style="flex:1;min-width:0"><div class="ei-ans">${q.answer}${isVid?'<span class=\'vid-badge\'>VIDEO</span>':''}</div><div class="ei-hint">${q.hint}</div></div><div class="ei-del" onclick="delQ(${i},event)">✕</div>`;
+    const hasCred = !!(q.author && q.authorUrl);
+    const credDot = isVid ? '' : `<span class="ei-credit-dot ${hasCred?'ok':'Wait'}" title="${hasCred?('Photo by '+q.author):'撮影者クレジット未取得'}"></span>`;
+    d.innerHTML=`<div style="width:34px;height:24px;flex:0 0 34px;background:#111;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden">${isVid?'🎬':`<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.background='#181830'">`}</div><div style="flex:1;min-width:0"><div class="ei-ans">${q.answer}${credDot}${isVid?'<span class=\'vid-badge\'>VIDEO</span>':''}</div><div class="ei-hint">${q.hint}${hasCred?(' · 📷 '+q.author):''}</div></div><div class="ei-del" onclick="delQ(${i},event)">✕</div>`;
     d.addEventListener('click',()=>selQ(i));el.appendChild(d);
   });
   const ab=document.createElement('button');ab.className='eadd';ab.textContent='＋ 新しい問題を追加';ab.onclick=addQ;el.appendChild(ab);
+  updateUnsplashEditorStatus();
 }
 function selQ(i){
-  esel=i;renderEList();const q=QS[i];
+  esel=i;_delConfirmIdx=-1;renderEList();const q=QS[i];
+  applyCachedCreditToQuestion(q);
   const hasVideo=!!(q.video);
+  const defaultSearchWord = JP_TO_EN_QUERY[q.answer] || q.answer || '';
+  const attrPreview = buildUnsplashAttributionHtml(q) || '<span style="color:var(--dim)">未設定（下の「🔍 API検索」または「🔄 クレジット自動取得」で設定できます）</span>';
   document.getElementById('eform').innerHTML=`
     <div style="font-size:9px;color:var(--dim);letter-spacing:2px">問題 #${i+1}${hasVideo?'<span class=\"vid-badge\">VIDEO</span>':''}</div>
-    <div><label class="efl">答え</label><input class="efi" id="ef-a" value="${q.answer}" placeholder="例: 富士山"></div>
-    <div><label class="efl">ヒント</label><input class="efi" id="ef-h" value="${q.hint}" placeholder="例: 山"></div>
-    <div style="border:1px solid #1a1a3a;border-radius:3px;padding:8px;background:#06060f">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="efl">答え</label><input class="efi" id="ef-a" value="${q.answer}" placeholder="例: ピザ"></div>
+      <div><label class="efl">ヒント</label><input class="efi" id="ef-h" value="${q.hint}" placeholder="例: 食べ物"></div>
+    </div>
+    <div style="border:1px solid #1a1a3a;border-radius:3px;padding:10px;background:#06060f">
       <div class="etype-tabs">
-        <button class="etype-tab ${!hasVideo?'active':''}" onclick="switchMediaTab(${i},'image')">🖼 画像</button>
+        <button class="etype-tab ${!hasVideo?'active':''}" onclick="switchMediaTab(${i},'image')">🖼 画像 (Unsplash API連携)</button>
         <button class="etype-tab ${hasVideo?'active':''}" onclick="switchMediaTab(${i},'video')">🎬 動画</button>
       </div>
       <div id="ef-img-section" style="display:${!hasVideo?'block':'none'}">
-        <label class="efl">画像URL</label>
+        <label class="efl">画像URL (Unsplash Hotlink URL)</label>
         <input class="efi" id="ef-i" value="${q.img||''}" placeholder="https://images.unsplash.com/...">
         ${q.img&&!hasVideo?`<img class="eprev" id="epv" src="${q.img}" onerror="this.style.opacity='.15'" alt="">`:`<div class="eprevp" id="epv">プレビュー</div>`}
-        <div class="etip" style="margin-top:4px">💡 Unsplash: https://images.unsplash.com/photo-[ID]?w=600&q=80</div>
+
+        <div class="us-credit-badge" id="ef-credit-preview">${attrPreview}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div>
+            <label class="efl">撮影者名 (Photographer Name)</label>
+            <input class="efi" id="ef-author" value="${q.author||''}" placeholder="例: Ivan Torres" style="font-size:10.5px;padding:5px 8px">
+          </div>
+          <div>
+            <label class="efl">撮影者プロフィールURL (Unsplash Profile)</label>
+            <input class="efi" id="ef-author-url" value="${q.authorUrl||''}" placeholder="https://unsplash.com/@..." style="font-size:10.5px;padding:5px 8px">
+          </div>
+        </div>
+
+        <div class="us-search-box">
+          <div style="font-size:9px;color:var(--cyan);letter-spacing:1.5px;font-weight:700">🔍 方法B：Unsplash 公式API 画像検索（クリックでURL＋クレジット＋DL通知を自動セット）</div>
+          <div class="us-search-row">
+            <input class="efi" id="ef-us-query" value="${defaultSearchWord}" placeholder="検索ワード（日本語・英語どちらもOK）" style="flex:1;min-width:140px;font-size:11px;padding:5px 8px" onkeydown="if(event.key==='Enter'){event.preventDefault();searchUnsplashInEditor(${i});}">
+            <button class="eb2 p" style="padding:5px 12px" onclick="searchUnsplashInEditor(${i})">🔍 Unsplash検索</button>
+            <button class="eb2" style="padding:5px 10px;border-color:#ffcc00;color:#ffcc00" onclick="fetchSingleQuestionCreditInEditor(${i})" title="現在の画像または答えから撮影者クレジットを自動取得します">🔄 この問題のクレジットを自動取得</button>
+          </div>
+          <div id="ef-us-grid" class="us-grid"></div>
+        </div>
       </div>
       <div id="ef-vid-section" style="display:${hasVideo?'block':'none'}">
         <label class="efl">動画URL (YouTube / mp4直リンク)</label>
@@ -1411,7 +2066,7 @@ function selQ(i){
         <div id="ef-vpreview" style="margin-top:6px;font-size:9px;color:#3a6a3a">${q.video?'✓ 動画URL設定済み':'動画URLを入力してください'}</div>
       </div>
     </div>
-    <div class="ebr"><button class="eb2 p" onclick="saveQ(${i})">✔ 保存</button><button class="eb2 d" onclick="delQ(${i})">✕ 削除</button></div>`;
+    <div class="ebr"><button class="eb2 p" onclick="saveQ(${i})">✔ 保存</button><button class="eb2 d" id="btn-del-q" onclick="delQ(${i})">✕ 削除</button></div>`;
   document.getElementById('ef-i').addEventListener('input',function(){
     let p=document.getElementById('epv');
     if(!p||p.tagName!=='IMG'){const im=document.createElement('img');im.className='eprev';im.id='epv';im.onerror=function(){this.style.opacity='.15'};p&&p.replaceWith(im);p=im;}
@@ -1423,15 +2078,32 @@ function saveQ(i){
   const h=document.getElementById('ef-h').value.trim();
   const imgEl=document.getElementById('ef-i');
   const vidEl=document.getElementById('ef-v');
+  const authEl=document.getElementById('ef-author');
+  const authUrlEl=document.getElementById('ef-author-url');
   const im=imgEl?imgEl.value.trim():'';
   const vd=vidEl?vidEl.value.trim():'';
+  const author=authEl?authEl.value.trim():'';
+  const authorUrl=authUrlEl?authUrlEl.value.trim():'';
   const isVideo=document.getElementById('ef-vid-section')&&document.getElementById('ef-vid-section').style.display!=='none';
-  if(!a){alert('答えは必須です');return;}
-  if(isVideo&&!vd){alert('動画URLを入力してください');return;}
-  if(!isVideo&&!im){alert('画像URLを入力してください');return;}
+  if(!a){toast('答えを入力してください',true);return;}
+  if(isVideo&&!vd){toast('動画URLを入力してください',true);return;}
+  if(!isVideo&&!im){toast('画像URLを入力してください',true);return;}
+  const prev=QS[i]||{};
   const q={answer:a,hint:h||'—',img:isVideo?'':im};
   if(isVideo)q.video=vd;
-  QS[i]=q;saveQuestionsToStorage();renderEList();toast('保存: '+a+(isVideo?' [動画]':''));
+  if(!isVideo){
+    if(author) q.author=author;
+    if(authorUrl) q.authorUrl=authorUrl;
+    if(prev.photoLink) q.photoLink=prev.photoLink;
+    if(prev.downloadLocation) q.downloadLocation=prev.downloadLocation;
+    if(q.author && q.authorUrl){
+      storeCreditForQuestion(q, {author:q.author, authorUrl:q.authorUrl, photoLink:q.photoLink, downloadLocation:q.downloadLocation});
+    }
+  }
+  QS[i]=q;saveQuestionsToStorage();renderEList();
+  const badge=document.getElementById('ef-credit-preview');
+  if(badge) badge.innerHTML = buildUnsplashAttributionHtml(q);
+  toast('保存: '+a+(isVideo?' [動画]':''));
 }
 function switchMediaTab(i,type){
   const imgSec=document.getElementById('ef-img-section');
@@ -1446,14 +2118,23 @@ function switchMediaTab(i,type){
   }
 }
 function delQ(i,e){
-  if(e)e.stopPropagation();if(!confirm('削除: '+QS[i].answer))return;
+  if(e)e.stopPropagation();
+  if(_delConfirmIdx!==i){
+    _delConfirmIdx=i;
+    const btn=document.getElementById('btn-del-q');
+    if(btn) btn.textContent='⚠ もう一度押すと削除確定';
+    toast('もう一度「✕」を押すと「'+(QS[i].answer||'問題')+'」を削除します',true);
+    return;
+  }
+  _delConfirmIdx=-1;
   QS.splice(i,1);saveQuestionsToStorage();if(esel>=QS.length)esel=QS.length-1;
   renderEList();
   if(esel>=0&&QS.length>0)selQ(esel);
   else document.getElementById('eform').innerHTML='<div style="color:var(--dim);font-size:10px;margin-top:24px;text-align:center">問題を選択してください</div>';
+  toast('問題を削除しました');
 }
 function addQ(){QS.push({answer:'',hint:'',img:''});esel=QS.length-1;renderEList();selQ(esel);}
-function toast(msg){const d=document.createElement('div');d.style.cssText='position:fixed;bottom:20px;right:20px;background:#0a1a0a;border:1px solid #00ffcc44;color:#00ffcc;font-size:10px;padding:8px 14px;border-radius:3px;z-index:600;font-family:Share Tech Mono,monospace;letter-spacing:1px';d.textContent='✔ '+msg;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
+function toast(msg,isErr=false){const d=document.createElement('div');d.style.cssText=`position:fixed;bottom:20px;right:20px;background:${isErr?'#1a080c':'#0a1a0a'};border:1px solid ${isErr?'#ff444488':'#00ffcc44'};color:${isErr?'#ff8888':'#00ffcc'};font-size:10px;padding:8px 14px;border-radius:3px;z-index:3000;font-family:Share Tech Mono,monospace;letter-spacing:1px`;d.textContent=(isErr?'⚠ ':'✔ ')+msg;document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
 
 // ── GAME ──
 function buildCustomSchedule(){
@@ -1492,10 +2173,10 @@ function buildCustomSchedule(){
 }
 
 function startGame(mode='normal'){
-  if(QS.length<1){alert('問題が1問以上必要です');return;}
+  if(QS.length<1){toast('問題が1問以上必要です',true);return;}
   if(mode==='normal'||mode==='hyper'){
     const total=mode==='hyper'?HYPER_TOTAL:NORMAL_TOTAL;
-    if(QS.length<total){alert('問題が'+total+'問以上必要です（現在'+QS.length+'問）');return;}
+    if(QS.length<total){toast('問題が'+total+'問以上必要です（現在'+QS.length+'問）',true);return;}
   }
   auInit();
   G.mode=mode;
@@ -1660,6 +2341,9 @@ function loadQ(){
     const nq=QS[G.order[ni]];
     if(nq&&nq.img)preloadImageUrl(nq.img);
   }
+  hideBoardUnsplashCredit();
+  applyCachedCreditToQuestion(q);
+  ensureQuestionUnsplashCredit(G.order[G.qi], false);
   buildBoard(sz,q.video||q.img||'');
   renderStrip();updateHUD();
   addLog((isFinal&&!custom||(endless&&step>=30))?'Q'+qn+(endless?' — ヒントなし！':' FINAL — ヒントなし！'):'Q'+qn+' ヒント:「'+q.hint+'」','info');
@@ -3061,6 +3745,13 @@ function stageClr(){
   applyImgStyle();
   const bd=document.getElementById('board');
   if(bd)bd.querySelectorAll('.tile:not(.revealed)').forEach(t=>{t.classList.remove('dy','ah','barrier','vine');t.classList.add('revealed');});
+  if(G.order&&G.order[G.qi]!=null){
+    const clearedQ=QS[G.order[G.qi]];
+    if(clearedQ){
+      applyCachedCreditToQuestion(clearedQ);
+      showBoardUnsplashCredit(clearedQ);
+    }
+  }
   renderStrip();fireP();
   const endless=G.mode==='endless';
   const hyper=G.mode==='hyper';
@@ -3175,8 +3866,15 @@ function showGO(m){
   if(G.order&&G.order[G.qi]!=null){
     const q=QS[G.order[G.qi]];
     if(q){
+      applyCachedCreditToQuestion(q);
       document.getElementById('go-ans-txt').textContent=q.answer;
       document.getElementById('go-ans-img').src=q.img;
+      const goCred=document.getElementById('go-unsplash-credit');
+      if(goCred){
+        const credHtml=buildUnsplashAttributionHtml(q);
+        goCred.innerHTML=credHtml;
+        goCred.style.display=credHtml?'block':'none';
+      }
       document.getElementById('go-reveal').style.display='flex';
     }
   }
