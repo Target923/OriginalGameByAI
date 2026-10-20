@@ -840,31 +840,31 @@
         id: 2,
         icon: "🛸",
         title: "イマジンタイル (Imagine Tile)",
-        copy: "5台のホバーカーでデジタル神殿を疾走し、視覚デバフに覆われたタイル壁を砕いて真実を暴く協力型クイズ（NORMAL / HYPER / ENDLESS）。",
-        tags: ["5台協力クイズ", "視覚デバフ解毒", "ENDLESS搭載", "3ワールド切替"],
-        htmlFile: "game_02.html",
-        pdfFile: "game_02_rulebook.pdf",
+        copy: "5台のホバーカーで神殿・深海・密林を疾走！3種のワールド妨害と視覚デバフに覆われたタイル壁を、タイルコア💎と5種の固有スペシャル技で打ち砕く協力型クイズ。",
+        tags: ["5台協力クイズ", "コア＆固有SPEC", "3ワールド妨害", "CUSTOM/ENDLESS"],
+        htmlFile: "imagine_tile.html",
+        pdfFile: "imagine_tile_rulebook.pdf",
         status: "ready"
       },
       {
         id: 3,
-        icon: "♦",
-        title: "第3作：オリジナルゲーム（Slot 03）",
-        copy: "3作目のルールから作成するゲームスロットです。同じフォルダに game_03.html を置くと即座に起動できます。",
-        tags: ["Slot 03", "ルール解析待ち", "タイトル編集可"],
-        htmlFile: "game_03.html",
-        pdfFile: "game_03_rulebook.pdf",
-        status: "pending"
+        icon: "🎯",
+        title: "サーチバトル (Search Battle)",
+        copy: "サイバー空間で敵の構造を透視する位置あて推理バトル。サーチキューブ・サーチライン等の索敵アイテムを駆使し、敵ブロックとトレジャーを撃ち抜け！",
+        tags: ["1vs1 / CPU戦", "位置あて推理", "索敵アイテム", "サイバー戦術"],
+        htmlFile: "サーチバトル.html",
+        pdfFile: "search_battle_rulebook.pdf",
+        status: "ready"
       },
       {
         id: 4,
-        icon: "♣",
-        title: "第4作：オリジナルゲーム（Slot 04）",
-        copy: "4作目のルールから作成するゲームスロットです。同じフォルダに game_04.html を置くと即座に起動できます。",
-        tags: ["Slot 04", "ルール解析待ち", "タイトル編集可"],
-        htmlFile: "game_04.html",
-        pdfFile: "game_04_rulebook.pdf",
-        status: "pending"
+        icon: "🎨",
+        title: "色彩陣取り (Color Territory)",
+        copy: "原色と白のカードから混色・明暗合成で高得点の色彩を生み出し、8種の戦術アイテムで盤面を塗り替える陣取り頭脳戦（1vs1＆CPU・シミュ搭載）。",
+        tags: ["1vs1 / CPU戦", "混色＆明暗合成", "戦術アイテム", "陣取りパズル"],
+        htmlFile: "色彩陣取り.html",
+        pdfFile: "color_territory_rulebook.pdf",
+        status: "ready"
       },
       {
         id: 5,
@@ -942,7 +942,7 @@
 
     function loadCatalog() {
       try {
-        const saved = localStorage.getItem("boardgame_archive_catalog_v2");
+        const saved = localStorage.getItem("boardgame_archive_catalog_v4");
         if (saved) {
           gamesCatalog = JSON.parse(saved);
           return;
@@ -953,7 +953,7 @@
 
     function saveCatalog() {
       try {
-        localStorage.setItem("boardgame_archive_catalog_v2", JSON.stringify(gamesCatalog));
+        localStorage.setItem("boardgame_archive_catalog_v4", JSON.stringify(gamesCatalog));
       } catch (e) {}
     }
 
