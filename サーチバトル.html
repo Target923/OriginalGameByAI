@@ -643,11 +643,11 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   const SHAPES_BY_SIZE = { 1: ['A1'], 2: ['D2'], 3: ['I3', 'L3'], 4: ['I4', 'O4', 'L4', 'T4'], 5: ['I5', 'L5', 'V5', 'T5', 'Y5'] };
 
   // 状態の形が変わったら上げる（公開ページの更新時に、古い対戦を新しいルールで再開しないため）
-  const VERSION = 6;
+  const VERSION = 7;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'dist', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
-    line: { name: 'サーチライン', desc: '指定した1列・1行にある個体の数を調べる' },
+    line: { name: 'サーチライン', desc: '指定した1列・1行に、個体のマスがいくつあるかを調べる' },
     number: { name: 'サーチナンバー', desc: '指定した1マスにある個体のマス数を調べる' },
     shape: { name: 'サーチシェイプ', desc: '指定した1マスにある個体の形状を調べる' },
     pair: { name: 'ペアショット', desc: '指定した2マスが同じ個体か調べる' },
@@ -1290,11 +1290,14 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         break;
       }
       case 'line': {
+        // その列・行で、生きている個体が占めているマスの数（個体の数ではない）
         const lm = lineMask(params.line, params.index, N);
-        const n = livingFoe.filter((p) => p.mask & lm).length;
+        let occ = 0;
+        for (const p of livingFoe) occ |= p.mask;
+        const n = popcount(occ & lm);
         me.kb.counts.push({ t, turn: this.turn, kind: 'line', line: params.line, index: params.index, n });
         result.n = n;
-        this._log(pi, `${me.name}：${name}${tag}（${lineLabel(params.line, params.index)}）→ ${n}個体`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${lineLabel(params.line, params.index)}）→ ${n}マス`, null, 'item', key);
         break;
       }
       case 'number': {
@@ -1449,9 +1452,10 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     for (const q of kb.counts) {
       if (q.kind === 'line') {
         if (kb.warps.some((w) => w.t > q.t) || kb.adds.some((a) => a.t > q.t)) continue;
+        // サーチライン＝その列・行で埋まっているマスの数。その後に撃破された個体のマスは引く
         const lm = lineMask(q.line, q.index, N);
         let n = q.n;
-        for (const d of kb.deads) if (d.t > q.t && (d.mask & lm)) n--;
+        for (const d of kb.deads) if (d.t > q.t) n -= popcount(d.mask & lm);
         res.lines.push({ mask: lm, n });
         continue;
       }
@@ -1708,7 +1712,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       for (const c in byCat) if (counts.cat[c] != null && byCat[c] > counts.cat[c]) return false;
       for (const L of ctx.lineMax) {
         let k = 0;
-        for (let i = 0; i < nG; i++) if (G[i].cands[assign[i]].mask & L.mask) k++;
+        for (let i = 0; i < nG; i++) k += popcount(G[i].cands[assign[i]].mask & L.mask);
         if (k > L.n) return false;
       }
       for (const p of ctx.pairs) {
@@ -2026,7 +2030,62 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       for (const e of entP) none *= 1 - Math.min(0.999, e.p[c]);
       P[c] = 1 - none;
     }
+    // サーチラインの結果（その列・行で埋まっているマスの数）に合うように、列・行ごとに見込みを合わせる。
+    // 分かっている「埋まっている」マス（ヒット・確定した個体）と「空き」（×・撃破済み）を除いた残りで、
+    // ◎個体の候補が埋める見込みを引き、足りない分を見つけていない個体の見込みとして配り直す
+    const lines = ctx.counts.lines.filter((L) => L.n > 0);
+    if (lines.length) {
+      const known1 = ctx.hitMask | certainCover;
+      const known0 = lineKnownEmpty(ctx);
+      const tP = (c) => (joint.total > 0 ? Math.min(1, joint.cellW[c] / joint.total) : 0);
+      for (let it = 0; it < 6; it++) {
+        for (const L of lines) {
+          let K = 0, T = 0, S = 0, room = 0;
+          const freeCells = [];
+          for (let c = 0; c < NN; c++) {
+            if (!(L.mask & bit(c))) continue;
+            if (known1 & bit(c)) { K++; continue; }
+            if (known0 & bit(c)) continue;
+            const t = tP(c);
+            T += t; S += (1 - t) * P[c]; room += 1 - t;
+            freeCells.push(c);
+          }
+          if (!freeCells.length) continue;
+          const R = L.n - K - T;
+          if (R <= 1e-6) { for (const c of freeCells) P[c] = 0; continue; }
+          if (S > 1e-9) { const f = R / S; for (const c of freeCells) P[c] = Math.min(0.995, P[c] * f); }
+          else if (room > 0) for (const c of freeCells) P[c] = Math.min(0.995, R / room);
+        }
+      }
+    }
     return { P, occU, entP, Etotal, Es, q, occPseudo, kDist, shapeW };
+  }
+
+  function lineKnownEmpty(ctx) {
+    let lastW = -1;
+    for (const w of ctx.kb.warps) if (w.t > lastW) lastW = w.t;
+    return ctx.deadMask | ctx.xMaskAfter(lastW) | ctx.lineZeroMask;
+  }
+  // サーチラインの見積もり：その列・行で埋まっているマスの数の分布（マスごとに独立とみなす）の情報量
+  function lineOptions(A) {
+    const ctx = A.ctx, N = ctx.N, NN = ctx.NN, P = A.hunt.P;
+    const known1 = ctx.hitMask | A.certainCover, known0 = lineKnownEmpty(ctx);
+    const done = new Set(ctx.counts.lines.map((L) => L.mask));
+    const out = [];
+    for (const line of ['row', 'col']) for (let i = 0; i < N; i++) {
+      const lm = lineMask(line, i, N);
+      if (done.has(lm)) continue;
+      let dist = new Float64Array([1]);
+      for (let c = 0; c < NN; c++) {
+        if (!(lm & bit(c)) || (known1 & bit(c)) || (known0 & bit(c))) continue;
+        const t = A.targetP[c];
+        const p = Math.min(1, t + (1 - t) * P[c]);
+        if (p <= 0 || p >= 1) continue;
+        dist = convolve(dist, new Float64Array([1 - p, p]));
+      }
+      out.push({ params: { line, index: i }, H: entropyOf(dist) });
+    }
+    return out;
   }
 
   // ------------------------------------------------------------------
@@ -2362,6 +2421,11 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           consider('dist', { cell: c }, entropy(wmap));
         }
       }
+      // サーチライン：その列・行で埋まっているマスの数の割れ方（◎の候補と、見つけていない個体の両方に効く）
+      if (free('line')) {
+        const lp = pol.linePost != null ? pol.linePost : 0.5;
+        for (const o of lineOptions(A)) consider('line', o.params, lp * o.H);
+      }
       // サーチキューブ：◎個体の絞り込みに効く分＋まだ見つけていない個体の情報（少し割り引く）
       if (cubeMode === 'eig' && free('cube')) {
         const beta = pol.beta != null ? pol.beta : 0.3;
@@ -2373,16 +2437,11 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       // 索敵中
       const hp = A.hunt.P;
       const cells = callableCells(game, pi).filter((c) => hp[c] > 0.05);
-      let lineBest = null, lineS = 0.45;
-      if (free('line') && cells.length >= 5) {
-        for (const line of ['row', 'col']) for (let i = 0; i < N; i++) {
-          const lm = lineMask(line, i, N);
-          let pe = 1, n = 0;
-          for (let c = 0; c < NN; c++) if ((lm & bit(c)) && game.isCallable(pi, c)) { pe *= 1 - hp[c]; n++; }
-          if (n < 2) continue;
-          const s = H2(pe) * Math.min(1, n / N);
-          if (s > lineS) { lineS = s; lineBest = { line, index: i }; }
-        }
+      // サーチライン：埋まっているマスの数の割れ方がいちばん大きい列・行
+      let lineBest = null, lineS = pol.lineMin != null ? pol.lineMin : 0.6;
+      if (free('line') && cells.length >= 3) {
+        const lk = pol.lineK != null ? pol.lineK : 1.0;
+        for (const o of lineOptions(A)) { const v = lk * o.H; if (v > lineS) { lineS = v; lineBest = o.params; } }
       }
       // サーチキューブ：見つけていない個体の数とマス数・形状の割れ方が大きければ、サーチラインより優先
       if (cubeMode === 'eig' && free('cube') && game.turn >= (pol.minTurn || 1)) {
@@ -2463,9 +2522,10 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   }
 
   // ドラフト：決勝ルールのCPU同士の対戦で測った価値の順（片方だけ持たないと勝率がどれだけ下がるか）
-  const DRAFT_PRIORITY = ['number', 'shape', 'warp', 'stealth', 'cube', 'dist', 'pair', 'line'];
+  const DRAFT_PRIORITY = ['warp', 'number', 'cube', 'shape', 'dist', 'stealth', 'pair', 'line'];
   function draftPick(game, pi) {
-    for (const k of DRAFT_PRIORITY) if (game.draft.pool.indexOf(k) >= 0) return k;
+    const order = (policy[pi] && policy[pi].draft) || DRAFT_PRIORITY;
+    for (const k of order) if (game.draft.pool.indexOf(k) >= 0) return k;
     return game.draft.pool[0];
   }
 
@@ -3332,18 +3392,19 @@ window.SBAudio = (function () {
     for (const q of kb.counts) latest.set(q.kind === 'line' ? 'line:' + q.line + q.index : q.kind + ':' + q.value, q);
     for (const q of latest.values()) {
       if (q.kind === 'line') {
+        // サーチライン＝その列・行で埋まっているマスの数。撃破された個体のマスはその分減らす
         const stale = relocatedAfter(q.t);
         let n = q.n;
-        if (!stale) { const lm = E.lineMask(q.line, q.index, N); for (const d of kb.deads) if (d.t > q.t && (d.mask & lm)) n--; }
+        if (!stale) { const lm = E.lineMask(q.line, q.index, N); for (const d of kb.deads) if (d.t > q.t) n -= E.popcount(d.mask & lm); }
         const label = E.lineLabel(q.line, q.index);
-        tags.push({ key: 'line', label, n, turn: q.turn, stale,
-          tip: `サーチライン（T${pad2(q.turn)}）：${label}にある個体の数。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : '撃破されると自動で減ります'}` });
+        tags.push({ key: 'line', label, n, unit: 'マス', turn: q.turn, stale,
+          tip: `サーチライン（T${pad2(q.turn)}）：${label}で個体が占めているマスの数。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : '撃破されると自動で減ります'}` });
         continue;
       }
       if (q.kind !== 'size' && q.kind !== 'cat') continue;
       const n = q.kind === 'size' ? cc.size[q.value] : cc.cat[q.value];
       const label = q.kind === 'size' ? q.value + 'マス' : q.value;
-      tags.push({ key: 'cube', label, n: n == null ? q.n : n, turn: q.turn, tip: `サーチキューブ（T${pad2(q.turn)}）。撃破で自動更新` });
+      tags.push({ key: 'cube', label, n: n == null ? q.n : n, unit: '体', turn: q.turn, tip: `サーチキューブ（T${pad2(q.turn)}）。撃破で自動更新` });
     }
     const cells = {};
     const put = (c, k, val) => { if (!view.dead[c]) cells[c] = Object.assign(cells[c] || {}, { [k]: val }); };
@@ -3375,7 +3436,7 @@ window.SBAudio = (function () {
   function intelTagsHTML(intel, mine) {
     if (!intel || !intel.tags.length) return '';
     return `<div class="intel ${mine ? 'mine' : 'enemy'}" aria-label="調査の記録">` + intel.tags.map((t) =>
-      `<span class="itag${t.stale ? ' stale' : ''}" data-tip="${esc(t.tip)}">${ICON[t.key]}${esc(t.label)}<b>${t.n}</b>体<small>T${pad2(t.turn)}</small></span>`
+      `<span class="itag${t.stale ? ' stale' : ''}" data-tip="${esc(t.tip)}">${ICON[t.key]}${esc(t.label)}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
     ).join('') + '</div>';
   }
   // マスの左上に「形状＋マス数」（例：L4、C3、#2、∅）
@@ -3696,7 +3757,7 @@ window.SBAudio = (function () {
         acts = cancel;
         break;
       case 'line':
-        main = itemHead('line', '相手フィールドの列（A〜）か行（1〜）のラベルをタップ。結果はアイテム欄の下に残ります。');
+        main = itemHead('line', '相手フィールドの列（A〜）か行（1〜）のラベルをタップ。そこで埋まっているマスの数が分かり、アイテム欄の下に残ります。');
         acts = cancel;
         break;
       case 'number':
@@ -4402,7 +4463,7 @@ window.SBAudio = (function () {
           const pos = (ev.index + 0.5) / g.N;
           const x = ev.line === 'col' ? tbc.r.left + tbc.w * pos : tbc.x;
           const y = ev.line === 'row' ? tbc.r.top + tbc.h * pos : tbc.y;
-          setTimeout(() => text(x, y, `${E.lineLabel(ev.line, ev.index)}：${ev.n} 体`, 'count' + ecls, 1500), 640 * k);
+          setTimeout(() => text(x, y, `${E.lineLabel(ev.line, ev.index)}：${ev.n} マス`, 'count' + ecls, 1500), 640 * k);
           return 1500 * k;
         }
         case 'shape': {
