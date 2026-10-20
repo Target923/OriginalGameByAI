@@ -93,6 +93,10 @@ h1, h2, h3 { text-wrap: balance; }
 .btn.primary { background: linear-gradient(180deg, #7BEDFF, #17A4D4); color: var(--ink-on-cyan); border-color: transparent; }
 .btn.primary:hover { background: linear-gradient(180deg, #A5F4FF, #2BB9E6); box-shadow: 0 0 18px rgba(79, 227, 255, .55); }
 .btn.fire { background: linear-gradient(180deg, #FF77AE, #D81F69); color: #fff; border-color: transparent; }
+/* バズーカの宣言ボタン（アイテムとは別枠） */
+.btn.bzbtn { display: inline-flex; align-items: center; gap: .4em; background: linear-gradient(180deg, #FFD27A, #E08A12); color: #1A1003; }
+.btn.bzbtn:hover { background: linear-gradient(180deg, #FFE2A6, #F09A22); box-shadow: 0 0 18px rgba(255, 193, 74, .55); }
+.btn.bzbtn svg, .btn.fire svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .btn.big { font-size: 1.02rem; padding: .78em 1.7em; letter-spacing: .04em; }
 .btn.ghost { background: transparent; border-color: var(--edge); font-weight: 500; }
 .btn:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
@@ -181,7 +185,6 @@ h1, h2, h3 { text-wrap: balance; }
 .ichip.spent svg { opacity: .8; }
 .ichip.spent::after { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 1.5px; background: var(--dim); transform: rotate(-35deg); }
 .ichip.rebuy, .chips.enemy .ichip.rebuy { --ic: var(--amber); }
-.ichip.locked { opacity: .55; }
 .itemhead .ichip { width: 36px; height: 36px; }
 @media (max-width: 520px) { .ichip { width: 27px; height: 27px; } .ichip svg { width: 16px; height: 16px; } .chips { gap: 6px 4px; } .chiprow { gap: 6px; } }
 /* ツールチップ（本文の外、最前面） */
@@ -252,7 +255,6 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.dead::before { border-color: var(--bad); filter: none; }
 .cell.pc.revealed { --pcc: var(--magenta); animation: none;
   background: repeating-linear-gradient(135deg, rgba(255, 63, 143, .28) 0 1px, transparent 1px 6px), linear-gradient(160deg, rgba(255, 63, 143, .16), rgba(20, 6, 18, .7)); box-shadow: inset 0 0 14px rgba(255, 63, 143, .35); }
-.cell.pc.revealed.bz { background: repeating-linear-gradient(45deg, rgba(255, 193, 74, .32) 0 1px, transparent 1px 6px), linear-gradient(160deg, rgba(255, 193, 74, .14), rgba(20, 14, 6, .7)); --pcc: var(--amber); }
 .cell.ghost { background: color-mix(in srgb, var(--pcc) 16%, transparent); }
 .cell.ghost::before { content: ""; position: absolute; inset: 0; border: 0 dashed var(--pcc); }
 .cell.ghost.et::before { border-top-width: 2px; } .cell.ghost.eb::before { border-bottom-width: 2px; }
@@ -274,7 +276,7 @@ h1, h2, h3 { text-wrap: balance; }
 .pairs line { stroke: var(--pl); stroke-width: .05; stroke-linecap: round; filter: drop-shadow(0 0 2px var(--pl)); }
 .pairs .diff line { stroke-dasharray: .12 .1; }
 .pairs circle { fill: #04070F; stroke: var(--pl); stroke-width: .035; }
-.pairs text { fill: var(--pl); text-anchor: middle; dominant-baseline: central; font-family: var(--f-tech); font-weight: 700; }
+.pairs .sym { fill: none; stroke: var(--pl); stroke-width: .03; stroke-linecap: round; }
 .pairs .stale { opacity: .4; }
 .cube-menu { position: absolute; inset: 7%; z-index: 7; display: grid; align-content: center; gap: 6px; padding: 8px; background: rgba(4, 10, 22, .9);
   border: 1px solid var(--cyan); border-radius: 4px; box-shadow: 0 0 26px rgba(79, 227, 255, .4), inset 0 0 18px rgba(79, 227, 255, .2); animation: menuIn .25s ease-out; }
@@ -300,6 +302,8 @@ h1, h2, h3 { text-wrap: balance; }
 .ink-x .mk { stroke-width: 2.4; }
 /* 再コールできる×は、線はそのままで薄く */
 .ink-x.stale { opacity: .3; }
+/* バズーカで公開された×（色だけ少し変える） */
+.ink-x.bzx { color: color-mix(in srgb, var(--amber) 62%, var(--steel-2)); opacity: .78; }
 /* ワープで空いたマス（移動前の位置） */
 .wtag { position: absolute; right: 6%; bottom: 4%; z-index: 2; font: 700 clamp(.46rem, 20cqw, .66rem)/1 var(--f-tech); color: var(--violet); text-shadow: 0 0 6px var(--violet); }
 /* ディスタンスショットの結果：○の上は丸、まだヒットしていないマスは角丸の枠、NoData は文字 */
@@ -319,6 +323,15 @@ h1, h2, h3 { text-wrap: balance; }
 @keyframes cloak { 0% { opacity: 0; transform: translateY(-30%); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(30%); } }
 .fxb.cloakfield { background: repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 63, 143, .2) 6px 7px); animation: flash 1.2s ease-out forwards; }
 .stat.treasure b { color: var(--orange); }
+.stat.bzstat b { color: var(--amber); }
+.stat.bzstat.me b { color: var(--good); }
+.stat.bzstat.hot { border-color: rgba(255, 193, 74, .7); color: var(--amber); }
+.stat.bzstat.hot b { color: var(--amber); }
+.stat.bzstat.pulse { animation: bzpulse 1.2s ease-in-out infinite; }
+@keyframes bzpulse { 50% { box-shadow: 0 0 14px rgba(255, 193, 74, .55); background: rgba(255, 193, 74, .12); } }
+.itemhead .ichip.bz { --ic: var(--amber); }
+.mi.bz { border-color: rgba(255, 193, 74, .45); }
+.mi.bz svg { stroke: var(--amber); }
 .mk-add { color: var(--ink-on-cyan); stroke-width: 3.4; }
 .gem { position: absolute; left: 5%; bottom: 6%; width: 34%; height: 34%; z-index: 2; fill: var(--amber); stroke: #FFF1CF; stroke-width: 1.4; filter: drop-shadow(0 0 5px var(--amber)); animation: gem 2.6s ease-in-out infinite; }
 .gem .facet { fill: none; stroke: rgba(120, 70, 0, .55); stroke-width: 1.2; }
@@ -396,6 +409,9 @@ h1, h2, h3 { text-wrap: balance; }
 .loglist li.k-hit .x { color: var(--hit); }
 .loglist li.k-kill .x { color: var(--magenta); font-weight: 700; }
 .loglist li.k-treasure .x { color: var(--amber); font-weight: 700; }
+.loglist li.k-bazooka .x { color: var(--amber); }
+.loglist .li-ic.sys svg { stroke: var(--amber); }
+.banner.k-bazooka { border-left-color: var(--amber); background: rgba(255, 193, 74, .08); }
 .loglist li.k-penalty .x, .loglist li.k-miss .x { color: var(--bad); }
 .loglist li.none { color: var(--muted); }
 .logcol .panel { display: flex; flex-direction: column; }
@@ -547,6 +563,8 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 .fx-banner.enemy b { color: var(--magenta); text-shadow: 0 0 18px var(--magenta); }
 .fx-banner.treasure { border-color: rgba(255, 154, 60, .6); }
 .fx-banner.treasure b { color: var(--orange); text-shadow: 0 0 18px var(--orange); }
+.fx-banner.bz { border-color: rgba(255, 193, 74, .65); }
+.fx-banner.bz b { color: var(--amber); text-shadow: 0 0 20px var(--amber); }
 @keyframes bannerIn { 0% { opacity: 0; clip-path: inset(48% 0 48% 0); } 18% { opacity: 1; clip-path: inset(0 0 0 0); } 78% { opacity: 1; clip-path: inset(0 0 0 0); } 100% { opacity: 0; clip-path: inset(48% 0 48% 0); } }
 .fxo { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .fxo.lock svg { position: absolute; inset: -30%; width: 160%; height: 160%; fill: none; stroke: var(--magenta); stroke-width: 2.4; filter: drop-shadow(0 0 6px var(--magenta)); animation: lockon .8s cubic-bezier(.2, .8, .2, 1) forwards; }
@@ -583,6 +601,10 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 .fxb.column.enemy .bar { background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(255, 63, 143, .55) 35%, rgba(255, 63, 143, .08)); box-shadow: 0 0 22px var(--magenta); }
 @keyframes drop { 0% { transform: scaleY(0); opacity: 1; } 40% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
 .fxb.shock { background: radial-gradient(circle, rgba(255, 255, 255, .9), rgba(255, 63, 143, .5) 30%, transparent 62%); animation: impact .8s ease-out forwards; }
+.fxb.shock.bz { background: radial-gradient(circle, rgba(255, 255, 255, .9), rgba(255, 193, 74, .55) 30%, transparent 62%); }
+/* バズーカで空きマスが開く */
+.fxo.bzopen { background: radial-gradient(circle, rgba(255, 244, 214, .95) 0%, rgba(255, 193, 74, .7) 35%, transparent 72%); animation: bzopen .7s ease-out forwards; }
+@keyframes bzopen { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.3); } }
 .fxb.holo { display: grid; place-items: center; perspective: 500px; background: radial-gradient(circle, rgba(79, 227, 255, .2), transparent 60%); animation: flash 1.5s ease-in forwards; }
 .fxb.holo.enemy { background: radial-gradient(circle, rgba(255, 63, 143, .2), transparent 60%); }
 .holo-cube { position: relative; width: 34%; aspect-ratio: 1; transform-style: preserve-3d; animation: holospin 1.5s cubic-bezier(.2, .8, .2, 1) forwards; }
@@ -643,18 +665,19 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   const SHAPES_BY_SIZE = { 1: ['A1'], 2: ['D2'], 3: ['I3', 'L3'], 4: ['I4', 'O4', 'L4', 'T4'], 5: ['I5', 'L5', 'V5', 'T5', 'Y5'] };
 
   // 状態の形が変わったら上げる（公開ページの更新時に、古い対戦を新しいルールで再開しないため）
-  const VERSION = 7;
+  const VERSION = 8;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'dist', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
     line: { name: 'サーチライン', desc: '指定した1列・1行に、個体のマスがいくつあるかを調べる' },
-    number: { name: 'サーチナンバー', desc: '指定した1マスにある個体のマス数を調べる' },
-    shape: { name: 'サーチシェイプ', desc: '指定した1マスにある個体の形状を調べる' },
+    number: { name: 'サーチサイズ', desc: '指定した1マスにある個体のマス数を調べる（空きマスならNoData）' },
+    shape: { name: 'サーチシェイプ', desc: '指定した1マスにある個体の形状を調べる（空きマスならNoData）' },
     pair: { name: 'ペアショット', desc: '指定した2マスが同じ個体か調べる' },
     dist: { name: 'ディスタンスショット', desc: '◎以外のマスから、その個体の◎までのブロック数を調べる（空きマスや◎のない個体はNoData）' },
     warp: { name: 'ワープ', desc: '自分の個体1つを空きマスへ移動する' },
     stealth: { name: 'ステルス', desc: '自分のキューブを1つ選ぶ。全マスに当たっても自動では撃破されず、アンサーでしか撃破できない' },
-    bazooka: { name: 'バズーカ', desc: '互いに1個体ずつ差し出して除去する（現在は使用禁止）' },
+    // バズーカはアイテムとは別枠（宣言制）
+    bazooka: { name: 'バズーカ', desc: '両者が使用を宣言すると、次のターンの始めに、お互いの空きマスをすべて×で公開する（1試合に1回・アイテムとは別枠）' },
   };
 
   function bit(c) { return 1 << c; }
@@ -749,8 +772,9 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 
   function makeRules(kind) {
     return kind === 'final'
-      ? { kind: 'final', label: '決勝', N: 5, bazookaTurn: 13, draft: true, treasureMax: 5 }
-      : { kind: 'prelim', label: '予選', N: 4, bazookaTurn: 9, draft: false, treasureMax: 4 };
+      // bazookaTurn：バズーカの使用を宣言できる最初のターン（発動は早くてもその次のターン）
+      ? { kind: 'final', label: '決勝', N: 5, bazookaTurn: 12, draft: true, treasureMax: 5 }
+      : { kind: 'prelim', label: '予選', N: 4, bazookaTurn: 8, draft: false, treasureMax: 4 };
   }
 
   // ------------------------------------------------------------------
@@ -762,9 +786,10 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     this.rng = opts.rng || Math.random;
     this.mode = opts.mode || 'pvp';
     this.v = VERSION;
-    // バズーカは現在使用禁止（仕組みは残してあり、opts.bazooka で有効にできる）
-    this.bazookaOn = !!opts.bazooka;
-    // この試合で使えるアイテム（バズーカは別枠で常に使える）
+    // バズーカ（宣言制。opts.bazooka === false で無効にできる＝検証用）
+    this.bazookaOn = opts.bazooka !== false;
+    this.bazooka = { decl: [null, null], fired: null };
+    // この試合で使えるアイテム（バズーカは別枠）
     const pick = Array.isArray(opts.items) ? ITEM_KEYS.filter((k) => opts.items.indexOf(k) >= 0) : [];
     this.itemKeys = pick.length ? pick : ITEM_KEYS.slice();
     this.clock = 0;
@@ -789,7 +814,6 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     const NN = this.NN;
     const items = {};
     for (const k of ITEM_KEYS) items[k] = this.itemKeys.indexOf(k) >= 0 ? 1 : 0;
-    items.bazooka = 1;
     return {
       idx: i, name, isCPU,
       pieces: [], nextId: 1, treasure: null, setupDone: false,
@@ -805,6 +829,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         N: this.N, stock: Object.assign({}, STOCK),
         calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [],
         pairs: [], dists: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
+        reveal: null,   // バズーカで空きマスが公開された時刻と、そのとき個体があったマス
       },
     };
   };
@@ -1156,10 +1181,14 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 
   Game.prototype._advance = function () {
     this.cur = 1 - this.cur;
-    if (this.cur === this.first) this.turn += 1;
+    const newTurn = this.cur === this.first;
+    if (newTurn) this.turn += 1;
     this.sub = 'item';
     this.itemUsed = false;
     this.pending = null;
+    // 両者のバズーカ宣言がそろっていたら、新しいターンの始めに発動する
+    const B = this.bazooka;
+    if (newTurn && B && !B.fired && B.decl[0] && B.decl[1]) this._fireBazooka();
     this._emit({ type: 'turn', cur: this.cur });
   };
 
@@ -1174,7 +1203,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       cells: piece.cells.slice(), mask: piece.mask, size: piece.size, cat: piece.cat, key: piece.shape,
       isAdd: piece.isAdd, t: this.clock, cause,
     });
-    if (cause !== 'bazooka' && !piece.isAdd) viewer.score.attack += piece.size;
+    if (!piece.isAdd) viewer.score.attack += piece.size;
     this._emit({ type: 'destroy', owner: piece.owner, cells: piece.cells.slice(), size: piece.size, isAdd: piece.isAdd, key: piece.shape, cause });
   };
 
@@ -1204,12 +1233,11 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   // ---------------- アイテム ----------------
   Game.prototype.itemStatus = function (pi, key) {
     const P = this.players[pi];
-    const inPlay = key === 'bazooka' ? !!this.bazookaOn : (this.itemKeys || ITEM_KEYS).indexOf(key) >= 0;
+    const inPlay = (this.itemKeys || ITEM_KEYS).indexOf(key) >= 0;
     const have = inPlay ? (P.items[key] || 0) : 0;
     const canRebuy = inPlay && have <= 0 && !!P.used[key] && P.wallet >= 3;
-    const locked = key === 'bazooka' && this.turn < this.rules.bazookaTurn;
     const inPhase = this._myTurn(pi, ['item', 'answer']) && !this.itemUsed;
-    return { inPlay, have, canRebuy, locked, usable: inPlay && inPhase && !locked && (have > 0 || canRebuy), rebuyNeeded: have <= 0 };
+    return { inPlay, have, canRebuy, usable: inPlay && inPhase && (have > 0 || canRebuy), rebuyNeeded: have <= 0 };
   };
 
   Game.prototype.validateItem = function (pi, key, params) {
@@ -1219,7 +1247,6 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     params = params || {};
     const inRange = (c) => Number.isInteger(c) && c >= 0 && c < NN;
     switch (key) {
-      case 'bazooka': return { ok: true };
       case 'cube':
         if (params.kind === 'cat' && CATS.indexOf(params.value) >= 0) return { ok: true };
         if (params.kind === 'size' && [1, 2, 3, 4, 5].indexOf(params.value) >= 0) return { ok: true };
@@ -1262,7 +1289,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 
   Game.prototype.useItem = function (pi, key, params) {
     const st = this.itemStatus(pi, key);
-    if (!st.usable) return { ok: false, reason: st.locked ? `バズーカは${this.rules.bazookaTurn}ターン目から使えます` : 'いまはアイテムを使えません' };
+    if (!st.usable) return { ok: false, reason: 'いまはアイテムを使えません' };
     const val = this.validateItem(pi, key, params);
     if (!val.ok) return val;
     const me = this.players[pi], foe = this.foeOf(pi);
@@ -1306,7 +1333,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         if (size) me.kb.occs.push({ c: params.cell, t, cat: null, size, turn: this.turn, src: 'number' });
         else me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'number' });
         result.size = size;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${size ? size + 'マス' : 'なし'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${size ? size + 'マス' : 'NoData'}`, null, 'item', key);
         break;
       }
       case 'shape': {
@@ -1314,7 +1341,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         const cat = p ? p.cat : null;
         if (cat) me.kb.occs.push({ c: params.cell, t, cat, turn: this.turn, src: 'shape' }); else me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'shape' });
         result.cat = cat;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${cat || 'なし'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${cat || 'NoData'}`, null, 'item', key);
         break;
       }
       case 'pair': {
@@ -1368,14 +1395,6 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
         break;
       }
-      case 'bazooka': {
-        this.pending = { kind: 'bazooka', by: pi, choice: [null, null], returnTo: fromSub === 'answer' ? 'answer' : 'call' };
-        this.sub = 'bazooka';
-        this._log(pi, `${me.name}：${name}${tag}を発射！ 互いに1個体を差し出します`, null, 'item', key);
-        this.lastAction = { kind: 'item', pi, key, result };
-        this._emit({ type: 'item', actor: pi, key, rebuy: st.rebuyNeeded });
-        return result;
-      }
     }
     const pub = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded };
     if (key === 'cube' || key === 'line') { pub.n = result.n; }
@@ -1393,25 +1412,59 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     return result;
   };
 
-  Game.prototype.bazookaChoose = function (pi, pieceId) {
-    if (!(this.phase === 'play' && this.sub === 'bazooka' && this.pending && this.pending.kind === 'bazooka')) return { ok: false };
-    if (this.pending.choice[pi] != null) return { ok: false, reason: '選択済みです' };
-    const p = this.players[pi].pieces.find((x) => x.id === pieceId && x.alive);
-    if (!p) return { ok: false, reason: '生きている自分の個体を選んでください' };
-    this.pending.choice[pi] = pieceId;
-    if (this.pending.choice[0] != null && this.pending.choice[1] != null) {
-      const picks = this.pending.choice.map((id, i) => this.players[i].pieces.find((x) => x.id === id));
-      for (const q of picks) this._destroy(q, 'bazooka');
-      for (const q of picks) {
-        this._log(q.owner, `${this.players[q.owner].name}：バズーカで${q.isAdd ? 'アッド' : q.size + 'マスの個体'}を除去（${coordList(q.cells, this.N)}）`, null, 'penalty');
-      }
-      const back = this.pending.returnTo || 'call';
-      this.pending = null;
-      this.sub = back;
-      const ended = this._checkEnd();
-      return { ok: true, resolved: true, ended };
+  // ---------------- バズーカ ----------------
+  // 予選8ターン目・決勝12ターン目から、自分の手番のあいだならいつでも使用を宣言できる（アイテムとは別枠）。
+  // 宣言は取り消せない。両者の宣言がそろったら、次のターンの始めに発動して、
+  // お互いの空きマス（個体のないマス）をすべて×で公開する。発動は1試合に1回だけ。
+  // 公開された×も、その後に相手がワープすれば、ふつうの×と同じく再コールできるようになる
+  Game.prototype.bazookaStatus = function (pi) {
+    const B = this.bazooka || { decl: [null, null], fired: null };
+    const on = !!this.bazookaOn;
+    const fired = !!B.fired;
+    const mine = !!B.decl[pi], theirs = !!B.decl[1 - pi];
+    const locked = this.turn < this.rules.bazookaTurn;
+    const inPhase = this.phase === 'play' && this.cur === pi && ['item', 'call', 'answer', 'treasure'].indexOf(this.sub) >= 0;
+    return { on, fired, mine, theirs, locked, armed: mine && theirs && !fired, from: this.rules.bazookaTurn, can: on && !fired && !mine && !locked && inPhase };
+  };
+  Game.prototype.declareBazooka = function (pi) {
+    const st = this.bazookaStatus(pi);
+    if (!st.can) {
+      let reason = 'いまはバズーカを宣言できません';
+      if (!st.on) reason = 'この試合ではバズーカを使いません';
+      else if (st.fired) reason = 'バズーカはもう発動しました（1試合に1回）';
+      else if (st.mine) reason = 'バズーカはもう宣言しています';
+      else if (st.locked) reason = `バズーカは${this.rules.bazookaTurn}ターン目から宣言できます`;
+      return { ok: false, reason };
     }
-    return { ok: true, resolved: false };
+    const me = this.players[pi];
+    this.bazooka.decl[pi] = { turn: this.turn, t: this._tick() };
+    const both = !!this.bazooka.decl[1 - pi];
+    this._log(pi, `${me.name}：バズーカの使用を宣言${both ? '（両者がそろったので、次のターンの始めに発動）' : ''}`, null, 'bazooka', 'bazooka');
+    this._emit({ type: 'bzdecl', actor: pi, both });
+    this.lastAction = { kind: 'bazooka', pi, both };
+    return { ok: true, both };
+  };
+  Game.prototype._fireBazooka = function () {
+    const B = this.bazooka;
+    const t = this._tick();
+    B.fired = { turn: this.turn, t };
+    const opened = [[], []];   // opened[i]：プレイヤー i の予想盤面（相手フィールド）で新しく×になったマス
+    for (const P of this.players) {
+      const foe = this.foeOf(P.idx);
+      const v = P.view;
+      const occ = this.livingMask(foe.idx);
+      for (let c = 0; c < this.NN; c++) {
+        if (v.dead[c] || (occ & bit(c))) continue;
+        const m = v.marks[c];
+        if (m && m.r !== 'x') continue;
+        if (!m || m.callable) { v.marks[c] = { r: 'x', callable: false, t, bz: true }; opened[P.idx].push(c); }
+        P.kb.empties.push({ c, t, turn: this.turn, src: 'bazooka' });
+      }
+      // 推論用：この時点で個体があったマスは、ちょうど occ（撃破済み以外で×でないマス）
+      P.kb.reveal = { t, turn: this.turn, occ };
+    }
+    this._log(-1, 'バズーカ発動：お互いの空きマスがすべて×で公開された', null, 'bazooka', 'bazooka');
+    this._emit({ type: 'bazooka', opened });
   };
 
   const api = {
@@ -1596,7 +1649,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   // ------------------------------------------------------------------
   // ◎ごとの候補配置（健全：本当の配置を必ず含む）
   // ------------------------------------------------------------------
-  // サーチシェイプ（形状）・サーチナンバー（マス数）の結果と矛盾しないか
+  // サーチシェイプ（形状）・サーチサイズ（マス数）の結果と矛盾しないか
   function factsOK(P, occs, tp) {
     for (const o of occs) {
       if (o.t <= tp || !(P.mask & bit(o.c))) continue;
@@ -1800,6 +1853,149 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   }
 
   // ------------------------------------------------------------------
+  // バズーカの後：空きマスがすべて公開されたので、そのとき個体があったマスがちょうど分かっている。
+  // そこから、その後に撃破された個体とワープで動いた個体のマスを除いた領域 R は、
+  // 「それ以来動いていない、生きている個体」でぴったり埋まっている。
+  // R を個体で敷き詰める置き方をすべて調べ、どの置き方にも出てくる個体を確定とする（健全：本当の置き方を必ず含む）
+  // ------------------------------------------------------------------
+  function revealRegion(kb) {
+    const rv = kb.reveal;
+    if (!rv) return null;
+    let R = rv.occ;
+    for (const d of kb.deads) if (d.t > rv.t) R &= ~d.mask;
+    let warpedAfter = false;
+    for (const w of kb.warps) if (w.t > rv.t) { R &= ~w.oldMask; warpedAfter = true; }
+    return { R, t: rv.t, warpedAfter };
+  }
+
+  function revealSolve(ctx, priorByKey, cap, keep) {
+    const rg = revealRegion(ctx.kb);
+    if (!rg) return null;
+    const { R, t: tb } = rg;
+    const N = ctx.N, NN = ctx.NN, PL = ctx.PL, kb = ctx.kb;
+    keep = keep || 3000;
+    const out = { R, t: tb, warpedAfter: rg.warpedAfter, tilings: [], total: 0, count: 0, nodes: 0, aborted: false, truncated: false, certain: [] };
+    // 説明のつかないヒット（今もそこにいる個体への命中）は、公開の後にワープした個体へのものでなければ R の中にあるはず
+    if (!rg.warpedAfter) for (const u of ctx.U) if (!(R & bit(u.c))) return out;
+    if (!R) { out.count = 1; out.total = 1; out.tilings.push({ w: 1, tiles: [], own: new Int8Array(NN).fill(-1) }); return out; }
+    // 失敗したアンサーと同じ置き方は、その後にワープがなければありえない
+    const failed = (kb.failedAnswers || []).filter((fa) => !kb.warps.some((w) => w.t > fa.t && w.t < tb));
+    // 1個体ごとの条件：ヒットの順（最初が◎、あとは○）、形状・マス数の調査、ディスタンスショット、ステルス
+    const tileInfo = (P) => {
+      const hs = [];
+      for (const c of P.cells) { const u = ctx.Ucell.get(c); if (u) hs.push(u); }
+      hs.sort((a, b) => a.t - b.t);
+      if (hs.length) {
+        if (hs[0].r !== 'oo') return null;
+        for (let i = 1; i < hs.length; i++) if (hs[i].r !== 'o') return null;
+      }
+      if (!factsOK(P, ctx.occs, 0)) return null;
+      const g = hs.length ? hs[0] : null;
+      for (const d of ctx.dists) {
+        if (!(P.mask & bit(d.c))) continue;
+        if (d.k == null) { if (g && g.t < d.t) return null; continue; }
+        if (!g || g.t > d.t || blockDist(d.c, g.c, N) !== d.k) return null;
+      }
+      for (const fa of failed) if (fa.mask === P.mask) return null;
+      const full = (P.mask & ~ctx.hitMask) === 0;
+      const lastHit = full ? hs[hs.length - 1].t : -1;
+      if (full && (!ctx.stealthTimes.length || ctx.stealthTimes[0] >= lastHit)) return null;
+      return { full, lastHit, oo: g ? g.c : -1, hits: hs.length };
+    };
+    const cand = [];
+    for (let c = 0; c < NN; c++) cand.push([]);
+    for (const s of [2, 3, 4, 5]) {
+      if (!ctx.sizeAllowed(s)) continue;
+      for (const key of SHAPES_BY_SIZE[s]) {
+        if (!ctx.catAllowed(SHAPES[key].cat)) continue;
+        for (const P of PL[key]) {
+          if (P.mask & ~R) continue;
+          const info = tileInfo(P);
+          if (!info) continue;
+          const low = 31 - Math.clz32(P.mask & -P.mask);
+          cand[low].push({ mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, info, w: (priorByKey[P.key] || 0.05) / PL[P.key].length });
+        }
+      }
+    }
+    const counts = ctx.counts;
+    const exact = !rg.warpedAfter;   // ワープで出ていった個体がいなければ、R の個体＝生きている個体のすべて
+    const szCnt = new Int32Array(6), ctCnt = {};
+    const tiles = [];
+    const tileN = new Map();
+    const own = new Int8Array(NN).fill(-1);
+    const leaf = (w) => {
+      if (exact) {
+        if (counts.all != null && tiles.length !== counts.all) return;
+        for (const sz in counts.size) if ((szCnt[sz] || 0) !== counts.size[sz]) return;
+        for (const ct in counts.cat) if ((ctCnt[ct] || 0) !== counts.cat[ct]) return;
+      }
+      for (const p of ctx.pairs) {
+        const oa = own[p.a], ob = own[p.b];
+        // 2マスとも R の外なら、公開の後にワープした個体についての結果（ここでは調べない）
+        if (p.same) { if (oa < 0 && ob < 0 && rg.warpedAfter) continue; if (oa < 0 || oa !== ob) return; } else if (oa >= 0 && oa === ob) return;
+      }
+      for (const d of ctx.distNums) if (own[d.c] < 0 && !(rg.warpedAfter && !(R & bit(d.c)))) return;
+      // 全マス命中で生きている個体には、それぞれ別の（より前の）ステルスが要る
+      const fulls = [];
+      for (const T of tiles) if (T.info.full) fulls.push(T.info.lastHit);
+      if (fulls.length) {
+        if (fulls.length > ctx.stealthTimes.length) return;
+        fulls.sort((a, b) => a - b);
+        let j = 0;
+        for (const dl of fulls) { if (ctx.stealthTimes[j] >= dl) return; j++; }
+      }
+      out.count++;
+      out.total += w;
+      for (const T of tiles) tileN.set(T.mask, (tileN.get(T.mask) || 0) + 1);
+      if (out.tilings.length < keep) out.tilings.push({ w, tiles: tiles.slice(), own: own.slice() });
+      else out.truncated = true;
+    };
+    const dfs = (rem, w) => {
+      if (out.aborted) return;
+      if (++out.nodes > cap) { out.aborted = true; return; }
+      if (!rem) { leaf(w); return; }
+      const low = 31 - Math.clz32(rem & -rem);
+      for (const T of cand[low]) {
+        if (T.mask & ~rem) continue;
+        const s = T.size, ct = T.cat;
+        if (szCnt[s] + 1 > ctx.stockBound[s]) continue;
+        if (counts.size[s] != null && szCnt[s] + 1 > counts.size[s]) continue;
+        if (counts.cat[ct] != null && (ctCnt[ct] || 0) + 1 > counts.cat[ct]) continue;
+        if (counts.all != null && tiles.length + 1 > counts.all) continue;
+        const idx = tiles.length;
+        tiles.push(T); szCnt[s]++; ctCnt[ct] = (ctCnt[ct] || 0) + 1;
+        for (const c of T.cells) own[c] = idx;
+        dfs(rem & ~T.mask, w * T.w);
+        for (const c of T.cells) own[c] = -1;
+        tiles.pop(); szCnt[s]--; ctCnt[ct]--;
+        if (out.aborted) return;
+      }
+    };
+    dfs(R, 1);
+    if (out.count > 0 && !out.aborted) {
+      const seen = new Set();
+      for (const Tl of out.tilings) for (const T of Tl.tiles) {
+        if (seen.has(T.mask) || tileN.get(T.mask) !== out.count) continue;
+        seen.add(T.mask);
+        out.certain.push({ mask: T.mask, key: T.key, size: T.size, cat: T.cat, cells: T.cells });
+      }
+    }
+    return out;
+  }
+  // バズーカ後の解析が使える状態か（敷き詰め方を全部数えられた）
+  function revealReady(A) { const rv = A && A.reveal; return !!(rv && rv.count > 0 && !rv.aborted && !rv.truncated && rv.tilings.length); }
+  // 敷き詰め方ごとの結果の割れ方（情報量）。key(敷き詰め方) が結果を返す
+  function revealEntropy(rv, key) {
+    const m = new Map();
+    let tot = 0;
+    for (const Tl of rv.tilings) { const k = key(Tl); m.set(k, (m.get(k) || 0) + Tl.w); tot += Tl.w; }
+    if (!(tot > 0)) return 0;
+    let h = 0;
+    for (const w of m.values()) { const p = w / tot; if (p > 0) h -= p * Math.log2(p); }
+    return h;
+  }
+
+  // ------------------------------------------------------------------
   // 解析本体
   // ------------------------------------------------------------------
   function analyze(kb, N, rng, opt) {
@@ -1810,6 +2006,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     for (const g of ctx.groups) g.cands = groupCands(g, ctx, priorByKey);
     const joint = solveGroups(ctx, rng);
     const NN = ctx.NN;
+    const reveal = revealSolve(ctx, priorByKey, (opt && opt.revealCap) || 60000);
 
     // 確定個体
     const certain = [];
@@ -1821,6 +2018,15 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         if (live.length === 1) certain.push({ gi: i, cand: g.cands[live[0]] });
       }
     });
+    // バズーカ後の敷き詰めで確定した個体（◎がまだない個体も、ここで確定することがある）
+    if (reveal && reveal.count > 0 && !reveal.aborted) {
+      for (const T of reveal.certain) {
+        if (certain.some((x) => x.cand.mask === T.mask)) continue;
+        let gi = -1;
+        ctx.groups.forEach((g, i) => { if (T.mask & bit(g.c)) gi = i; });
+        certain.push({ gi, cand: T });
+      }
+    }
 
     const targetP = new Float64Array(NN);
     let certainCover = 0, anyCover = 0;
@@ -1841,12 +2047,13 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     }
     for (const u of ctx.U) { certainCover |= bit(u.c); anyCover |= bit(u.c); }
 
-    const H = huntModel(ctx, prior, joint, certainCover, anyCover, opt || {});
-    return { ctx, joint, certain, targetP, certainCover, anyCover, hunt: H };
+    if (reveal) for (const ce of certain) certainCover |= ce.cand.mask;
+    const H = huntModel(ctx, prior, joint, certainCover, anyCover, opt || {}, reveal);
+    return { ctx, joint, certain, targetP, certainCover, anyCover, hunt: H, reveal };
   }
 
   // 未発見の個体がいる確率（索敵用）
-  function huntModel(ctx, prior, joint, certainCover, anyCover, opt) {
+  function huntModel(ctx, prior, joint, certainCover, anyCover, opt, reveal) {
     const N = ctx.N, NN = ctx.NN, PL = ctx.PL;
     const forbidA = ctx.xMaskAll | ctx.deadMask | ctx.oldMaskAll | ctx.hitMask | ctx.lineZeroMask | certainCover;
 
@@ -1983,7 +2190,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
         entP.push({ p, ent: e });
         continue;
       }
-      const forb = ctx.xMaskAfter(e.t) | ctx.deadMask | e.oldMask | ctx.oldMaskAfter(e.t) | ctx.hitMask | ctx.occMaskBefore(e.t) | ctx.lineZeroMask | certainCover;
+      const forb = ctx.xMaskAfter(e.t) | ctx.deadMask | e.oldMask | ctx.oldMaskAfter(e.t) | ctx.hitMask | ctx.occMaskBefore(e.t) | ctx.lineZeroMask | certainCover | (reveal && e.t > reveal.t ? reveal.R : 0);
       const p = new Float64Array(NN);
       let V = 0;
       for (const P of PL[e.key]) { if (P.mask & forb) continue; V++; for (const c of P.cells) p[c] += 1; }
@@ -2006,7 +2213,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     // 位置の分かっている未ヒット個体
     for (const o of occPseudo) {
       const p = new Float64Array(NN);
-      if (o.size === 1) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // サーチナンバーで見つけたアッド
+      if (o.size === 1) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // サーチサイズで見つけたアッド
       let Z = 0;
       for (const sh of prior) {
         if (o.cat && SHAPES[sh.key].cat !== o.cat) continue;
@@ -2056,6 +2263,15 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
           if (S > 1e-9) { const f = R / S; for (const c of freeCells) P[c] = Math.min(0.995, P[c] * f); }
           else if (room > 0) for (const c of freeCells) P[c] = Math.min(0.995, R / room);
         }
+      }
+    }
+    // バズーカの後：R（動いていない個体のマス）は確実に埋まっていて、それ以外にいるのは公開の後にワープした個体だけ
+    if (reveal) {
+      for (let c = 0; c < NN; c++) {
+        if (reveal.R & bit(c)) { P[c] = 0.995; continue; }
+        let none = 1;
+        for (const e of entP) if (e.ent && e.ent.t > reveal.t) none *= 1 - Math.min(0.999, e.p[c]);
+        P[c] = 1 - none;
       }
     }
     return { P, occU, entP, Etotal, Es, q, occPseudo, kDist, shapeW };
@@ -2190,6 +2406,28 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     for (const ce of A.certain) exclude |= ce.cand.mask;
     const pool = cells.filter((c) => !(exclude & bit(c)));
     if (pool.length) cells = pool;
+    // バズーカの後：R の中のマスは必ず当たる。どの敷き詰め方かがいちばん割れるマス（＋撃破できそうなマス）を選ぶ
+    if (revealReady(A)) {
+      const rv = A.reveal;
+      const inR = cells.filter((c) => rv.R & bit(c));
+      if (inR.length) {
+        const hitM = A.ctx.hitMask;
+        const sc = new Map();
+        for (const c of inR) {
+          let kill = 0, tot = 0;
+          const h = revealEntropy(rv, (Tl) => {
+            const T = Tl.tiles[Tl.own[c]];
+            if (!T) return '-';
+            const rest = T.mask & ~hitM & ~bit(c);
+            if (!rest && !T.info.full) { kill += Tl.w; }
+            tot += Tl.w;
+            return (T.info.hits ? 'o' : 'oo') + (rest ? '' : ':' + T.mask);
+          });
+          sc.set(c, h + 0.3 * (tot > 0 ? kill / tot : 0));
+        }
+        return pickMax(inR, (c) => sc.get(c), rng);
+      }
+    }
     const certainSet = new Set(A.certain.map((x) => x.gi));
     const uncertain = A.ctx.groups.filter((g, i) => !certainSet.has(i));
     const hp = A.hunt.P;
@@ -2283,6 +2521,22 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       const info = out.get(p.id);
       if (info) { info.cands = live; info.danger = live <= 0 ? 0 : 1 / live; }
     });
+    // バズーカの後：相手の敷き詰めで確定している個体は、次の手番でアンサーされる
+    if (B.reveal && B.reveal.count > 0) {
+      for (const p of me.pieces) {
+        if (!p.alive) continue;
+        const info = out.get(p.id);
+        if (!info) continue;
+        if (B.certain.some((ce) => ce.cand.mask === p.mask)) { info.cands = 1; info.danger = 1; info.revealed = true; continue; }
+        if (revealReady(B)) {
+          // その置き方が出てくる割合
+          let w = 0;
+          for (const Tl of B.reveal.tilings) if (Tl.tiles.some((T) => T.mask === p.mask)) w += Tl.w;
+          const share = B.reveal.total > 0 ? w / B.reveal.total : 0;
+          if (share > info.danger) { info.danger = share; info.revealed = true; }
+        }
+      }
+    }
     return out;
   }
 
@@ -2321,6 +2575,81 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     return bestCells[Math.floor(game.rng() * bestCells.length)];
   }
 
+  // 防御のワープ：見破られかけた（またはバズーカで場所が知られた）個体を逃がす
+  function defensiveWarp(game, pi, free) {
+    const me = game.players[pi];
+    const living = game.living(pi);
+    const livingReal = living.filter((p) => !p.isAdd);
+    const ex = exposure(game, pi);
+    let best = null, bestV = 0;
+    for (const p of living) {
+      if (p.isAdd) continue;
+      const e = ex.get(p.id);
+      if (!e) continue;
+      const hits = popcount(p.hitMask);
+      if (!hits && !e.revealed) continue;
+      const danger = Math.max(e.danger, e.hitsLeft <= 1 ? 0.9 : 0);
+      const last = livingReal.length === 1 ? 4 : 0;
+      const value = (p.size + last + (me.treasure && me.treasure.pieceId === p.id ? 1 : 0)) * danger;
+      if (danger >= 0.5 && value > bestV && (p.size >= 3 || last || e.revealed)) { best = p; bestV = value; }
+    }
+    if (best && (free('warp') || best.size >= 4 || livingReal.length === 1)) {
+      const tgt = bestWarpTarget(game, pi, best);
+      if (tgt) return { key: 'warp', params: tgt };
+    }
+    return null;
+  }
+
+  // バズーカの後のアイテム。undefined＝ふだんの判断にまかせる
+  //  ・相手の個体がすべて確定していれば何も使わない（コールの後のアンサーで全滅させられる）
+  //  ・確定していなければ、コールの結果を見てから、敷き詰め方がいちばん割れるアイテムを選ぶ。
+  //    それで全部確定しそうにないときは、知られた自分の個体をワープで逃がすほうを優先する
+  function revealItemChoice(game, pi, A, stage, free, can) {
+    if (!revealReady(A)) return undefined;
+    const rv = A.reveal, ctx = A.ctx, N = game.N;
+    const certMask = A.certain.reduce((m, ce) => m | ce.cand.mask, 0);
+    const open = rv.R & ~certMask;
+    if (!open && !rv.warpedAfter) return null;
+    if (stage === 'pre') return null;
+    let best = null;
+    if (open) {
+      const cellsR = bitsOf(open);
+      const tileAt = (Tl, c) => Tl.tiles[Tl.own[c]] || null;
+      // 結果ごとに敷き詰め方を分け、割れ方（情報量）と「1通りに決まる見込み」を測る
+      const evalKey = (key, params, fn, k) => {
+        const m = new Map();
+        let tot = 0;
+        for (const Tl of rv.tilings) { const o = fn(Tl); const e = m.get(o) || { w: 0, n: 0 }; e.w += Tl.w; e.n++; m.set(o, e); tot += Tl.w; }
+        if (!(tot > 0)) return;
+        let h = 0, res = 0;
+        for (const e of m.values()) { const p = e.w / tot; if (p > 0) h -= p * Math.log2(p); if (e.n === 1) res += p; }
+        h *= k || 1;
+        if (h < 0.25) return;
+        if (!best || res > best.res + 1e-9 || (Math.abs(res - best.res) <= 1e-9 && h > best.h)) best = { key, params, h, res };
+      };
+      for (const c of cellsR) {
+        if (free('shape')) evalKey('shape', { cell: c }, (Tl) => { const T = tileAt(Tl, c); return T ? T.cat : '-'; });
+        if (free('number')) evalKey('number', { cell: c }, (Tl) => { const T = tileAt(Tl, c); return T ? T.size : 0; });
+        if (free('dist') && !(ctx.ooMask & bit(c))) evalKey('dist', { cell: c }, (Tl) => { const T = tileAt(Tl, c); return T && T.info.oo >= 0 ? blockDist(c, T.info.oo, N) : 'nd'; });
+      }
+      if (free('pair')) {
+        for (let i = 0; i < cellsR.length; i++) for (let j = i + 1; j < cellsR.length; j++) {
+          const a = cellsR[i], b = cellsR[j];
+          evalKey('pair', { a, b }, (Tl) => (Tl.own[a] >= 0 && Tl.own[a] === Tl.own[b] ? 1 : 0), 0.95);
+        }
+      }
+      if (free('cube')) {
+        for (const sz of [2, 3, 4, 5]) if (ctx.counts.size[sz] == null) evalKey('cube', { kind: 'size', value: sz }, (Tl) => Tl.tiles.filter((T) => T.size === sz).length);
+        for (const ct of CATS) if (ctx.counts.cat[ct] == null) evalKey('cube', { kind: 'cat', value: ct }, (Tl) => Tl.tiles.filter((T) => T.cat === ct).length);
+      }
+    }
+    if (best && best.res >= 0.5) return { key: best.key, params: best.params };
+    const w = can('warp') ? defensiveWarp(game, pi, free) : null;
+    if (w) return w;
+    if (best) return { key: best.key, params: best.params };
+    return rv.warpedAfter ? undefined : null;
+  }
+
   // stage: 'pre'＝コール前、'post'＝コール後（どちらかで1手番1つまで）
   function chooseItem(game, pi, stage) {
     stage = stage || 'pre';
@@ -2333,47 +2662,23 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     const free = (k) => game.itemStatus(pi, k).usable && game.players[pi].items[k] > 0;
     const living = game.living(pi);
     const livingReal = living.filter((p) => !p.isAdd);
-    const hasAdd = living.some((p) => p.isAdd);
+
+    // 0) バズーカの後：相手の個体のマスが全部分かっている
+    if (me.kb.reveal) {
+      const r = revealItemChoice(game, pi, analyze(me.kb, N, rng, pol), stage, free, can);
+      if (r !== undefined) return r;
+    }
 
     // 1) 防御：見破られかけた個体をワープで逃がす
     if (can('warp')) {
-      const ex = exposure(game, pi);
-      let best = null, bestV = 0;
-      for (const p of living) {
-        if (p.isAdd) continue;
-        const e = ex.get(p.id);
-        if (!e) continue;
-        const hits = popcount(p.hitMask);
-        if (!hits) continue;
-        const danger = Math.max(e.danger, e.hitsLeft <= 1 ? 0.9 : 0);
-        const last = livingReal.length === 1 ? 4 : 0;
-        const value = (p.size + last + (me.treasure && me.treasure.pieceId === p.id ? 1 : 0)) * danger;
-        if (danger >= 0.5 && value > bestV && (p.size >= 3 || last)) { best = p; bestV = value; }
-      }
-      if (best && (free('warp') || best.size >= 4 || livingReal.length === 1)) {
-        const tgt = bestWarpTarget(game, pi, best);
-        if (tgt) return { key: 'warp', params: tgt };
-      }
+      const w = defensiveWarp(game, pi, free);
+      if (w) return w;
     }
 
     const A = analyze(me.kb, N, rng, pol);
     const ctx = A.ctx;
-    const foeCountKnown = ctx.counts.all;
-    const foeAddsAlive = ctx.addEnt.length;
 
-    // 2) バズーカ：勝ちが確定する、または安い身代わりで相手の個体を減らせる
-    if (can('bazooka') && living.length >= 2) {
-      const foeMin = Math.max(ctx.groups.length + foeAddsAlive, 1);
-      const foeExactOne = foeCountKnown === 1 || (foeCountKnown == null && A.hunt.Etotal < 0.05 && foeMin === 1 && ctx.groups.length + foeAddsAlive + ctx.wEnt.length === 1);
-      if (foeExactOne && free('bazooka')) return { key: 'bazooka', params: {} };
-      if (foeExactOne && me.wallet >= 3) return { key: 'bazooka', params: {} };
-      if (hasAdd && free('bazooka') && !foeAddsAlive && livingReal.length >= 1) {
-        const foeEst = foeCountKnown != null ? foeCountKnown : ctx.groups.length + A.hunt.Etotal;
-        if (foeEst <= 2.2) return { key: 'bazooka', params: {} };
-      }
-    }
-
-    // 3) ステルス：あと1マスで撃破されるキューブ、または最後の1個体を、アンサーでしか倒せないようにする
+    // 2) ステルス：あと1マスで撃破されるキューブ、または最後の1個体を、アンサーでしか倒せないようにする
     if (free('stealth')) {
       let best = null, bestV = 0;
       for (const p of living) {
@@ -2395,7 +2700,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       // 候補の割れ方（情報量）がいちばん大きいアイテムを使う
       let best = null, bestH = 0.6;
       const consider = (key, params, h) => { if (h > bestH) { bestH = h; best = { key, params }; } };
-      // サーチシェイプ（形状）・サーチナンバー（マス数）：候補が割れている◎
+      // サーチシェイプ（形状）・サーチサイズ（マス数）：候補が割れている◎
       for (const i of uncertain) {
         const g = ctx.groups[i];
         const catW = {}, sizeW = {};
@@ -2529,6 +2834,42 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     return game.draft.pool[0];
   }
 
+  // ------------------------------------------------------------------
+  // バズーカの宣言
+  //  発動すると、お互いの個体のマスがすべて分かる。発動は次のターンの始めなので、その後に先に動けるのは先攻。
+  //  見通し（bazookaOutlook）：いま発動したら、相手が自分の個体をどれだけ確定できるか（自分の盤面は分かっているので正確に計算できる）
+  // ------------------------------------------------------------------
+  function revealedKB(kb, occ, deadMask, NN, t) {
+    const k2 = Object.assign({}, kb);
+    k2.empties = kb.empties.slice();
+    for (let c = 0; c < NN; c++) if (!(occ & bit(c)) && !(deadMask & bit(c))) k2.empties.push({ c, t, src: 'bazooka' });
+    k2.reveal = { t, occ };
+    return k2;
+  }
+  function bazookaOutlook(game, pi) {
+    const me = game.players[pi], foe = game.players[1 - pi];
+    const occ = game.livingMask(pi), dead = game.deadMask(pi);
+    const k2 = revealedKB(foe.kb, occ, dead, game.NN, game.clock + 1);
+    const B = analyze(k2, game.N, game.rng);
+    const living = me.pieces.filter((p) => p.alive);
+    const exposed = living.filter((p) => B.certain.some((ce) => ce.cand.mask === p.mask)).length;
+    return { living: living.length, exposed, tilings: B.reveal ? B.reveal.count : 0 };
+  }
+  function chooseBazooka(game, pi) {
+    const st = game.bazookaStatus(pi);
+    if (!st.can) return false;
+    const pol = policy[pi] || {};
+    const mode = pol.bz || 'smart';
+    if (mode === 'never') return false;
+    if (mode === 'always') return true;
+    if (mode === 'second') return pi !== game.first;
+    // smart：発動は次のターンの始めなので、公開の後に先に動けるのはいつも先攻。
+    // CPU同士の検証では、発動すると先攻が9割以上勝つ（その手番のうちに全個体をアンサーしてしまう）。
+    // 後攻が同意して得をする局面は、相手が自分の盤面を確定しきれない場合でもほとんどなかった。
+    // だから先攻は宣言できたらすぐ宣言し、後攻は宣言しない
+    return pi === game.first;
+  }
+
   // CPUの1手番をまとめて実行する（シミュレーション用。画面側は段階的に呼ぶ）
   function playTurn(game, pi, onStep) {
     const step = (s) => { if (onStep) onStep(s); };
@@ -2537,11 +2878,6 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
       if (!it) return 'none';
       const r = game.useItem(pi, it.key, it.params);
       step({ kind: 'item', it, r, stage });
-      if (game.sub === 'bazooka') {
-        game.bazookaChoose(pi, chooseSacrifice(game, pi));
-        if (game.pending && game.pending.choice[1 - pi] == null && game.players[1 - pi].isCPU) game.bazookaChoose(1 - pi, chooseSacrifice(game, 1 - pi));
-        if (game.sub === 'bazooka') return 'wait';
-      }
       return game.phase !== 'play' ? 'over' : 'used';
     };
     const answerLoop = () => {
@@ -2561,7 +2897,6 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     };
     if (game.sub === 'item') {
       const r = useItemNow('pre');
-      if (r === 'wait') return 'waitBazooka';
       if (r === 'over') return 'over';
     }
     if ((game.sub === 'item' || game.sub === 'call') && !game.hasCallable(pi)) game.skipCall(pi);
@@ -2574,9 +2909,13 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
     if (answerLoop() === 'over') return 'over';
     if (game.sub === 'answer' && !game.itemUsed) {
       const r = useItemNow('post');
-      if (r === 'wait') return 'waitBazooka';
       if (r === 'over') return 'over';
       if (r === 'used' && answerLoop() === 'over') return 'over';
+    }
+    // バズーカの宣言は手番の終わりに判断する（発動は次のターンの始めなので、いちばん情報が多いところで決める）
+    if (game.sub === 'answer' && chooseBazooka(game, pi)) {
+      const r = game.declareBazooka(pi);
+      step({ kind: 'bazooka', r });
     }
     if (game.sub === 'answer') game.endTurn(pi);
     if (game.sub === 'treasure' && game.cur === pi) {
@@ -2590,7 +2929,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
   // 画面用：自分が知り得た相手の現在の個体数（サーチオール未使用なら null）
   function knownCounts(kb, N) { return currentCounts(kb, N); }
 
-  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, draftPick, playTurn, exposure, bestWarpTarget, bestAddCell, policy, _cubeOptions: cubeOptions };
+  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, chooseBazooka, bazookaOutlook, setup, draftPick, playTurn, exposure, bestWarpTarget, bestAddCell, policy, _cubeOptions: cubeOptions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBAI = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -2939,9 +3278,28 @@ window.SBAudio = (function () {
       noise(G, t, { ft: 'highpass', f: 5000, f2: 1500, glide: 0.8, a: 0.02, d: 0.9, v: 0.05, pan: p.pan });
       tone(G, t, { f: 147, a: 0.3, d: 0.7, v: 0.06, pan: p.pan });
     },
-    'i-bazooka'(G, t) {
-      noise(G, t, { f: 400, f2: 2200, a: 0.3, d: 0.2, v: 0.1 });
-      tone(G, t, { type: 'sawtooth', f: 80, f2: 300, glide: 0.5, a: 0.3, d: 0.2, v: 0.04, lp: 1200 });
+    // バズーカの宣言：装填音と警報（両者がそろったら長めに）
+    'bz-arm'(G, t, p) {
+      noise(G, t, { ft: 'lowpass', f: 1600, a: 0.001, d: 0.05, v: 0.22 });
+      tone(G, t + 0.03, { type: 'square', f: 140, f2: 70, glide: 0.08, a: 0.001, d: 0.09, v: 0.12, lp: 900 });
+      noise(G, t + 0.12, { ft: 'highpass', f: 3000, a: 0.001, d: 0.03, v: 0.12 });
+      const reps = p.both ? 3 : 2;
+      for (let i = 0; i < reps; i++) {
+        const s = t + 0.22 + i * 0.3;
+        tone(G, s, { type: 'square', f: 880, a: 0.004, hold: 0.1, d: 0.04, v: 0.05, lp: 2600 });
+        tone(G, s + 0.15, { type: 'square', f: 659, a: 0.004, hold: 0.1, d: 0.06, v: 0.05, lp: 2400, echo: 0.15 });
+      }
+      if (p.both) tone(G, t + 0.22 + reps * 0.3, { type: 'sawtooth', f: 220, f2: 880, glide: 0.4, a: 0.02, d: 0.35, v: 0.035, lp: 2400, rev: 0.25 });
+    },
+    // バズーカの発動：発射 → 爆発 → 空きマスが次々に開く
+    'bz-fire'(G, t, p) {
+      noise(G, t, { f: 260, f2: 4200, glide: 0.45, q: 1.2, a: 0.25, d: 0.15, v: 0.13 });
+      tone(G, t, { type: 'sawtooth', f: 90, f2: 520, glide: 0.45, a: 0.3, d: 0.12, v: 0.045, lp: 1800 });
+      SFX.destroy(G, t + 0.48, { big: true });
+      kick(G, t + 0.48, 0.55);
+      const n = Math.max(4, Math.min(18, p.n || 8));
+      for (let i = 0; i < n; i++) bell(G, t + 0.7 + i * 0.045, { f: mtof(84 - (i % 7) * 2), ratio: 2, index: 0.5, d: 0.22, v: 0.03, echo: 0.15 });
+      tone(G, t + 0.7, { f: 1760, f2: 440, glide: 0.8, a: 0.01, d: 0.8, v: 0.03, rev: 0.3 });
     },
     // 調べた結果：数（個体数・マス数・ブロック数）はその回数だけ「ピッ」と鳴らす
     readout(G, t, p) {
@@ -3208,13 +3566,12 @@ window.SBAudio = (function () {
   'use strict';
   const E = window.SBEngine, AI = window.SBAI;
   const { ITEMS, ITEM_KEYS, SHAPES, SHAPES_BY_SIZE, ORIENT, COLS, CATS, cellsFor, identifyShape, bit } = E;
-  const ALL_ITEMS = ITEM_KEYS.concat(['bazooka']);
-  // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用
-  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'dist', 'bazooka'];
+  // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用（バズーカはアイテムとは別枠の宣言）
+  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'dist'];
   const DEF_ITEMS = ['warp', 'stealth'];
   const isDef = (k) => DEF_ITEMS.indexOf(k) >= 0;
-  // この試合で使えるアイテムか（バズーカは現在使用禁止）
-  function inPlay(k) { const g = G(); if (k === 'bazooka') return !!(g && g.bazookaOn); return !g || (g.itemKeys || ITEM_KEYS).indexOf(k) >= 0; }
+  // この試合で使えるアイテムか
+  function inPlay(k) { const g = G(); return !g || (g.itemKeys || ITEM_KEYS).indexOf(k) >= 0; }
   const root = document.getElementById('app');
   const fxLayer = document.getElementById('fx-layer');
   // サウンド（読み込めなかったときは何もしない代わりを使う）
@@ -3257,21 +3614,18 @@ window.SBAudio = (function () {
     if (isCPUMode()) return 0;
     if (g.phase === 'setup') return app.setup ? app.setup.pi : 0;
     if (g.phase === 'draft') return Math.max(0, g.draftTurn());
-    if (g.phase === 'play') {
-      if (g.sub === 'bazooka' && g.pending) return g.pending.choice[g.cur] == null ? g.cur : 1 - g.cur;
-      return g.cur;
-    }
+    if (g.phase === 'play') return g.cur;
     return app.ui && app.ui.lastViewer != null ? app.ui.lastViewer : 0;
   }
 
   function effMode() {
     const g = G(), v = viewer();
     if (!g || g.phase !== 'play') return 'over';
-    if (g.sub === 'bazooka') return g.pending.choice[v] == null ? 'bazooka-pick' : 'wait';
     if (g.cur !== v || app.busy) return 'wait';
     if (g.sub === 'sacrifice') return 'sacrifice';
+    if (app.ui.mode === 'bazooka-confirm' && g.bazookaStatus(v).can) return 'bazooka-confirm';
     if (g.sub === 'treasure') return 'treasure';
-    if (app.ui.mode) return app.ui.mode;
+    if (app.ui.mode && app.ui.mode !== 'bazooka-confirm') return app.ui.mode;
     if (g.sub === 'item') return 'item';
     if (g.sub === 'call') return 'call';
     if (g.sub === 'answer') return 'answer-phase';
@@ -3352,7 +3706,7 @@ window.SBAudio = (function () {
   const LOCK_SVG = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 6v16M50 78v16M6 50h16M78 50h16"/><path d="M22 22l8 8M78 22l-8 8M22 78l8-8M78 78l-8-8" opacity=".6"/></svg>';
   const RETICLE_SVG = '<svg viewBox="0 0 100 100"><path d="M14 34V14h20M66 14h20v20M86 66v20H66M34 86H14V66"/><circle cx="50" cy="50" r="5"/></svg>';
   const TL = { H: 'H', N: 'N', X: '×' };
-  const SHAPE_ABBR = { 'キューブ': 'C', 'L字': 'L', 'T字': 'T', 'なし': '∅' };
+  const SHAPE_ABBR = { 'キューブ': 'C', 'L字': 'L', 'T字': 'T' };
 
   // ---------------- 形の配置補助 ----------------
   function anchorFor(key, t, c, N) {
@@ -3408,12 +3762,17 @@ window.SBAudio = (function () {
     }
     const cells = {};
     const put = (c, k, val) => { if (!view.dead[c]) cells[c] = Object.assign(cells[c] || {}, { [k]: val }); };
-    // マスの調査（サーチシェイプ・サーチナンバー）は時刻順に、新しい結果で上書きする
+    // マスの調査（サーチシェイプ・サーチサイズ）は時刻順に、新しい結果で上書きする。
+    // 空きマスだったとき（NoData）は、ディスタンスショットの NoData と同じ表示にする
     const facts = [];
     for (const o of kb.occs) if (o.src === 'shape' || o.src === 'number') facts.push({ c: o.c, t: o.t, turn: o.turn, src: o.src, v: o.src === 'shape' ? o.cat : o.size, stale: warpedAfter(o.t) });
-    for (const e of kb.empties) facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src === 'number' ? 'number' : 'shape', v: e.src === 'number' ? 0 : 'なし', stale: relocatedAfter(e.t) });
+    for (const e of kb.empties) if (e.src === 'shape' || e.src === 'number') facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src, nd: true, stale: relocatedAfter(e.t) });
     facts.sort((a, b) => a.t - b.t);
-    for (const f of facts) put(f.c, f.src === 'shape' ? 'shape' : 'size', { v: f.v, stale: f.stale, turn: f.turn });
+    for (const f of facts) {
+      if (f.nd) { put(f.c, 'nd', { t: f.t, turn: f.turn, src: f.src, stale: f.stale }); put(f.c, 'shape', null); put(f.c, 'size', null); continue; }
+      put(f.c, f.src === 'shape' ? 'shape' : 'size', { v: f.v, stale: f.stale, turn: f.turn });
+      put(f.c, 'nd', null);
+    }
     // ディスタンスショット：そのマスの最新の結果（数字か NoData）
     //  数字：その個体がそのマスから動くまで有効（動けば W付きの×になる）
     //  NoData：その後のワープ・新しい◎で変わりうる（薄く表示）
@@ -3439,24 +3798,30 @@ window.SBAudio = (function () {
       `<span class="itag${t.stale ? ' stale' : ''}" data-tip="${esc(t.tip)}">${ICON[t.key]}${esc(t.label)}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
     ).join('') + '</div>';
   }
-  // マスの左上に「形状＋マス数」（例：L4、C3、#2、∅）
+  // マスの左上に「形状＋マス数」（例：L4、C3、#2）。空きマスだったときは、マスの中央に NoData を出す（cellMarkHTML）
   function cellTagHTML(intel, c) {
     if (!intel || !intel.cells[c]) return '';
     const a = intel.cells[c];
     if (!a.shape && !a.size) return '';
-    const none = (a.shape && a.shape.v === 'なし') || (a.size && a.size.v === 0);
     let s = '';
-    if (none) s = '∅';
-    else {
-      if (a.shape) s += SHAPE_ABBR[a.shape.v] || a.shape.v;
-      if (a.size) s += (a.shape ? '' : '#') + a.size.v;
-    }
+    if (a.shape) s += SHAPE_ABBR[a.shape.v] || a.shape.v;
+    if (a.size) s += (a.shape ? '' : '#') + a.size.v;
     const stale = (a.shape && a.shape.stale) || (a.size && a.size.stale);
-    const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチナンバー：${a.size.v ? a.size.v + 'マス' : 'なし'}` : ''].filter(Boolean).join(' / ');
+    const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチサイズ：${a.size.v}マス` : ''].filter(Boolean).join(' / ');
     return `<span class="ctag${stale ? ' stale' : ''}" title="${esc(title)}">${esc(s)}</span>`;
   }
-  // ディスタンスショットの結果を、その後に付いた印と見比べて出し分ける
-  const distAt = (intel, c) => (intel && intel.cells[c] && intel.cells[c].dist) || null;
+  // ディスタンスショットの結果を、その後に付いた印と見比べて出し分ける。
+  // サーチサイズ・サーチシェイプで空きマスだったとき（NoData）も、ディスタンスの NoData と同じように出す
+  const NODATA_HTML = (stale) => `<span class="mkw nodata${stale ? ' stale' : ''}"><b>NoData</b></span>`;
+  const ndAt = (intel, c) => (intel && intel.cells[c] && intel.cells[c].nd) || null;
+  function distAt(intel, c) {
+    const a = intel && intel.cells[c];
+    if (!a) return null;
+    const d = a.dist || null, nd = a.nd || null;
+    // 新しいほうの結果を使う（サーチサイズ・シェイプの NoData は、ディスタンスの NoData と同じ形にそろえる）
+    if (nd && (!d || nd.t > d.t)) return { v: null, t: nd.t, turn: nd.turn, stale: nd.stale, src: nd.src };
+    return d;
+  }
   function cellMarkHTML(m, intel, c) {
     const d = distAt(intel, c);
     if (!d || (d.v != null && d.left)) return markHTML(m);
@@ -3466,7 +3831,7 @@ window.SBAudio = (function () {
       return markHTML(m);
     }
     if (m && m.r === 'x' && !m.callable) return markHTML(m);
-    if (d.v == null) return `<span class="mkw nodata${d.stale ? ' stale' : ''}"><b>NoData</b></span>`;
+    if (d.v == null) return NODATA_HTML(d.stale);
     if (m && m.r === 'o') return `<span class="mkw ink-o num-hit">${numMark(d.v, false)}</span>`;
     return `<span class="mkw ink-d">${numMark(d.v, true)}</span>`;
   }
@@ -3475,7 +3840,8 @@ window.SBAudio = (function () {
     if (!d || (d.v != null && d.left)) return '';
     if (m && m.t > d.t && !(m.r === 'o' && d.v != null)) return '';
     if (m && m.t <= d.t && m.r === 'x' && !m.callable) return '';
-    return d.v == null ? ' ディスタンス NoData' : ` ◎まで${d.v}ブロック`;
+    const who = d.src === 'number' ? 'サーチサイズ' : d.src === 'shape' ? 'サーチシェイプ' : 'ディスタンス';
+    return d.v == null ? ` ${who} NoData` : ` ◎まで${d.v}ブロック`;
   }
   function pairsSVG(intel, N) {
     if (!intel || !intel.pairs.length) return '';
@@ -3483,7 +3849,11 @@ window.SBAudio = (function () {
     const body = intel.pairs.map((p) => {
       const [x1, y1] = pt(p.a), [x2, y2] = pt(p.b);
       const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-      return `<g class="${p.same ? 'same' : 'diff'}${p.stale ? ' stale' : ''}"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${mx}" cy="${my}" r="0.17"/><text x="${mx}" y="${my}" font-size="0.22">${p.same ? '=' : '≠'}</text></g>`;
+      // ＝・≠ は文字ではなく線で描く（文字だとフォントによって円の中心からずれる）
+      const f = (n) => +n.toFixed(3);
+      const bar = (dy) => `M${f(mx - 0.075)} ${f(my + dy)}H${f(mx + 0.075)}`;
+      const sym = bar(-0.036) + bar(0.036) + (p.same ? '' : `M${f(mx + 0.045)} ${f(my - 0.095)}L${f(mx - 0.045)} ${f(my + 0.095)}`);
+      return `<g class="${p.same ? 'same' : 'diff'}${p.stale ? ' stale' : ''}"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${mx}" cy="${my}" r="0.17"/><path class="sym" d="${sym}"/></g>`;
     }).join('');
     return `<svg class="pairs" viewBox="0 0 ${N} ${N}" preserveAspectRatio="none" aria-hidden="true">${body}</svg>`;
   }
@@ -3533,7 +3903,7 @@ window.SBAudio = (function () {
     if (!m) return '';
     if (m.r === 'x') {
       if (m.callable) return `<span class="mkw ink-x stale">${MARK.x}</span>`;
-      return `<span class="mkw ink-x">${MARK.x}</span>${m.warp ? '<span class="wtag" aria-hidden="true">W</span>' : ''}`;
+      return `<span class="mkw ink-x${m.bz ? ' bzx' : ''}">${MARK.x}</span>${m.warp ? '<span class="wtag" aria-hidden="true">W</span>' : ''}`;
     }
     let s = `<span class="mkw ink-${m.r}">${MARK[m.r]}</span>`;
     if (m.r === 'oo' && m.num != null) s += `<span class="num">${m.num}</span>`;
@@ -3606,7 +3976,6 @@ window.SBAudio = (function () {
       const d = v.dead[c];
       if (d) {
         cls += ' pc revealed' + edgeClasses(deadMaskById[d.pieceId], c, N);
-        if (d.cause === 'bazooka') cls += ' bz';
       } else if (opts.reveal) {
         const tp = g.pieceAt(foe.idx, c);
         if (tp) { cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${colorIndex(foe, tp)});`; }
@@ -3621,7 +3990,7 @@ window.SBAudio = (function () {
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : m.bz ? ' ×（バズーカで公開）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : ' ○';
       label += distLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       html += `<div class="${cls}" style="${style}" data-act="cell" data-board="pred" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${inner}</div>`;
@@ -3636,8 +4005,7 @@ window.SBAudio = (function () {
     const st = g.itemStatus(pi, k);
     const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy;
     let cls = 'ichip', bd = '', state;
-    if (st.locked) { cls += ' locked'; bd = g.rules.bazookaTurn + 'T'; state = `${g.rules.bazookaTurn}ターン目から`; }
-    else if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
+    if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
     else if (interactive && P.used[k] && P.wallet >= 3) { cls += ' rebuy'; bd = '3pt'; state = '使用済み・3ptで再購入できる'; }
     else { cls += ' spent'; state = P.used[k] ? (P.wallet >= 3 ? '使用済み（3ptで再購入できる）' : '使用済み') : 'なし'; }
     const usable = phaseOK && st.usable;
@@ -3668,9 +4036,11 @@ window.SBAudio = (function () {
   function sideEntries(v) {
     const g = G(), f = 1 - v;
     const used = (e) => e.kind === 'item' && e.key;
-    // 自分フィールド：相手の攻撃アイテム＋自分の防御アイテム／相手フィールド：自分の攻撃アイテム＋相手の防御アイテム
-    const myFieldItems = g.log.filter((e) => used(e) && ((e.actor === f && !isDef(e.key)) || (e.actor === v && isDef(e.key))));
-    const foeFieldItems = g.log.filter((e) => used(e) && ((e.actor === v && !isDef(e.key)) || (e.actor === f && isDef(e.key))));
+    const bz = (e) => e.kind === 'bazooka';
+    // 自分フィールド：相手の攻撃アイテム＋自分の防御アイテム／相手フィールド：自分の攻撃アイテム＋相手の防御アイテム。
+    // バズーカ（宣言・発動）は両方のフィールドに関わるので、どちらにも載せる
+    const myFieldItems = g.log.filter((e) => bz(e) || (used(e) && ((e.actor === f && !isDef(e.key)) || (e.actor === v && isDef(e.key)))));
+    const foeFieldItems = g.log.filter((e) => bz(e) || (used(e) && ((e.actor === v && !isDef(e.key)) || (e.actor === f && isDef(e.key)))));
     const calls = (a, b) => g.log.filter((e) => (e.actor === a && CALL_KINDS.has(e.kind)) || (e.actor === b && e.kind === 'penalty'));
     return { myItems: myFieldItems, foeItems: foeFieldItems, defCalls: calls(f, v), atkCalls: calls(v, f) };
   }
@@ -3678,8 +4048,8 @@ window.SBAudio = (function () {
     if (!entries.length) return `<ol class="loglist"><li class="none"><span class="t">—</span><span class="x">${esc(empty)}</span></li></ol>`;
     return '<ol class="loglist">' + entries.slice().reverse().map((e) => {
       const txt = e.actor === v && e.priv ? e.priv : e.text;
-      const side = e.actor === v ? 'mine' : 'enemy';
-      return `<li class="k-item wicon ${side}"><span class="t">T${pad2(e.turn)}</span><span class="li-ic ${side}">${ICON[e.key]}</span><span class="x">${esc(txt)}</span></li>`;
+      const side = e.actor === v ? 'mine' : e.actor < 0 ? 'sys' : 'enemy';
+      return `<li class="k-${e.kind === 'bazooka' ? 'bazooka' : 'item'} wicon ${side}"><span class="t">T${pad2(e.turn)}</span><span class="li-ic ${side}">${ICON[e.key] || ''}</span><span class="x">${esc(txt)}</span></li>`;
     }).join('') + '</ol>';
   }
   function callLogHTML(entries, v, empty) {
@@ -3702,9 +4072,9 @@ window.SBAudio = (function () {
       case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのマスを1つ選んでください`;
       case 'stealth-pick': return who + 'ステルス：守る自分のキューブを選んでください';
       case 'sacrifice': return who + 'アンサー失敗。差し出す自分のキューブを選んでください';
-      case 'bazooka-pick': return who + 'バズーカ：差し出す自分のキューブを選んでください';
+      case 'bazooka-confirm': return who + 'バズーカの使用を宣言しますか？（取り消せません）';
       case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
-      case 'number': return who + 'サーチナンバー：相手フィールドで調べるマスを選んでください';
+      case 'number': return who + 'サーチサイズ：相手フィールドで調べるマスを選んでください';
       case 'dist': return who + 'ディスタンスショット：相手フィールドで◎以外のマスを選んでください';
       case 'pair': return who + 'ペアショット：相手フィールドでマスを2つ選んでください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
@@ -3722,6 +4092,17 @@ window.SBAudio = (function () {
 
   // 進行表示ブロック：上の段に直前の出来事、下の段に説明（左）とボタン（右）。
   // フィールドの上に置くので、どの状態でも高さがほぼ変わらないように中身を短くそろえる
+  // バズーカの宣言ボタン（自分の手番で、宣言できるときだけ）。アイテムとは別枠
+  function bzButtonHTML(v) {
+    const g = G();
+    const st = g.bazookaStatus(v);
+    if (!st.can || app.busy) return '';
+    const label = st.theirs ? 'バズーカに同意' : 'バズーカ宣言';
+    const tip = st.theirs
+      ? '相手はバズーカを宣言済み。あなたも宣言すると、次のターンの始めに、お互いの空きマスがすべて×で公開されます'
+      : '宣言しておくと、相手も宣言した次のターンの始めに、お互いの空きマスがすべて×で公開されます（アイテムとは別枠・取り消し不可）';
+    return `<button class="btn fire bzbtn" data-act="bz-declare" data-tip="${esc(tip)}">${ICON.bazooka}<span>${label}</span></button>`;
+  }
   function dockHTML(mode) {
     const g = G(), v = viewer(), ui = app.ui;
     const cancel = '<button class="btn ghost" data-act="cancel">やめる</button>';
@@ -3733,13 +4114,15 @@ window.SBAudio = (function () {
           main = '<p class="dock-msg">コールできるマスが残っていません。コールを飛ばして、アンサーかターンエンドに進みます。</p>';
           acts = '<button class="btn primary" data-act="skip-call">コールを飛ばす</button>';
         }
+        acts += bzButtonHTML(v);
         break;
       case 'call':
         main = '<p class="note">相手フィールドのマスをタップしてコールします。</p>';
+        acts = bzButtonHTML(v);
         break;
       case 'answer-phase':
         main = `<p class="note">${g.itemUsed ? 'アンサーで個体の全マスを宣言するか、ターンエンドします。' : 'このターンはまだアイテムを使えます（フィールド上部のアイコン）。'}</p>`;
-        acts = '<button class="btn primary" data-act="answer-start">アンサー</button><button class="btn" data-act="end-turn">ターンエンド</button>';
+        acts = '<button class="btn primary" data-act="answer-start">アンサー</button><button class="btn" data-act="end-turn">ターンエンド</button>' + bzButtonHTML(v);
         break;
       case 'answer': {
         const key = ui.sel.length ? identifyShape(ui.sel, g.N) : null;
@@ -3748,10 +4131,14 @@ window.SBAudio = (function () {
         acts = `<span class="chip ${key ? 'ok' : ''}">${esc(shapeTxt)}</span><button class="btn primary" data-act="answer-submit" ${key ? '' : 'disabled'}>宣言する</button>${cancel}`;
         break;
       }
-      case 'bazooka-confirm':
-        main = itemHead('bazooka', '互いに1個体ずつ差し出して除去します。除去した個体はポイント対象外です。');
-        acts = `<button class="btn fire" data-act="item-use">発射する</button>${cancel}`;
+      case 'bazooka-confirm': {
+        const st = g.bazookaStatus(v);
+        main = `<div class="itemhead"><span class="ichip active bz">${ICON.bazooka}</span><div><b>バズーカ</b><p class="note ih-desc">${st.theirs
+          ? '相手は宣言済みです。宣言すると、次のターンの始めにお互いの空きマスがすべて×で公開されます。'
+          : '宣言は取り消せません。相手も宣言したら、その次のターンの始めにお互いの空きマスがすべて×で公開されます。'}アイテムとは別枠です。</p></div></div>`;
+        acts = `<button class="btn bzbtn" data-act="bz-confirm">${ICON.bazooka}<span>宣言する</span></button>${cancel}`;
         break;
+      }
       case 'cube':
         main = itemHead('cube', '相手フィールドに出たメニューから、調べる形かマス数を選んでください。');
         acts = cancel;
@@ -3761,11 +4148,11 @@ window.SBAudio = (function () {
         acts = cancel;
         break;
       case 'number':
-        main = itemHead('number', '調べるマスを選んでください。そこにある個体のマス数が分かります（なければ「なし」）。');
+        main = itemHead('number', '調べるマスを選んでください。そこにある個体のマス数が分かります（空きマスなら NoData）。');
         acts = cancel;
         break;
       case 'shape':
-        main = itemHead('shape', '調べるマスを選んでください。そこにある個体の形が分かります（なければ「なし」）。');
+        main = itemHead('shape', '調べるマスを選んでください。そこにある個体の形が分かります（空きマスなら NoData）。');
         acts = cancel;
         break;
       case 'pair':
@@ -3790,9 +4177,9 @@ window.SBAudio = (function () {
         break;
       case 'treasure':
         main = `<p class="dock-msg">トレジャーコール（残り${g.treasureLeft(v)}回／全${g.rules.treasureMax}回）：相手フィールドのマスを1つ。H＝的中、N＝上下左右か同じ個体、×＝外れ。</p>`;
+        acts = bzButtonHTML(v);
         break;
       case 'sacrifice':
-      case 'bazooka-pick':
         main = `<p class="dock-msg warn">${esc(phaseText(mode))}</p>`;
         break;
       case 'wait':
@@ -3914,7 +4301,7 @@ window.SBAudio = (function () {
     return `<div class="item-pick" role="group" aria-label="使うアイテムを選ぶ">${ITEM_KEYS.map((k) => {
       const id = 'pick-' + k;
       return `<input type="checkbox" id="${id}" data-pick="${k}" ${on.indexOf(k) >= 0 ? 'checked' : ''}><label for="${id}" title="${esc(ITEMS[k].desc)}">${ICON[k]}<span>${esc(ITEMS[k].name)}</span></label>`;
-    }).join('')}<p class="note" id="pick-count">${on.length}種を使います。バズーカは現在使用禁止です。</p></div>`;
+    }).join('')}<p class="note" id="pick-count">${on.length}種を使います。バズーカはアイテムとは別枠で、どの試合でも宣言できます。</p></div>`;
   }
 
   function renderTitle() {
@@ -4000,7 +4387,7 @@ window.SBAudio = (function () {
               <button class="btn${S.treasureMode ? ' primary' : ''}" data-act="treasure-mode" ${P.pieces.length ? '' : 'disabled'} aria-pressed="${S.treasureMode}">◆ トレジャー${P.treasure ? '（済）' : ''}</button>
             </div>
             <div class="palette">${palette}</div>
-            <div class="match-items"><span class="cap">この試合のアイテム</span><div class="mi-list">${g.itemKeys.concat(g.bazookaOn ? ['bazooka'] : []).map((k) => `<span class="mi" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}">${ICON[k]}<b>${esc(ITEMS[k].name)}</b></span>`).join('')}</div></div>
+            <div class="match-items"><span class="cap">この試合のアイテム</span><div class="mi-list">${g.itemKeys.map((k) => `<span class="mi" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}">${ICON[k]}<b>${esc(ITEMS[k].name)}</b></span>`).join('')}${g.bazookaOn ? `<span class="mi bz" data-tip="${esc(`バズーカ（別枠）：${g.rules.bazookaTurn}ターン目から宣言できる。${ITEMS.bazooka.desc}`)}">${ICON.bazooka}<b>バズーカ</b></span>` : ''}</div></div>
             <div class="row">
               <button class="btn" data-act="random">おまかせ配置</button>
               <button class="btn ghost" data-act="clear" ${P.pieces.length ? '' : 'disabled'}>全部外す</button>
@@ -4054,17 +4441,16 @@ window.SBAudio = (function () {
     else if (mode === 'answer' || mode === 'shape' || mode === 'number') predClick = (c) => !P.view.dead[c];
     else if (mode === 'dist') predClick = (c) => { const m = P.view.marks[c]; return !P.view.dead[c] && !(m && m.r === 'oo'); };
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
-    if (mode === 'warp-pick' || mode === 'sacrifice' || mode === 'bazooka-pick') { ownPick = true; ownClick = (c) => !!g.pieceAt(v, c); }
+    if (mode === 'warp-pick' || mode === 'sacrifice') { ownPick = true; ownClick = (c) => !!g.pieceAt(v, c); }
     else if (mode === 'stealth-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth; }; }
     else if (mode === 'warp-place') ownClick = () => true;
     const predActive = !!predClick || mode === 'line' || mode === 'cube';
 
     const reveal = g.phase === 'over' && ui.reveal;
-    const unlocked = g.turn >= g.rules.bazookaTurn;
     const tLeft = g.treasureLeft(v);
     const tStat = P.view.treasureFound ? 'GET' : tLeft > 0 ? `あと${tLeft}回` : '失敗';
     const stats = g.phase === 'play'
-      ? `<span class="stat">TURN<b>${pad2(g.turn)}</b></span><span class="stat">${esc(g.rules.label)}<b>${N}×${N}</b></span>${g.bazookaOn ? `<span class="stat${unlocked ? ' hot' : ''}">BAZOOKA<b>${unlocked ? 'ON' : g.rules.bazookaTurn + 'T'}</b></span>` : ''}<span class="stat treasure">TREASURE<b>${tStat}</b></span><span class="stat${g.cur === v ? ' me' : ' hot'}">手番<b>${esc(g.players[g.cur].name)}</b></span>`
+      ? `<span class="stat">TURN<b>${pad2(g.turn)}</b></span><span class="stat">${esc(g.rules.label)}<b>${N}×${N}</b></span>${bzStatHTML(v)}<span class="stat treasure">TREASURE<b>${tStat}</b></span><span class="stat${g.cur === v ? ' me' : ' hot'}">手番<b>${esc(g.players[g.cur].name)}</b></span>`
       : `<span class="stat">GAME<b>OVER</b></span>`;
     const L = sideEntries(v);
     const myIntel = intelFor(1 - v, v);     // 相手が自分フィールドを調べた結果
@@ -4106,6 +4492,22 @@ window.SBAudio = (function () {
         </div>
       </div>
       ${g.phase === 'over' && ui.showResult ? resultHTML() : ''}`;
+  }
+
+  // バズーカの状態（ヘッダー）：宣言できるターン → 宣言の状況 → 発動予定 → 発動済み
+  function bzStatHTML(v) {
+    const g = G();
+    if (!g.bazookaOn) return '';
+    const st = g.bazookaStatus(v);
+    const foeName = isCPUMode() ? 'CPU' : '相手';
+    let val, cls = '', tip;
+    if (st.fired) { val = '発動済'; tip = `バズーカはT${pad2(g.bazooka.fired.turn)}に発動しました（1試合に1回）`; }
+    else if (st.armed) { val = '次T発動'; cls = ' hot pulse'; tip = '両者が宣言しました。次のターンの始めに、お互いの空きマスがすべて×で公開されます'; }
+    else if (st.locked) { val = g.rules.bazookaTurn + 'T〜'; tip = `バズーカは${g.rules.bazookaTurn}ターン目から宣言できます（アイテムとは別枠）`; }
+    else if (st.mine) { val = '宣言済'; cls = ' me'; tip = `宣言済みです。${foeName}も宣言したら、その次のターンの始めに発動します`; }
+    else if (st.theirs) { val = foeName === 'CPU' ? 'CPU宣言' : '相手宣言'; cls = ' hot'; tip = `${foeName}がバズーカを宣言しています。自分の手番に宣言すると、次のターンの始めに発動します`; }
+    else { val = '宣言可'; tip = '自分の手番のあいだ、いつでも宣言できます（アイテムとは別枠）。両者が宣言した次のターンの始めに発動します'; }
+    return `<span class="stat bzstat${cls}" data-tip="${esc(tip)}">BAZOOKA<b>${val}</b></span>`;
   }
 
   function resultHTML() {
@@ -4158,7 +4560,9 @@ window.SBAudio = (function () {
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは、全マスに当たっても撃破されず、アンサーでしか撃破できません（どのキューブかは相手に伝わりません）。ペアショットは撃破済み以外のどの2マスにも使えます。ディスタンスショットは◎以外のマスに使え、その個体の◎までのブロック数（となり＝1）が数字で表示されます。空きマスや、まだ◎のない個体なら NoData。マスの調査結果は C＝キューブ、L＝L字、T＝T字、数字＝マス数、∅＝なし。バズーカは現在使用禁止です。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは、全マスに当たっても撃破されず、アンサーでしか撃破できません（どのキューブかは相手に伝わりません）。ペアショットは撃破済み以外のどの2マスにも使えます。ディスタンスショットは◎以外のマスに使え、その個体の◎までのブロック数（となり＝1）が数字で表示されます。空きマスや、まだ◎のない個体なら NoData。マスの調査結果は C＝キューブ、L＝L字、T＝T字、数字＝マス数。サーチサイズ・サーチシェイプで空きマスだったときも NoData と表示されます。</p>
+        <h3 class="legend-h">バズーカ（アイテムとは別枠）</h3>
+        <ul class="icon-legend"><li>${ICON.bazooka}<div><b>バズーカ</b><span>予選8ターン目・決勝12ターン目から、自分の手番のあいだならいつでも使用を宣言できます（アイテムを使ったターンでも宣言できます）。宣言は取り消せません。両者が宣言したら、その次のターンの始めに発動し、お互いの空きマスがすべて×で公開されます。発動は1試合に1回だけ。公開の後もワープはでき、ワープすれば×はふつうどおり再コールできるようになります。</span></div></li></ul>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -4474,7 +4878,7 @@ window.SBAudio = (function () {
           const p = ctr(el);
           over(el, 'reticle' + ecls, RETICLE_SVG, 950);
           ring(p.x, p.y, c, p.w * 1.1, p.w * 0.25, 650, 2);
-          setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.cat || 'なし', 'count' + ecls, 1400), 480 * k);
+          setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.cat || 'NoData', ev.cat ? 'count' + ecls : 'miss', 1400), 480 * k);
           return 1200 * k;
         }
         case 'number': {
@@ -4486,8 +4890,8 @@ window.SBAudio = (function () {
           over(el, 'reticle' + ecls, RETICLE_SVG, 950);
           ring(p.x, p.y, c, p.w * 0.25, p.w * 1.2, 700, 2);
           ring(p.x, p.y, c, p.w * 0.25, p.w * 0.9, 600, 1.5, 180);
-          glyphs(p.x, p.y, ev.size ? [String(ev.size), '#'] : ['0', '∅'], c);
-          setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.size ? `${ev.size}マス` : 'なし', 'count' + ecls, 1400), 480 * k);
+          glyphs(p.x, p.y, ev.size ? [String(ev.size), '#'] : ['N', 'D', '0'], c);
+          setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.size ? `${ev.size}マス` : 'NoData', ev.size ? 'count' + ecls : 'miss', 1400), 480 * k);
           return 1250 * k;
         }
         case 'pair': {
@@ -4556,26 +4960,54 @@ window.SBAudio = (function () {
           text(bc.x, bc.r.top + 22, 'STEALTH', 'count' + ecls, 1400);
           return 1200 * k;
         }
-        case 'bazooka': {
-          SND.sfx('i-bazooka');
-          SND.sfx('destroy', 0.52 * k, { big: true });
-          const a = ab, b = tb;
-          if (!a || !b) return 0;
-          const pa = ctr(a), pb = ctr(b);
-          banner('BAZOOKA', '互いに1個体を差し出す', 'enemy', 1300);
-          streak(pa.x, pa.y, pb.x, pb.y, MG, 820);
-          setTimeout(() => {
-            bover(b, 'shock', '', 820);
-            bover(a, 'shock', '', 820);
-            ring(pb.x, pb.y, WH, 10, pb.w * 0.9, 900, 5);
-            ring(pa.x, pa.y, c, 10, pa.w * 0.7, 900, 3);
-            sparks(pb.x, pb.y, AM, 40, 2, 0.4);
-            shake(2);
-          }, 520 * k);
-          return 1450 * k;
-        }
       }
       return 0;
+    }
+
+    // バズーカ：宣言と発動
+    function playBazooka(ev, v, k) {
+      const g = G();
+      if (ev.type === 'bzdecl') {
+        const mine = ev.actor === v;
+        const who = mine ? (isCPUMode() ? 'あなた' : g.players[ev.actor].name) : (isCPUMode() ? 'CPU' : g.players[ev.actor].name);
+        SND.sfx('bz-arm', 0, { both: ev.both });
+        banner(ev.both ? 'BAZOOKA READY' : 'BAZOOKA', ev.both ? `${who}も宣言 ─ 次のターンの始めに発動` : `${who}がバズーカを宣言`, ev.both ? 'bz' : mine ? '' : 'enemy', 1500);
+        const st = root.querySelector('.bzstat');
+        if (st) { const p = ctr(st); ring(p.x, p.y, ev.both ? AM : mine ? CY : MG, 6, 60, 800, 3); sparks(p.x, p.y, ev.both ? AM : mine ? CY : MG, 14, 0.8, 0); }
+        return 1150 * k;
+      }
+      // 発動：両方のフィールドを撃ち抜いて、空きマスを×で開く
+      SND.sfx('bz-fire', 0, { n: (ev.opened[0] || []).length + (ev.opened[1] || []).length });
+      banner('BAZOOKA', 'お互いの空きマスをすべて公開', 'bz', 1800);
+      const ownB = boardOf(v), predB = boardOf(1 - v);
+      if (!ownB || !predB) return 1600 * k;
+      const po = ctr(ownB), pp = ctr(predB);
+      streak(po.x, po.r.bottom, pp.x, pp.y, AM, 700);
+      streak(pp.x, pp.r.bottom, po.x, po.y, AM, 700);
+      const open = (owner, cells, base) => {
+        cells.forEach((c, i) => {
+          const el = cellOf(owner, c);
+          if (!el) return;
+          const p = ctr(el);
+          const d = base + i * 45 * k;
+          setTimeout(() => { over(el, 'bzopen', '', 700); }, d);
+          sparks(p.x, p.y, AM, 5, 0.6, 0, d);
+        });
+      };
+      setTimeout(() => {
+        for (const [b, pb] of [[ownB, po], [predB, pp]]) {
+          bover(b, 'shock bz', '', 820);
+          ring(pb.x, pb.y, WH, 10, pb.w * 0.8, 900, 5);
+          ring(pb.x, pb.y, AM, 10, pb.w * 0.65, 1000, 3, 120);
+          sparks(pb.x, pb.y, AM, 30, 1.8, 0.4);
+        }
+        shake(2);
+      }, 480 * k);
+      // 相手フィールド（自分の予想盤面）で開いたマスと、自分フィールド（相手から見た自分）で開いたマス
+      open(1 - v, ev.opened[v] || [], 700 * k);
+      open(v, ev.opened[1 - v] || [], 760 * k);
+      const n = Math.max((ev.opened[v] || []).length, (ev.opened[1 - v] || []).length);
+      return (1500 + n * 45) * k;
     }
 
     function play(ev) {
@@ -4653,7 +5085,7 @@ window.SBAudio = (function () {
           return 950 * k;
         }
         case 'destroy': {
-          SND.sfx('destroy', 0, { pan: panOf(ev.owner, v), big: ev.size >= 4 || ev.cause === 'bazooka', penalty: ev.cause === 'answerFail' });
+          SND.sfx('destroy', 0, { pan: panOf(ev.owner, v), big: ev.size >= 4, penalty: ev.cause === 'answerFail' });
           const els = ev.cells.map((c) => cellOf(ev.owner, c)).filter(Boolean);
           if (!els.length) return 0;
           const tint = ev.owner === v ? CY : MG;
@@ -4668,10 +5100,10 @@ window.SBAudio = (function () {
           const mx = sx / els.length, my = sy / els.length;
           ring(mx, my, tint, 8, 60 + els.length * 26, 900, 4);
           ring(mx, my, WH, 4, 40 + els.length * 18, 600, 2, 120);
-          const label = ev.cause === 'bazooka' ? 'BAZOOKA' : ev.cause === 'answerFail' ? 'PENALTY' : 'DESTROYED';
+          const label = ev.cause === 'answerFail' ? 'PENALTY' : 'DESTROYED';
           text(mx, my, label, 'kill', 1600);
           text(mx, my + 34, ev.isAdd ? 'アッド撃破' : `${ev.size}マス撃破`, 'sub', 1600);
-          shake(ev.size >= 4 || ev.cause === 'bazooka' ? 2 : 1);
+          shake(ev.size >= 4 ? 2 : 1);
           return 1250 * k;
         }
         case 'answer': {
@@ -4718,6 +5150,9 @@ window.SBAudio = (function () {
         }
         case 'item':
           return playItem(ev, v, k);
+        case 'bzdecl':
+        case 'bazooka':
+          return playBazooka(ev, v, k);
         case 'over': {
           const r = ev.result;
           let big, small, cls = '';
@@ -4806,23 +5241,17 @@ window.SBAudio = (function () {
   // CPUの手番を、演出を見せながら段階的に進める
   async function cpuRun() {
     const g = G();
-    if (!isCPUMode() || app.busy || g.phase !== 'play' || g.cur !== 1 || g.sub === 'bazooka') return;
+    if (!isCPUMode() || app.busy || g.phase !== 'play' || g.cur !== 1) return;
     app.busy = true;
     resetMode();
     render();
     const cpu = 1;
     const step = async (mult) => { setBanner(); render(); await playFx(); await pause(mult); };
-    // アイテムを使う。バズーカで相手の選択待ちになったら 'wait'
     const useItemStage = async (stage) => {
       const it = AI.chooseItem(g, cpu, stage);
       if (!it) return 'none';
       const r = g.useItem(cpu, it.key, it.params);
       if (r.ok) await step(0.5);
-      if (g.sub === 'bazooka') {
-        g.bazookaChoose(cpu, AI.chooseSacrifice(g, cpu));
-        if (g.sub === 'bazooka') return 'wait';
-        await step(0.5);
-      }
       return 'used';
     };
     const answers = async () => {
@@ -4836,11 +5265,6 @@ window.SBAudio = (function () {
         if (g.sub === 'sacrifice') { g.sacrifice(cpu, AI.chooseSacrifice(g, cpu)); await step(0.5); if (g.phase !== 'play') return; }
       }
     };
-    const waitHuman = () => {
-      app.busy = false;
-      setBanner(); render();
-      toast('CPUがバズーカを発射。差し出すキューブを選んでください', 'warn', true);
-    };
     try {
       await app.fxChain;
       await pause(0.45);
@@ -4852,7 +5276,7 @@ window.SBAudio = (function () {
           continue;
         }
         if (g.sub === 'item') {
-          if (await useItemStage('pre') === 'wait') { waitHuman(); return; }
+          await useItemStage('pre');
           if (g.phase !== 'play') break;
         }
         if ((g.sub === 'item' || g.sub === 'call') && !g.hasCallable(cpu)) { g.skipCall(cpu); await step(0.3); }
@@ -4865,9 +5289,13 @@ window.SBAudio = (function () {
         if (g.phase !== 'play') break;
         if (g.sub === 'answer' && !g.itemUsed) {
           const r = await useItemStage('post');
-          if (r === 'wait') { waitHuman(); return; }
           if (g.phase !== 'play') break;
           if (r === 'used') { await answers(); if (g.phase !== 'play') break; }
+        }
+        // バズーカの宣言は手番の終わりに判断する
+        if (g.sub === 'answer' && AI.chooseBazooka(g, cpu)) {
+          const r = g.declareBazooka(cpu);
+          if (r.ok) await step(0.7);
         }
         if (g.sub === 'answer') g.endTurn(cpu);
         if (g.sub === 'treasure' && g.cur === cpu) {
@@ -4892,13 +5320,7 @@ window.SBAudio = (function () {
 
   function kick() {
     const g = G();
-    // バズーカの差し出しが途中で止まっていたら、CPUのぶんを選ぶ
-    if (g && g.phase === 'play' && isCPUMode() && g.sub === 'bazooka' && g.pending && g.pending.choice[1] == null) {
-      g.bazookaChoose(1, AI.chooseSacrifice(g, 1));
-      setBanner(); render(); playFx();
-      if (g.phase === 'over') { onGameOver(); return; }
-    }
-    if (g && g.phase === 'play' && isCPUMode() && g.cur === 1 && !app.busy && g.sub !== 'bazooka') cpuRun();
+    if (g && g.phase === 'play' && isCPUMode() && g.cur === 1 && !app.busy) cpuRun();
     if (g && g.phase === 'over') onGameOver();
   }
 
@@ -4938,14 +5360,13 @@ window.SBAudio = (function () {
     if (!inItemWindow || g.cur !== v) { toast('アイテムは自分のターンの、コールの前か後に使えます'); return; }
     if (g.itemUsed) { toast('このターンはもうアイテムを使いました'); return; }
     if (!st.usable) {
-      if (st.locked) toast(`バズーカは${g.rules.bazookaTurn}ターン目から使えます`);
-      else if (st.have <= 0 && g.players[v].used[key]) toast('手持ちポイントが足りないため再購入できません');
+      if (st.have <= 0 && g.players[v].used[key]) toast('手持ちポイントが足りないため再購入できません');
       else toast('このアイテムは持っていません');
       return;
     }
     resetMode();
     app.ui.item = key;
-    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', dist: 'dist', warp: 'warp-pick', stealth: 'stealth-pick', bazooka: 'bazooka-confirm' };
+    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', dist: 'dist', warp: 'warp-pick', stealth: 'stealth-pick' };
     app.ui.mode = modeOf[key];
     render();
     SND.sfx('select');
@@ -4966,6 +5387,7 @@ window.SBAudio = (function () {
     'show-result': 'open', reveal: 'ui', shape: 'ui', rotate: 'rotate', flip: 'rotate', 'treasure-mode': 'ui',
     random: 'shuffle', clear: 'remove', 'setup-done': 'confirm', 'draft-pick': 'pick', cancel: 'cancel',
     'answer-start': 'select', 'end-turn': 'ui', 'skip-call': 'ui', 'warp-rotate': 'rotate', 'warp-flip': 'rotate', 'warp-repick': 'cancel',
+    'bz-declare': 'select',
   };
   const handlers = {
     rules() { app.modal = 'rules'; render(); },
@@ -5018,7 +5440,24 @@ window.SBAudio = (function () {
       const b = root.querySelector('[data-act="sound"]');
       if (b) b.focus();
     },
-    'item-use'() { useItem(app.ui.item, {}); },
+    // バズーカ：宣言ボタン → 確認 → 宣言（アイテムとは別枠）
+    'bz-declare'() {
+      const g = G(), v = viewer();
+      const st = g.bazookaStatus(v);
+      if (!st.can) { toast(g.declareBazooka(v).reason || 'いまは宣言できません'); return; }
+      // 選択中のアイテムがあればやめて、確認を出す（もう一度押すとやめる）
+      if (app.ui.mode === 'bazooka-confirm') { resetMode(); render(); SND.sfx('cancel'); denied = true; return; }
+      resetMode();
+      app.ui.mode = 'bazooka-confirm';
+      render();
+    },
+    'bz-confirm'() {
+      const g = G(), v = viewer();
+      const r = g.declareBazooka(v);
+      resetMode();
+      if (!r.ok) { toast(r.reason || '宣言できません', 'warn'); render(); return; }
+      afterHuman();
+    },
     cube(el) { const kind = el.dataset.kind; useItem('cube', { kind, value: kind === 'size' ? +el.dataset.value : el.dataset.value }); },
     'pick-line'(el) { useItem('line', { line: el.dataset.line, index: +el.dataset.index }); },
     cancel() { resetMode(); render(); },
@@ -5142,7 +5581,7 @@ window.SBAudio = (function () {
 
   function ownCell(c) {
     const g = G(), v = viewer(), mode = effMode(), ui = app.ui;
-    if (app.busy && mode !== 'bazooka-pick') return;
+    if (app.busy) return;
     switch (mode) {
       case 'warp-pick': {
         const p = g.pieceAt(v, c);
@@ -5171,16 +5610,6 @@ window.SBAudio = (function () {
         const p = g.pieceAt(v, c);
         if (!p) { toast('差し出す自分のキューブを選んでください'); return; }
         g.sacrifice(v, p.id);
-        afterHuman();
-        return;
-      }
-      case 'bazooka-pick': {
-        const p = g.pieceAt(v, c);
-        if (!p) { toast('差し出す自分のキューブを選んでください'); return; }
-        const r = g.bazookaChoose(v, p.id);
-        if (!r.ok) { toast(r.reason || '選べません', 'warn'); return; }
-        if (isCPUMode() && g.sub === 'bazooka' && g.pending.choice[1] == null) g.bazookaChoose(1, AI.chooseSacrifice(g, 1));
-        if (!isCPUMode() && g.sub === 'bazooka') toast(`${g.players[viewer()].name}も差し出すキューブを選んでください`, 'note');
         afterHuman();
         return;
       }
@@ -5219,7 +5648,7 @@ window.SBAudio = (function () {
       store.set('settings', app.settings);
       SND.sfx('tick');
       const cnt = document.getElementById('pick-count');
-      if (cnt) cnt.textContent = `${list.length}種を使います。バズーカは現在使用禁止です。`;
+      if (cnt) cnt.textContent = `${list.length}種を使います。バズーカはアイテムとは別枠で、どの試合でも宣言できます。`;
       const lab = root.querySelector('label[for="opt-items-3"] small');
       if (lab) lab.textContent = list.length + '種を指定';
     }
