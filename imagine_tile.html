@@ -170,8 +170,8 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
 .efl{font-size:9px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;display:block}
 .efi{width:100%;background:var(--s1);border:1px solid var(--bd);color:#e0e0ff;padding:7px 9px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none}
 .efi:focus{border-color:var(--cyan)}.efi::placeholder{color:#2a2a4a}
-.eprev{width:100%;height:110px;object-fit:cover;border-radius:3px;border:1px solid var(--bd);background:#0a0a18;margin-top:4px}
-.eprevp{width:100%;height:110px;border-radius:3px;border:1px dashed var(--bd);background:#0a0a18;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--mut);margin-top:4px}
+.eprev{width:100%;height:330px;min-height:330px;object-fit:cover;border-radius:3px;border:1px solid var(--bd);background:#0a0a18;margin-top:4px;display:block}
+.eprevp{width:100%;height:330px;min-height:330px;border-radius:3px;border:1px dashed var(--bd);background:#0a0a18;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--mut);margin-top:4px}
 .ebr{display:flex;gap:7px;margin-top:3px}
 .eb2{padding:7px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:1px;transition:all .15s;border:1px solid var(--mut);background:transparent;color:var(--dim)}
 .eb2.p{border-color:var(--cyan);color:var(--cyan)}.eb2.p:hover{background:var(--cyan);color:var(--bg)}
@@ -669,8 +669,8 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
     <span style="color:#ffd866;font-weight:700">🔑 Access Key:</span>
     <input id="us-key-inp" type="password" class="efi" style="width:210px;padding:3px 7px;font-size:10px" placeholder="Unsplash Access Key" onchange="onChangeUnsplashKey(this.value)">
     <button class="eb2" style="padding:3px 8px;font-size:9px" onclick="toggleUnsplashKeyVis()">👁 表示切替</button>
-    <button id="btn-batch-sync" class="eb2 p" style="padding:4px 10px;font-size:9.5px" onclick="batchSyncUnsplashCredits(false)" title="未取得の問題の撮影者クレジットをUnsplash APIから自動取得します（1回最大25問）">⚡ 未取得クレジットを一括API取得</button>
-    <button id="btn-batch-replace" class="eb2" style="padding:4px 10px;font-size:9.5px;border-color:#ffcc00;color:#ffcc00" onclick="batchSyncUnsplashCredits(true)" title="未取得またはPremium画像をUnsplash API公式URL＋撮影者クレジットに一括更新します（1回最大25問）">🔄 公式API画像＋クレジットに一括同期</button>
+    <button id="btn-batch-sync" class="eb2 p" style="padding:4px 10px;font-size:9.5px" onclick="batchSyncUnsplashCredits()" title="現在の画像URL(photo-xxx)と完全一致する写真のみUnsplash APIからクレジットを自動取得します（1回最大20問・別画像への誤リンク防止）">⚡ 一致画像のクレジットを一括API取得</button>
+    <button class="eb2 d" style="padding:4px 10px;font-size:9.5px" onclick="resetAllUnverifiedCredits()" title="設定済みのクレジットや写真リンクを一括クリアします">🧹 クレジット一括クリア</button>
     <button class="eb2" style="padding:4px 10px;font-size:9.5px;border-color:#88aaff;color:#88aaff" onclick="openExportDefaultQModal()" title="方法A：取得したクレジットを埋め込んだ DEFAULT_Q コードを書き出します">📋 DEFAULT_Q コード書き出し(方法A)</button>
   </div>
   <div class="eb">
@@ -1083,116 +1083,108 @@ function tileBorderColor(baseColor){
 
 // ── QUESTION BANK — curated & verified image/answer pairs ──
 const DEFAULT_Q=[
-  // ── ピザ・パスタ・洋食 ──
-  {answer:"ピザ",        img:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80",hint:"食べ物"},
-  {answer:"パスタ",      img:"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80",hint:"食べ物"},
-  {answer:"ハンバーガー",img:"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80",hint:"食べ物"},
-  {answer:"ホットドッグ",img:"https://plus.unsplash.com/premium_photo-1713793236003-bf10d934825e?w=600&q=80",hint:"食べ物"},
-  {answer:"タコス",      img:"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&q=80",hint:"食べ物"},
-  {answer:"サンドイッチ",img:"https://images.unsplash.com/photo-1553909489-cd47e0907980?w=600&q=80",hint:"食べ物"},
-  {answer:"クロワッサン",img:"https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&q=80",hint:"食べ物"},
-  {answer:"パン",        img:"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&q=80",hint:"食べ物"},
-  {answer:"バゲット",    img:"https://plus.unsplash.com/premium_photo-1677686707023-9ac1e4f75a87?w=600&q=80",hint:"食べ物"},
-  {answer:"ステーキ",    img:"https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=600&q=80",hint:"食べ物"},
-  {answer:"フライドチキン",img:"https://images.unsplash.com/photo-1730900737724-5b752e1ed3dd?w=600&q=80",hint:"食べ物"},
-  {answer:"フライドポテト",img:"https://images.unsplash.com/photo-1576107232684-1279f390859f?w=600&q=80",hint:"食べ物"},
-  {answer:"クラムチャウダー",      img:"https://images.unsplash.com/photo-1560684352-8497838a2229?w=600&q=80",hint:"食べ物"},
-  {answer:"シーザーサラダ",      img:"https://images.unsplash.com/photo-1746211108786-ca20c8f80ecd?w=600&q=80",hint:"食べ物"},
-  {answer:"パンケーキ",  img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80",hint:"デザート"},
-  {answer:"ワッフル",    img:"https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=600&q=80",hint:"デザート"},
-  {answer:"フレンチトースト",img:"https://images.unsplash.com/photo-1595044643502-616eeebbdff3?w=600&q=80",hint:"食べ物"},
-  {answer:"チーズ",      img:"https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&q=80",hint:"食べ物"},
-  // ── 和食 ──
-  {answer:"寿司",        img:"https://images.unsplash.com/photo-1724115862102-ca5de83eff8b?w=600&q=80",hint:"食べ物"},
-  {answer:"ラーメン",    img:"https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&q=80",hint:"食べ物"},
-  {answer:"うどん",      img:"https://images.unsplash.com/photo-1707201124182-099f3d98bb90?w=600&q=80",hint:"食べ物"},
-  {answer:"そば",        img:"https://images.unsplash.com/photo-1714802145664-d70405029ced?w=600&q=80",hint:"食べ物"},
-  {answer:"天ぷら",      img:"https://images.unsplash.com/photo-1600019229369-ef34b8700b3f?w=600&q=80",hint:"食べ物"},
-  {answer:"焼き鳥",      img:"https://images.unsplash.com/photo-1708597525178-6c302364f37c?w=600&q=80",hint:"食べ物"},
-  {answer:"刺身",        img:"https://images.unsplash.com/photo-1534256958597-7fe685cbd745?w=600&q=80",hint:"食べ物"},
-  {answer:"カレーライス",      img:"https://images.unsplash.com/photo-1705313381636-672463bfa6fa?w=600&q=80",hint:"食べ物"},
-  {answer:"とんかつ",      img:"https://images.unsplash.com/photo-1677743540715-d4fe04852225?w=600&q=80",hint:"食べ物"},
-  {answer:"海鮮丼",      img:"https://images.unsplash.com/photo-1724365956437-1b7e1ade4cf7?w=600&q=80",hint:"食べ物"},
-  {answer:"牛丼",        img:"https://images.unsplash.com/photo-1761064864527-d428a88cd4f5?w=600&q=80",hint:"食べ物"},
-  {answer:"天丼",        img:"https://images.unsplash.com/photo-1738819367362-45ec5be27c24?w=600&q=80",hint:"食べ物"},
-  {answer:"お好み焼き",  img:"https://images.unsplash.com/photo-1764520406362-b1673b2213bf?w=600&q=80",hint:"食べ物"},
-  {answer:"たこ焼き",    img:"https://images.unsplash.com/photo-1751094364516-02b351f9c277?w=600&q=80",hint:"食べ物"},
-  {answer:"焼きそば",    img:"https://images.unsplash.com/photo-1717903623956-080d34a18e58?w=600&q=80",hint:"食べ物"},
-  {answer:"おでん",      img:"https://images.unsplash.com/photo-1761064392867-9001ed23a8a8?w=600&q=80",hint:"食べ物"},
-  // ── アジア料理 ──
-  {answer:"チャーハン",  img:"https://images.unsplash.com/photo-1609570324378-ec0c4c9b6ba8?w=600&q=80",hint:"食べ物"},
-  {answer:"餃子",        img:"https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&q=80",hint:"食べ物"},
-  {answer:"春巻き",      img:"https://images.unsplash.com/photo-1679310290259-78d9eaa32700?w=600&q=80",hint:"食べ物"},
-  {answer:"冷麺",  img:"https://images.unsplash.com/photo-1616627052149-22c4f8a6316e?w=600&q=80",hint:"食べ物"},
-  {answer:"ビビンバ",    img:"https://images.unsplash.com/photo-1741295017668-c8132acd6fc0?w=600&q=80",hint:"食べ物"},
-  {answer:"グリーンカレー",img:"https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=600&q=80",hint:"食べ物"},
-  {answer:"バインミー",  img:"https://images.unsplash.com/photo-1715924298872-9a86b729eb96?w=600&q=80",hint:"食べ物"},
-  {answer:"ナン",        img:"https://images.unsplash.com/photo-1640625314547-aee9a7696589?w=600&q=80",hint:"食べ物"},
-  {answer:"バターチキンカレー",img:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600&q=80",hint:"食べ物"},
-  // ── お菓子・デザート ──
-  {answer:"ケーキ",      img:"https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=600&q=80",hint:"お菓子"},
-  {answer:"チョコレート",img:"https://images.unsplash.com/photo-1511381939415-e44015466834?w=600&q=80",hint:"お菓子"},
-  {answer:"アイスクリーム",img:"https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=600&q=80",hint:"デザート"},
-  {answer:"ドーナツ",    img:"https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&q=80",hint:"お菓子"},
-  {answer:"マカロン",    img:"https://images.unsplash.com/photo-1634560604992-7784a29bc419?w=600&q=80",hint:"お菓子"},
-  {answer:"クッキー",    img:"https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600&q=80",hint:"お菓子"},
-  {answer:"チーズケーキ",img:"https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600&q=80",hint:"お菓子"},
-  {answer:"ティラミス",  img:"https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600&q=80",hint:"お菓子"},
-  {answer:"プリン",      img:"https://images.unsplash.com/photo-1702728109878-c61a98d80491?w=600&q=80",hint:"お菓子"},
-  {answer:"クレープ",    img:"https://images.unsplash.com/photo-1519676867240-f03562e64548?w=600&q=80",hint:"お菓子"},
-  {answer:"エクレア",    img:"https://images.unsplash.com/photo-1784841399281-40c323e95339?w=600&q=80",hint:"お菓子"},
-  {answer:"シュークリーム",img:"https://images.unsplash.com/photo-1596548739300-c1ff4cf00433?w=600&q=80",hint:"お菓子"},
-  {answer:"ブラウニー",  img:"https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=600&q=80",hint:"お菓子"},
-  {answer:"マフィン",    img:"https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=600&q=80",hint:"お菓子"},
-  {answer:"カップケーキ",img:"https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=600&q=80",hint:"お菓子"},
-  {answer:"タルト",      img:"https://images.unsplash.com/photo-1503485838016-53579610c389?w=600&q=80",hint:"お菓子"},
-  {answer:"ゼリー",      img:"https://images.unsplash.com/photo-1789676045761-54fd3939a5aa?w=600&q=80",hint:"お菓子"},
-  {answer:"たい焼き",    img:"https://images.unsplash.com/photo-1602030029545-52959ef2927c?w=600&q=80",hint:"お菓子"},
-  {answer:"かき氷",      img:"https://images.unsplash.com/photo-1716626669148-1731504429dd?w=600&q=80",hint:"お菓子"},
-  {answer:"ソフトクリーム",img:"https://images.unsplash.com/photo-1636564499112-6113e73c504a?w=600&q=80",hint:"デザート"},
-  {answer:"パフェ",      img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600&q=80",hint:"デザート"},
-  {answer:"フルーツポンチ",img:"https://images.unsplash.com/photo-1497534446932-c925b458314e?w=600&q=80",hint:"デザート"},
-  {answer:"ポップコーン",img:"https://images.unsplash.com/photo-1585647347483-22b66260dfff?w=600&q=80",hint:"お菓子"},
-  {answer:"プレッツェル",img:"https://images.unsplash.com/photo-1609438824822-5b3a0e9abb4e?w=600&q=80",hint:"お菓子"},
-  {answer:"キャンディ",  img:"https://images.unsplash.com/photo-1588756264692-d396bca41fb1?w=600&q=80",hint:"お菓子"},
-  {answer:"グミ",        img:"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=600&q=80",hint:"お菓子"},
-  {answer:"マシュマロ",  img:"https://images.unsplash.com/photo-1613549421877-6db464752da5?w=600&q=80",hint:"お菓子"},
-  // ── 果物 ──
-  {answer:"リンゴ",      img:"https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&q=80",hint:"果物"},
-  {answer:"いちご",      img:"https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80",hint:"果物"},
-  {answer:"バナナ",      img:"https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=600&q=80",hint:"果物"},
-  {answer:"スイカ",      img:"https://images.unsplash.com/photo-1563114773-84221bd62daa?w=600&q=80",hint:"果物"},
-  {answer:"ブドウ",      img:"https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=600&q=80",hint:"果物"},
-  {answer:"レモン",      img:"https://images.unsplash.com/photo-1590502593747-42a996133562?w=600&q=80",hint:"果物"},
-  {answer:"オレンジ",    img:"https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80",hint:"果物"},
-  {answer:"パイナップル",img:"https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=600&q=80",hint:"果物"},
-  {answer:"さくらんぼ",  img:"https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=600&q=80",hint:"果物"},
-  {answer:"キウイ",      img:"https://images.unsplash.com/photo-1543353071-873f17a7a088?w=600&q=80",hint:"果物"},
-  {answer:"マンゴー",    img:"https://images.unsplash.com/photo-1605027990121-cbae9e0642df?w=600&q=80",hint:"果物"},
-  {answer:"桃",          img:"https://images.unsplash.com/photo-1639588473831-dd9d014646ae?w=600&q=80",hint:"果物"},
-  {answer:"栗",          img:"https://images.unsplash.com/photo-1573991091002-9d60934af2dc?w=600&q=80",hint:"果物"},
-  {answer:"ブルーベリー",img:"https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=600&q=80",hint:"果物"},
-  {answer:"ラズベリー",  img:"https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=600&q=80",hint:"果物"},
-  {answer:"メロン",      img:"https://images.unsplash.com/photo-1602597190461-43774583d3c0?w=600&q=80",hint:"果物"},
-  {answer:"ライチ",      img:"https://images.unsplash.com/photo-1705335834319-92a152363ea1?w=600&q=80",hint:"果物"},
-  {answer:"パパイヤ",    img:"https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?w=600&q=80",hint:"果物"},
-  {answer:"ドラゴンフルーツ",img:"https://images.unsplash.com/photo-1527325678964-54921661f888?w=600&q=80",hint:"果物"},
-  {answer:"アボカド",    img:"https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80",hint:"果物"},
-  // ── 飲み物 ──
-  {answer:"コーヒー",    img:"https://images.unsplash.com/photo-1652507733698-b0c536a92cd4?w=600&q=80",hint:"飲み物"},
-  {answer:"カプチーノ",  img:"https://images.unsplash.com/photo-1534778101976-62847782c213?w=600&q=80",hint:"飲み物"},
-  {answer:"エスプレッソ",img:"https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&q=80",hint:"飲み物"},
-  {answer:"タピオカミルクティー",        img:"https://images.unsplash.com/photo-1525803377221-4f6ccdaa5133?w=600&q=80",hint:"飲み物"},
-  {answer:"緑茶",        img:"https://images.unsplash.com/photo-1606377695906-236fdfcef767?w=600&q=80",hint:"飲み物"},
-  {answer:"抹茶",        img:"https://images.unsplash.com/photo-1753009712810-3f72c3f72548?w=600&q=80",hint:"飲み物"},
-  {answer:"ワイン",      img:"https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",hint:"飲み物"},
-  {answer:"ビール",      img:"https://images.unsplash.com/photo-1608270586620-248524c67de9?w=600&q=80",hint:"飲み物"},
-  {answer:"オレンジジュース",img:"https://images.unsplash.com/photo-1613478223719-2ab802602423?w=600&q=80",hint:"飲み物"},
-  {answer:"レモネード",  img:"https://images.unsplash.com/photo-1523677011781-c91d1bbe2f9e?w=600&q=80",hint:"飲み物"},
-  {answer:"スムージー",  img:"https://images.unsplash.com/photo-1600718374662-0483d2b9da44?w=600&q=80",hint:"飲み物"},
-  {answer:"シェイク",img:"https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&q=80",hint:"飲み物"},
-  {answer:"ホットチョコレート",img:"https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=600&q=80",hint:"飲み物"},
-  {answer:"牛乳",        img:"https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&q=80",hint:"飲み物"},
+  {"answer":"ピザ","img":"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80","hint":"食べ物","author":"Ivan Torres","authorUrl":"https://unsplash.com/@iavnt","photoLink":"https://unsplash.com/photos/cheese-pizza-with-tomatoes-and-rosemary-MQUqbmszGGM","creditVerified":true,"verifiedSlug":"photo-1513104890138-7c749659a591"},
+  {"answer":"パスタ","img":"https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600&q=80","hint":"食べ物","author":"Pixzolo Photography","authorUrl":"https://unsplash.com/@pixzolo","photoLink":"https://unsplash.com/photos/sauced-penne-pasta-dish-on-bowl-aeESmmFKH0M","creditVerified":true,"verifiedSlug":"photo-1555949258-eb67b1ef0ceb"},
+  {"answer":"ハンバーガー","img":"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80","hint":"食べ物","author":"amirali mirhashemian","authorUrl":"https://unsplash.com/@amir_v_ali","photoLink":"https://unsplash.com/photos/burger-with-lettuce-and-tomatoes-sc5sTPMrVfk","creditVerified":true,"verifiedSlug":"photo-1568901346375-23c9450c58cd"},
+  {"answer":"ホットドッグ","img":"https://images.unsplash.com/photo-1768250708131-23da8d1cb5ad?q=600w=80","hint":"食べ物","author":"Ricardo Costilla","authorUrl":"https://unsplash.com/@phcostilla","photoLink":"https://unsplash.com/photos/hot-dog-with-ketchup-and-mustard-in-bun-DNDc3ZnK02o","creditVerified":true,"verifiedSlug":"photo-1768250708131-23da8d1cb5ad"},
+  {"answer":"タコス","img":"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&q=80","hint":"食べ物","author":"Chad Montano","authorUrl":"https://unsplash.com/@briewilly","photoLink":"https://unsplash.com/photos/cooked-tacos-lP5MCM6nZ5A","creditVerified":true,"verifiedSlug":"photo-1565299585323-38d6b0865b47"},
+  {"answer":"サンドイッチ","img":"https://images.unsplash.com/photo-1553909489-cd47e0907980?w=600&q=80","hint":"食べ物","author":"Mae Mu","authorUrl":"https://unsplash.com/@picoftasty","photoLink":"https://unsplash.com/photos/sandwich-on-white-surface-IZ0LRt1khgM","creditVerified":true,"verifiedSlug":"photo-1553909489-cd47e0907980"},
+  {"answer":"クロワッサン","img":"https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&q=80","hint":"食べ物","author":"Mae Mu","authorUrl":"https://unsplash.com/@picoftasty","photoLink":"https://unsplash.com/photos/two-brown-croissants-m9pzwmxm2rk","creditVerified":true,"verifiedSlug":"photo-1555507036-ab1f4038808a"},
+  {"answer":"パン","img":"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&q=80","hint":"食べ物","author":"Wesual Click","authorUrl":"https://unsplash.com/@wesual","photoLink":"https://unsplash.com/photos/rustic-bread-loaves-with-wheat-stalks-rsWZ-P9FbQ4","creditVerified":true,"verifiedSlug":"photo-1509440159596-0249088772ff"},
+  {"answer":"バゲット","img":"https://plus.unsplash.com/premium_photo-1677686707023-9ac1e4f75a87?w=600&q=80","hint":"食べ物","author":"Maryam Sicard","authorUrl":"https://unsplash.com/@maryamsicard","photoLink":"https://unsplash.com/photos/a-loaf-of-bread-on-a-cutting-board-with-a-knife-RD2tSkJUkII","creditVerified":true,"verifiedSlug":"premium_photo-1677686707023-9ac1e4f75a87"},
+  {"answer":"ステーキ","img":"https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=600&q=80","hint":"食べ物","author":"Loija Nguyen","authorUrl":"https://unsplash.com/@loija","photoLink":"https://unsplash.com/photos/cooked-meat-on-tray-NYBnDWeOX2c","creditVerified":true,"verifiedSlug":"photo-1546964124-0cce460f38ef"},
+  {"answer":"フライドチキン","img":"https://images.unsplash.com/photo-1730900737724-5b752e1ed3dd?w=600&q=80","hint":"食べ物","author":"Ömer Taha Çetin","authorUrl":"https://unsplash.com/@omertahacetin","photoLink":"https://unsplash.com/photos/a-plate-of-fried-chicken-with-a-side-of-mustard-and-ketchup-KWoq-eLsIEs","creditVerified":true,"verifiedSlug":"photo-1730900737724-5b752e1ed3dd"},
+  {"answer":"フライドポテト","img":"https://images.unsplash.com/photo-1768252452214-38f555002147?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8Nnx8RnJlbmNoJTIwZnJpZXN8ZW58MHx8fHwxNzkyNTU5NDM2fDA&ixlib=rb-4.1.0&w=600&q=80","hint":"食べ物","author":"lap lap","authorUrl":"https://unsplash.com/@laper","photoLink":"https://unsplash.com/photos/a-basket-of-golden-french-fries-AQO133kB9fc","creditVerified":true,"verifiedSlug":"photo-1768252452214-38f555002147"},
+  {"answer":"クラムチャウダー","img":"https://images.unsplash.com/photo-1560684352-8497838a2229?w=600&q=80","hint":"食べ物","author":"Do mee","authorUrl":"https://unsplash.com/@meemeeno","photoLink":"https://unsplash.com/photos/clam-and-vegetable-soup-in-white-ceramic-bowl-SH8_JmrsQcw","creditVerified":true,"verifiedSlug":"photo-1560684352-8497838a2229"},
+  {"answer":"シーザーサラダ","img":"https://images.unsplash.com/photo-1746211108786-ca20c8f80ecd?w=600&q=80","hint":"食べ物","author":"Cliffer Rebelo","authorUrl":"https://unsplash.com/@cliffer14","photoLink":"https://unsplash.com/photos/delicious-caesar-salad-is-presented-on-a-table-UdLsLK_KFLw","creditVerified":true,"verifiedSlug":"photo-1746211108786-ca20c8f80ecd"},
+  {"answer":"パンケーキ","img":"https://images.unsplash.com/photo-1565299543923-37dd37887442?w=600&q=80","hint":"デザート","author":"Chad Montano","authorUrl":"https://unsplash.com/@briewilly","photoLink":"https://unsplash.com/photos/person-pouring-syrup-on-pancake-gf9777gaYjs","creditVerified":true,"verifiedSlug":"photo-1565299543923-37dd37887442"},
+  {"answer":"ワッフル","img":"https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=600&q=80","hint":"デザート","author":"Mae Mu","authorUrl":"https://unsplash.com/@picoftasty","photoLink":"https://unsplash.com/photos/waffles-on-plate-dEUyLofZe5o","creditVerified":true,"verifiedSlug":"photo-1562376552-0d160a2f238d"},
+  {"answer":"フレンチトースト","img":"https://images.unsplash.com/photo-1595044643502-616eeebbdff3?w=600&q=80","hint":"食べ物","author":"Crystal Jo","authorUrl":"https://unsplash.com/@crystalsjo","photoLink":"https://unsplash.com/photos/brown-bread-on-white-ceramic-plate-Q58N5cBKDZ8","creditVerified":true,"verifiedSlug":"photo-1595044643502-616eeebbdff3"},
+  {"answer":"チーズ","img":"https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&q=80","hint":"食べ物","author":"Alexander Maasch","authorUrl":"https://unsplash.com/@tiefenscharf","photoLink":"https://unsplash.com/photos/baked-bread-KaK2jp8ie8s","creditVerified":true,"verifiedSlug":"photo-1486297678162-eb2a19b0a32d"},
+  {"answer":"寿司","img":"https://images.unsplash.com/photo-1724115862102-ca5de83eff8b?w=600&q=80","hint":"食べ物","author":"Tadahiro Higuchi","authorUrl":"https://unsplash.com/@tad_higuchi","photoLink":"https://unsplash.com/photos/a-bowl-filled-with-different-types-of-sushi-fLVkF02wxxs","creditVerified":true,"verifiedSlug":"photo-1724115862102-ca5de83eff8b"},
+  {"answer":"ラーメン","img":"https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&q=80","hint":"食べ物","author":"Michele Blackwell","authorUrl":"https://unsplash.com/@mab_studio","photoLink":"https://unsplash.com/photos/round-white-bowl-with-ramen-and-egg-rAyCBQTH7ws","creditVerified":true,"verifiedSlug":"photo-1569718212165-3a8278d5f624"},
+  {"answer":"うどん","img":"https://images.unsplash.com/photo-1707201124182-099f3d98bb90?w=600&q=80","hint":"食べ物","author":"Winston Chen","authorUrl":"https://unsplash.com/@winstonchen","photoLink":"https://unsplash.com/photos/a-bowl-of-soup-with-noodles-and-seaweed--F53y5bjk6Y","creditVerified":true,"verifiedSlug":"photo-1707201124182-099f3d98bb90"},
+  {"answer":"そば","img":"https://images.unsplash.com/photo-1714802145664-d70405029ced?w=600&q=80","hint":"食べ物","author":"Kouji Tsuru","authorUrl":"https://unsplash.com/@pafuxu","photoLink":"https://unsplash.com/photos/a-plate-of-noodles-and-a-cup-of-tea-on-a-table-R6U1j6lzafY","creditVerified":true,"verifiedSlug":"photo-1714802145664-d70405029ced"},
+  {"answer":"天ぷら","img":"https://images.unsplash.com/photo-1600019229369-ef34b8700b3f?w=600&q=80","hint":"食べ物","author":"Jason Leung","authorUrl":"https://unsplash.com/@ninjason","photoLink":"https://unsplash.com/photos/yellow-and-green-vegetable-on-black-ceramic-bowl-67G9k8_9xA4","creditVerified":true,"verifiedSlug":"photo-1600019229369-ef34b8700b3f"},
+  {"answer":"焼き鳥","img":"https://images.unsplash.com/photo-1708597525178-6c302364f37c?w=600&q=80","hint":"食べ物","author":"Dennis Zhang","authorUrl":"https://unsplash.com/@windagh","photoLink":"https://unsplash.com/photos/a-white-plate-topped-with-meat-and-veggies-5Q4UYvxDPVU","creditVerified":true,"verifiedSlug":"photo-1708597525178-6c302364f37c"},
+  {"answer":"刺身","img":"https://images.unsplash.com/photo-1534256958597-7fe685cbd745?w=600&q=80","hint":"食べ物","author":"Jongsun Lee","authorUrl":"https://unsplash.com/@sarahleejs","photoLink":"https://unsplash.com/photos/served-raw-meat-JnFGgVaFpmE","creditVerified":true,"verifiedSlug":"photo-1534256958597-7fe685cbd745"},
+  {"answer":"カレーライス","img":"https://images.unsplash.com/photo-1705313381636-672463bfa6fa?w=600&q=80","hint":"食べ物","author":"Markus Winkler","authorUrl":"https://unsplash.com/@markuswinkler","photoLink":"https://unsplash.com/photos/a-bowl-of-rice-and-a-bowl-of-chili-on-a-table-bw8161Dx48k","creditVerified":true,"verifiedSlug":"photo-1705313381636-672463bfa6fa"},
+  {"answer":"とんかつ","img":"https://images.unsplash.com/photo-1677743540715-d4fe04852225?w=600&q=80","hint":"食べ物","author":"GRANT LEE","authorUrl":"https://unsplash.com/@grantlee","photoLink":"https://unsplash.com/photos/a-close-up-of-a-plate-of-food-on-a-table-TFHV_c7dSi8","creditVerified":true,"verifiedSlug":"photo-1677743540715-d4fe04852225"},
+  {"answer":"海鮮丼","img":"https://images.unsplash.com/photo-1724365956437-1b7e1ade4cf7?w=600&q=80","hint":"食べ物","author":"Tadahiro Higuchi","authorUrl":"https://unsplash.com/@tad_higuchi","photoLink":"https://unsplash.com/photos/a-bowl-of-sashimi-and-a-cup-of-soup-on-a-table-Kxa0hAaZYI4","creditVerified":true,"verifiedSlug":"photo-1724365956437-1b7e1ade4cf7"},
+  {"answer":"牛丼","img":"https://images.unsplash.com/photo-1761064864527-d428a88cd4f5?w=600&q=80","hint":"食べ物","author":"Nicholas Ng","authorUrl":"https://unsplash.com/@nicsandman20","photoLink":"https://unsplash.com/photos/bowl-of-beef-and-rice-topped-with-egg-yolk-gZlH1CdjVow","creditVerified":true,"verifiedSlug":"photo-1761064864527-d428a88cd4f5"},
+  {"answer":"天丼","img":"https://images.unsplash.com/photo-1738819367362-45ec5be27c24?w=600&q=80","hint":"食べ物","author":"Kouji Tsuru","authorUrl":"https://unsplash.com/@pafuxu","photoLink":"https://unsplash.com/photos/a-plate-of-food-on-a-tray-on-a-table-mLWMayuIUkc","creditVerified":true,"verifiedSlug":"photo-1738819367362-45ec5be27c24"},
+  {"answer":"お好み焼き","img":"https://images.unsplash.com/photo-1764520406362-b1673b2213bf?w=600&q=80","hint":"食べ物","author":"Yosuke Ota","authorUrl":"https://unsplash.com/@yosuke_ota","photoLink":"https://unsplash.com/photos/okonomiyaki-cooking-on-a-hot-plate-IveJAkyk7q8","creditVerified":true,"verifiedSlug":"photo-1764520406362-b1673b2213bf"},
+  {"answer":"たこ焼き","img":"https://images.unsplash.com/photo-1751094364516-02b351f9c277?w=600&q=80","hint":"食べ物","author":"sooji min","authorUrl":"https://unsplash.com/@_sooji","photoLink":"https://unsplash.com/photos/takoyaki-a-popular-japanese-street-food-dish-O9keRareNeY","creditVerified":true,"verifiedSlug":"photo-1751094364516-02b351f9c277"},
+  {"answer":"焼きそば","img":"https://images.unsplash.com/photo-1717903623956-080d34a18e58?w=600&q=80","hint":"食べ物","author":"Kouji Tsuru","authorUrl":"https://unsplash.com/ja/@pafuxu","photoLink":"https://unsplash.com/photos/a-plate-of-noodles-and-a-glass-of-beer-on-a-table-_IS1SbB0vpI","creditVerified":true,"verifiedSlug":"photo-1717903623956-080d34a18e58"},
+  {"answer":"おでん","img":"https://images.unsplash.com/photo-1761064392867-9001ed23a8a8?w=600&q=80","hint":"食べ物","author":"Nicholas Ng","authorUrl":"https://unsplash.com/@nicsandman20","photoLink":"https://unsplash.com/photos/bowl-of-japanese-oden-stew-with-daikon-and-egg-z-cXoH4acvI","creditVerified":true,"verifiedSlug":"photo-1761064392867-9001ed23a8a8"},
+  {"answer":"チャーハン","img":"https://images.unsplash.com/photo-1609570324378-ec0c4c9b6ba8?w=600&q=80","hint":"食べ物","author":"Jay Nlper","authorUrl":"https://unsplash.com/@itworkonline","photoLink":"https://unsplash.com/photos/white-ceramic-plate-with-rice-and-stainless-steel-fork-XciY4hwqnNk","creditVerified":true,"verifiedSlug":"photo-1609570324378-ec0c4c9b6ba8"},
+  {"answer":"餃子","img":"https://images.unsplash.com/photo-1609183590563-7710ba1f90a9?w=600&q=80","hint":"食べ物","author":"Tomoyo S","authorUrl":"https://unsplash.com/@lifetofood","photoLink":"https://unsplash.com/photos/white-and-black-round-ceramic-plate-gBPN0pnMU9s","creditVerified":true,"verifiedSlug":"photo-1609183590563-7710ba1f90a9"},
+  {"answer":"春巻き","img":"https://images.unsplash.com/photo-1679310290259-78d9eaa32700?w=600&q=80","hint":"食べ物","author":"SJ 📸","authorUrl":"https://unsplash.com/@uxsj_ph","photoLink":"https://unsplash.com/photos/a-plate-of-food-on-a-table-next-to-a-glass-of-orange-juice-VeK39ynd3Ac","creditVerified":true,"verifiedSlug":"photo-1679310290259-78d9eaa32700"},
+  {"answer":"冷麺","img":"https://images.unsplash.com/photo-1616627052149-22c4f8a6316e?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8MXx8JUVCJTgzJTg5JUVCJUE5JUI0fGphfDB8fHx8MTc5MjU1ODk5OXww&ixlib=rb-4.1.0&w=600&q=80","hint":"食べ物","author":"Crystal Jo","authorUrl":"https://unsplash.com/@crystalsjo","photoLink":"https://unsplash.com/photos/cooked-food-on-stainless-steel-bowl--ym9TU7IuvA","creditVerified":true,"verifiedSlug":"photo-1616627052149-22c4f8a6316e"},
+  {"answer":"ビビンバ","img":"https://images.unsplash.com/photo-1741295017668-c8132acd6fc0?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8NHx8JUVCJUI5JTg0JUVCJUI5JTk0JUVCJUIwJUE1fGphfDB8fHx8MTc5MjU1OTAzNXww&ixlib=rb-4.1.0&w=600&q=80","hint":"食べ物","author":"Dmitry Pavlovsky","authorUrl":"https://unsplash.com/@vectorburn","photoLink":"https://unsplash.com/photos/korean-bibimbap-with-side-dishes-is-served-SbHulgzS_eo","creditVerified":true,"verifiedSlug":"photo-1741295017668-c8132acd6fc0"},
+  {"answer":"バインミー","img":"https://images.unsplash.com/photo-1715924298872-9a86b729eb96?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8OHx8YmFuaCUyMG1pfGVufDB8fHx8MTc5MjU1OTEzOXww&ixlib=rb-4.1.0&w=600&q=80","hint":"食べ物","author":"Maria Klichik","authorUrl":"https://unsplash.com/@switchinglanes","photoLink":"https://unsplash.com/photos/a-bunch-of-hot-dogs-sitting-on-top-of-a-table-CT1kGLrCwSI","creditVerified":true,"verifiedSlug":"photo-1715924298872-9a86b729eb96"},
+  {"answer":"ナン","img":"https://images.unsplash.com/photo-1640625314547-aee9a7696589?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8Mnx8TmFhbnxlbnwwfHx8fDE3OTI1NTkyMDZ8MA&ixlib=rb-4.1.0&w=600&q=80","hint":"食べ物","author":"Sweetyoga Justine","authorUrl":"https://unsplash.com/@sweetyogajustine","photoLink":"https://unsplash.com/photos/a-pile-of-pita-bread-sitting-on-top-of-a-wooden-cutting-board--C93EET79kU","creditVerified":true,"verifiedSlug":"photo-1640625314547-aee9a7696589"},
+  {"answer":"バターチキンカレー","img":"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8MXx8QnV0dGVyJTIwQ2hpY2tlbiUyMEN1cnJ5fGVufDB8fHx8MTc5MjU1OTMwNHww&ixlib=rb-4.1.0&w=600&q=80","hint":"食べ物","author":"Raman","authorUrl":"https://unsplash.com/@potofgold07","photoLink":"https://unsplash.com/photos/brown-and-green-dish-on-brown-wooden-bowl-sqcH2q7lkvo","creditVerified":true,"verifiedSlug":"photo-1603894584373-5ac82b2ae398"},
+  {"answer":"ケーキ","img":"https://images.unsplash.com/photo-1761637604927-e3656dc81383?w=600&q=80","hint":"お菓子","author":"Christian Agbede","authorUrl":"https://unsplash.com/@chriscreations__","photoLink":"https://unsplash.com/photos/a-slice-of-layered-cake-with-fresh-berries-on-top-AXF6s3IvEFw","creditVerified":true,"verifiedSlug":"photo-1761637604927-e3656dc81383"},
+  {"answer":"チョコレート","img":"https://images.unsplash.com/photo-1610450949065-1f2841536c88?ixid=M3wxMTA4NjgzfDB8MXxzZWFyY2h8MXx8Y2hvY29sYXRlfGVufDB8fHx8MTc5MjU1OTUyMHww&ixlib=rb-4.1.0&w=600&q=80","hint":"お菓子","author":"Tetiana Bykovets","authorUrl":"https://unsplash.com/@tetiana_bykovets","photoLink":"https://unsplash.com/photos/chocolate-bars-on-white-table-H22N-9s8AUw","creditVerified":true,"verifiedSlug":"photo-1610450949065-1f2841536c88"},
+  {"answer":"アイスクリーム","img":"https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=600&q=80","hint":"デザート","author":"Brooke Lark","authorUrl":"https://unsplash.com/@brookelark","photoLink":"https://unsplash.com/photos/coned-ice-cream-with-blueberries-and-flowers-8beTH4VkhLI","creditVerified":true,"verifiedSlug":"photo-1501443762994-82bd5dace89a"},
+  {"answer":"ドーナツ","img":"https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&q=80","hint":"お菓子","author":"Kobby Mendez","authorUrl":"https://unsplash.com/@kobbymendez","photoLink":"https://unsplash.com/photos/doughnut-with-toppings-q54Oxq44MZs","creditVerified":true,"verifiedSlug":"photo-1551024601-bec78aea704b"},
+  {"answer":"マカロン","img":"https://images.unsplash.com/photo-1634560604992-7784a29bc419?w=600&q=80","hint":"お菓子","author":"Teo Zac","authorUrl":"https://unsplash.com/@teo","photoLink":"https://unsplash.com/photos/a-close-up-of-a-tray-of-macaroons-DXorwc7TLFg","creditVerified":true,"verifiedSlug":"photo-1634560604992-7784a29bc419"},
+  {"answer":"クッキー","img":"https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600&q=80","hint":"お菓子","author":"Mae Mu","authorUrl":"https://unsplash.com/@picoftasty","photoLink":"https://unsplash.com/photos/brown-cookies-on-round-brown-bowl-kID9sxbJ3BQ","creditVerified":true,"verifiedSlug":"photo-1558961363-fa8fdf82db35"},
+  {"answer":"チーズケーキ","img":"https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600&q=80","hint":"お菓子","author":"Mink Mingle","authorUrl":"https://unsplash.com/@minkmingle","photoLink":"https://unsplash.com/photos/slice-blueberry-cheesecake-pie-on-white-ceramic-plate-LGNxQzYmeUk","creditVerified":true,"verifiedSlug":"photo-1533134242443-d4fd215305ad"},
+  {"answer":"ティラミス","img":"https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600&q=80","hint":"お菓子","author":"Marianna OLE","authorUrl":"https://unsplash.com/@marianna_ole","photoLink":"https://unsplash.com/photos/white-and-brown-ceramic-cake-4El3DUkQs2g","creditVerified":true,"verifiedSlug":"photo-1571877227200-a0d98ea607e9"},
+  {"answer":"プリン","img":"https://images.unsplash.com/photo-1702728109878-c61a98d80491?w=600&q=80","hint":"お菓子","author":"Felippe Lopes","authorUrl":"https://unsplash.com/@pires128","photoLink":"https://unsplash.com/photos/a-small-dessert-on-a-white-plate-on-a-wooden-table-TqPdzQ00I0U","creditVerified":true,"verifiedSlug":"photo-1702728109878-c61a98d80491"},
+  {"answer":"クレープ","img":"https://images.unsplash.com/photo-1519676867240-f03562e64548?w=600&q=80","hint":"お菓子","author":"Monika Grabkowska","authorUrl":"https://unsplash.com/@moniqa","photoLink":"https://unsplash.com/photos/flat-lay-photography-of-pancake-with-icing-jsgJtBOR6jY","creditVerified":true,"verifiedSlug":"photo-1519676867240-f03562e64548"},
+  {"answer":"エクレア","img":"https://images.unsplash.com/photo-1784841399281-40c323e95339?w=600&q=80","hint":"お菓子","author":"Emre ÇOBAN","authorUrl":"https://unsplash.com/@emrecob","photoLink":"https://unsplash.com/photos/a-chocolate-eclair-with-fresh-berries-on-a-white-plate-ZIVhImrOI3w","creditVerified":true,"verifiedSlug":"photo-1784841399281-40c323e95339"},
+  {"answer":"シュークリーム","img":"https://images.unsplash.com/photo-1596548739300-c1ff4cf00433?w=600&q=80","hint":"お菓子","author":"Kevin kevin","authorUrl":"https://unsplash.com/@0x00kevin","photoLink":"https://unsplash.com/photos/brown-cookies-on-white-ceramic-plate-nDMNT1n5BN0","creditVerified":true,"verifiedSlug":"photo-1596548739300-c1ff4cf00433"},
+  {"answer":"ブラウニー","img":"https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=600&q=80","hint":"お菓子","author":"Shivansh Sethi","authorUrl":"https://unsplash.com/@kaaficlever","photoLink":"https://unsplash.com/photos/chocolate-cake-with-white-icing-on-white-ceramic-plate-dKT6Q7q2UKs","creditVerified":true,"verifiedSlug":"photo-1624353365286-3f8d62daad51"},
+  {"answer":"マフィン","img":"https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=600&q=80","hint":"お菓子","author":"Joshua Flores","authorUrl":"https://unsplash.com/@nyarlathotep","photoLink":"https://unsplash.com/photos/brown-cupcakes-on-white-ceramic-plate-5RQffqRkmWQ","creditVerified":true,"verifiedSlug":"photo-1607958996333-41aef7caefaa"},
+  {"answer":"カップケーキ","img":"https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=600&q=80","hint":"お菓子","author":"Brooke Lark","authorUrl":"https://unsplash.com/@brookelark","photoLink":"https://unsplash.com/photos/six-teal-icing-cupcakes-with-sprinkles-pGM4sjt_BdQ","creditVerified":true,"verifiedSlug":"photo-1486427944299-d1955d23e34d"},
+  {"answer":"タルト","img":"https://images.unsplash.com/photo-1503485838016-53579610c389?w=600&q=80","hint":"お菓子","author":"Reuben Mcfeeters","authorUrl":"https://unsplash.com/@reubenmcfeeters","photoLink":"https://unsplash.com/photos/selective-focus-photography-of-strawberry-pie-qnCzQRAoIr4","creditVerified":true,"verifiedSlug":"photo-1503485838016-53579610c389"},
+  {"answer":"ゼリー","img":"https://images.unsplash.com/photo-1789676045761-54fd3939a5aa?w=600&q=80","hint":"お菓子","author":"nilufar nattaq","authorUrl":"https://unsplash.com/@nillufar","photoLink":"https://unsplash.com/photos/red-gelatin-mold-on-polka-dot-plate-CJQ4KTiFzJ0","creditVerified":true,"verifiedSlug":"photo-1789676045761-54fd3939a5aa"},
+  {"answer":"たい焼き","img":"https://images.unsplash.com/photo-1602030029545-52959ef2927c?w=600&q=80","hint":"お菓子","author":"Kelly Visel","authorUrl":"https://unsplash.com/@kellyvisel","photoLink":"https://unsplash.com/photos/brown-cookies-on-brown-wooden-table-MIMgqOQLnOc","creditVerified":true,"verifiedSlug":"photo-1602030029545-52959ef2927c"},
+  {"answer":"かき氷","img":"https://images.unsplash.com/photo-1716626669148-1731504429dd?w=600&q=80","hint":"お菓子","author":"Yuika Takamura","authorUrl":"https://unsplash.com/@blue_hamberts","photoLink":"https://unsplash.com/photos/a-person-holding-a-cup-with-a-blue-substance-in-it-9gxUT7fyR_c","creditVerified":true,"verifiedSlug":"photo-1716626669148-1731504429dd"},
+  {"answer":"ソフトクリーム","img":"https://images.unsplash.com/photo-1636564499112-6113e73c504a?w=600&q=80","hint":"デザート","author":"charlesdeluvio","authorUrl":"https://unsplash.com/@charlesdeluvio","photoLink":"https://unsplash.com/photos/ice-cream-from-swirl-3bhnI1Am5Yc","creditVerified":true,"verifiedSlug":"photo-1636564499112-6113e73c504a"},
+  {"answer":"パフェ","img":"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600&q=80","hint":"デザート","author":"Emile Mbunzama","authorUrl":"https://unsplash.com/@emilembunzama","photoLink":"https://unsplash.com/photos/oreo-cookie-sandwiches-dessert-in-short-stem-glass-cLpdEA23Z44","creditVerified":true,"verifiedSlug":"photo-1563805042-7684c019e1cb"},
+  {"answer":"ポップコーン","img":"https://images.unsplash.com/photo-1585647347483-22b66260dfff?w=600&q=80","hint":"お菓子","author":"Corina Rainer","authorUrl":"https://unsplash.com/@corina_rainer_","photoLink":"https://unsplash.com/photos/white-and-red-plastic-packs-9FDI-_E29fk","creditVerified":true,"verifiedSlug":"photo-1585647347483-22b66260dfff"},
+  {"answer":"プレッツェル","img":"https://images.unsplash.com/photo-1609438824822-5b3a0e9abb4e?w=600&q=80","hint":"お菓子","author":"Israel Albornoz","authorUrl":"https://unsplash.com/@israelalbornoz","photoLink":"https://unsplash.com/photos/brown-bread-with-chocolate-on-top-f3wRaue-5oI","creditVerified":true,"verifiedSlug":"photo-1609438824822-5b3a0e9abb4e"},
+  {"answer":"キャンディ","img":"https://images.unsplash.com/photo-1588756264692-d396bca41fb1?w=600&q=80","hint":"お菓子","author":"Customerbox","authorUrl":"https://unsplash.com/@customerbox","photoLink":"https://unsplash.com/photos/a-pile-of-colorful-candies-sitting-on-top-of-a-table-k4w2o7TVjks","creditVerified":true,"verifiedSlug":"photo-1588756264692-d396bca41fb1"},
+  {"answer":"グミ","img":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=600&q=80","hint":"お菓子","author":"Amit Lahav","authorUrl":"https://unsplash.com/@amit_lahav","photoLink":"https://unsplash.com/photos/yellow-green-and-red-plastic-beads-LU_fCezP9-o","creditVerified":true,"verifiedSlug":"photo-1582058091505-f87a2e55a40f"},
+  {"answer":"マシュマロ","img":"https://images.unsplash.com/photo-1613549421877-6db464752da5?w=600&q=80","hint":"お菓子","author":"FlyD","authorUrl":"https://unsplash.com/@flyd2069","photoLink":"https://unsplash.com/photos/white-plastic-egg-tray-lot-z4BrxRuNPek","creditVerified":true,"verifiedSlug":"photo-1613549421877-6db464752da5"},
+  {"answer":"リンゴ","img":"https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&q=80","hint":"果物","author":"Matheus Cenali","authorUrl":"https://unsplash.com/@cenali","photoLink":"https://unsplash.com/photos/bunch-of-red-apples-wXuzS9xR49M","creditVerified":true,"verifiedSlug":"photo-1560806887-1e4cd0b6cbd6"},
+  {"answer":"いちご","img":"https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80","hint":"果物","author":"Anton Darius","authorUrl":"https://unsplash.com/@thesollers","photoLink":"https://unsplash.com/photos/strawberry-lot-FCrgmqqvl-w","creditVerified":true,"verifiedSlug":"photo-1464965911861-746a04b4bca6"},
+  {"answer":"バナナ","img":"https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=600&q=80","hint":"果物","author":"Giorgio Trovato","authorUrl":"https://unsplash.com/@giorgiotrovato","photoLink":"https://unsplash.com/photos/yellow-bananas-fczCr7MdE7U","creditVerified":true,"verifiedSlug":"photo-1571771894821-ce9b6c11b08e"},
+  {"answer":"スイカ","img":"https://images.unsplash.com/photo-1563114773-84221bd62daa?w=600&q=80","hint":"果物","author":"Floh Keitgen","authorUrl":"https://unsplash.com/@flohkeitgen","photoLink":"https://unsplash.com/photos/watermelon-close-up-photography-aFUHu9WNO3Q","creditVerified":true,"verifiedSlug":"photo-1563114773-84221bd62daa"},
+  {"answer":"ブドウ","img":"https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=600&q=80","hint":"果物","author":"David Köhler","authorUrl":"https://unsplash.com/@davidkhlr","photoLink":"https://unsplash.com/photos/dark-purple-grapes-on-vine-gBdG886bLDY","creditVerified":true,"verifiedSlug":"photo-1537640538966-79f369143f8f"},
+  {"answer":"レモン","img":"https://images.unsplash.com/photo-1590502593747-42a996133562?w=600&q=80","hint":"果物","author":"Thitiphum Koonjantuek","authorUrl":"https://unsplash.com/@phumthiti","photoLink":"https://unsplash.com/photos/yellow-citrus-fruits-on-black-surface-TFqjlTmkeyY","creditVerified":true,"verifiedSlug":"photo-1590502593747-42a996133562"},
+  {"answer":"オレンジ","img":"https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80","hint":"果物","author":"Xiaolong Wong","authorUrl":"https://unsplash.com/@runblue","photoLink":"https://unsplash.com/photos/two-orange-fruits-on-table-nibgG33H0F8","creditVerified":true,"verifiedSlug":"photo-1547514701-42782101795e"},
+  {"answer":"パイナップル","img":"https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=600&q=80","hint":"果物","author":"Fernando Andrade","authorUrl":"https://unsplash.com/@thisisnando","photoLink":"https://unsplash.com/photos/ripe-pineapple-fruit-nAOZCYcLND8","creditVerified":true,"verifiedSlug":"photo-1550258987-190a2d41a8ba"},
+  {"answer":"さくらんぼ","img":"https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=600&q=80","hint":"果物","author":"Quaritsch Photography","authorUrl":"https://unsplash.com/@quaritsch","photoLink":"https://unsplash.com/photos/two-cherries-on-white-surface-lZ8onQ1wuY8","creditVerified":true,"verifiedSlug":"photo-1528821128474-27f963b062bf"},
+  {"answer":"キウイ","img":"https://images.unsplash.com/photo-1585059895524-72359e06133a?w=600&q=80","hint":"果物","author":"engin akyurt","authorUrl":"https://unsplash.com/ja/@enginakyurt","photoLink":"https://unsplash.com/photos/sliced-green-fruit-on-white-surface-jPVcZsxRGJo","creditVerified":true,"verifiedSlug":"photo-1585059895524-72359e06133a"},
+  {"answer":"マンゴー","img":"https://images.unsplash.com/photo-1605027990121-cbae9e0642df?w=600&q=80","hint":"果物","author":"Alexander Schimmeck","authorUrl":"https://unsplash.com/@alschim","photoLink":"https://unsplash.com/photos/yellow-and-red-fruit-lot-vTXtQ8ZBzvY","creditVerified":true,"verifiedSlug":"photo-1605027990121-cbae9e0642df"},
+  {"answer":"桃","img":"https://images.unsplash.com/photo-1639588473831-dd9d014646ae?w=600&q=80","hint":"果物","author":"NisonCo PR and SEO","authorUrl":"https://unsplash.com/@nisoncoprseo","photoLink":"https://unsplash.com/photos/a-pile-of-peaches-with-a-leaf-on-top-H4QpChoce7I","creditVerified":true,"verifiedSlug":"photo-1639588473831-dd9d014646ae"},
+  {"answer":"栗","img":"https://images.unsplash.com/photo-1573991091002-9d60934af2dc?w=600&q=80","hint":"果物","author":"Roberto Patti","authorUrl":"https://unsplash.com/@roby54","photoLink":"https://unsplash.com/photos/brown-nut-lot-GUZHqrk_TdU","creditVerified":true,"verifiedSlug":"photo-1573991091002-9d60934af2dc"},
+  {"answer":"ブルーベリー","img":"https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=600&q=80","hint":"果物","author":"Joanna Kosinska","authorUrl":"https://unsplash.com/@joannakosinska","photoLink":"https://unsplash.com/photos/blueberries-on-white-ceramic-container-4qujjbj3srs","creditVerified":true,"verifiedSlug":"photo-1498557850523-fd3d118b962e"},
+  {"answer":"ラズベリー","img":"https://images.unsplash.com/photo-1774709781906-820bcb12f218?w=600&q=80","hint":"果物","author":"Valentin","authorUrl":"https://unsplash.com/@omikron","photoLink":"https://unsplash.com/photos/a-wooden-box-filled-with-fresh-raspberries-4W0E2SgolJY","creditVerified":true,"verifiedSlug":"photo-1774709781906-820bcb12f218"},
+  {"answer":"メロン","img":"https://images.unsplash.com/photo-1602597190461-43774583d3c0?w=600&q=80","hint":"果物","author":"Otherness TV","authorUrl":"https://unsplash.com/@othernesstv","photoLink":"https://unsplash.com/photos/sliced-orange-and-green-fruit-XzSlxVsSEfc","creditVerified":true,"verifiedSlug":"photo-1602597190461-43774583d3c0"},
+  {"answer":"ライチ","img":"https://images.unsplash.com/photo-1705335834319-92a152363ea1?w=600&q=80","hint":"果物","author":"ZJ Luk","authorUrl":"https://unsplash.com/@zeonjat","photoLink":"https://unsplash.com/photos/a-bunch-of-fruit-hanging-from-a-tree-vxf5qTYKvRA","creditVerified":true,"verifiedSlug":"photo-1705335834319-92a152363ea1"},
+  {"answer":"パパイヤ","img":"https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?w=600&q=80","hint":"果物","author":"charlesdeluvio","authorUrl":"https://unsplash.com/@charlesdeluvio","photoLink":"https://unsplash.com/photos/orange-sliced-papaya-yPI38imbQSI","creditVerified":true,"verifiedSlug":"photo-1517282009859-f000ec3b26fe"},
+  {"answer":"ドラゴンフルーツ","img":"https://images.unsplash.com/photo-1527325678964-54921661f888?w=600&q=80","hint":"果物","author":"Helen Thomas","authorUrl":"https://unsplash.com/@hlthomas","photoLink":"https://unsplash.com/photos/sliced-dragon-fruits-vkVLkKi8H60","creditVerified":true,"verifiedSlug":"photo-1527325678964-54921661f888"},
+  {"answer":"アボカド","img":"https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80","hint":"果物","author":"Thought Catalog","authorUrl":"https://unsplash.com/@thoughtcatalog","photoLink":"https://unsplash.com/photos/sliced-green-avocado-fruit-9aOswReDKPo","creditVerified":true,"verifiedSlug":"photo-1523049673857-eb18f1d7b578"},
+  {"answer":"コーヒー","img":"https://images.unsplash.com/photo-1652507733698-b0c536a92cd4?w=600&q=80","hint":"飲み物","author":"Indra Projects","authorUrl":"https://unsplash.com/@indraprojects","photoLink":"https://unsplash.com/photos/a-cup-of-coffee-ma90umjzwT4","creditVerified":true,"verifiedSlug":"photo-1652507733698-b0c536a92cd4"},
+  {"answer":"カプチーノ","img":"https://images.unsplash.com/photo-1534778101976-62847782c213?w=600&q=80","hint":"飲み物","author":"Harris Vo","authorUrl":"https://unsplash.com/@hoanvokim","photoLink":"https://unsplash.com/photos/white-ceramic-cup-with-latte-cafe-art-on-desk-JpQGEArmG0I","creditVerified":true,"verifiedSlug":"photo-1534778101976-62847782c213"},
+  {"answer":"エスプレッソ","img":"https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&q=80","hint":"飲み物","author":"Matt Hoffman","authorUrl":"https://unsplash.com/@__matthoffman__","photoLink":"https://unsplash.com/photos/white-ceramic-mug-fill-with-coffee-IE-gdqEg45M","creditVerified":true,"verifiedSlug":"photo-1510591509098-f4fdc6d0ff04"},
+  {"answer":"タピオカミルクティー","img":"https://images.unsplash.com/photo-1525803377221-4f6ccdaa5133?w=600&q=80","hint":"飲み物","author":"Rosalind Chang","authorUrl":"https://unsplash.com/@rosalindjchang","photoLink":"https://unsplash.com/photos/two-clear-glass-jars-with-straws-P_wPicZYoPI","creditVerified":true,"verifiedSlug":"photo-1525803377221-4f6ccdaa5133"},
+  {"answer":"緑茶","img":"https://images.unsplash.com/photo-1606377695906-236fdfcef767?w=600&q=80","hint":"飲み物","author":"Na visky","authorUrl":"https://unsplash.com/@navisky","photoLink":"https://unsplash.com/photos/white-ceramic-teacup-on-brown-wooden-table-3hRRT4qztzs","creditVerified":true,"verifiedSlug":"photo-1606377695906-236fdfcef767"},
+  {"answer":"抹茶","img":"https://images.unsplash.com/photo-1753009712810-3f72c3f72548?w=600&q=80","hint":"飲み物","author":"Zed Can","authorUrl":"https://unsplash.com/@zedcan77","photoLink":"https://unsplash.com/photos/matcha-tea-being-whisked-in-a-bowl-BFeHprrF4Aw","creditVerified":true,"verifiedSlug":"photo-1753009712810-3f72c3f72548"},
+  {"answer":"ワイン","img":"https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80","hint":"飲み物","author":"Kelsey Knight","authorUrl":"https://unsplash.com/@kelsoknight","photoLink":"https://unsplash.com/photos/people-tossing-their-clear-wine-glasses-udj2tD3WKsY","creditVerified":true,"verifiedSlug":"photo-1510812431401-41d2bd2722f3"},
+  {"answer":"ビール","img":"https://images.unsplash.com/photo-1608270586620-248524c67de9?w=600&q=80","hint":"飲み物","author":"engin akyurt","authorUrl":"https://unsplash.com/@enginakyurt","photoLink":"https://unsplash.com/photos/clear-glass-beer-mug-with-beer-3ORoQEJY9LA","creditVerified":true,"verifiedSlug":"photo-1608270586620-248524c67de9"},
+  {"answer":"オレンジジュース","img":"https://images.unsplash.com/photo-1613478223719-2ab802602423?w=600&q=80","hint":"飲み物","author":"Mateusz Feliksik","authorUrl":"https://unsplash.com/@mateusz_feliksik","photoLink":"https://unsplash.com/photos/orange-juice-in-clear-drinking-glass-TmOGarNOGFs","creditVerified":true,"verifiedSlug":"photo-1613478223719-2ab802602423"},
+  {"answer":"レモネード","img":"https://images.unsplash.com/photo-1523677011781-c91d1bbe2f9e?w=600&q=80","hint":"飲み物","author":"Charity Beth Long","authorUrl":"https://unsplash.com/@charitybethlong","photoLink":"https://unsplash.com/photos/sliced-lemon-beside-two-clear-drinking-glasses-_PaXoN4_2s0","creditVerified":true,"verifiedSlug":"photo-1523677011781-c91d1bbe2f9e"},
+  {"answer":"スムージー","img":"https://images.unsplash.com/photo-1600718374662-0483d2b9da44?w=600&q=80","hint":"飲み物","author":"Arvid Skywalker","authorUrl":"https://unsplash.com/@brandad","photoLink":"https://unsplash.com/photos/pink-ice-cream-with-red-and-blue-berries-on-top-h6ccJcVHh20","creditVerified":true,"verifiedSlug":"photo-1600718374662-0483d2b9da44"},
+  {"answer":"シェイク","img":"https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&q=80","hint":"飲み物","author":"Victor Rutka","authorUrl":"https://unsplash.com/@victorrutka","photoLink":"https://unsplash.com/photos/chocolate-cookie-frappe-4FujjkcI40g","creditVerified":true,"verifiedSlug":"photo-1572490122747-3968b75cc699"},
+  {"answer":"ホットチョコレート","img":"https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=600&q=80","hint":"飲み物","author":"Maddi Bazzocco","authorUrl":"https://unsplash.com/@maddibazzocco","photoLink":"https://unsplash.com/photos/chocolate-coffee-pouring-in-white-mug-MjZq7A2RJxQ","creditVerified":true,"verifiedSlug":"photo-1542990253-0d0f5be5f0ed"},
+  {"answer":"牛乳","img":"https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&q=80","hint":"飲み物","author":"Eiliv Aceron","authorUrl":"https://unsplash.com/@shootdelicious","photoLink":"https://unsplash.com/photos/person-pours-milk-into-glass-_8bnn1GqX70","creditVerified":true,"verifiedSlug":"photo-1550583724-b2692b85b150"},
 ];
 let QS=[...DEFAULT_Q];
 const QS_STORAGE_KEY='imagine_tile_questions_v1';
@@ -1204,7 +1196,27 @@ function loadQuestionsFromStorage(){
     const raw=localStorage.getItem(QS_STORAGE_KEY);
     if(!raw)return;
     const arr=JSON.parse(raw);
-    if(Array.isArray(arr)&&arr.length>=10) QS=arr;
+    if(Array.isArray(arr)&&arr.length>=10){
+      // 旧バージョンの不一致フォールバック(results[0])で誤って紐付いたクレジット・photoLinkを自動クリーンアップ
+      arr.forEach((q, idx)=>{
+        if(!q) return;
+        const m = (q.img||'').match(/((?:premium_)?photo-[0-9]+-[0-9a-fA-F]+)/);
+        const curSlug = m ? m[1] : '';
+        if(!q.creditVerified || (q.verifiedSlug && curSlug && q.verifiedSlug !== curSlug)){
+          delete q.author;
+          delete q.authorUrl;
+          delete q.photoLink;
+          delete q.downloadLocation;
+          delete q.creditVerified;
+          delete q.verifiedSlug;
+          if(DEFAULT_Q[idx] && DEFAULT_Q[idx].answer === q.answer && DEFAULT_Q[idx].img){
+            q.img = DEFAULT_Q[idx].img;
+          }
+        }
+      });
+      QS=arr;
+      try{localStorage.setItem(QS_STORAGE_KEY, JSON.stringify(QS));}catch(e){}
+    }
   }catch(e){}
 }
 loadQuestionsFromStorage();
@@ -1491,46 +1503,46 @@ const getAnsCost=p=>(p&&p.ansCost)?p.ansCost:1;
 // ══════════════════════════════════════════════════════════════════════════
 const DEFAULT_UNSPLASH_ACCESS_KEY = ''; // 公開用は空欄（自分が編集する時だけエディタ上部の入力欄からブラウザ保存）
 const UNSPLASH_KEY_STORAGE = 'imagine_tile_unsplash_key_v1';
-const UNSPLASH_CREDIT_CACHE_KEY = 'imagine_tile_unsplash_credits_v1';
+const UNSPLASH_CREDIT_CACHE_KEY = 'imagine_tile_unsplash_credits_v2'; // v2: 完全一致または手動検証済みのみ保存
 const UNSPLASH_DL_TRIGGERED_KEY = 'imagine_tile_unsplash_dl_v1';
 const UNSPLASH_UTM = 'utm_source=imagine_tile&utm_medium=referral';
 
-// 日本語問題タイトル ➔ 英語Unsplash検索クエリ変換辞書（高精度マッチ用）
+// 英語シンプル検索語（日本語検索でヒットしなかった場合の補助用）
 const JP_TO_EN_QUERY = {
-  'ピザ':'pizza', 'パスタ':'pasta', 'ハンバーガー':'hamburger burger', 'ホットドッグ':'hot dog',
-  'タコス':'tacos', 'サンドイッチ':'sandwich', 'クロワッサン':'croissant', 'パン':'bread loaf',
-  'バゲット':'baguette', 'ステーキ':'beef steak', 'フライドチキン':'fried chicken', 'フライドポテト':'french fries',
-  'クラムチャウダー':'clam chowder soup', 'シーザーサラダ':'caesar salad', 'パンケーキ':'pancakes',
-  'ワッフル':'belgian waffle', 'フレンチトースト':'french toast', 'チーズ':'cheese',
-  '寿司':'sushi nigiri', 'ラーメン':'ramen noodles', 'うどん':'udon noodles', 'そば':'soba buckwheat noodles',
-  '天ぷら':'tempura japanese', '焼き鳥':'yakitori chicken skewers', '刺身':'sashimi',
-  'カレーライス':'japanese curry rice', 'とんかつ':'tonkatsu pork cutlet', '海鮮丼':'sashimi rice bowl kaisendon',
-  '牛丼':'gyudon beef bowl', '天丼':'tempura rice bowl tendon', 'お好み焼き':'okonomiyaki',
-  'たこ焼き':'takoyaki octopus balls', '焼きそば':'yakisoba fried noodles', 'おでん':'oden japanese hotpot',
-  'チャーハン':'fried rice', '餃子':'gyoza dumplings', '春巻き':'spring rolls',
-  '冷麺':'cold noodles naengmyeon', 'ビビンバ':'bibimbap korean rice', 'グリーンカレー':'thai green curry',
-  'バインミー':'banh mi vietnamese sandwich', 'ナン':'naan bread', 'バターチキンカレー':'butter chicken curry',
-  'ケーキ':'shortcake cake', 'チョコレート':'chocolate', 'アイスクリーム':'ice cream scoop',
-  'ドーナツ':'donut doughnut', 'マカロン':'macarons', 'クッキー':'chocolate chip cookies',
-  'チーズケーキ':'cheesecake', 'ティラミス':'tiramisu', 'プリン':'caramel pudding flan',
-  'クレープ':'crepe dessert', 'エクレア':'eclair pastry', 'シュークリーム':'cream puff choux',
-  'ブラウニー':'chocolate brownie', 'マフィン':'blueberry muffin', 'カップケーキ':'cupcake frosting',
-  'タルト':'fruit tart', 'ゼリー':'fruit jelly dessert', 'たい焼き':'taiyaki fish pastry',
-  'かき氷':'shaved ice dessert kakigori', 'ソフトクリーム':'soft serve ice cream cone',
-  'パフェ':'parfait dessert glass', 'フルーツポンチ':'fruit punch bowl', 'ポップコーン':'popcorn',
-  'プレッツェル':'pretzel', 'キャンディ':'colorful candy lollipop', 'グミ':'gummy bears candy',
-  'マシュマロ':'marshmallows',
-  'リンゴ':'red apple fruit', 'いちご':'strawberry fruit', 'バナナ':'banana fruit',
-  'スイカ':'watermelon', 'ブドウ':'grapes fruit', 'レモン':'lemon fruit', 'オレンジ':'orange fruit',
-  'パイナップル':'pineapple', 'さくらんぼ':'cherries fruit', 'キウイ':'kiwi fruit',
-  'マンゴー':'mango fruit', '桃':'peach fruit', '栗':'chestnuts', 'ブルーベリー':'blueberries',
-  'ラズベリー':'raspberries', 'メロン':'cantaloupe melon', 'ライチ':'lychee fruit',
-  'パパイヤ':'papaya fruit', 'ドラゴンフルーツ':'dragon fruit pitaya', 'アボカド':'avocado',
-  'コーヒー':'coffee cup', 'カプチーノ':'cappuccino latte art', 'エスプレッソ':'espresso shot',
-  'タピオカミルクティー':'bubble tea boba', '緑茶':'green tea japanese', '抹茶':'matcha whisk tea',
-  'ワイン':'red wine glass', 'ビール':'beer mug', 'オレンジジュース':'orange juice glass',
-  'レモネード':'lemonade glass', 'スムージー':'berry smoothie', 'シェイク':'milkshake',
-  'ホットチョコレート':'hot chocolate mug', '牛乳':'milk glass'
+  'ピザ':'pizza', 'パスタ':'pasta', 'ハンバーガー':'hamburger', 'ホットドッグ':'hot dog',
+  'タコス':'tacos', 'サンドイッチ':'sandwich', 'クロワッサン':'croissant', 'パン':'bread',
+  'バゲット':'baguette', 'ステーキ':'steak', 'フライドチキン':'fried chicken', 'フライドポテト':'french fries',
+  'クラムチャウダー':'clam chowder', 'シーザーサラダ':'caesar salad', 'パンケーキ':'pancakes',
+  'ワッフル':'waffle', 'フレンチトースト':'french toast', 'チーズ':'cheese',
+  '寿司':'sushi', 'ラーメン':'ramen', 'うどん':'udon', 'そば':'soba',
+  '天ぷら':'tempura', '焼き鳥':'yakitori', '刺身':'sashimi',
+  'カレーライス':'curry rice', 'とんかつ':'tonkatsu', '海鮮丼':'kaisendon',
+  '牛丼':'gyudon', '天丼':'tendon tempura', 'お好み焼き':'okonomiyaki',
+  'たこ焼き':'takoyaki', '焼きそば':'yakisoba', 'おでん':'oden',
+  'チャーハン':'fried rice', '餃子':'gyoza', '春巻き':'spring rolls',
+  '冷麺':'cold noodles', 'ビビンバ':'bibimbap', 'グリーンカレー':'green curry',
+  'バインミー':'banh mi', 'ナン':'naan', 'バターチキンカレー':'butter chicken',
+  'ケーキ':'cake', 'チョコレート':'chocolate', 'アイスクリーム':'ice cream',
+  'ドーナツ':'donut', 'マカロン':'macaron', 'クッキー':'cookies',
+  'チーズケーキ':'cheesecake', 'ティラミス':'tiramisu', 'プリン':'pudding',
+  'クレープ':'crepe', 'エクレア':'eclair', 'シュークリーム':'cream puff',
+  'ブラウニー':'brownie', 'マフィン':'muffin', 'カップケーキ':'cupcake',
+  'タルト':'tart', 'ゼリー':'jelly', 'たい焼き':'taiyaki',
+  'かき氷':'shaved ice', 'ソフトクリーム':'soft serve',
+  'パフェ':'parfait', 'フルーツポンチ':'fruit punch', 'ポップコーン':'popcorn',
+  'プレッツェル':'pretzel', 'キャンディ':'candy', 'グミ':'gummy candy',
+  'マシュマロ':'marshmallow',
+  'リンゴ':'apple', 'いちご':'strawberry', 'バナナ':'banana',
+  'スイカ':'watermelon', 'ブドウ':'grapes', 'レモン':'lemon', 'オレンジ':'orange',
+  'パイナップル':'pineapple', 'さくらんぼ':'cherries', 'キウイ':'kiwi',
+  'マンゴー':'mango', '桃':'peach', '栗':'chestnut', 'ブルーベリー':'blueberry',
+  'ラズベリー':'raspberry', 'メロン':'melon', 'ライチ':'lychee',
+  'パパイヤ':'papaya', 'ドラゴンフルーツ':'dragon fruit', 'アボカド':'avocado',
+  'コーヒー':'coffee', 'カプチーノ':'cappuccino', 'エスプレッソ':'espresso',
+  'タピオカミルクティー':'bubble tea', '緑茶':'green tea', '抹茶':'matcha',
+  'ワイン':'wine', 'ビール':'beer', 'オレンジジュース':'orange juice',
+  'レモネード':'lemonade', 'スムージー':'smoothie', 'シェイク':'milkshake',
+  'ホットチョコレート':'hot chocolate', '牛乳':'milk'
 };
 
 let _unsplashCreditCache = {};
@@ -1539,6 +1551,8 @@ let _unsplashRateRemaining = null;
 
 function loadUnsplashCaches(){
   try{
+    // 旧v1キャッシュ（不一致のresults[0]が含まれる可能性があるもの）を破棄
+    localStorage.removeItem('imagine_tile_unsplash_credits_v1');
     const c = localStorage.getItem(UNSPLASH_CREDIT_CACHE_KEY);
     if(c) _unsplashCreditCache = JSON.parse(c) || {};
   }catch(e){}
@@ -1546,7 +1560,6 @@ function loadUnsplashCaches(){
     const d = localStorage.getItem(UNSPLASH_DL_TRIGGERED_KEY);
     if(d) _unsplashDlTriggered = JSON.parse(d) || {};
   }catch(e){}
-  // キャッシュ済みのクレジット情報をQSに反映
   QS.forEach(q => applyCachedCreditToQuestion(q));
 }
 
@@ -1594,6 +1607,14 @@ function extractUnsplashSlug(url){
   return m ? m[1] : '';
 }
 
+function normalizeProfileUrl(val){
+  const v = (val || '').trim();
+  if(!v) return '';
+  if(/^https?:\/\//i.test(v)) return v;
+  if(v.startsWith('@')) return 'https://unsplash.com/' + v;
+  return 'https://unsplash.com/@' + v;
+}
+
 function withUnsplashUtm(url){
   if(!url) return 'https://unsplash.com/?' + UNSPLASH_UTM;
   try{
@@ -1608,14 +1629,22 @@ function withUnsplashUtm(url){
 
 function applyCachedCreditToQuestion(q){
   if(!q || !q.img) return false;
-  if(q.author && q.authorUrl) return true;
   const slug = extractUnsplashSlug(q.img);
-  const hit = (slug && _unsplashCreditCache[slug]) || _unsplashCreditCache['ans:' + q.answer];
-  if(hit && hit.author){
+  if(q.creditVerified && q.author && q.authorUrl){
+    if(!q.verifiedSlug || !slug || q.verifiedSlug === slug){
+      return true;
+    }
+  }
+  // スラッグ完全一致のキャッシュのみ参照（問題名での流用は別画像誤リンクの原因になるため行わない）
+  const hit = slug ? _unsplashCreditCache[slug] : null;
+  if(hit && hit.author && hit.verifiedSlug === slug){
     q.author = hit.author;
     q.authorUrl = hit.authorUrl;
     if(hit.photoLink) q.photoLink = hit.photoLink;
+    else delete q.photoLink;
     if(hit.downloadLocation) q.downloadLocation = hit.downloadLocation;
+    q.verifiedSlug = slug;
+    q.creditVerified = true;
     return true;
   }
   return false;
@@ -1623,15 +1652,63 @@ function applyCachedCreditToQuestion(q){
 
 function storeCreditForQuestion(q, creditObj){
   if(!q || !creditObj || !creditObj.author) return;
-  q.author = creditObj.author;
-  q.authorUrl = creditObj.authorUrl;
-  if(creditObj.photoLink) q.photoLink = creditObj.photoLink;
-  if(creditObj.downloadLocation) q.downloadLocation = creditObj.downloadLocation;
   const slug = extractUnsplashSlug(q.img);
-  if(slug) _unsplashCreditCache[slug] = creditObj;
-  if(q.answer) _unsplashCreditCache['ans:' + q.answer] = creditObj;
+  q.author = creditObj.author;
+  q.authorUrl = normalizeProfileUrl(creditObj.authorUrl);
+  if(creditObj.photoLink) q.photoLink = creditObj.photoLink;
+  else delete q.photoLink;
+  if(creditObj.downloadLocation) q.downloadLocation = creditObj.downloadLocation;
+  q.verifiedSlug = slug;
+  q.creditVerified = true;
+  if(slug){
+    _unsplashCreditCache[slug] = {
+      author: q.author,
+      authorUrl: q.authorUrl,
+      photoLink: q.photoLink || '',
+      downloadLocation: q.downloadLocation || '',
+      verifiedSlug: slug,
+      creditVerified: true
+    };
+  }
   saveUnsplashCreditCache();
   saveQuestionsToStorage();
+}
+
+function clearSingleQuestionCredit(qIdx){
+  const q = QS[qIdx];
+  if(!q) return;
+  const slug = extractUnsplashSlug(q.img);
+  if(slug) delete _unsplashCreditCache[slug];
+  delete q.author;
+  delete q.authorUrl;
+  delete q.photoLink;
+  delete q.downloadLocation;
+  delete q.verifiedSlug;
+  delete q.creditVerified;
+  saveUnsplashCreditCache();
+  saveQuestionsToStorage();
+  if(esel === qIdx) selQ(qIdx);
+  renderEList();
+  updateUnsplashEditorStatus();
+  toast('この問題のクレジット設定をクリアしました');
+}
+
+function resetAllUnverifiedCredits(){
+  _unsplashCreditCache = {};
+  try{ localStorage.removeItem(UNSPLASH_CREDIT_CACHE_KEY); }catch(e){}
+  QS.forEach(q => {
+    delete q.author;
+    delete q.authorUrl;
+    delete q.photoLink;
+    delete q.downloadLocation;
+    delete q.verifiedSlug;
+    delete q.creditVerified;
+  });
+  saveQuestionsToStorage();
+  if(esel >= 0 && esel < QS.length) selQ(esel);
+  renderEList();
+  updateUnsplashEditorStatus();
+  toast('全問題のクレジット設定をクリアしました');
 }
 
 // Unsplash API 規約③: Triggering a Download (https://help.unsplash.com/en/articles/2511258-guideline-triggering-a-download)
@@ -1658,18 +1735,21 @@ async function triggerUnsplashDownload(downloadLocation){
 }
 
 // Unsplash API 規約②: Attribution HTML生成 (Photo by [Name] on Unsplash)
+// ※ photoLink は現在の画像と完全一致が確認された場合（または手動設定された場合）のみリンクし、それ以外は公式規約通り https://unsplash.com/ トップへリンクします（別画像への誤ジャンプ防止）
 function buildUnsplashAttributionHtml(q){
   if(!q || q.video) return '';
   const imgUrl = q.img || '';
   const isUnsplash = imgUrl.includes('unsplash.com') || !!(q.author && q.authorUrl);
   if(!isUnsplash) return '';
-  const unsplashHome = withUnsplashUtm(q.photoLink || 'https://unsplash.com/');
-  if(q.author && q.authorUrl){
-    const authorHref = withUnsplashUtm(q.authorUrl);
+  const slug = extractUnsplashSlug(imgUrl);
+  const hasVerifiedPhotoLink = !!(q.photoLink && q.creditVerified && (!q.verifiedSlug || !slug || q.verifiedSlug === slug));
+  const unsplashTarget = withUnsplashUtm(hasVerifiedPhotoLink ? q.photoLink : 'https://unsplash.com/');
+  if(q.author && q.authorUrl && q.creditVerified){
+    const authorHref = withUnsplashUtm(normalizeProfileUrl(q.authorUrl));
     const safeAuthor = String(q.author).replace(/[<>&"']/g, '');
-    return `📷 Photo by <a href="${authorHref}" target="_blank" rel="noopener noreferrer">${safeAuthor}</a> on <a href="${unsplashHome}" target="_blank" rel="noopener noreferrer">Unsplash</a>`;
+    return `📷 Photo by <a href="${authorHref}" target="_blank" rel="noopener noreferrer">${safeAuthor}</a> on <a href="${unsplashTarget}" target="_blank" rel="noopener noreferrer">Unsplash</a>`;
   }
-  return `📷 Photo on <a href="${unsplashHome}" target="_blank" rel="noopener noreferrer">Unsplash</a>`;
+  return `📷 Photo on <a href="${withUnsplashUtm('https://unsplash.com/')}" target="_blank" rel="noopener noreferrer">Unsplash</a>`;
 }
 
 function showBoardUnsplashCredit(q){
@@ -1691,60 +1771,62 @@ function hideBoardUnsplashCredit(){
   bar.classList.remove('show');
 }
 
-// 単一問題のクレジットをUnsplash APIから非同期解決（出題中バックグラウンド＆一括同期用）
-async function ensureQuestionUnsplashCredit(qIdx, replaceUrlWithOfficial=false){
+// 単一問題のクレジットをUnsplash APIから非同期解決
+// ★重要：現在の画像URLのスラッグ(photo-xxx)と完全一致する写真が見つかった場合のみクレジットとphotoLinkを保存します。
+// 一致しない場合に results[0]（別の写真）のリンクを割り当てると、別のメロン画像や無関係な画像に飛んでしまうため絶対に割り当てません。
+async function ensureQuestionUnsplashCredit(qIdx){
   const q = QS[qIdx];
-  if(!q || q.video || !q.img) return false;
-  if(applyCachedCreditToQuestion(q) && !replaceUrlWithOfficial) return true;
+  if(!q || q.video || !q.img) return { matched: false, results: [] };
+  if(applyCachedCreditToQuestion(q)) return { matched: true, results: [] };
   const key = getUnsplashKey();
-  if(!key) return false;
+  if(!key) return { matched: false, results: [] };
 
   const slug = extractUnsplashSlug(q.img);
-  const enQuery = JP_TO_EN_QUERY[q.answer] || q.answer || q.hint || 'food';
-  try{
-    const isAscii = /^[\x00-\x7F]+$/.test(enQuery);
-    const langParam = isAscii ? '' : '&lang=ja';
-    const apiUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(enQuery)}&per_page=30${langParam}&client_id=${encodeURIComponent(key)}`;
-    const res = await fetch(apiUrl);
-    const rem = res.headers.get('X-Ratelimit-Remaining');
-    if(rem !== null) _unsplashRateRemaining = rem;
-    updateUnsplashEditorStatus();
-    if(!res.ok) return false;
-    const data = await res.json();
-    const results = (data && data.results) || [];
-    if(!results.length) return false;
+  if(!slug) return { matched: false, results: [] };
 
-    // 1. まず現在の画像URLのスラッグ(photo-xxx)と完全一致する写真を探す
-    let matched = null;
-    if(slug){
-      matched = results.find(item => {
+  // 1. まず日本語の答えそのもの(lang=ja)で検索、見つからなければ英語シンプル語でも検索
+  const queriesToTry = [];
+  if(q.answer) queriesToTry.push({ q: q.answer, lang: '&lang=ja' });
+  const enSimple = JP_TO_EN_QUERY[q.answer];
+  if(enSimple && enSimple !== q.answer) queriesToTry.push({ q: enSimple, lang: '' });
+
+  let firstResults = [];
+  try{
+    for(const qObj of queriesToTry){
+      const apiUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(qObj.q)}&per_page=30${qObj.lang}&client_id=${encodeURIComponent(key)}`;
+      const res = await fetch(apiUrl);
+      const rem = res.headers.get('X-Ratelimit-Remaining');
+      if(rem !== null) _unsplashRateRemaining = rem;
+      updateUnsplashEditorStatus();
+      if(!res.ok) continue;
+      const data = await res.json();
+      const results = (data && data.results) || [];
+      if(!firstResults.length && results.length) firstResults = results;
+
+      const matched = results.find(item => {
         const raw = (item.urls && (item.urls.raw || item.urls.regular)) || '';
         return raw.includes(slug);
       });
-    }
-    // 2. 見つからない場合は検索トップの写真を割り当て
-    const chosen = matched || results[0];
-    if(!chosen || !chosen.user) return false;
 
-    if(replaceUrlWithOfficial || (!matched && q.img.includes('plus.unsplash.com'))){
-      // 公式APIが返すhotlink URL (urls.regular または raw + w=600&q=80) を使用
-      const rawBase = (chosen.urls && chosen.urls.raw) ? (chosen.urls.raw + (chosen.urls.raw.includes('?') ? '&' : '?') + 'w=600&q=80') : chosen.urls.regular;
-      if(rawBase) q.img = rawBase;
+      if(matched && matched.user){
+        const creditObj = {
+          author: matched.user.name || matched.user.username || 'Unsplash Photographer',
+          authorUrl: (matched.user.links && matched.user.links.html) || `https://unsplash.com/@${matched.user.username || ''}`,
+          photoLink: (matched.links && matched.links.html) || '',
+          downloadLocation: (matched.links && matched.links.download_location) || ''
+        };
+        storeCreditForQuestion(q, creditObj);
+        if(creditObj.downloadLocation){
+          triggerUnsplashDownload(creditObj.downloadLocation);
+        }
+        return { matched: true, results };
+      }
+      // レート制限保護：残り5回以下なら2回目の補助検索は行わない
+      if(_unsplashRateRemaining !== null && parseInt(_unsplashRateRemaining, 10) <= 5) break;
     }
-
-    const creditObj = {
-      author: chosen.user.name || chosen.user.username || 'Unsplash Photographer',
-      authorUrl: (chosen.user.links && chosen.user.links.html) || `https://unsplash.com/@${chosen.user.username || ''}`,
-      photoLink: (chosen.links && chosen.links.html) || 'https://unsplash.com/',
-      downloadLocation: (chosen.links && chosen.links.download_location) || ''
-    };
-    storeCreditForQuestion(q, creditObj);
-    if(creditObj.downloadLocation){
-      triggerUnsplashDownload(creditObj.downloadLocation);
-    }
-    return true;
+    return { matched: false, results: firstResults };
   }catch(e){
-    return false;
+    return { matched: false, results: firstResults };
   }
 }
 
@@ -1758,7 +1840,7 @@ function updateUnsplashEditorStatus(){
   }
   if(badge){
     if(!key){
-      badge.textContent = '📸 Unsplash API: KEY未設定(埋め込みクレジットのみ)';
+      badge.textContent = '📸 Unsplash API: KEY未設定(手動/埋め込みクレジット)';
       badge.style.borderColor = '#64748b';
       badge.style.color = '#94a3b8';
     } else {
@@ -1770,13 +1852,13 @@ function updateUnsplashEditorStatus(){
   }
   if(cntEl){
     const imgQs = QS.filter(q => !q.video && q.img);
-    const credited = imgQs.filter(q => q.author && q.authorUrl).length;
+    const credited = imgQs.filter(q => q.creditVerified && q.author && q.authorUrl).length;
     cntEl.textContent = `クレジット登録済: ${credited} / ${imgQs.length}問`;
   }
 }
 
 let _batchSyncRunning = false;
-async function batchSyncUnsplashCredits(replaceUrlWithOfficial=false){
+async function batchSyncUnsplashCredits(){
   if(_batchSyncRunning){
     toast('現在API同期を実行中です…');
     return;
@@ -1786,12 +1868,11 @@ async function batchSyncUnsplashCredits(replaceUrlWithOfficial=false){
     toast('Access Key を入力してください', true);
     return;
   }
-  // 未取得の問題（またはreplaceUrlWithOfficial時はplus.unsplash.comを含む問題も対象）を抽出
   const targets = [];
   QS.forEach((q, idx) => {
     if(q.video || !q.img) return;
     applyCachedCreditToQuestion(q);
-    if(!q.author || !q.authorUrl || (replaceUrlWithOfficial && q.img.includes('plus.unsplash.com'))){
+    if(!q.creditVerified || !q.author || !q.authorUrl){
       targets.push(idx);
     }
   });
@@ -1800,17 +1881,16 @@ async function batchSyncUnsplashCredits(replaceUrlWithOfficial=false){
     updateUnsplashEditorStatus();
     return;
   }
-  // Demoモード(50req/h)を考慮し、1回のバッチで最大25問ずつ安全に取得
-  const batch = targets.slice(0, 25);
+  const batch = targets.slice(0, 20);
   _batchSyncRunning = true;
-  const btn = document.getElementById(replaceUrlWithOfficial ? 'btn-batch-replace' : 'btn-batch-sync');
+  const btn = document.getElementById('btn-batch-sync');
   const origTxt = btn ? btn.textContent : '';
   let okCount = 0;
   for(let i=0; i<batch.length; i++){
     const qIdx = batch[i];
-    if(btn) btn.textContent = `⏳ 取得中 (${i+1}/${batch.length}) : ${QS[qIdx].answer}`;
-    const ok = await ensureQuestionUnsplashCredit(qIdx, replaceUrlWithOfficial);
-    if(ok) okCount++;
+    if(btn) btn.textContent = `⏳ 一致確認中 (${i+1}/${batch.length}) : ${QS[qIdx].answer}`;
+    const res = await ensureQuestionUnsplashCredit(qIdx);
+    if(res && res.matched) okCount++;
     if(_unsplashRateRemaining !== null && parseInt(_unsplashRateRemaining, 10) <= 2){
       toast('APIの残りリクエスト数が少なくなったため一時停止しました', true);
       break;
@@ -1822,8 +1902,7 @@ async function batchSyncUnsplashCredits(replaceUrlWithOfficial=false){
   renderEList();
   if(esel >= 0 && esel < QS.length) selQ(esel);
   updateUnsplashEditorStatus();
-  const remTargets = QS.filter(q => !q.video && q.img && (!q.author || !q.authorUrl)).length;
-  toast(`${okCount}問の撮影者クレジットをAPI取得しました！（未取得残り: ${remTargets}問）`);
+  toast(`画像URL完全一致: ${okCount}問のクレジットを取得しました（不一致の画像は誤リンク防止のためスキップ）`);
 }
 
 function openExportDefaultQModal(){
@@ -1832,9 +1911,11 @@ function openExportDefaultQModal(){
   QS.forEach(q => {
     const obj = { answer: q.answer, img: q.img || '', hint: q.hint || '—' };
     if(q.video) obj.video = q.video;
-    if(q.author) obj.author = q.author;
-    if(q.authorUrl) obj.authorUrl = q.authorUrl;
-    if(q.photoLink) obj.photoLink = q.photoLink;
+    if(q.creditVerified && q.author) obj.author = q.author;
+    if(q.creditVerified && q.authorUrl) obj.authorUrl = q.authorUrl;
+    if(q.creditVerified && q.photoLink) obj.photoLink = q.photoLink;
+    if(q.creditVerified) obj.creditVerified = true;
+    if(q.verifiedSlug) obj.verifiedSlug = q.verifiedSlug;
     lines.push('  ' + JSON.stringify(obj) + ',');
   });
   lines.push('];');
@@ -1883,6 +1964,30 @@ function downloadExportedDefaultQ(){
 
 // 方法B：エディタ内でのUnsplashキーワード検索＆ワンクリック画像・クレジット・DLトリガー反映
 let _lastEditorSearchResults = [];
+function renderUnsplashSearchGrid(qIdx, results){
+  const grid = document.getElementById('ef-us-grid');
+  if(!grid) return;
+  const curSlug = extractUnsplashSlug((QS[qIdx] && QS[qIdx].img) || '');
+  _lastEditorSearchResults = results || [];
+  if(!_lastEditorSearchResults.length){
+    grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--dim);padding:10px;text-align:center">該当する写真が見つかりませんでした（別の日本語・英語キーワードでも検索できます）</div>';
+    return;
+  }
+  grid.innerHTML = _lastEditorSearchResults.map((item, idx) => {
+    const thumb = (item.urls && (item.urls.small || item.urls.thumb)) || '';
+    const rawUrl = (item.urls && (item.urls.raw || item.urls.regular)) || '';
+    const isCurrentMatch = curSlug && rawUrl.includes(curSlug);
+    const uName = (item.user && (item.user.name || item.user.username)) || 'Unknown';
+    const safeName = String(uName).replace(/[<>&"']/g, '');
+    return `
+      <div class="us-card" style="${isCurrentMatch?'border:2px solid #00ffcc;box-shadow:0 0 12px rgba(0,255,204,.45)':''}" onclick="selectUnsplashSearchResult(${qIdx}, ${idx})" title="クリックでこの画像を採用＆DLカウント通知＆クレジット自動設定">
+        <img src="${thumb}" alt="" loading="lazy">
+        <div class="us-card-meta">${isCurrentMatch?'★現在設定中 ':''}📷 ${safeName}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 async function searchUnsplashInEditor(qIdx){
   const key = getUnsplashKey();
   if(!key){
@@ -1898,11 +2003,11 @@ async function searchUnsplashInEditor(qIdx){
   const grid = document.getElementById('ef-us-grid');
   if(grid) grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--cyan);padding:12px;text-align:center">⏳ Unsplash API で検索中…</div>';
 
-  const mappedQuery = JP_TO_EN_QUERY[rawQuery] || rawQuery;
-  const isAscii = /^[\x00-\x7F]+$/.test(mappedQuery);
+  // 入力されたキーワードそのもので検索（勝手に別ワードへ置換しない）
+  const isAscii = /^[\x00-\x7F]+$/.test(rawQuery);
   const langParam = isAscii ? '' : '&lang=ja';
   try{
-    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(mappedQuery)}&per_page=12${langParam}&client_id=${encodeURIComponent(key)}`);
+    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(rawQuery)}&per_page=24${langParam}&client_id=${encodeURIComponent(key)}`);
     const rem = res.headers.get('X-Ratelimit-Remaining');
     if(rem !== null) _unsplashRateRemaining = rem;
     updateUnsplashEditorStatus();
@@ -1911,24 +2016,7 @@ async function searchUnsplashInEditor(qIdx){
       return;
     }
     const data = await res.json();
-    _lastEditorSearchResults = (data && data.results) || [];
-    if(!_lastEditorSearchResults.length){
-      if(grid) grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--dim);padding:10px;text-align:center">該当する写真が見つかりませんでした（英語キーワードでの検索もおすすめです）</div>';
-      return;
-    }
-    if(grid){
-      grid.innerHTML = _lastEditorSearchResults.map((item, idx) => {
-        const thumb = (item.urls && (item.urls.small || item.urls.thumb)) || '';
-        const uName = (item.user && (item.user.name || item.user.username)) || 'Unknown';
-        const safeName = String(uName).replace(/[<>&"']/g, '');
-        return `
-          <div class="us-card" onclick="selectUnsplashSearchResult(${qIdx}, ${idx})" title="クリックでこの画像を採用＆DLカウント通知＆クレジット自動設定">
-            <img src="${thumb}" alt="" loading="lazy">
-            <div class="us-card-meta">📷 ${safeName}</div>
-          </div>
-        `;
-      }).join('');
-    }
+    renderUnsplashSearchGrid(qIdx, (data && data.results) || []);
   }catch(e){
     if(grid) grid.innerHTML = '<div style="grid-column:1/-1;font-size:10px;color:var(--red);padding:10px">通信エラーが発生しました（インターネット接続を確認してください）</div>';
   }
@@ -1959,6 +2047,8 @@ async function selectUnsplashSearchResult(qIdx, resultIdx){
   if(authInp) authInp.value = author;
   const authUrlInp = document.getElementById('ef-author-url');
   if(authUrlInp) authUrlInp.value = authorUrl;
+  const photoLinkInp = document.getElementById('ef-photo-link');
+  if(photoLinkInp) photoLinkInp.value = photoLink;
 
   q.img = hotlinkUrl;
   storeCreditForQuestion(q, { author, authorUrl, photoLink, downloadLocation });
@@ -1972,20 +2062,48 @@ async function selectUnsplashSearchResult(qIdx, resultIdx){
   }
   renderEList();
   updateUnsplashEditorStatus();
-  toast(`採用＆DL通知完了: Photo by ${author}`);
+  toast(`画像＆クレジットをセットしました: Photo by ${author}`);
 }
 
 async function fetchSingleQuestionCreditInEditor(qIdx){
-  toast('Unsplash API から撮影者情報を取得中…');
-  const ok = await ensureQuestionUnsplashCredit(qIdx, false);
-  if(ok){
+  const key = getUnsplashKey();
+  if(!key){
+    toast('上部のバーに Unsplash Access Key を入力してください（APIなしの場合は「🔎 Googleレンズで元ページを特定」から手動入力できます）', true);
+    return;
+  }
+  toast('現在の画像URLと一致する写真をUnsplash APIから検索中…');
+  const res = await ensureQuestionUnsplashCredit(qIdx);
+  if(res && res.matched){
     selQ(qIdx);
     renderEList();
     updateUnsplashEditorStatus();
-    toast(`クレジット取得完了: Photo by ${QS[qIdx].author}`);
+    toast(`完全一致する写真のクレジットを取得しました: Photo by ${QS[qIdx].author}`);
   } else {
-    toast('クレジット情報を取得できませんでした（キーワード検索からお選びください）', true);
+    if(res && res.results && res.results.length){
+      renderUnsplashSearchGrid(qIdx, res.results);
+    }
+    toast('現在の画像URLと完全一致する写真がAPI検索上位30件内に見つかりませんでした。下の候補から画像を選び直すか、「🔎 Googleレンズで元ページを特定」から手動入力してください', true);
   }
+}
+
+function openGoogleLensForCurrentImg(){
+  const inp = document.getElementById('ef-i');
+  const url = inp ? inp.value.trim() : '';
+  if(!url){
+    toast('画像URLが空です', true);
+    return;
+  }
+  window.open('https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(url), '_blank', 'noopener,noreferrer');
+}
+
+function openRawCurrentImg(){
+  const inp = document.getElementById('ef-i');
+  const url = inp ? inp.value.trim() : '';
+  if(!url){
+    toast('画像URLが空です', true);
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 loadUnsplashCaches();
@@ -2006,8 +2124,8 @@ function renderEList(){
     applyCachedCreditToQuestion(q);
     const d=document.createElement('div');d.className='ei'+(i===esel?' active':'');
     const thumbSrc=q.video?'':q.img; const isVid=!!q.video;
-    const hasCred = !!(q.author && q.authorUrl);
-    const credDot = isVid ? '' : `<span class="ei-credit-dot ${hasCred?'ok':'Wait'}" title="${hasCred?('Photo by '+q.author):'撮影者クレジット未取得'}"></span>`;
+    const hasCred = !!(q.creditVerified && q.author && q.authorUrl);
+    const credDot = isVid ? '' : `<span class="ei-credit-dot ${hasCred?'ok':'Wait'}" title="${hasCred?('Photo by '+q.author):'撮影者クレジット未設定'}"></span>`;
     d.innerHTML=`<div style="width:34px;height:24px;flex:0 0 34px;background:#111;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden">${isVid?'🎬':`<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.background='#181830'">`}</div><div style="flex:1;min-width:0"><div class="ei-ans">${q.answer}${credDot}${isVid?'<span class=\'vid-badge\'>VIDEO</span>':''}</div><div class="ei-hint">${q.hint}${hasCred?(' · 📷 '+q.author):''}</div></div><div class="ei-del" onclick="delQ(${i},event)">✕</div>`;
     d.addEventListener('click',()=>selQ(i));el.appendChild(d);
   });
@@ -2018,8 +2136,11 @@ function selQ(i){
   esel=i;_delConfirmIdx=-1;renderEList();const q=QS[i];
   applyCachedCreditToQuestion(q);
   const hasVideo=!!(q.video);
-  const defaultSearchWord = JP_TO_EN_QUERY[q.answer] || q.answer || '';
-  const attrPreview = buildUnsplashAttributionHtml(q) || '<span style="color:var(--dim)">未設定（下の「🔍 API検索」または「🔄 クレジット自動取得」で設定できます）</span>';
+  const defaultSearchWord = q.answer || '';
+  const hasCred = !!(q.creditVerified && q.author && q.authorUrl);
+  const attrPreview = hasCred
+    ? buildUnsplashAttributionHtml(q)
+    : '<span style="color:var(--dim)">未設定（手動入力、または下の「🔍 Unsplash検索」「🔄 現在画像のクレジットを自動取得」で設定できます）</span>';
   document.getElementById('eform').innerHTML=`
     <div style="font-size:9px;color:var(--dim);letter-spacing:2px">問題 #${i+1}${hasVideo?'<span class=\"vid-badge\">VIDEO</span>':''}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -2032,29 +2153,42 @@ function selQ(i){
         <button class="etype-tab ${hasVideo?'active':''}" onclick="switchMediaTab(${i},'video')">🎬 動画</button>
       </div>
       <div id="ef-img-section" style="display:${!hasVideo?'block':'none'}">
-        <label class="efl">画像URL (Unsplash Hotlink URL)</label>
-        <input class="efi" id="ef-i" value="${q.img||''}" placeholder="https://images.unsplash.com/...">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <label class="efl" style="margin:0">画像URL (Unsplash Hotlink URL)</label>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="eb2" style="padding:2px 8px;font-size:9px;border-color:#88aaff;color:#88aaff" onclick="openGoogleLensForCurrentImg()" title="APIを使わずにGoogleレンズでこの画像のUnsplash元ページと撮影者を探します">🔎 Googleレンズで元ページを特定</button>
+            <button type="button" class="eb2" style="padding:2px 8px;font-size:9px" onclick="openRawCurrentImg()">🖼 画像を別タブで開く</button>
+          </div>
+        </div>
+        <input class="efi" id="ef-i" value="${q.img||''}" placeholder="https://images.unsplash.com/..." style="margin-top:4px">
         ${q.img&&!hasVideo?`<img class="eprev" id="epv" src="${q.img}" onerror="this.style.opacity='.15'" alt="">`:`<div class="eprevp" id="epv">プレビュー</div>`}
 
-        <div class="us-credit-badge" id="ef-credit-preview">${attrPreview}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <div class="us-credit-badge" id="ef-credit-preview" style="margin-top:0">${attrPreview}</div>
+          ${hasCred?`<button type="button" class="eb2 d" style="padding:3px 8px;font-size:9px" onclick="clearSingleQuestionCredit(${i})">🗑 クレジットをクリア</button>`:''}
+        </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
           <div>
             <label class="efl">撮影者名 (Photographer Name)</label>
-            <input class="efi" id="ef-author" value="${q.author||''}" placeholder="例: Ivan Torres" style="font-size:10.5px;padding:5px 8px">
+            <input class="efi" id="ef-author" value="${(q.creditVerified&&q.author)||''}" placeholder="例: Ivan Torres" style="font-size:10.5px;padding:5px 8px">
           </div>
           <div>
-            <label class="efl">撮影者プロフィールURL (Unsplash Profile)</label>
-            <input class="efi" id="ef-author-url" value="${q.authorUrl||''}" placeholder="https://unsplash.com/@..." style="font-size:10.5px;padding:5px 8px">
+            <label class="efl">撮影者URL または @ID (Profile)</label>
+            <input class="efi" id="ef-author-url" value="${(q.creditVerified&&q.authorUrl)||''}" placeholder="https://unsplash.com/@..." style="font-size:10.5px;padding:5px 8px">
+          </div>
+          <div>
+            <label class="efl">写真ページURL (Photo Page・任意)</label>
+            <input class="efi" id="ef-photo-link" value="${(q.creditVerified&&q.photoLink)||''}" placeholder="https://unsplash.com/photos/... (空欄時はUnsplashトップ)" style="font-size:10.5px;padding:5px 8px">
           </div>
         </div>
 
         <div class="us-search-box">
-          <div style="font-size:9px;color:var(--cyan);letter-spacing:1.5px;font-weight:700">🔍 方法B：Unsplash 公式API 画像検索（クリックでURL＋クレジット＋DL通知を自動セット）</div>
+          <div style="font-size:9px;color:var(--cyan);letter-spacing:1.5px;font-weight:700">🔍 方法B：Unsplash 公式API 画像検索（クリックで画像URL＋クレジット＋写真ページURL＋DL通知を一致セット）</div>
           <div class="us-search-row">
             <input class="efi" id="ef-us-query" value="${defaultSearchWord}" placeholder="検索ワード（日本語・英語どちらもOK）" style="flex:1;min-width:140px;font-size:11px;padding:5px 8px" onkeydown="if(event.key==='Enter'){event.preventDefault();searchUnsplashInEditor(${i});}">
             <button class="eb2 p" style="padding:5px 12px" onclick="searchUnsplashInEditor(${i})">🔍 Unsplash検索</button>
-            <button class="eb2" style="padding:5px 10px;border-color:#ffcc00;color:#ffcc00" onclick="fetchSingleQuestionCreditInEditor(${i})" title="現在の画像または答えから撮影者クレジットを自動取得します">🔄 この問題のクレジットを自動取得</button>
+            <button class="eb2" style="padding:5px 10px;border-color:#ffcc00;color:#ffcc00" onclick="fetchSingleQuestionCreditInEditor(${i})" title="現在の画像URL(photo-xxx)と完全一致する写真のみクレジットを自動取得します">🔄 現在画像のクレジットを自動取得</button>
           </div>
           <div id="ef-us-grid" class="us-grid"></div>
         </div>
@@ -2080,10 +2214,12 @@ function saveQ(i){
   const vidEl=document.getElementById('ef-v');
   const authEl=document.getElementById('ef-author');
   const authUrlEl=document.getElementById('ef-author-url');
+  const photoLinkEl=document.getElementById('ef-photo-link');
   const im=imgEl?imgEl.value.trim():'';
   const vd=vidEl?vidEl.value.trim():'';
   const author=authEl?authEl.value.trim():'';
-  const authorUrl=authUrlEl?authUrlEl.value.trim():'';
+  const authorUrl=normalizeProfileUrl(authUrlEl?authUrlEl.value.trim():'');
+  const photoLink=photoLinkEl?photoLinkEl.value.trim():'';
   const isVideo=document.getElementById('ef-vid-section')&&document.getElementById('ef-vid-section').style.display!=='none';
   if(!a){toast('答えを入力してください',true);return;}
   if(isVideo&&!vd){toast('動画URLを入力してください',true);return;}
@@ -2092,17 +2228,21 @@ function saveQ(i){
   const q={answer:a,hint:h||'—',img:isVideo?'':im};
   if(isVideo)q.video=vd;
   if(!isVideo){
-    if(author) q.author=author;
-    if(authorUrl) q.authorUrl=authorUrl;
-    if(prev.photoLink) q.photoLink=prev.photoLink;
-    if(prev.downloadLocation) q.downloadLocation=prev.downloadLocation;
-    if(q.author && q.authorUrl){
-      storeCreditForQuestion(q, {author:q.author, authorUrl:q.authorUrl, photoLink:q.photoLink, downloadLocation:q.downloadLocation});
+    const prevSlug = extractUnsplashSlug(prev.img||'');
+    const newSlug = extractUnsplashSlug(im);
+    const sameImg = prevSlug && newSlug && (prevSlug === newSlug);
+    if(author && authorUrl){
+      storeCreditForQuestion(q, {
+        author,
+        authorUrl,
+        photoLink: photoLink || '',
+        downloadLocation: sameImg ? (prev.downloadLocation || '') : ''
+      });
     }
   }
   QS[i]=q;saveQuestionsToStorage();renderEList();
   const badge=document.getElementById('ef-credit-preview');
-  if(badge) badge.innerHTML = buildUnsplashAttributionHtml(q);
+  if(badge) badge.innerHTML = (q.creditVerified && q.author && q.authorUrl) ? buildUnsplashAttributionHtml(q) : '<span style="color:var(--dim)">未設定</span>';
   toast('保存: '+a+(isVideo?' [動画]':''));
 }
 function switchMediaTab(i,type){
@@ -2343,7 +2483,7 @@ function loadQ(){
   }
   hideBoardUnsplashCredit();
   applyCachedCreditToQuestion(q);
-  ensureQuestionUnsplashCredit(G.order[G.qi], false);
+  ensureQuestionUnsplashCredit(G.order[G.qi]);
   buildBoard(sz,q.video||q.img||'');
   renderStrip();updateHUD();
   addLog((isFinal&&!custom||(endless&&step>=30))?'Q'+qn+(endless?' — ヒントなし！':' FINAL — ヒントなし！'):'Q'+qn+' ヒント:「'+q.hint+'」','info');
@@ -4765,7 +4905,7 @@ const YOMI_TABLE = {
   'ブリトー':'ぶりとー','burrito':'ぶりとー',
   'サンドイッチ':'さんどいっち','sandwich':'さんどいっち','サンド':'さんどいっち', 'サンドウィッチ':'さんどいっち',
   'クロワッサン':'くろわっさん','croissant':'くろわっさん',
-  'バゲット':'ばげっと','baguette':'ばげっと',
+  'バゲット':'ばげっと','baguette':'ばげっと', 'フランスパン':'ばげっと',
   'ステーキ':'すてーき','steak':'すてーき',
   'フライドチキン':'ふらいどちきん','fried chicken':'ふらいどちきん',
   'フライドポテト':'ふらいどぽてと','french fries':'ふらいどぽてと','fries':'ふらいどぽてと',
@@ -4818,6 +4958,7 @@ const YOMI_TABLE = {
   'かき氷':'かきごおり','カキゴオリ':'かきごおり','かき氷':'かきごおり','shaved ice':'かきごおり',
   'たい焼き':'たいやき','タイヤキ':'たいやき','鯛焼き':'たいやき',
   'ソフトクリーム':'そふとくりーむ','ソフト':'そふとくりーむ','soft cream':'そふとくりーむ',
+  'アイスクリーム':'あいすくりーむ','アイス':'あいすくりーむ','ice cream':'あいすくりーむ',
   'パフェ':'ぱふぇ','parfait':'ぱふぇ',
   'フルーツポンチ':'ふるーつぽんち','fruit punch':'ふるーつぽんち',
   'ポップコーン':'ぽっぷこーん','popcorn':'ぽっぷこーん',
@@ -4861,7 +5002,7 @@ const YOMI_TABLE = {
   'レモネード':'れもねーど','lemonade':'れもねーど',
   'スムージー':'すむーじー','smoothie':'すむーじー',
   'ミルクシェイク':'みるくしぇいく','milkshake':'みるくしぇいく','シェイク':'みるくしぇいく','milk shake':'みるくしぇいく',
-  'ホットチョコレート':'ほっとちょこれーと','hot chocolate':'ほっとちょこれーと','ホットcocoa':'ほっとちょこれーと','ホットカカオ':'ほっとちょこれーと',
+  'ホットチョコレート':'ほっとちょこれーと','hot chocolate':'ほっとちょこれーと','cocoa':'ほっとちょこれーと','ココア':'ほっとちょこれーと',
   '牛乳':'ぎゅうにゅう','ミルク':'ぎゅうにゅう','milk':'ぎゅうにゅう',
   '豆乳':'とうにゅう','soymilk':'とうにゅう','soy milk':'とうにゅう',
   '炭酸水':'たんさんすい','sparkling water':'たんさんすい','ソーダ水':'たんさんすい',
