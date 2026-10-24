@@ -516,6 +516,12 @@ h1, h2, h3 { text-wrap: balance; }
 .su-ilist.enemy em { color: var(--magenta); }
 .su-ilist li.zero { opacity: .4; }
 
+/* 配置完了の下の一言：文字があってもなくても高さを変えない */
+.su-donenote { min-height: 1.6em; }
+/* 画面全体をウインドウの高さに合わせているとき（fitScreen）：下の余白を詰め、対戦の左右のログ列は中央の高さに合わせる（ログが伸びても画面が伸びない） */
+.fit .wrap { padding-bottom: 10px; }
+@media (min-width: 1180px) { .fit .logcol { position: relative; top: auto; height: auto; max-height: none; contain: size; align-self: stretch; } }
+
 /* ===== ドラフト ===== */
 .draft { display: grid; gap: 12px; }
 .prompt { font-weight: 700; margin: 0; }

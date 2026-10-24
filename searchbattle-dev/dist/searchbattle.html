@@ -516,6 +516,12 @@ h1, h2, h3 { text-wrap: balance; }
 .su-ilist.enemy em { color: var(--magenta); }
 .su-ilist li.zero { opacity: .4; }
 
+/* 配置完了の下の一言：文字があってもなくても高さを変えない */
+.su-donenote { min-height: 1.6em; }
+/* 画面全体をウインドウの高さに合わせているとき（fitScreen）：下の余白を詰め、対戦の左右のログ列は中央の高さに合わせる（ログが伸びても画面が伸びない） */
+.fit .wrap { padding-bottom: 10px; }
+@media (min-width: 1180px) { .fit .logcol { position: relative; top: auto; height: auto; max-height: none; contain: size; align-self: stretch; } }
+
 /* ===== ドラフト ===== */
 .draft { display: grid; gap: 12px; }
 .prompt { font-weight: 700; margin: 0; }
@@ -5788,7 +5794,7 @@ window.SBAudio = (function () {
           </section>
           <section class="panel su-done">
             <button class="btn primary big su-donebtn" data-act="setup-done" ${ready ? '' : 'disabled'}>配置完了</button>
-            <span class="note">${ready ? '' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>
+            <span class="note su-donenote">${ready ? '準備ができました' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>
           </section>
           <section class="panel su-parts">
             <h2 class="ptitle">キューブ<small>CUBES</small></h2>
@@ -6398,16 +6404,46 @@ window.SBAudio = (function () {
     const vr = v.getBoundingClientRect();
     let x = 0, y = 0;
     for (const c of cells) { const r = c.getBoundingClientRect(); x += r.left + r.width / 2; y += r.top + r.height / 2; }
-    x = x / cells.length - vr.left; y = y / cells.length - vr.top;
+    // 画面全体を拡大・縮小しているとき（fitScreen）、測った位置は拡大後の値なので、拡大前の値に直してから使う
+    const z = parseFloat(root.style.zoom) || 1;
+    x = (x / cells.length - vr.left) / z; y = (y / cells.length - vr.top) / z;
     const top = cube.offsetTop + cube.offsetHeight + 6;
     cube.style.left = x + 'px';
     beam.style.left = x + 'px'; beam.style.top = top + 'px'; beam.style.height = Math.max(0, y - top) + 'px';
   }
-  window.addEventListener('resize', () => { if (app.screen === 'title') aimTitleBeam(); });
+  // 画面全体の縦の大きさを、ウインドウの高さにぎりぎり収まるように拡大・縮小する（幅900px以上。スマホは今までどおりスクロール）。
+  // 画面が変わったときとウインドウの大きさが変わったときに測り直す（同じ画面の中では大きさを保ち、手番ごとに伸び縮みしないように）。
+  // シミュレーターは長い表の画面なので、縮めずにスクロールする
+  const FIT_MIN = 0.55, FIT_MAX = 1.4;
+  let fitKey = '';
+  function fitScreen(force) {
+    const T = app.tour, g = G();
+    const on = window.innerWidth >= 900 && app.screen !== 'sim';
+    document.documentElement.classList.toggle('fit', on);
+    if (!on) { root.style.zoom = ''; fitKey = ''; return; }
+    const key = [app.replay ? 'replay' : app.screen, T ? T.stage + T.round : '', app.tourFx ? app.tourFx.kind : '', g ? g.phase : '', window.innerWidth, window.innerHeight].join(':');
+    if (!force && key === fitKey) return;
+    fitKey = key;
+    let z = 1;
+    root.style.zoom = '1';
+    for (let i = 0; i < 6; i++) {
+      const h = root.getBoundingClientRect().height / z;
+      let nz = Math.max(FIT_MIN, Math.min(FIT_MAX, (window.innerHeight - 4) / h));
+      if (Math.abs(nz - z) < 0.004) break;
+      z = nz; root.style.zoom = String(z);
+      // 横にはみ出すなら少し戻す
+      if (document.documentElement.scrollWidth > window.innerWidth + 1) { z = Math.max(FIT_MIN, z * window.innerWidth / document.documentElement.scrollWidth); root.style.zoom = String(z); }
+    }
+  }
+  function afterRender() {
+    fitScreen(false);
+    if (app.screen === 'title' && !app.replay) aimTitleBeam();
+  }
+  window.addEventListener('resize', () => { fitScreen(true); if (app.screen === 'title') aimTitleBeam(); });
   function render() {
     hideTip();
-    if (app.replay) { renderReplay(); return; }
-    if (app.screen === 'title') { renderTitle(); requestAnimationFrame(aimTitleBeam); }
+    if (app.replay) { renderReplay(); afterRender(); return; }
+    if (app.screen === 'title') renderTitle();
     else if (app.screen === 'setup') renderSetup();
     else if (app.screen === 'draft') renderDraft();
     else if (app.screen === 'battle') renderBattle();
@@ -6417,6 +6453,7 @@ window.SBAudio = (function () {
     if (app.modal === 'quit') root.insertAdjacentHTML('beforeend', quitModal());
     applyPreview();
     syncMusic();
+    afterRender();
   }
 
   // BGM：タイトル〜配置〜ドラフトは静かな曲、対戦中は対戦曲（終盤は激しくなる）。
