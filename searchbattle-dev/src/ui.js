@@ -2376,7 +2376,7 @@
     document.getElementById('rp-note').textContent = prob
       ? '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。'
       : '確率を計算中…';
-    // ログ：いまの場面まで。左＝0番（あなた）、右＝1番のアクションに分ける（誰のでもない行は両方に薄く出す）。いまの場面の行を強調
+    // ログ：いまの場面まで。対戦画面と同じく、左＝相手（1番）、右＝あなた（0番）のアクションに分ける（誰のでもない行は両方に薄く出す）。いまの場面の行を強調
     for (const k of [0, 1]) {
       document.getElementById('rp-lh' + k).textContent = `${g.players[k].name}のアクション`;
       const logEl = document.getElementById('rp-log' + k);
