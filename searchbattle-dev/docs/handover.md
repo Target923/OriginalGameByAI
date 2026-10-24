@@ -17,10 +17,10 @@
 | ルールブック（Docs） | https://claude.ai/artifact/H8PsvKivxY1fXYnd5D6pfJ 。docs のツールで編集（doc 829a8622-d46e-45a1-8ac0-5435a3b5d4d1、本文 node 80d22682-fb23）。変えるところだけ find で書き換える |
 | 旧シミュレーター（別ページ） | https://claude.ai/artifact/W54fL2qr9z9zauoT1kaJfG 。本体に組み込んだので不要。削除はユーザーの確認待ち |
 | 確定ルール・総括 | プロジェクトのドキュメント claude/サーチバトル_確定ルール.md・claude/サーチバトル_総括.md（docs/rules.md・docs/summary.md と同じ中身。project_write の local_path で上げる） |
-| GitHub | Target923/OriginalGameByAI（読むだけで、push はしない）。ルートの index.html がランチャーで、同じ階層のファイル名で各ゲームを開く（このゲームは search_battle.html。ルールブックのボタンは search_battle_rulebook.pdf を見る）。開発フォルダは searchbattle-dev/ に置く（ランチャーはファイル名で開くだけなので、別のフォルダは影響しない） |
+| GitHub | Target923/OriginalGameByAI（2026-10-24 から書き込み権限あり。main に直接 push する）。ルートの index.html がランチャーで、同じ階層のファイル名で各ゲームを開く（このゲームは search_battle.html。ルールブックのボタンは search_battle_rulebook.pdf を見る）。開発フォルダは searchbattle-dev/ に置く（ランチャーはファイル名で開くだけなので、別のフォルダは影響しない） |
 
 ## 開発フォルダの戻し方
-1. GitHub のリポジトリを読む（add_repo で追加して clone）。searchbattle-dev/（build.js がある階層）を /home/claude/searchbattle に写す。
+1. add_repo（access: "push"）でリポジトリを追加し、/home/claude/originalgamebyai に clone する。開発はその中の searchbattle-dev/（build.js がある階層）で直接行う。
 2. `node build.js` → dist/searchbattle.html（artifact に publish する本文。head がないので、そのままでは開かない）、dist/search_battle.html（GitHub のランチャー用。そのまま開ける完全な HTML）、dist/test.html（テスト用。中身は search_battle.html と同じ。window.__sb・SBEngine・SBAI が使える）。
 3. Node と Python の Playwright（Chromium 入り）を使う。画面テストのスクリーンショットは環境変数 SB_SHOTS（なければ /tmp/sb_shots）。
 
@@ -44,9 +44,12 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 
 ## ユーザーとの決まりごと
 - 返事は日本語。
-- 公開したら毎回、dist/search_battle.html を SendUserFile で送る（GitHub のランチャーの隣に置く差し替え用。publish するのは dist/searchbattle.html）。
+- 公開の手順：ビルド → dist/searchbattle.html を artifact に publish → dist/search_battle.html をリポジトリのルートの search_battle.html に上書き → searchbattle-dev/ の変更と一緒に1コミットで main に push。ルートだけ・フォルダだけの片方を更新しない（次のセッションは searchbattle-dev/ のソースから作り直すため）。
+- コミットメッセージ：1行目に日本語で何を変えたか（例：「サーチバトル v12.13：〜」）、本文に要点、最後に Claude がコミットしたとわかる署名行（Co-Authored-By: Claude …）を付ける。ユーザーの希望。
+- push したら、何を変えたかと公開ページに反映されることを一言伝える。ファイルの送付・zip は不要になった（ユーザーが求めたときだけ）。
+- セッションが約40万トークンを超えたら新しいチャットに移る（ユーザーの運用）。
 - ルールを変えたら、docs/rules.md（変更履歴に v 番号）・docs/summary.md・プロジェクトのドキュメント・ルールブック（Docs）を更新する。ルールの形が変わったら engine.js の VERSION を上げる（途中の対戦・大会は引き継がない）。
-- GitHub は読むだけ。
+- GitHub は main に直接 push してよい（ユーザーの了承済み。2026-10-24）。ユーザーはコードの中身は見ないので、何を変えたかは日本語で短く伝える。
 - 表記：熟語にできるものは熟語にする（例：くじ→抽選）。表記ゆれはユーザーが随時報告する。
 - CPU は人間と同じ情報だけで推理する。人間に見える情報を足したら CPU にも使わせ、見えすぎる情報は伏せる（v12.11 の例）。
 - 長い実験のループに入らない。測定は必要な分を1回にとどめ、途中経過を報告する。点数のルールの検討は、ユーザーがシミュレーター画面で回す（トークンを使わない）。
