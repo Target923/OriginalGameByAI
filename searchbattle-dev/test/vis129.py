@@ -11,7 +11,7 @@ STATE = """() => { const R=window.__sb.app.replay; if (!R) return null; const g=
   return { pos:R.pos, frames:R.frames.length, unit:R.unit, playing:R.playing, prob:!!R.prob[R.pos],
     pcts:[...document.querySelectorAll('#replay .rp-pct')].map(e=>e.textContent),
     alive:[g.living(0).length, g.living(1).length], now:(document.getElementById('rp-now')||{}).textContent,
-    count:(document.getElementById('rp-count')||{}).textContent, logCur: document.querySelectorAll('#rp-log li.cur').length,
+    count:(document.getElementById('rp-count')||{}).textContent, logCur: document.querySelectorAll('.rp-log li.cur').length,
     appHidden: getComputedStyle(document.getElementById('app')).display } }"""
 async def wait_prob(p, ms=8000):
     for _ in range(ms // 100):
@@ -66,7 +66,7 @@ async def main():
             s6 = await wait_prob(p)
             await p.screenshot(path=f'{SHOTS}/v129_end_{view}.png', full_page=True)
             # ログの行で飛ぶ
-            await p.click('#rp-log li:nth-child(4)')
+            await p.click('#rp-log0 li:nth-child(2)')
             s7 = await p.evaluate(STATE)
             # 盤のマスを押しても何も起きない
             await p.click('#replay .board[data-board=pred] .cell[data-cell="0"]')

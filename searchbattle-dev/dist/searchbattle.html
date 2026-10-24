@@ -659,7 +659,7 @@ table.score { width: 100%; border-collapse: collapse; font-variant-numeric: tabu
 .replay-host[hidden] { display: none; }
 body.replaying #app { display: none; }
 /* 画面の中央に置く（入りきらないときは上からスクロール） */
-.rp { width: 100%; max-width: 1240px; margin: auto; display: grid; gap: 10px; padding: 14px; animation: menuIn .22s ease-out; }
+.rp { width: 100%; max-width: 1420px; margin: auto; display: grid; gap: 10px; padding: 14px; animation: menuIn .22s ease-out; }
 .rp-head { display: flex; align-items: center; gap: 10px; }
 .rp-head > div { flex: 1; min-width: 0; }
 .rp-head h2 { margin: 2px 0 0; font-size: 1.02rem; }
@@ -667,14 +667,21 @@ body.replaying #app { display: none; }
 .rp-now { margin: 0; min-height: 2.6em; padding: 6px 10px; border-left: 3px solid var(--cyan); background: rgba(79, 227, 255, .06); font-size: .88rem; line-height: 1.4; }
 .rp-now b { font-family: var(--f-tech); letter-spacing: .06em; margin-right: 6px; }
 .rp-now.foe { border-left-color: var(--magenta); background: rgba(255, 63, 143, .06); }
-.rp-main { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 12px; }
+.rp-main { display: grid; grid-template-columns: 230px minmax(0, 1fr) 230px; grid-template-areas: "l0 stage l1"; gap: 12px; }
+.rp-fields { grid-area: stage; } .rp-side0 { grid-area: l0; } .rp-side1 { grid-area: l1; }
+.rp-lh { margin: 0; font-size: .8rem; font-weight: 700; color: var(--cyan); }
+.rp-side1 .rp-lh { color: var(--magenta); }
+.rp-logwrap { display: flex; flex-direction: column; gap: 6px; }
+.rp-logbox { position: relative; flex: 1 1 auto; min-height: 160px; }
+.rp-side1 .rp-log li.cur { border-left-color: var(--magenta); background: rgba(255, 63, 143, .08); }
+.rp-log li.sys { opacity: .6; }
+.rp-log li.none { cursor: default; }
 .rp-fields { gap: 12px; }
 .rp-left { font: 700 .72rem var(--f-tech); color: var(--cyan); white-space: nowrap; }
 .panel.enemy .rp-left { color: var(--magenta); }
 /* 盤は画面の高さに合わせて小さくし、ポップアップが画面に収まるように */
 .rp-field .board { max-width: clamp(240px, calc(100vh - 430px), 440px); }
-.rp-logwrap { position: relative; min-height: 160px; }
-.rp-logwrap .rp-log { position: absolute; inset: 0; max-height: none; border: 1px solid var(--edge); border-radius: 4px; }
+.rp-logbox .rp-log { position: absolute; inset: 0; max-height: none; border: 1px solid var(--edge); border-radius: 4px; }
 .rp-ctrl { position: sticky; bottom: -14px; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; background: var(--panel); }
 .rp-ctrl .btn { min-width: 44px; }
 .rp-range { flex: 1 1 180px; min-width: 120px; accent-color: var(--cyan); }
@@ -694,15 +701,16 @@ body.replaying #app { display: none; }
 .rp-warp { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
 .rp-warp rect { fill: rgba(180, 156, 255, .12); stroke: var(--violet); stroke-width: .05; stroke-dasharray: .14 .1; }
 @media (max-width: 1100px) {
-  .rp-main { grid-template-columns: minmax(0, 1fr); }
+  .rp-main { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "stage stage" "l0 l1"; }
   .rp-field .board { max-width: clamp(220px, calc(100vh - 560px), 420px); }
-  .rp-logwrap { min-height: 0; }
-  .rp-logwrap .rp-log { position: relative; max-height: 150px; }
+  .rp-logbox { min-height: 0; }
+  .rp-logbox .rp-log { position: relative; max-height: 150px; }
 }
 @media (max-width: 720px) {
   .replay-host { padding: 6px; }
   .rp { padding: 10px; }
   .rp-fields { grid-template-columns: 1fr; }
+  .rp-main { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "l0" "l1"; }
   .rp-field .board { max-width: 340px; }
   .rp-ctrl { bottom: -10px; }
 }
@@ -6417,11 +6425,12 @@ window.SBAudio = (function () {
   const FIT_MIN = 0.55, FIT_MAX = 1.4;
   let fitKey = '';
   function fitScreen(force) {
-    const T = app.tour, g = G();
+    const T = app.tour;
     const on = window.innerWidth >= 900 && app.screen !== 'sim';
     document.documentElement.classList.toggle('fit', on);
     if (!on) { root.style.zoom = ''; fitKey = ''; return; }
-    const key = [app.replay ? 'replay' : app.screen, T ? T.stage + T.round : '', app.tourFx ? app.tourFx.kind : '', g ? g.phase : '', window.innerWidth, window.innerHeight].join(':');
+    // 試合の決着（phase の変化）では測り直さない（決着した瞬間に画面の大きさが変わっていた）
+    const key = [app.replay ? 'replay' : app.screen, T ? T.stage + T.round : '', app.tourFx ? app.tourFx.kind : '', window.innerWidth, window.innerHeight].join(':');
     if (!force && key === fitKey) return;
     fitKey = key;
     let z = 1;
@@ -7091,8 +7100,9 @@ window.SBAudio = (function () {
       </div>
       <p class="rp-now" id="rp-now" aria-live="polite"></p>
       <div class="rp-main">
+        <div class="rp-logwrap rp-side0"><h3 class="rp-lh" id="rp-lh0"></h3><div class="rp-logbox"><ol class="rp-log" id="rp-log0" aria-label="ログ"></ol></div></div>
         <div class="fields rp-fields" id="rp-stage"></div>
-        <div class="rp-logwrap"><ol class="rp-log" id="rp-log" aria-label="ログ"></ol></div>
+        <div class="rp-logwrap rp-side1 foe"><h3 class="rp-lh" id="rp-lh1"></h3><div class="rp-logbox"><ol class="rp-log" id="rp-log1" aria-label="ログ"></ol></div></div>
       </div>
       <p class="note" id="rp-note"></p>
       <div class="rp-ctrl">
@@ -7187,12 +7197,19 @@ window.SBAudio = (function () {
     document.getElementById('rp-note').textContent = prob
       ? '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。'
       : '確率を計算中…';
-    // ログ：いまの場面まで。いまの場面の行を強調
-    const logEl = document.getElementById('rp-log');
-    logEl.innerHTML = g.log.map((e, i) => `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${R.logFrame[i] === R.pos ? ' class="cur"' : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`).join('');
-    const curs = logEl.querySelectorAll('li.cur');
-    const last = curs.length ? curs[curs.length - 1] : logEl.lastElementChild;
-    if (last) logEl.scrollTop = Math.max(0, last.offsetTop - logEl.clientHeight + last.offsetHeight + 6);
+    // ログ：いまの場面まで。左＝0番（あなた）、右＝1番のアクションに分ける（誰のでもない行は両方に薄く出す）。いまの場面の行を強調
+    for (const k of [0, 1]) {
+      document.getElementById('rp-lh' + k).textContent = `${g.players[k].name}のアクション`;
+      const logEl = document.getElementById('rp-log' + k);
+      logEl.innerHTML = g.log.map((e, i) => {
+        if (e.actor != null && e.actor !== k) return '';
+        const cls = [R.logFrame[i] === R.pos ? 'cur' : '', e.actor == null ? 'sys' : ''].filter(Boolean).join(' ');
+        return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
+      }).join('') || '<li class="none">まだありません</li>';
+      const curs = logEl.querySelectorAll('li.cur');
+      const last = curs.length ? curs[curs.length - 1] : logEl.lastElementChild;
+      if (last) logEl.scrollTop = Math.max(0, last.offsetTop - logEl.clientHeight + last.offsetHeight + 6);
+    }
     // 操作の欄
     const range = replayEl.querySelector('.rp-range');
     if (range && +range.value !== R.pos) range.value = R.pos;

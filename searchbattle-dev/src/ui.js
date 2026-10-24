@@ -1604,11 +1604,12 @@
   const FIT_MIN = 0.55, FIT_MAX = 1.4;
   let fitKey = '';
   function fitScreen(force) {
-    const T = app.tour, g = G();
+    const T = app.tour;
     const on = window.innerWidth >= 900 && app.screen !== 'sim';
     document.documentElement.classList.toggle('fit', on);
     if (!on) { root.style.zoom = ''; fitKey = ''; return; }
-    const key = [app.replay ? 'replay' : app.screen, T ? T.stage + T.round : '', app.tourFx ? app.tourFx.kind : '', g ? g.phase : '', window.innerWidth, window.innerHeight].join(':');
+    // 試合の決着（phase の変化）では測り直さない（決着した瞬間に画面の大きさが変わっていた）
+    const key = [app.replay ? 'replay' : app.screen, T ? T.stage + T.round : '', app.tourFx ? app.tourFx.kind : '', window.innerWidth, window.innerHeight].join(':');
     if (!force && key === fitKey) return;
     fitKey = key;
     let z = 1;
@@ -2278,8 +2279,9 @@
       </div>
       <p class="rp-now" id="rp-now" aria-live="polite"></p>
       <div class="rp-main">
+        <div class="rp-logwrap rp-side0"><h3 class="rp-lh" id="rp-lh0"></h3><div class="rp-logbox"><ol class="rp-log" id="rp-log0" aria-label="ログ"></ol></div></div>
         <div class="fields rp-fields" id="rp-stage"></div>
-        <div class="rp-logwrap"><ol class="rp-log" id="rp-log" aria-label="ログ"></ol></div>
+        <div class="rp-logwrap rp-side1 foe"><h3 class="rp-lh" id="rp-lh1"></h3><div class="rp-logbox"><ol class="rp-log" id="rp-log1" aria-label="ログ"></ol></div></div>
       </div>
       <p class="note" id="rp-note"></p>
       <div class="rp-ctrl">
@@ -2374,12 +2376,19 @@
     document.getElementById('rp-note').textContent = prob
       ? '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。'
       : '確率を計算中…';
-    // ログ：いまの場面まで。いまの場面の行を強調
-    const logEl = document.getElementById('rp-log');
-    logEl.innerHTML = g.log.map((e, i) => `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${R.logFrame[i] === R.pos ? ' class="cur"' : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`).join('');
-    const curs = logEl.querySelectorAll('li.cur');
-    const last = curs.length ? curs[curs.length - 1] : logEl.lastElementChild;
-    if (last) logEl.scrollTop = Math.max(0, last.offsetTop - logEl.clientHeight + last.offsetHeight + 6);
+    // ログ：いまの場面まで。左＝0番（あなた）、右＝1番のアクションに分ける（誰のでもない行は両方に薄く出す）。いまの場面の行を強調
+    for (const k of [0, 1]) {
+      document.getElementById('rp-lh' + k).textContent = `${g.players[k].name}のアクション`;
+      const logEl = document.getElementById('rp-log' + k);
+      logEl.innerHTML = g.log.map((e, i) => {
+        if (e.actor != null && e.actor !== k) return '';
+        const cls = [R.logFrame[i] === R.pos ? 'cur' : '', e.actor == null ? 'sys' : ''].filter(Boolean).join(' ');
+        return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
+      }).join('') || '<li class="none">まだありません</li>';
+      const curs = logEl.querySelectorAll('li.cur');
+      const last = curs.length ? curs[curs.length - 1] : logEl.lastElementChild;
+      if (last) logEl.scrollTop = Math.max(0, last.offsetTop - logEl.clientHeight + last.offsetHeight + 6);
+    }
     // 操作の欄
     const range = replayEl.querySelector('.rp-range');
     if (range && +range.value !== R.pos) range.value = R.pos;
