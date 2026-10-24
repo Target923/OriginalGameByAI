@@ -939,41 +939,54 @@
         const fits = PL[k].length > 0;
         const dis = left <= 0 || !fits;
         const on = S.key === k && !S.treasureMode;
-        palette += `<button class="shape-btn${on ? ' on' : ''}" data-act="shape" data-key="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" title="${esc(SHAPES[k].cat + ' ' + SHAPES[k].name)}">${shapeMini(k, on ? S.t : 0)}<span>${esc(SHAPES[k].cat)}</span>${!fits ? '<em>5×5のみ</em>' : ''}</button>`;
+        palette += `<button class="shape-btn${on ? ' on' : ''}" data-act="shape" data-key="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" title="${esc(SHAPES[k].cat + ' ' + SHAPES[k].name)}">${shapeMini(k, on ? S.t : 0)}<span>${!fits ? '5×5のみ' : esc(SHAPES[k].cat)}</span></button>`;
       }
       palette += '</div></div>';
     }
     const ready = P.pieces.length > 0 && !!P.treasure;
     const hint = S.treasureMode
       ? 'トレジャーを置くキューブのマスをタップしてください。'
-      : (S.key ? 'フィールドをタップして配置。置いたキューブをタップすると外せます。R：回転 / F：反転' : '右の一覧から形を選んでください。');
+      : (S.key ? 'フィールドをタップして配置。置いたキューブをタップすると外せます。R：回転 / F：反転' : 'キューブの一覧から形を選んでください。');
+    // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
+    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.map((k) => {
+      const n = P2 ? (P2.items[k] || 0) : null;
+      return `<li class="${n === 0 ? 'zero' : ''}" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}"><span class="ic">${ICON[k]}</span><b>${esc(ITEMS[k].name)}</b>${n != null ? `<em>×${n}</em>` : ''}</li>`;
+    }).join('')}</ul>`;
+    const foe = g.players[1 - pi];
+    const itemsHTML = app.tour
+      ? `<h2 class="ptitle">${esc(who)}の残りアイテム<small>YOUR ITEMS</small></h2>${itemRows(P, false)}
+         <h2 class="ptitle su-foe">${esc(foe.name)}の残りアイテム<small>RIVAL ITEMS</small></h2>${itemRows(foe, true)}`
+      : `<h2 class="ptitle">この試合のアイテム<small>ITEMS</small></h2>${itemRows(null, false)}`;
     root.innerHTML = `
       <div class="wrap">
         ${hudHTML(`<span class="stat">${esc(g.rules.label)}<b>${N}×${N}</b></span><span class="stat me">DEPLOY<b>${esc(who)}</b></span>`)}
         <p class="phase">${esc(who)}のキューブを配置してください</p>
-        <div class="setup">
-          <section class="panel">
+        <div class="setup3">
+          <section class="panel su-items">${itemsHTML}</section>
+          <section class="panel su-board">
             <div class="fhead"><b>${isCPUMode() ? '自分フィールド' : esc(who) + 'のフィールド'}</b><small>${P.pieces.length} UNITS / ${totalCells} CELLS</small></div>
             ${ownBoard(pi, { cls: 'large' })}
             <p class="hint">${esc(hint)}</p>
+            <div class="su-ctrl">
+              <div class="su-ctrl-main">
+                <button class="btn" data-act="rotate" ${S.key ? '' : 'disabled'}>↻ 回転</button>
+                <button class="btn" data-act="flip" ${S.key ? '' : 'disabled'}>⇋ 反転</button>
+                <button class="btn${S.treasureMode ? ' primary' : ''}" data-act="treasure-mode" ${P.pieces.length ? '' : 'disabled'} aria-pressed="${S.treasureMode}">◆ トレジャー${P.treasure ? '（済）' : ''}</button>
+              </div>
+              <div class="su-ctrl-sub">
+                <button class="btn ghost" data-act="random">おまかせ配置</button>
+                <button class="btn ghost" data-act="clear" ${P.pieces.length ? '' : 'disabled'}>全部外す</button>
+              </div>
+            </div>
           </section>
-          <section class="panel setup-panel">
-            <p class="note">最低1個体。詰め込んでも、1個体だけで隠れても構いません。${app.tour ? '大会では、撃破されると個体のマス数ぶんの点を相手に奪われます。' : ''}配置したら、どれか1マスにトレジャーをセットします。${app.tour ? '<b class="warn-t">大会：撃破された（アンサー失敗で差し出した）キューブは、次の試合から使えません。</b>' : ''}</p>
-            <div class="row">
-              <button class="btn" data-act="rotate" ${S.key ? '' : 'disabled'}>↻ 回転</button>
-              <button class="btn" data-act="flip" ${S.key ? '' : 'disabled'}>⇋ 反転</button>
-              <button class="btn${S.treasureMode ? ' primary' : ''}" data-act="treasure-mode" ${P.pieces.length ? '' : 'disabled'} aria-pressed="${S.treasureMode}">◆ トレジャー${P.treasure ? '（済）' : ''}</button>
-            </div>
+          <section class="panel su-done">
+            <button class="btn primary big su-donebtn" data-act="setup-done" ${ready ? '' : 'disabled'}>配置完了</button>
+            <span class="note">${ready ? '' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>
+          </section>
+          <section class="panel su-parts">
+            <h2 class="ptitle">キューブ<small>CUBES</small></h2>
             <div class="palette">${palette}</div>
-            <div class="match-items"><span class="cap">この試合のアイテム</span><div class="mi-list">${g.itemKeys.map((k) => `<span class="mi" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}">${ICON[k]}<b>${esc(ITEMS[k].name)}</b></span>`).join('')}</div></div>
-            <div class="row">
-              <button class="btn" data-act="random">おまかせ配置</button>
-              <button class="btn ghost" data-act="clear" ${P.pieces.length ? '' : 'disabled'}>全部外す</button>
-            </div>
-            <div class="done-row">
-              <button class="btn primary big" data-act="setup-done" ${ready ? '' : 'disabled'}>配置完了</button>
-              <span class="note">${ready ? '' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>
-            </div>
+            <p class="note">最低1個体。詰め込んでも、1個体だけで隠れても構いません。${app.tour ? '大会では、撃破されると個体のマス数ぶんの点を相手に奪われます。' : ''}配置したら、どれか1マスにトレジャーをセットします。${app.tour ? '<b class="warn-t">大会：撃破された（アンサー失敗で差し出した）キューブは、次の試合から使えません。</b>' : ''}</p>
           </section>
         </div>
       </div>`;

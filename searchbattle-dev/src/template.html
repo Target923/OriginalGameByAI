@@ -484,6 +484,38 @@ h1, h2, h3 { text-wrap: balance; }
 .shape-btn:disabled { opacity: .3; cursor: not-allowed; }
 .done-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-top: 1px solid rgba(96, 196, 255, .14); padding-top: 12px; }
 
+/* ===== 配置（v12.13：左＝アイテム、中央＝盤と操作・配置完了、右＝キューブ。3列の高さをそろえる） ===== */
+.setup3 { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "parts" "done" "items"; }
+.su-items { grid-area: items; } .su-board { grid-area: board; } .su-parts { grid-area: parts; } .su-done { grid-area: done; }
+@media (min-width: 760px) { .setup3 { grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: 1fr auto auto; grid-template-areas: "board parts" "done parts" "items items"; } }
+@media (min-width: 1100px) { .setup3 { grid-template-columns: 300px minmax(0, 1fr) 300px; grid-template-rows: 1fr auto; grid-template-areas: "items board parts" "items done parts"; } }
+.su-board { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.su-ctrl { display: grid; gap: 8px; justify-items: center; border-top: 1px solid rgba(96, 196, 255, .14); padding-top: 12px; margin-top: 8px; }
+.su-ctrl-main, .su-ctrl-sub { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.su-ctrl-main .btn { min-width: 7.2em; }
+.su-done { display: grid; gap: 6px; justify-items: center; }
+.su-donebtn { width: 100%; max-width: 520px; font-size: 1.2rem; padding: .9em 1em; letter-spacing: .12em; }
+.su-parts { display: flex; flex-direction: column; gap: 12px; }
+.su-parts .note { margin-top: auto; }
+.su-parts .pal-shapes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.su-parts .shape-btn { aspect-ratio: 1; min-width: 0; padding: 4px 2px 3px; grid-template-rows: minmax(0, 1fr) auto; align-items: center; gap: 2px; font-size: .64rem; position: relative; }
+.su-parts .shape-btn .mini { max-width: 78%; max-height: 100%; width: auto; height: auto; align-self: center; }
+.su-parts .shape-btn span { white-space: nowrap; }
+.su-items .ptitle { margin-bottom: 6px; flex-direction: column; align-items: flex-start; gap: 2px; }
+.su-items .ptitle small { order: -1; font-size: .58rem; }
+.su-board .board { width: 100%; }
+.su-items .su-foe { margin-top: 14px; }
+.su-ilist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.su-ilist li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: .8rem; padding: 4px 8px; border: 1px solid var(--edge); border-radius: 4px; background: rgba(79, 227, 255, .04); }
+.su-ilist .ic svg { width: 18px; height: 18px; fill: none; stroke: var(--cyan); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.su-ilist .ic svg .f { fill: var(--cyan); stroke: none; }
+.su-ilist.enemy li { background: rgba(255, 63, 143, .04); border-color: rgba(255, 63, 143, .22); }
+.su-ilist.enemy .ic svg { stroke: var(--magenta); } .su-ilist.enemy .ic svg .f { fill: var(--magenta); }
+.su-ilist b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.su-ilist em { font: 700 .82rem var(--f-tech); font-style: normal; color: var(--cyan); }
+.su-ilist.enemy em { color: var(--magenta); }
+.su-ilist li.zero { opacity: .4; }
+
 /* ===== ドラフト ===== */
 .draft { display: grid; gap: 12px; }
 .prompt { font-weight: 700; margin: 0; }

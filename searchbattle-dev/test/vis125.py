@@ -23,7 +23,7 @@ async def main():
                 await p.click(f'.cell[data-board=own][data-cell="{c}"]')
                 await p.wait_for_timeout(120)
             n = await p.evaluate("() => window.__sb.app.game.players[0].pieces.length")
-            head = await p.inner_text('.setup .fhead small')
+            head = await p.inner_text('.setup3 .fhead small')
             toast = await p.evaluate("() => [...document.querySelectorAll('.toast')].map(t=>t.textContent).join('|')")
             await p.screenshot(path=f'{SHOTS}/v125_setup_{view}.png')
             # タイトルの大会の説明
