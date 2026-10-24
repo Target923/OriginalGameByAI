@@ -2723,7 +2723,7 @@
       const g = G(), pi = app.setup.pi;
       if (app.tour) {
         // 大会：CPUと同じ考え方（残りのキューブ・予選か決勝か）で置く。トレジャーもCPUと同じ選び方
-        const plan = AI.tourSetupPlan(app.tour, 0, g.rules.kind === 'final' ? 'final' : 'prelim');
+        const plan = AI.tourSetupPlan(app.tour, 0, g.rules.kind === 'final' ? 'final' : 'prelim', null, Math.random);
         if (!AI.setup(g, pi, plan)) { denied = true; toast('おまかせで置けませんでした。手で置いてください', 'warn'); return; }
         const ps = g.players[pi].pieces;
         toast(`CPUと同じ考え方で置きました（${ps.length}個体・${ps.reduce((a, q) => a + q.size, 0)}マス）`, 'note');
