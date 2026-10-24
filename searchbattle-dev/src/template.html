@@ -1071,6 +1071,32 @@ body.replaying #app { display: none; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
   .space .floor { animation: none; }
 }
+
+/* ---------------- オンライン対戦（ロビー・相手を待つ表示） ---------------- */
+.lobby-panel { display: grid; gap: 16px; padding: 18px; max-width: 900px; margin: 12px auto 0; }
+.lob-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .lob-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lob-card { display: grid; gap: 10px; align-content: start; padding: 14px; border: 1px solid var(--edge); border-radius: 6px; background: rgba(79, 227, 255, .04); }
+.lob-card.enemy { border-color: rgba(255, 63, 143, .28); background: rgba(255, 63, 143, .04); }
+.lob-card h3 { margin: 0; font-size: 1rem; }
+.lob-card .btn { justify-self: start; }
+.lob-field { display: grid; gap: 4px; }
+.lob-field span { font-size: .78rem; color: var(--muted); }
+.lob-input { box-sizing: border-box; width: 100%; min-width: 0; font: 700 1rem/1.2 var(--f-body); color: var(--text); background: rgba(3, 5, 11, .55); border: 1px solid var(--edge-2); border-radius: 4px; padding: .6em .7em; }
+.lob-input::placeholder { color: var(--dim); font-weight: 500; }
+.lob-input:focus-visible { outline: none; border-color: var(--amber); box-shadow: 0 0 0 2px var(--amber); }
+.lob-input.code { font-family: var(--f-mono); letter-spacing: .28em; text-transform: uppercase; }
+.lob-wait { display: grid; gap: 12px; justify-items: start; }
+.lob-err { padding: .6em .8em; border: 1px solid rgba(255, 193, 74, .4); background: rgba(255, 193, 74, .07); border-radius: 4px; }
+.room-code { font: 700 clamp(2.2rem, 9vw, 3.4rem)/1 var(--f-mono); letter-spacing: .2em; color: var(--cyan); text-shadow: 0 0 18px rgba(79, 227, 255, .55); user-select: all; -webkit-user-select: all; padding: .1em 0; }
+.net-wait::after { content: ''; display: inline-block; width: 1.2em; text-align: left; animation: netdots 1.2s steps(4, end) infinite; }
+@keyframes netdots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+@media (prefers-reduced-motion: reduce) { .net-wait::after { animation: none; content: '…'; } }
+.net-foe { min-height: 1.4em; }
+.net-foe b { color: var(--good); font-weight: 700; }
+.net-note { flex-basis: 100%; }
+.lob-url { font-family: var(--f-mono); overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
+.lob-blocked .btn { text-decoration: none; }
 </style>
 <div class="space" aria-hidden="true"><div class="stars"></div><div class="floor"></div></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -1085,6 +1111,9 @@ body.replaying #app { display: none; }
 <div class="fx-layer" id="fx-layer" aria-hidden="true"></div>
 <script id="src-engine">
 /*ENGINE*/
+</script>
+<script id="src-net">
+/*NET*/
 </script>
 <script id="src-ai">
 /*AI*/

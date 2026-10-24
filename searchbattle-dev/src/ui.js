@@ -1,7 +1,7 @@
 /* サーチバトル — 画面（サイバー空間版） */
 (function () {
   'use strict';
-  const E = window.SBEngine, AI = window.SBAI;
+  const E = window.SBEngine, AI = window.SBAI, NET = window.SBNet;
   const { ITEMS, ITEM_KEYS, SHAPES, SHAPES_BY_SIZE, ORIENT, COLS, CATS, cellsFor, identifyShape, bit } = E;
   // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用
   const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka'];
@@ -21,7 +21,7 @@
     set(k, v) { try { localStorage.setItem('sb.' + k, JSON.stringify(v)); } catch (e) { /* 保存できなくても動く */ } },
   };
 
-  // 設定：モード（cpu／pvp）、ルール（prelim＝4×4／final＝5×5／tour＝大会）、
+  // 設定：モード（cpu／pvp／online＝オンライン対戦）、ルール（prelim＝4×4／final＝5×5／tour＝大会）、
   //  アイテム（pick＝選ぶ／random＝ランダム randomN 種／draft＝ドラフト 1人 draftN 個）
   const DRAFT_MAX = Math.floor(ITEM_KEYS.length / 2);
   function migrateSettings(st) {
@@ -30,7 +30,8 @@
     else if (st.items === 'r4') { st.items = 'random'; st.randomN = 4; }
     if (['pick', 'random', 'draft'].indexOf(st.items) < 0) st.items = 'pick';
     if (['prelim', 'final', 'tour'].indexOf(st.rules) < 0) st.rules = 'prelim';
-    if (['cpu', 'pvp'].indexOf(st.mode) < 0) st.mode = 'cpu';
+    if (['cpu', 'pvp', 'online'].indexOf(st.mode) < 0) st.mode = 'cpu';
+    if (typeof st.netName !== 'string') st.netName = '';   // オンライン対戦で相手に見せる名前
     st.randomN = Math.max(1, Math.min(ITEM_KEYS.length, (st.randomN | 0) || 6));
     st.draftN = Math.max(1, Math.min(DRAFT_MAX, (st.draftN | 0) || DRAFT_MAX));
     if (!Array.isArray(st.itemPick)) st.itemPick = ITEM_KEYS.slice();
@@ -51,6 +52,10 @@
     hover: -1,
     fxSeen: 0,
     fxChain: Promise.resolve(),
+    // オンライン対戦：lobby＝部屋を作る・入るまでの画面の状態、net＝相手とつながってからの状態
+    //  net = { role: 'host'|'guest', seat: 自分の席（ホスト0・ゲスト1）, link: 通信路, host/guest: net.js の役, foe: 相手の名前, gone: 相手が抜けた }
+    lobby: null,
+    net: null,
   };
   SND.setMode(app.settings.sound);
 
@@ -62,6 +67,12 @@
   function G() { return app.replay ? app.replay.game : app.game; }
   // 大会の試合は「あなた（0番）対 CPU（1番）」
   function isCPUMode() { return app.tour ? true : app.settings.mode === 'cpu'; }
+  // この端末で遊ぶのが1人だけか（CPU戦・大会・オンライン対戦）。「あなた」と呼ぶ・自分の席の側だけを見せる
+  function oneSide() { return isCPUMode() || !!app.net; }
+  // オンライン対戦のゲストなら、その役（net.js の Guest）
+  function netGuest() { return app.net && app.net.role === 'guest' ? app.net.guest : null; }
+  // ゲストが、送った操作の結果（ホストからの state）を待っているか
+  function netWaiting() { const gu = netGuest(); return !!(gu && gu.wait); }
   function foeName() { const g = G(); return g ? g.players[1].name : 'CPU'; }
   function speedK() { return app.settings.speed === 'fast' ? 0.55 : 1; }
   function pause(mult) { return sleep(560 * speedK() * (mult || 1)); }
@@ -69,6 +80,7 @@
 
   function viewer() {
     if (app.replay) return 0;   // リプレイは常に 0番（左）の側から見る
+    if (app.net) return app.net.seat;   // オンライン対戦：いつも自分の席から見る
     const g = G();
     if (!g) return 0;
     if (isCPUMode()) return 0;
@@ -81,7 +93,7 @@
   function effMode() {
     const g = G(), v = viewer();
     if (!g || g.phase !== 'play') return 'over';
-    if (g.cur !== v || app.busy) return 'wait';
+    if (g.cur !== v || app.busy || netWaiting()) return 'wait';
     if (g.sub === 'sacrifice') return 'sacrifice';
     if (g.sub === 'treasure') return 'treasure';
     if (app.ui.mode) return app.ui.mode;
@@ -547,7 +559,7 @@
   function chipHTML(pi, k, interactive) {
     const g = G(), P = g.players[pi];
     const st = g.itemStatus(pi, k);
-    const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy;
+    const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy && !netWaiting();
     let cls = k === 'bazooka' ? 'ichip bz' : 'ichip', bd = '', state;
     if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = st.have > 0 ? `この試合では使用済み（次の試合用に残り${st.have}）` : 'この試合では使用済み'; }
     else if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
@@ -556,7 +568,7 @@
     const usable = phaseOK && st.usable;
     if (usable) cls += ' usable';
     if (interactive && app.ui && app.ui.item === k) cls += ' active';
-    const who = !app.replay && isCPUMode() ? (pi === 0 ? 'あなた' : P.name) : P.name;
+    const who = !app.replay && oneSide() ? (pi === viewer() ? 'あなた' : P.name) : P.name;
     const active = interactive && app.ui && app.ui.item === k;
     const tip = `${who}の${isDef(k) ? '防御' : '攻撃'}アイテム「${ITEMS[k].name}」：${ITEMS[k].desc}（${active ? '選択中。もう一度押すとやめる' : state}）`;
     const badge = bd ? `<span class="bd">${esc(bd)}</span>` : '';
@@ -645,7 +657,7 @@
   // ---------------- 操作ブロック ----------------
   function phaseText(mode) {
     const g = G(), v = viewer();
-    const who = isCPUMode() ? '' : g.players[v].name + '：';
+    const who = oneSide() ? '' : g.players[v].name + '：';
     switch (mode) {
       case 'item': return who + (g.hasCallable(v) ? 'アイテムを使うか、相手フィールドをタップしてコール' : 'コールできるマスがありません。コールを飛ばしてください');
       case 'call': return who + '相手フィールドをタップしてコール';
@@ -660,7 +672,9 @@
       case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むマスを選んでください';
       case 'pair': return who + 'ペアショット：相手フィールドでマスを2つ選んでください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
-      case 'wait': return isCPUMode() ? `${foeName()}が解析しています…` : '';
+      case 'wait':
+        if (app.net) return netWaiting() ? '送信しています…' : `${g.players[g.cur].name}の番です。相手の操作を待っています…`;
+        return isCPUMode() ? `${foeName()}が解析しています…` : '';
       case 'over': return '試合終了';
       default: return who + (ITEMS[app.ui.item] ? ITEMS[app.ui.item].name + 'の対象を選んでください' : '');
     }
@@ -894,6 +908,7 @@
   function renderTitle() {
     const s = app.settings;
     const tour = s.rules === 'tour';
+    const online = !tour && s.mode === 'online';
     root.innerHTML = `
       <div class="wrap title-screen">
         <header class="hud">
@@ -922,7 +937,7 @@
         <section class="panel settings" aria-label="対戦の設定">
           <div class="set-row"><h2>モード</h2>${tour
             ? '<p class="set-fixed">大会は <b>あなた＋CPU3人</b> の4人で戦います</p>'
-            : seg('mode', s.mode, [['cpu', 'CPU戦', '最強CPUが相手'], ['pvp', 'プレイヤーバトル', '1台で2人が交代']])}</div>
+            : seg('mode', s.mode, [['cpu', 'CPU戦', '最強CPUが相手'], ['pvp', 'プレイヤーバトル', '1台で2人が交代'], ['online', 'オンライン対戦', '別の端末の人と']])}</div>
           <div class="set-row"><h2>ルール</h2>${seg('rules', s.rules, [['prelim', '4×4', 'トレジャー4回'], ['final', '5×5', 'トレジャー5回'], ['tour', '大会', '予選3試合＋決勝']])}</div>
           <div class="set-row"><h2>使えるアイテム</h2>${tour
             ? `<p class="set-fixed">9種を<b>2つずつ（18個）</b>持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ドラフト（4つずつ）。持ち点<b>${E.Tour.START}</b>から、撃破と勝利で相手の点を奪い合います。</p>`
@@ -933,8 +948,8 @@
           <div class="set-row"><h2>演出とCPUの速さ</h2>${seg('speed', s.speed, [['normal', 'ふつう', ''], ['fast', 'はやい', '']])}</div>
           <div class="set-row"><h2>サウンド</h2>${seg('sound', soundMode(), [['all', 'BGMと効果音', ''], ['sfx', '効果音だけ', ''], ['off', 'なし', '']])}</div>
           <div class="start-row">
-            <button class="btn primary big" data-act="start">${tour ? '大会を始める' : '対戦を始める'}</button>
-            <p class="note">${tour ? '総当たりの予選3試合（4×4）の上位2名が、決勝（5×5）に進みます。' : '先攻・後攻はランダムで決まります。'}音は最初に画面を操作したときから鳴ります。</p>
+            <button class="btn primary big" data-act="start">${tour ? '大会を始める' : online ? 'オンライン対戦の部屋へ' : '対戦を始める'}</button>
+            <p class="note">${tour ? '総当たりの予選3試合（4×4）の上位2名が、決勝（5×5）に進みます。' : online ? (NET.supported() ? '部屋を作った人のルールとアイテムの設定で対戦します。部屋に入る人の設定は使いません。' : 'このページではオンライン対戦を使えません（次の画面に、遊べるページへのリンクがあります）。') : '先攻・後攻はランダムで決まります。'}音は最初に画面を操作したときから鳴ります。</p>
           </div>
         </section>
       </div>`;
@@ -970,7 +985,10 @@
     const g = G(), S = app.setup, pi = S.pi, P = g.players[pi], N = g.N;
     const PL = E.placements(N);
     const totalCells = P.pieces.reduce((s, p) => s + p.size, 0);
-    const who = isCPUMode() ? 'あなた' : P.name;
+    const who = oneSide() ? 'あなた' : P.name;
+    // オンライン対戦：配置を終えた（ゲストは送った）あとは、相手を待つあいだ動かせない
+    const locked = netSetupLocked();
+    const lockDis = (off) => (off || locked ? 'disabled' : '');
     let palette = '';
     for (const size of [2, 3, 4, 5]) {
       const left = g.stockLeft(pi, size);
@@ -980,12 +998,14 @@
         const fits = PL[k].length > 0;
         const dis = left <= 0 || !fits;
         const on = S.key === k && !S.treasureMode;
-        palette += `<button class="shape-btn${on ? ' on' : ''}" data-act="shape" data-key="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" title="${esc(SHAPES[k].cat + ' ' + SHAPES[k].name)}">${shapeMini(k, on ? S.t : 0)}<span>${!fits ? '5×5のみ' : esc(SHAPES[k].cat)}</span></button>`;
+        palette += `<button class="shape-btn${on ? ' on' : ''}" data-act="shape" data-key="${k}" ${dis || locked ? 'disabled' : ''} aria-pressed="${on}" title="${esc(SHAPES[k].cat + ' ' + SHAPES[k].name)}">${shapeMini(k, on ? S.t : 0)}<span>${!fits ? '5×5のみ' : esc(SHAPES[k].cat)}</span></button>`;
       }
       palette += '</div></div>';
     }
     const ready = P.pieces.length > 0 && !!P.treasure;
-    const hint = S.treasureMode
+    const hint = locked
+      ? '配置を送りました。相手の配置が終わると対戦が始まります。'
+      : S.treasureMode
       ? 'トレジャーを置くキューブのマスをタップしてください。'
       : (S.key ? 'フィールドをタップして配置。置いたキューブをタップすると外せます。R：回転 / F：反転' : 'キューブの一覧から形を選んでください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
@@ -1005,24 +1025,27 @@
         <div class="setup3">
           <section class="panel su-items">${itemsHTML}</section>
           <section class="panel su-board">
-            <div class="fhead"><b>${isCPUMode() ? '自分フィールド' : esc(who) + 'のフィールド'}</b><small>${P.pieces.length} UNITS / ${totalCells} CELLS</small></div>
+            <div class="fhead"><b>${oneSide() ? '自分フィールド' : esc(who) + 'のフィールド'}</b><small>${P.pieces.length} UNITS / ${totalCells} CELLS</small></div>
             ${ownBoard(pi, { cls: 'large' })}
             <p class="hint">${esc(hint)}</p>
             <div class="su-ctrl">
               <div class="su-ctrl-main">
-                <button class="btn" data-act="rotate" ${S.key ? '' : 'disabled'}>↻ 回転</button>
-                <button class="btn" data-act="flip" ${S.key ? '' : 'disabled'}>⇋ 反転</button>
-                <button class="btn${S.treasureMode ? ' primary' : ''}" data-act="treasure-mode" ${P.pieces.length ? '' : 'disabled'} aria-pressed="${S.treasureMode}">◆ トレジャー${P.treasure ? '（済）' : ''}</button>
+                <button class="btn" data-act="rotate" ${lockDis(!S.key)}>↻ 回転</button>
+                <button class="btn" data-act="flip" ${lockDis(!S.key)}>⇋ 反転</button>
+                <button class="btn${S.treasureMode ? ' primary' : ''}" data-act="treasure-mode" ${lockDis(!P.pieces.length)} aria-pressed="${S.treasureMode}">◆ トレジャー${P.treasure ? '（済）' : ''}</button>
               </div>
               <div class="su-ctrl-sub">
-                <button class="btn ghost" data-act="random">自動配置</button>
-                <button class="btn ghost" data-act="clear" ${P.pieces.length ? '' : 'disabled'}>リセット</button>
+                <button class="btn ghost" data-act="random" ${lockDis(false)}>自動配置</button>
+                <button class="btn ghost" data-act="clear" ${lockDis(!P.pieces.length)}>リセット</button>
               </div>
             </div>
           </section>
           <section class="panel su-done">
-            <button class="btn primary big su-donebtn" data-act="setup-done" ${ready ? '' : 'disabled'}>配置完了</button>
-            <span class="note su-donenote">${ready ? '準備ができました' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>
+            ${locked
+              ? '<p class="prompt net-wait">相手の配置を待っています</p>'
+              : `<button class="btn primary big su-donebtn" data-act="setup-done" ${ready ? '' : 'disabled'}>配置完了</button>
+            <span class="note su-donenote">${ready ? '準備ができました' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>`}
+            ${app.net ? `<span class="note net-foe">${esc(app.net.foe || '相手')}：${netFoeReady() ? '<b>配置完了</b>' : '配置中…'}</span>` : ''}
           </section>
           <section class="panel su-parts">
             <h2 class="ptitle">キューブ<small>CUBES</small></h2>
@@ -1038,7 +1061,8 @@
     const g = G(), d = g.draft;
     const turn = g.draftTurn();
     const second = 1 - g.first;
-    const humanTurn = !(isCPUMode() && turn === 1);
+    // この端末の人が選ぶ番か（オンライン対戦は自分の席の番だけ。送った結果を待つあいだは選べない）
+    const humanTurn = app.net ? turn === app.net.seat && !netWaiting() : !(isCPUMode() && turn === 1);
     const picks = (pi) => d.picks[pi].map((k) => `<li>${esc(ITEMS[k].name)}</li>`).join('') || '<li class="none">まだありません</li>';
     // 大会の決勝：ドラフトの前から持っているアイテム（予選の残り）
     const held = (pi) => {
@@ -1138,8 +1162,9 @@
   function resultHTML() {
     const g = G(), r = g.result;
     let verdict, cls = '', sub;
+    const me = viewer();   // この端末の人の席（CPU戦・大会は0、オンライン対戦は自分の席）
     if (r.draw) { verdict = 'DRAW'; cls = 'draw'; sub = '両者全滅で引き分け'; }
-    else if (isCPUMode()) { verdict = r.winner === 0 ? 'VICTORY' : 'DEFEAT'; cls = r.winner === 0 ? '' : 'lose'; sub = r.winner === 0 ? 'あなたの勝ち！' : `${g.players[1].name}の勝ち`; }
+    else if (oneSide()) { verdict = r.winner === me ? 'VICTORY' : 'DEFEAT'; cls = r.winner === me ? '' : 'lose'; sub = r.winner === me ? 'あなたの勝ち！' : `${g.players[r.winner].name}の勝ち`; }
     else { verdict = 'WINNER'; sub = `${g.players[r.winner].name}の勝ち！`; }
     const note = r.draw ? '両者全滅で引き分けです。' : '相手の個体をすべて撃破しました。';
     let table, foot;
@@ -1174,9 +1199,16 @@
         </table></div>`;
       foot = '';
     }
+    const view = '<button class="btn" data-act="replay-open" data-src="game">リプレイ</button><button class="btn" data-act="reveal">フィールドで答え合わせ</button>';
+    // オンライン対戦の「もう一度」は審判のホストが始める（ゲストは待つ）
+    const netAgain = !app.net ? '' : app.net.gone
+      ? `<p class="note warn net-note">${esc(app.net.foe || '相手')}が退出しました。</p>`
+      : app.net.role === 'host' ? '<button class="btn primary" data-act="restart">もう一度</button>' : '<p class="note net-note">もう一度対戦するときは、部屋を作った人が始めます。</p>';
     const acts = app.tour
-      ? `<button class="btn primary" data-act="tour-back">${g.rules.kind === 'final' ? '大会の結果へ' : '大会の途中経過へ'}</button><button class="btn" data-act="replay-open" data-src="game">リプレイ</button><button class="btn" data-act="reveal">フィールドで答え合わせ</button>`
-      : '<button class="btn primary" data-act="restart">もう一度</button><button class="btn" data-act="replay-open" data-src="game">リプレイ</button><button class="btn" data-act="reveal">フィールドで答え合わせ</button><button class="btn ghost" data-act="to-title">設定に戻る</button>';
+      ? `<button class="btn primary" data-act="tour-back">${g.rules.kind === 'final' ? '大会の結果へ' : '大会の途中経過へ'}</button>${view}`
+      : app.net
+        ? `${netAgain}${view}<button class="btn ghost" data-act="to-title">退出する</button>`
+        : `<button class="btn primary" data-act="restart">もう一度</button>${view}<button class="btn ghost" data-act="to-title">設定に戻る</button>`;
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="result-h">
       <div class="panel dialog">
         <p class="eyebrow">${esc(g.rules.label)} / ${g.turn} turns</p>
@@ -1684,8 +1716,10 @@
     else if (app.screen === 'battle') renderBattle();
     else if (app.screen === 'tour') renderTour();
     else if (app.screen === 'sim') renderSim();
+    else if (app.screen === 'lobby') renderLobby();
     if (app.modal === 'rules') root.insertAdjacentHTML('beforeend', rulesModal());
     if (app.modal === 'quit') root.insertAdjacentHTML('beforeend', quitModal());
+    if (app.modal === 'net-quit') root.insertAdjacentHTML('beforeend', netQuitModal());
     applyPreview();
     syncMusic();
     afterRender();
@@ -2112,8 +2146,10 @@
       const v = viewer();
       const k = speedK();
       const mine = ev.actor === v;
-      // あなた対CPUの見せ方（YOUR TURN・VICTORY など）。リプレイでは、0番があなたで1番がCPUの試合だけ
-      const vsCPU = app.replay ? (!g.players[0].isCPU && g.players[1].isCPU) : isCPUMode();
+      // あなた対相手の見せ方（YOUR TURN・VICTORY など）：CPU戦・大会・オンライン対戦。リプレイでは、0番があなたで1番がCPUの試合だけ。
+      //  me＝あなたの席（オンライン対戦のゲストは1。ほかは0）
+      const vsCPU = app.replay ? (!g.players[0].isCPU && g.players[1].isCPU) : oneSide();
+      const me = v;
       const col = (who) => (who === v ? CY : MG);
       switch (ev.type) {
         case 'start':
@@ -2122,10 +2158,10 @@
           return 1000 * k;
         case 'turn': {
           if (g.phase !== 'play') return 0;
-          SND.sfx(vsCPU && ev.cur === 1 ? 'turnFoe' : 'turnMine', 0, { alt: !vsCPU && ev.cur === 1 });
+          SND.sfx(vsCPU && ev.cur !== me ? 'turnFoe' : 'turnMine', 0, { alt: !vsCPU && ev.cur === 1 });
           // ターン数も出す（例：YOUR TURN 05・5ターン目）
           const tn = ev.turn != null ? ev.turn : g.turn;
-          if (vsCPU) banner(`${ev.cur === 0 ? 'YOUR TURN' : 'ENEMY TURN'} ${pad2(tn)}`, `${tn}ターン目・${ev.cur === 0 ? 'あなたの手番' : `${g.players[1].name}の手番`}`, ev.cur === 0 ? '' : 'enemy', 1050);
+          if (vsCPU) banner(`${ev.cur === me ? 'YOUR TURN' : 'ENEMY TURN'} ${pad2(tn)}`, `${tn}ターン目・${ev.cur === me ? 'あなたの手番' : `${g.players[ev.cur].name}の手番`}`, ev.cur === me ? '' : 'enemy', 1050);
           else banner(`P${ev.cur + 1} TURN ${pad2(tn)}`, `${tn}ターン目・${g.players[ev.cur].name}の手番`, ev.cur === 0 ? '' : 'enemy', 1050);
           return 760 * k;
         }
@@ -2256,9 +2292,9 @@
           const r = ev.result;
           let big, small, cls = '';
           if (r.draw) { big = 'DRAW'; small = '両者全滅'; }
-          else if (vsCPU) { big = r.winner === 0 ? 'VICTORY' : 'DEFEAT'; small = r.winner === 0 ? 'あなたの勝ち' : `${g.players[1].name}の勝ち`; cls = r.winner === 0 ? '' : 'enemy'; }
+          else if (vsCPU) { big = r.winner === me ? 'VICTORY' : 'DEFEAT'; small = r.winner === me ? 'あなたの勝ち' : `${g.players[r.winner].name}の勝ち`; cls = r.winner === me ? '' : 'enemy'; }
           else { big = 'WINNER'; small = `${g.players[r.winner].name}の勝ち`; }
-          SND.result(r.draw ? 'draw' : vsCPU && r.winner !== 0 ? 'lose' : 'win');
+          SND.result(r.draw ? 'draw' : vsCPU && r.winner !== me ? 'lose' : 'win');
           banner(big, small, cls, 1700);
           if (!cls) { const w = window.innerWidth / 2, h = window.innerHeight * 0.38; sparks(w, h, CY, 50, 2.2, 0.3); sparks(w, h, AM, 30, 1.8, 0.4); }
           return 1500 * k;
@@ -2623,6 +2659,7 @@ self.onmessage = function (e) {
   function startGame() {
     const s = app.settings;
     if (s.rules === 'tour') { startTour(); return; }
+    if (s.mode === 'online') { openLobby(); return; }   // オンライン対戦は、部屋を作る・入る画面から
     app.tour = null;
     const cpu = s.mode === 'cpu';
     app.game = new E.Game({
@@ -2640,7 +2677,8 @@ self.onmessage = function (e) {
   }
   function beginMatchUI() {
     app.ui = freshUI();
-    app.setup = { pi: 0, key: firstShape(0), t: 0, treasureMode: false };
+    const pi = app.net ? app.net.seat : 0;   // オンライン対戦のゲストは1番の席に置く
+    app.setup = { pi, key: firstShape(pi), t: 0, treasureMode: false };
     app.busy = false;
     app.hover = -1;
     app.fxSeen = 0;
@@ -2779,6 +2817,38 @@ self.onmessage = function (e) {
     });
   }
 
+  // 操作の窓口：人の操作で盤面を変えるときは、ルールのプログラム（engine）を直接呼ばずに、すべてここを通す。
+  //  ・ふつうの試合・大会：その場で実行する（今までと同じ）
+  //  ・オンライン対戦のホスト：実行してから、ゲストに新しい状態を送る（net.js の Host.run）
+  //  ・オンライン対戦のゲスト：配置はこの端末の中だけで行い、対戦中の操作はホストに送る。
+  //    結果はあとで state として届くので、ここでは「送った」（{ ok: true, sent: true }）を返す
+  //  args の先頭は操作する人の席（g.call(v, c) なら act('call', v, c)）
+  function act(name, ...args) {
+    const g = G(), N = app.net;
+    if (N && N.role === 'host') return N.host.run(name, args);
+    if (N && N.role === 'guest' && NET.PLAY_ACTS.indexOf(name) >= 0) {
+      const pre = guestPrecheck(g, name, args);
+      if (!pre.ok) return pre;
+      const r = N.guest.act(name, args.slice(1));   // 席の番号は送らない（ホストがゲストの席として実行する）
+      if (r.sent) render();   // 「送信しています…」を出して、結果が届くまで操作できないようにする
+      return r;
+    }
+    return g[name].apply(g, args);
+  }
+  // ゲストの手元でも確かめられること（自分の盤と自分の記録だけで決まること）は、送る前に確かめる。
+  //  通信を待たずにすぐ知らせるため（ワープの置き場所など）。最後に確かめるのはホスト
+  function guestPrecheck(g, name, args) {
+    const v = args[0];
+    if (name === 'useItem') {
+      if (!g.itemStatus(v, args[1]).usable) return { ok: false, reason: 'いまはアイテムを使えません' };
+      return g.validateItem(v, args[1], args[2]);
+    }
+    if (name === 'answer' && !E.identifyShape(Array.from(new Set(args[1])).sort((a, b) => a - b), g.N)) {
+      return { ok: false, reason: 'キューブ・L字・T字のいずれかの形で宣言してください' };
+    }
+    return { ok: true };
+  }
+
   function afterHuman() {
     const g = G();
     setBanner();
@@ -2815,8 +2885,8 @@ self.onmessage = function (e) {
   }
 
   function useItem(key, params) {
-    const g = G(), v = viewer();
-    const r = g.useItem(v, key, params);
+    const v = viewer();
+    const r = act('useItem', v, key, params);
     if (!r.ok) { toast(r.reason || '使えません', 'warn'); return r; }
     resetMode();
     afterHuman();
@@ -2830,6 +2900,7 @@ self.onmessage = function (e) {
     random: 'shuffle', clear: 'remove', 'setup-done': 'confirm', 'draft-pick': 'pick', cancel: 'cancel',
     'answer-start': 'select', 'end-turn': 'ui', 'skip-call': 'ui', 'warp-rotate': 'rotate', 'warp-flip': 'rotate', 'warp-repick': 'cancel',
     step: 'tick', 'memo-type': 'ui', 'memo-clear': 'remove', 'tour-next': 'confirm', 'tour-choose': 'select', 'tour-end': 'ui', 'tour-back': 'confirm', 'quit-tour': 'cancel',
+    'net-create': 'confirm', 'net-join': 'confirm', 'net-cancel': 'cancel', 'net-copy': 'ui', 'net-quit': 'cancel',
     'sim-open': 'open', 'sim-back': 'cancel', 'sim-run': 'confirm', 'sim-stop': 'cancel', 'sim-refinal': 'confirm', 'sim-pin': 'pick', 'sim-reset': 'ui', 'sim-rm': 'remove',
   };
   const handlers = {
@@ -2849,6 +2920,13 @@ self.onmessage = function (e) {
     'close-modal'() { app.modal = null; render(); },
     start() { store.set('settings', app.settings); startGame(); },
     'to-title'() {
+      // オンライン対戦：試合の途中なら、やめてよいか確かめる。ロビー・決着のあとは、そのまま部屋を出る
+      if (app.net || app.lobby) {
+        const g = app.game;
+        if (app.net && !app.net.gone && g && g.phase !== 'over' && app.screen !== 'lobby') { app.modal = 'net-quit'; render(); return; }
+        netLeave();
+        return;
+      }
       // 大会の途中なら、やめてよいか確かめる
       const T = app.tour;
       if (T && T.stage !== 'done' && !(T.stage === 'qualify' && T.finalists && T.finalists.indexOf(0) < 0)) { app.modal = 'quit'; render(); return; }
@@ -2906,7 +2984,16 @@ self.onmessage = function (e) {
       app.screen = 'title';
       render(); window.scrollTo(0, 0);
     },
-    restart() { startGame(); },
+    restart() {
+      // オンライン対戦の「もう一度」：ホストが同じ相手と新しい試合を作る
+      if (app.net) { if (app.net.role === 'host' && !app.net.gone) app.net.host.newMatch(); return; }
+      startGame();
+    },
+    'net-create'() { lobbyCreate(); },
+    'net-join'() { lobbyJoin(); },
+    'net-cancel'() { lobbyCancel(); },
+    'net-copy'() { netCopyCode(); },
+    'net-quit'() { app.modal = null; netLeave(); },
     'show-result'() { app.ui.showResult = true; render(); },
     reveal() { app.ui.reveal = true; app.ui.showResult = false; render(); },
 
@@ -2916,20 +3003,26 @@ self.onmessage = function (e) {
     'treasure-mode'() { const S = app.setup; S.treasureMode = !S.treasureMode; render(); },
     random() {
       const g = G(), pi = app.setup.pi;
+      if (netSetupLocked()) return;
       if (app.tour) {
         // 大会：CPUと同じ考え方（残りのキューブ・予選か決勝か）で置く。トレジャーもCPUと同じ選び方
         const plan = AI.tourSetupPlan(app.tour, 0, g.rules.kind === 'final' ? 'final' : 'prelim', null, Math.random);
         if (!AI.setup(g, pi, plan)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
         const ps = g.players[pi].pieces;
         toast(`CPUと同じ考え方で置きました（${ps.length}個体・${ps.reduce((a, q) => a + q.size, 0)}マス）`, 'note');
-      } else if (!g.randomSetup(pi, AI.setupSizes(g, pi)) && !g.randomSetup(pi)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
+      } else if (!act('randomSetup', pi, AI.setupSizes(g, pi)) && !act('randomSetup', pi)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
       app.setup.treasureMode = false; render();
     },
-    clear() { G().clearSetup(app.setup.pi); render(); },
+    clear() { if (netSetupLocked()) return; act('clearSetup', app.setup.pi); render(); },
     'setup-done'() {
       const g = G(), S = app.setup;
-      const r = g.finishSetup(S.pi);
+      if (netSetupLocked()) return;
+      // オンライン対戦のゲスト：配置をホストに送って、確かめてもらう（結果は state で届く）
+      const gu = netGuest();
+      if (gu) { const r = gu.sendSetup(); if (!r.ok) toast(r.reason, 'warn'); render(); return; }
+      const r = act('finishSetup', S.pi);
       if (!r.ok) { toast(r.reason, 'warn'); return; }
+      if (app.net && g.phase === 'setup') { render(); return; }   // オンライン対戦のホスト：相手の配置を待つ
       if (!isCPUMode() && S.pi === 0 && !g.players[1].setupDone) {
         app.setup = { pi: 1, key: firstShape(1), t: 0, treasureMode: false };
         render(); window.scrollTo(0, 0);
@@ -2943,8 +3036,10 @@ self.onmessage = function (e) {
       const g = G();
       const pi = g.draftTurn();
       if (isCPUMode() && pi === 1) return;
-      const r = g.draftPick(pi, el.dataset.key);
+      if (app.net && (pi !== app.net.seat || netWaiting())) return;
+      const r = act('draftPick', pi, el.dataset.key);
       if (!r.ok) { toast(r.reason || '選べません'); return; }
+      if (r.sent) { render(); return; }   // ゲスト：結果はホストから届く
       if (g.phase === 'play') { enterBattle(); return; }
       render();
       runDraftCPU();
@@ -2964,22 +3059,23 @@ self.onmessage = function (e) {
     'answer-start'() { resetMode(); app.ui.mode = 'answer'; render(); },
     'answer-submit'() {
       const g = G(), v = viewer();
-      const r = g.answer(v, app.ui.sel.slice());
+      const r = act('answer', v, app.ui.sel.slice());
       if (!r.ok) { toast(r.reason || 'アンサーできません', 'warn'); return; }
       resetMode();
-      if (!r.success) toast('アンサー失敗。差し出すキューブを選んでください', 'warn', true);
+      // ゲストは結果がまだ分からない（失敗のときは、届いた state を見て知らせる）
+      if (!r.sent && !r.success) toast('アンサー失敗。差し出すキューブを選んでください', 'warn', true);
       afterHuman();
     },
     'skip-call'() {
       const g = G(), v = viewer();
-      const r = g.skipCall(v);
+      const r = act('skipCall', v);
       if (!r.ok) { toast(r.reason || 'コールできるマスがあります'); return; }
       resetMode();
       afterHuman();
     },
     'end-turn'() {
       const g = G(), v = viewer();
-      g.endTurn(v);
+      act('endTurn', v);
       resetMode();
       afterHuman();
     },
@@ -2997,20 +3093,21 @@ self.onmessage = function (e) {
 
   function setupCell(c) {
     const g = G(), S = app.setup, pi = S.pi;
+    if (netSetupLocked()) return;   // 配置を送ったあとは動かせない
     const p = g.pieceAt(pi, c);
     if (S.treasureMode) {
-      const r = g.setTreasure(pi, c);
+      const r = act('setTreasure', pi, c);
       if (!r.ok) { toast(r.reason, 'warn'); return; }
       S.treasureMode = false;
       render();
       SND.sfx('gem');
       return;
     }
-    if (p) { g.removePiece(pi, p.id); render(); SND.sfx('remove'); return; }
+    if (p) { act('removePiece', pi, p.id); render(); SND.sfx('remove'); return; }
     if (!S.key) { toast('先に形を選んでください'); return; }
     const a = anchorFor(S.key, S.t, c, g.N);
     if (!a) { toast('このフィールドには入らない形です', 'warn'); return; }
-    const r = g.placePiece(pi, S.key, S.t, a.r0, a.c0);
+    const r = act('placePiece', pi, S.key, S.t, a.r0, a.c0);
     if (!r.ok) { toast(r.reason, 'warn'); return; }
     SND.sfx('place');
     const size = SHAPES[S.key].size;
@@ -3026,7 +3123,7 @@ self.onmessage = function (e) {
   function predCell(c) {
     const g = G(), v = viewer(), mode = effMode(), ui = app.ui;
     if (ui && ui.memoMode && g.phase === 'play') { toggleMemo(c); return; }
-    if (app.busy) return;
+    if (app.busy || netWaiting()) return;
     const P = g.players[v];
     if ((mode === 'item' || mode === 'call' || mode === 'treasure') && memoOf(v)[c]) {
       delete memoOf(v)[c];
@@ -3039,7 +3136,7 @@ self.onmessage = function (e) {
       case 'item':
       case 'call': {
         if (!g.isCallable(v, c)) { toast('そのマスはコールできません'); return; }
-        const r = g.call(v, c);
+        const r = act('call', v, c);
         if (!r.ok) { toast(r.reason, 'warn'); return; }
         resetMode();
         afterHuman();
@@ -3056,7 +3153,7 @@ self.onmessage = function (e) {
       }
       case 'treasure': {
         if (!g.isTreasureCallable(v, c)) { toast('そのマスにはトレジャーコールできません'); return; }
-        g.treasureCall(v, c);
+        act('treasureCall', v, c);
         resetMode();
         afterHuman();
         return;
@@ -3087,7 +3184,7 @@ self.onmessage = function (e) {
 
   function ownCell(c) {
     const g = G(), v = viewer(), mode = effMode(), ui = app.ui;
-    if (app.busy) return;
+    if (app.busy || netWaiting()) return;
     switch (mode) {
       case 'warp-pick': {
         const p = g.pieceAt(v, c);
@@ -3115,7 +3212,7 @@ self.onmessage = function (e) {
       case 'sacrifice': {
         const p = g.pieceAt(v, c);
         if (!p) { toast('差し出す自分のキューブを選んでください'); return; }
-        g.sacrifice(v, p.id);
+        act('sacrifice', v, p.id);
         afterHuman();
         return;
       }
@@ -3150,7 +3247,7 @@ self.onmessage = function (e) {
       app.settings[k] = el.value;
       store.set('settings', app.settings);
       SND.sfx('tick');
-      if (k === 'items' || k === 'rules') { render(); const f = document.getElementById(el.id); if (f) f.focus(); }
+      if (k === 'items' || k === 'rules' || k === 'mode') { render(); const f = document.getElementById(el.id); if (f) f.focus(); }
     }
     if (el && el.dataset && el.dataset.pick) {
       let list = pickedItems().slice();
@@ -3559,9 +3656,264 @@ self.onmessage = function (e) {
     if (el.dataset.sim === 'final') S.withFinal = !!el.checked;
   });
 
+  // ---------------- オンライン対戦（P2P・ホスト権威。しくみは net.js と docs/online.md） ----------------
+  // 画面の流れ：タイトル（モード「オンライン対戦」）→ ロビー（部屋を作る／コードで入る）→ つながる → 配置 → 対戦 → 結果。
+  //  ホストの端末：本当の対戦（app.game）を持ち、ゲストの操作は net.js の Host が実行して、画面は netRefresh で描き直す。
+  //  ゲストの端末：app.game は、ホストから届いた（伏せた）スナップショット。届くたびに差し替えて netGuestState で描く。
+
+  // 配置を終えた（ゲストは送った）ので、相手を待っているあいだか
+  function netSetupLocked() {
+    const g = G();
+    if (!app.net || !g || g.phase !== 'setup') return false;
+    const gu = netGuest();
+    return g.players[app.net.seat].setupDone || !!(gu && gu.setupSent);
+  }
+  // 相手が配置を終えたか（ゲストには相手の盤面が届かないので、net.js の Guest が覚えている）
+  function netFoeReady() {
+    const g = G(), gu = netGuest();
+    if (!app.net || !g) return false;
+    return gu ? gu.foeReady : g.players[1 - app.net.seat].setupDone;
+  }
+  function openLobby() {
+    app.tour = null; app.game = null; app.ui = null; app.modal = null;
+    app.lobby = { st: 'idle' };
+    app.screen = 'lobby';
+    render(); window.scrollTo(0, 0);
+  }
+  // 名前の入力欄の中身を設定に残す（次に開いたときも同じ名前）
+  function lobbyName() {
+    const el = document.getElementById('net-name');
+    if (el) { app.settings.netName = el.value; store.set('settings', app.settings); }
+    return app.settings.netName;
+  }
+  // ホスト：部屋を作る。コードが決まったら画面に出し、相手がつないでくるのを待つ
+  //  （L＝この試みの状態。やめたあとに古い知らせが届いても無視できるよう、app.lobby と同じものかを確かめる）
+  function lobbyCreate() {
+    if (!app.lobby || app.lobby.st !== 'idle') return;
+    const name = lobbyName();
+    const L = app.lobby = { st: 'opening' };
+    render();
+    L.room = NET.openRoom({
+      onOpen(code) { if (app.lobby !== L) return; L.st = 'hosting'; L.code = code; render(); },
+      onGuest(link) { if (app.lobby !== L) { link.close({ t: 'bye' }); return; } netStartHost(link, name); },
+      onError(text) { if (app.lobby !== L) return; app.lobby = { st: 'idle', err: text }; render(); },
+    });
+  }
+  // ゲスト：コードを入れて部屋に入る
+  function lobbyJoin() {
+    if (!app.lobby || app.lobby.st !== 'idle') return;
+    const name = lobbyName();
+    const el = document.getElementById('net-code');
+    const code = NET.normCode(el ? el.value : '');
+    if (!code) { toast(`部屋のコード（${NET.CODE_LEN}文字の英数字）を入れてください`, 'warn'); if (el) el.focus(); return; }
+    const L = app.lobby = { st: 'joining', code };
+    render();
+    L.join = NET.joinRoom(code, {
+      onLink(link) { if (app.lobby !== L) { link.close({ t: 'bye' }); return; } netStartGuest(link, name); },
+      onError(text) { if (app.lobby !== L) return; app.lobby = { st: 'idle', err: text, code }; render(); },
+    });
+  }
+  function lobbyCancel() {
+    const L = app.lobby;
+    if (L && L.room) L.room.close();
+    if (L && L.join) L.join.close();
+    app.lobby = { st: 'idle', code: L && L.st === 'joining' ? L.code : undefined };
+    render();
+  }
+  function netCopyCode() {
+    const L = app.lobby;
+    if (!L || !L.code) return;
+    const ng = () => toast('コピーできませんでした。コードを書き写してください', 'warn');
+    try { navigator.clipboard.writeText(L.code).then(() => toast('コードをコピーしました', 'note'), ng); } catch (e) { ng(); }
+  }
+
+  // 相手がつながった（ホスト）：審判の役（Host）を作り、届いたメッセージを渡す。
+  //  試合はホストの設定（ルール・アイテム）で作る。ゲストの hello が届くと、Host が最初の試合を作って welcome を送る
+  function netStartHost(link, name) {
+    const N = app.net = { role: 'host', seat: NET.HOST_SEAT, link, foe: null, gone: false };
+    app.lobby.st = 'linked';
+    N.host = new NET.Host({
+      name,
+      send: (m) => link.send(m),
+      makeGame: (names) => {
+        const s = app.settings;
+        return new E.Game({
+          rules: s.rules === 'final' ? 'final' : 'prelim', mode: 'online', label: 'オンライン', names, cpu: [false, false],
+          items: itemsForMatch(), draftEach: s.items === 'draft' ? s.draftN : 0,
+        });
+      },
+      on: {
+        guest(nm) { N.foe = nm; toast(`${nm}が入りました`, 'note', true); },
+        match(g) { if (app.replay) closeReplay(); app.game = g; beginMatchUI(); },
+        change() { if (app.net === N) netRefresh(); },
+        bye(reason) { netGone(reason); },
+      },
+    });
+    link.onmessage = (m) => { if (app.net === N) N.host.receive(m); };
+    link.onclose = (reason) => { if (app.net === N) netGone(reason); };
+    render();
+  }
+  // 部屋に入れた（ゲスト）：ゲストの役（Guest）を作り、hello を送る（ホストが試合を作って welcome を返す）
+  function netStartGuest(link, name) {
+    const N = app.net = { role: 'guest', seat: NET.GUEST_SEAT, link, foe: null, gone: false };
+    app.lobby.st = 'linked';
+    N.guest = new NET.Guest({
+      name,
+      send: (m) => link.send(m),
+      on: {
+        welcome(g) { N.foe = g.players[1 - N.seat].name; netGuestWelcome(g); },
+        state(g) { netGuestState(g); },
+        foeReady() { if (app.screen === 'setup') render(); },
+        reject(m) { toast(m.reason || 'その操作はできませんでした', 'warn'); render(); },
+        bye(reason) { netGone(reason); },
+      },
+    });
+    link.onmessage = (m) => { if (app.net === N) N.guest.receive(m); };
+    link.onclose = (reason) => { if (app.net === N) netGone(reason); };
+    N.guest.hello();
+    render();
+  }
+  // ゲスト：新しい試合が届いた（最初の試合と「もう一度」）。配置は手元の対戦の中で行う
+  function netGuestWelcome(g) {
+    if (app.replay) closeReplay();
+    const again = !!app.game;
+    app.game = g;
+    beginMatchUI();
+    if (again) toast(`${app.net.foe}が次の試合を始めました`, 'note', true);
+  }
+  // ゲスト：ホストから新しい状態が届いた。手元の対戦を差し替えて、新しい演出だけを見せる
+  //  （演出は「どこまで見せたか」を番号 app.fxSeen で覚えているので、届いた記録の続きから再生される）
+  function netGuestState(g) {
+    const prev = app.game;
+    app.game = g;
+    if (app.screen === 'setup') { if (g.phase === 'setup') render(); else enterAfterSetup(); return; }
+    if (app.screen === 'draft') { if (g.phase === 'play') enterBattle(); else render(); return; }
+    if (app.screen !== 'battle') { render(); return; }
+    const me = app.net.seat;
+    if (g.phase === 'play' && g.sub === 'sacrifice' && g.pending && g.pending.who === me && !(prev && prev.sub === 'sacrifice')) {
+      toast('アンサー失敗。差し出すキューブを選んでください', 'warn', true);
+    }
+    afterHuman();
+  }
+  // ホスト：ゲストの操作（配置・ドラフト・対戦）を実行したあと、画面を描き直す
+  function netRefresh() {
+    const g = app.game;
+    if (!g) return;
+    if (app.screen === 'setup') { if (g.phase === 'setup') render(); else enterAfterSetup(); return; }
+    if (app.screen === 'draft') { if (g.phase === 'play') enterBattle(); else render(); return; }
+    if (app.screen === 'battle') afterHuman(); else render();
+  }
+  const BYE_TEXT = {
+    version: '相手とゲームの版が違います。両方ともページを読み込み直してから、もう一度つないでください',
+    full: 'その部屋はもう対戦中です',
+    timeout: '相手との通信が途切れました',
+    left: '相手が退出しました',
+  };
+  // 相手が抜けた・通信が切れた
+  function netGone(reason) {
+    const N = app.net;
+    if (!N || N.gone) return;
+    N.gone = true;
+    N.link.close();
+    const text = BYE_TEXT[reason] || '相手との接続が切れました';
+    const g = app.game;
+    // 決着のあとなら、結果・リプレイ・答え合わせはそのまま見られるようにする
+    if (g && g.phase === 'over' && app.screen === 'battle') { toast(text, 'warn', true); render(); return; }
+    netLeave(text, !g);   // 試合が始まる前なら、ロビーに戻る
+  }
+  // 部屋を出る（自分でやめたとき・相手が抜けたとき）。相手にはまだつながっていれば bye を送る
+  function netLeave(text, toLobby) {
+    const N = app.net, L = app.lobby;
+    app.net = null;
+    if (N && N.link) N.link.close(N.gone ? null : { t: 'bye' });
+    if (L && L.room) L.room.close();
+    if (L && L.join) L.join.close();
+    if (app.replay) closeReplay();
+    app.lobby = null; app.game = null; app.ui = null; app.modal = null; app.busy = false;
+    if (toLobby) { openLobby(); app.lobby.err = text || null; render(); return; }
+    app.screen = 'title';
+    render(); window.scrollTo(0, 0);
+    if (text) toast(text, 'warn', true);
+  }
+  function netQuitModal() {
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="nquit-h">
+      <div class="panel dialog">
+        <h2 id="nquit-h" class="verdict-sub">対戦をやめて部屋を出ますか？</h2>
+        <p class="note">相手との接続が切れ、この試合は終わります。</p>
+        <div class="row"><button class="btn fire" data-act="net-quit">部屋を出る</button><button class="btn" data-act="close-modal">続ける</button></div>
+      </div>
+    </div>`;
+  }
+  // ロビーの画面
+  function renderLobby() {
+    const s = app.settings, L = app.lobby || { st: 'idle' }, N = app.net;
+    const rulesTxt = `${s.rules === 'final' ? '5×5（トレジャー5回）' : '4×4（トレジャー4回）'}・アイテム：${s.items === 'draft' ? `ドラフト（1人${s.draftN}個）` : s.items === 'random' ? `ランダム（毎試合${s.randomN}種）` : `${pickedItems().length}種`}`;
+    let body;
+    if (!NET.supported()) {
+      // claude.ai の公開ページなど、通信が止められているページでは、遊べるページ（GitHub Pages 版）を案内する
+      body = `<div class="lob-wait lob-blocked">
+          <p class="note warn lob-err">このページではオンライン対戦を使えません。claude.ai の公開ページは、安全のため端末どうしの通信が止められています。</p>
+          <p class="note">GitHub Pages 版のサーチバトルを開いて、2人ともそちらで遊んでください。</p>
+          <a class="btn primary" href="${esc(NET.PLAY_URL)}" target="_blank" rel="noopener">GitHub Pages 版を開く</a>
+          <p class="note lob-url">${esc(NET.PLAY_URL)}</p>
+        </div>`;
+    } else if (N) {
+      const t = N.role === 'host' ? (N.foe ? `${esc(N.foe)}が入りました。準備しています` : '相手とつながりました。準備しています') : '部屋に入りました。準備しています';
+      body = `<div class="lob-wait"><p class="prompt net-wait">${t}</p></div>`;
+    } else if (L.st === 'opening') {
+      body = '<div class="lob-wait"><p class="prompt net-wait">部屋を作っています</p><button class="btn ghost" data-act="net-cancel">やめる</button></div>';
+    } else if (L.st === 'hosting') {
+      body = `<div class="lob-wait">
+          <p class="note">このコードを相手に伝えてください（LINE など）。相手が「部屋に入る」に入力すると、つながります。</p>
+          <div class="room-code" aria-label="部屋のコード ${esc(L.code.split('').join(' '))}">${esc(L.code)}</div>
+          <div class="row"><button class="btn" data-act="net-copy">コードをコピー</button><button class="btn ghost" data-act="net-cancel">部屋を閉じる</button></div>
+          <p class="prompt net-wait">相手を待っています</p>
+          <p class="note">試合の設定：${esc(rulesTxt)}</p>
+        </div>`;
+    } else if (L.st === 'joining') {
+      body = `<div class="lob-wait"><p class="prompt net-wait">部屋 ${esc(L.code)} に接続しています</p><button class="btn ghost" data-act="net-cancel">やめる</button></div>`;
+    } else {
+      body = `
+        ${L.err ? `<p class="note warn lob-err" role="alert">${esc(L.err)}</p>` : ''}
+        <label class="lob-field"><span>あなたの名前（相手の画面に出ます。12文字まで）</span><input id="net-name" class="lob-input" type="text" maxlength="12" autocomplete="nickname" placeholder="例：たろう" value="${esc(s.netName || '')}"></label>
+        <div class="lob-grid">
+          <section class="lob-card">
+            <h3>部屋を作る</h3>
+            <p class="note">あなたの端末が審判になります。試合の設定はタイトルで選んだもの：<b>${esc(rulesTxt)}</b></p>
+            <button class="btn primary" data-act="net-create">部屋を作る</button>
+          </section>
+          <section class="lob-card enemy">
+            <h3>部屋に入る</h3>
+            <label class="lob-field"><span>部屋のコード（${NET.CODE_LEN}文字）</span><input id="net-code" class="lob-input code" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7P2QX" value="${esc(L.code || '')}"></label>
+            <button class="btn primary" data-act="net-join">入る</button>
+          </section>
+        </div>
+        <p class="note">知り合いどうしで遊ぶためのしくみです。つなぐときだけ PeerJS の無料サービスを使い、試合のデータは端末どうしで直接やりとりします。会社や学校のネットワークなど、つながらない回線もあります。</p>`;
+    }
+    root.innerHTML = `
+      <div class="wrap lobby">
+        ${hudHTML('<span class="stat">ONLINE<b>対戦</b></span>', '<button class="btn ghost" data-act="to-title">戻る</button>')}
+        <section class="panel lobby-panel" aria-label="オンライン対戦">
+          <h2 class="ptitle">オンライン対戦<small>ONLINE BATTLE</small></h2>
+          ${body}
+        </section>
+      </div>`;
+  }
+  // 名前を打つたびに残す・コードの欄で Enter を押したら入る
+  root.addEventListener('input', (ev) => {
+    if (ev.target && ev.target.id === 'net-name') { app.settings.netName = ev.target.value; store.set('settings', app.settings); }
+  });
+  root.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && ev.target && ev.target.id === 'net-code') { ev.preventDefault(); lobbyJoin(); }
+  });
+  // ページを閉じるときは、相手に「抜けた」と伝える（届かないこともあるので、相手側は合図が途切れたことでも気づく）
+  window.addEventListener('pagehide', () => { if (app.net && app.net.link) app.net.link.send({ t: 'bye' }); });
+
   // ---------------- 公開ページの更新時に状態を引き継ぐ ----------------
   function snapshot() {
     try {
+      // オンライン対戦は通信が切れるので引き継がない（タイトルから）
+      if (app.net || app.lobby) return JSON.parse(JSON.stringify({ screen: 'title', settings: app.settings }));
       const g = app.game;
       const gd = g ? Object.assign({}, g) : null;
       if (gd) delete gd.rng;

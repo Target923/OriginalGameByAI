@@ -7,6 +7,7 @@ let html = src('template.html');
 const samplePath = path.join(__dirname, 'src', 'sim-sample.json');
 const sample = fs.existsSync(samplePath) ? fs.readFileSync(samplePath, 'utf8').replace(/<\//g, '<\\/') : 'null';
 html = html.replace('/*ENGINE*/', () => src('engine.js'))
+           .replace('/*NET*/', () => src('net.js'))
            .replace('/*AI*/', () => src('ai.js'))
            .replace('/*SIM*/', () => src('sim.js'))
            .replace('/*SAMPLE*/', () => sample)

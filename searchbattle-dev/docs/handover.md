@@ -1,10 +1,11 @@
-# サーチバトル 引き継ぎ資料（2026-10-24）
+# サーチバトル 引き継ぎ資料（2026-10-25）
 
 新しいチャットで続きをするための資料。最初にこれを読み、ルールの細部が要るときだけ「確定ルール」「総括」の該当箇所を読む（全部は読まない）。
 
 ## いまの状態
-- ルール v12.15（スピードボーナスの点数）、エンジンのバージョン19（src/engine.js の `VERSION`）。公開 Version 47。
+- ルール v12.15（スピードボーナスの点数）、エンジンのバージョン19（src/engine.js の `VERSION`）、通信の版1（src/net.js の `NET_VERSION`）。
 - 直近の変更
+  - オンライン対戦 v1（2026-10-25。ルールの変更なし）：タイトルのモードに「オンライン対戦」。部屋を作った人（ホスト）の端末が審判で、PeerJS の無料クラウドでつなぎ、データは WebRTC で端末どうし直接（サーバー代0円）。1vs1 の単発試合（4×4／5×5、アイテムの設定もホストのもの）と「もう一度」（ホストが始める）。ゲストには伏せたスナップショットだけを送る。しくみ・メッセージ・伏せるもの・テストは docs/online.md。新しいファイル src/net.js、test/net_sim.js、test/online_e2e.py。ui.js は、人の操作で盤面を変えるところをすべて操作の窓口 `act()` 経由にした（ふつうの試合の動きは同じ）。本物の回線での確認はユーザーに頼んだ（この環境から外の PeerJS に出られない）。
   - v12.15：スピードボーナスを速い勝ちへのご褒美に広げた。1ターン目52・42・33・25・18・12・7・8ターン目3、9ターン目から0（engine の TOUR_SPEED）。8ターン目まで＝予選のトレジャーチャンス4回を使い切る前。見本では予選の19.2%で出て、出たときの平均6.8点。予選の持ち点の最低が1点まで下がる（理論上はマイナスもありうる）。シミュレーターの入力欄は TOUR_SPEED の長さに合わせて出す（今は8つ）。
   - v12.14：スピードボーナス（予選だけ）。早いターンで負けた側は勝った側にさらに点を奪われる（1ターン目15・14・12・9・5、6ターン目から0。アンサー失敗で負けても同じ）。2マス1個で即負けしてキューブを温存する動きを防ぐ。engine の TOUR_SPEED・speedFor・matchPoints（speed）・pts.spdWon/spdLost、sim.js の rules.speed、結果の表の「スピード」列、シミュレーターの入力欄。
   - 画面（v12.13の後）：タイトルの光を盤の中心に。配置画面を3列に（左＝アイテム、中央＝盤・操作・配置完了、右＝キューブ）。幅900px以上で画面全体をウインドウの高さに合わせて拡大・縮小（ui.js の fitScreen。決着では測り直さない）。リプレイのログを左右に分け（左＝相手、右＝あなた）、新しいものを上に（対戦画面と同じ）。途中経過の順位表は、点数を数えてから順位をスライド。ログのアンサーに重ねると盤の上で枠を光らせる（ui.js の hlAnswer。engine の _log に extra＝{ cells }）。画面の拡大・縮小（zoom）の中で、画面上で測った大きさ（getBoundingClientRect）を CSS の大きさに使うとずれるので注意（サーチキューブの立方体で起きた）。リプレイは戻るときも演出し、確率は Web Worker で全場面を先に計算（ui.js の replayStartWorker・replayProbsCore。replayProbsCore は文字列にして Worker でも使うので、引数以外を参照しない）。配置画面のボタンは「自動配置」「リセット」（旧「おまかせ配置」「全部外す」）。
@@ -20,6 +21,7 @@
 | ルールブック（Docs） | https://claude.ai/artifact/H8PsvKivxY1fXYnd5D6pfJ 。docs のツールで編集（doc 829a8622-d46e-45a1-8ac0-5435a3b5d4d1、本文 node 80d22682-fb23）。変えるところだけ find で書き換える |
 | 旧シミュレーター（別ページ） | https://claude.ai/artifact/W54fL2qr9z9zauoT1kaJfG 。本体に組み込んだので不要。削除はユーザーの確認待ち |
 | 確定ルール・総括 | プロジェクトのドキュメント claude/サーチバトル_確定ルール.md・claude/サーチバトル_総括.md（docs/rules.md・docs/summary.md と同じ中身。project_write の local_path で上げる） |
+| オンライン対戦 | 遊べるのは GitHub Pages 版（https://target923.github.io/OriginalGameByAI/ のランチャー、または search_battle.html）だけ。claude.ai の公開ページは WebRTC とほかのサイトへの通信が止められているので使えず、ロビーで GitHub Pages 版へのリンクを出す |
 | GitHub | Target923/OriginalGameByAI（2026-10-24 から書き込み権限あり。main に直接 push する）。ルートの index.html がランチャーで、同じ階層のファイル名で各ゲームを開く（このゲームは search_battle.html。ルールブックのボタンは search_battle_rulebook.pdf を見る）。開発フォルダは searchbattle-dev/ に置く（ランチャーはファイル名で開くだけなので、別のフォルダは影響しない） |
 
 ## 開発フォルダの戻し方
@@ -28,13 +30,13 @@
 3. Node と Python の Playwright（Chromium 入り）を使う。画面テストのスクリーンショットは環境変数 SB_SHOTS（なければ /tmp/sb_shots）。
 
 ## ファイル
-- src/engine.js ルール（Game・Tour・リプレイ）／src/ai.js CPU／src/ui.js 画面（シミュレーター画面も）／src/audio.js 音／src/sim.js シミュレーターの計算（画面とコマンドで共通）／src/template.html HTML と CSS／src/sim-sample.json シミュレーターの見本
+- src/engine.js ルール（Game・Tour・リプレイ）／src/ai.js CPU／src/net.js オンライン対戦（伏せる・ホストとゲストの役・PeerJS）／src/ui.js 画面（シミュレーター・ロビーの画面も）／src/audio.js 音／src/sim.js シミュレーターの計算（画面とコマンドで共通）／src/template.html HTML と CSS／src/sim-sample.json シミュレーターの見本
 - build.js：template.html に各ファイルを差し込んで1ファイルにする
 - tools/sim.js：シミュレーターのコマンド（run・rescore・sample）。tools/item_value.js：アイテムの価値の測定（片方だけ持たない対戦）
 - tools/comp_duel.js：キューブの組み合わせどうしの対戦（`--ref 2,2,2,3,3 --vs 3,3,4,4`、総当たりは `--rr "a;b;c"`、`@cluster` などで置き方を固定、`--kind final` で5×5）。予選は1試合約0.1秒、決勝は約1.6秒〜（7個体どうしは数秒）
 - tools/cube_usage.js：大会での性格ごとのキューブの使い方（試合ごとの内訳・最後まで使わなかったキューブ・予選通過・優勝）。`--tours 200` で約6分。`--setup '{"save":{...}}'` で置き方を上書きして比べられる
 - tools/think_time.js：CPUの考える時間（手番ごとの平均・上位5%・最大）。`--rules final --n 8`（1試合モード5×5）、`--tour`（大会の決勝）、`--src` で別の版と比べる
-- docs/rules.md（確定ルールと変更履歴）・docs/summary.md（総括）・docs/handover.md（この資料）・docs/online.md（オンライン対戦の設計。まだ作っていない）
+- docs/rules.md（確定ルールと変更履歴）・docs/summary.md（総括）・docs/handover.md（この資料）・docs/online.md（オンライン対戦のしくみ・テスト・遊び方・今後）
 
 ## テスト（変更したら回す。時間はこの環境で）
 | 何を確かめる | コマンド | 時間 |
@@ -44,7 +46,9 @@
 | 盤面の決まりごと・リプレイ | `node test/invariants.js 120` | 約10〜14分（v12.13で1試合モードの5×5が厚くなり重くなった） |
 | リプレイの再現 | `node test/replay_check.js` | 約4.5分 |
 | 大会（CPU だけ。アンサー失敗・点の合計も厳しく） | `node test/tour_sim.js 20` | 約1分 |
-| 画面 | `python3 test/vis129.py`（リプレイ）・`test/vis_sim.py`（シミュレーター）・`test/tour_e2e.py`（大会を画面で通す） | 各2〜4分 |
+| 画面 | `python3 test/vis129.py`（リプレイ）・`test/vis_sim.py`（シミュレーター）・`test/tour_e2e.py`（大会を画面で通す）・`test/e2e.py`（1試合モード：CPU戦・プレイヤーバトル） | 各2〜4分 |
+| オンライン対戦（通信なしの模擬） | `node test/net_sim.js`（既定24試合。秘密が漏れない・ゲストの全部がホストと同じ・記録のやり直しと同じ・変な操作を断る） | 約30秒 |
+| オンライン対戦（画面・通信あり） | `python3 test/online_e2e.py`（PeerServer を 127.0.0.1:9000 に立て、ブラウザ2つで部屋〜決着〜もう一度〜退出。SB_NETDEPS に peer・peerjs を npm で入れる） | 約2分 |
 
 CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --tours 200 --out src/sim-sample.json`（約6分）。見本の数字は `node tools/sim.js rescore --load src/sim-sample.json` か、src/sim.js の summarize で出せる。
 テストを並べて回すときは、2つずつにする（この環境は2コア）。pkill -f で自分のコマンドの文字列に当たる名前を使わない（自分のシェルごと止まる）。
@@ -63,11 +67,11 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 - 長い実験のループに入らない。測定は必要な分を1回にとどめ、途中経過を報告する。点数のルールの検討は、ユーザーがシミュレーター画面で回す（トークンを使わない）。
 - トークンの節約：長いコードや出力を表示しない。様子見の回数を減らす。
 
-## 次にやること：オンライン対戦（ユーザーの希望。2026-10-25）
-- 設計は docs/online.md（プロジェクトのドキュメント claude/サーチバトル_オンライン設計.md と同じ中身）。最初にこれを読む。
-- 方式はめっちゃカメレオン型（P2P・ホスト権威）：部屋を作った人の端末が審判、PeerJS の無料クラウドでつなぐ。サーバー代0円。まず1vs1の単発試合だけ。
-- ユーザーはコードを読んで勉強する。新しいコードには、日本語のコメントで「何のために・なぜそうするか」を書く。しくみの説明は docs/online.md に足していく。
-- PeerJS は 1.5.5（npm。2025-06-07）。テスト用の PeerServer は npm の peer（1.0.2）。この環境からは外の PeerJS クラウドに出られないので、本物の回線での確認はユーザーに頼む。
+## 次にやること
+- オンライン対戦 v1 を、ユーザーが知り合いと本物の回線で試す（GitHub Pages 版で。遊び方は docs/online.md の 8）。つながらない・動きがおかしいときは、どの端末・回線か、画面の知らせを聞いて直す。
+- v2 の候補（ユーザーと相談）：再接続、ホストものぞけない形（B'）、観戦、大会のオンライン、差分だけ送る通信。docs/online.md の 9。
+- オンライン対戦のコードを変えたら：`node test/net_sim.js` と `python3 test/online_e2e.py`。メッセージの形を変えたら net.js の `NET_VERSION` を上げる（違う版どうしは hello で断る）。engine に新しい項目（とくに本人だけの情報）を足したら、redactFor で伏せるかを考える（net_sim が「送ってよい項目の一覧」にない項目で失敗して知らせる）。
+- 新しいコードには、日本語のコメントで「何のために・なぜそうするか」を書く（ユーザーがコードを読んで勉強する）。
 
 ## 残っている課題・アイデア
 - 決勝の先攻有利（CPU どうしの見本で51.5〜59.0%。測定ごとにぶれる）。
