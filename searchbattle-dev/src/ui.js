@@ -1570,10 +1570,24 @@
   }
 
   // ---------------- 描画 ----------------
+  // タイトルの立方体から伸びる光を、傾けた4×4の盤の中心に当てる（盤は3Dで傾けているので、マスの見た目の位置から中心を求める）
+  function aimTitleBeam() {
+    const v = document.querySelector('.visual'); if (!v) return;
+    const beam = v.querySelector('.beamv'), cube = v.querySelector('.cube3d'), cells = v.querySelectorAll('.cells .cell');
+    if (!beam || !cube || !cells.length) return;
+    const vr = v.getBoundingClientRect();
+    let x = 0, y = 0;
+    for (const c of cells) { const r = c.getBoundingClientRect(); x += r.left + r.width / 2; y += r.top + r.height / 2; }
+    x = x / cells.length - vr.left; y = y / cells.length - vr.top;
+    const top = cube.offsetTop + cube.offsetHeight + 6;
+    cube.style.left = x + 'px';
+    beam.style.left = x + 'px'; beam.style.top = top + 'px'; beam.style.height = Math.max(0, y - top) + 'px';
+  }
+  window.addEventListener('resize', () => { if (app.screen === 'title') aimTitleBeam(); });
   function render() {
     hideTip();
     if (app.replay) { renderReplay(); return; }
-    if (app.screen === 'title') renderTitle();
+    if (app.screen === 'title') { renderTitle(); requestAnimationFrame(aimTitleBeam); }
     else if (app.screen === 'setup') renderSetup();
     else if (app.screen === 'draft') renderDraft();
     else if (app.screen === 'battle') renderBattle();

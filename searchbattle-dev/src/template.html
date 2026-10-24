@@ -434,7 +434,8 @@ h1, h2, h3 { text-wrap: balance; }
 .cube3d i:nth-child(3) { transform: rotateY(90deg) translateZ(38px); } .cube3d i:nth-child(4) { transform: rotateY(-90deg) translateZ(38px); }
 .cube3d i:nth-child(5) { transform: rotateX(90deg) translateZ(38px); } .cube3d i:nth-child(6) { transform: rotateX(-90deg) translateZ(38px); }
 @keyframes spin3d { from { transform: translateY(0) rotateX(-22deg) rotateY(0deg); } 50% { transform: translateY(-10px) rotateX(-22deg) rotateY(180deg); } to { transform: translateY(0) rotateX(-22deg) rotateY(360deg); } }
-.beamv { position: absolute; top: 92px; left: 50%; width: 2px; height: 110px; margin-left: -1px; background: linear-gradient(180deg, rgba(79, 227, 255, .9), transparent); box-shadow: 0 0 12px var(--cyan); }
+.beamv { position: absolute; top: 92px; left: 50%; width: 2px; height: 110px; margin-left: -1px; z-index: 1; background: linear-gradient(180deg, rgba(79, 227, 255, .9), rgba(79, 227, 255, .45)); box-shadow: 0 0 12px var(--cyan); }
+.beamv::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px 3px rgba(79, 227, 255, .8); animation: blink 1.6s ease-in-out infinite; }
 .settings { display: grid; gap: 14px; padding: 18px; }
 .set-row { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); align-items: center; }
 @media (min-width: 720px) { .set-row { grid-template-columns: 11em minmax(0, 1fr); } }
