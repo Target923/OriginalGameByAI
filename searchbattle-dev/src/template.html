@@ -493,6 +493,7 @@ h1, h2, h3 { text-wrap: balance; }
 .su-ctrl { display: grid; gap: 8px; justify-items: center; border-top: 1px solid rgba(96, 196, 255, .14); padding-top: 12px; margin-top: 8px; }
 .su-ctrl-main, .su-ctrl-sub { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .su-ctrl-main .btn { min-width: 7.2em; }
+.su-ctrl-sub .btn { width: 7.2em; text-align: center; }
 .su-done { display: grid; gap: 6px; justify-items: center; }
 .su-donebtn { width: 100%; max-width: 520px; font-size: 1.2rem; padding: .9em 1em; letter-spacing: .12em; }
 .su-parts { display: flex; flex-direction: column; gap: 12px; }
@@ -895,15 +896,16 @@ body.replaying #app { display: none; }
 .st-row.fin { box-shadow: inset 3px 0 0 var(--amber); }
 .st-row.me.fin { box-shadow: inset 3px 0 0 var(--amber), 0 0 0 1px rgba(79, 227, 255, .35); }
 .st-row.champ { border-color: rgba(255, 193, 74, .8); background: linear-gradient(90deg, rgba(255, 193, 74, .16), rgba(255, 193, 74, .03)); }
-.fx .st-row { animation: rowIn .5s cubic-bezier(.2, .8, .2, 1) both, rowShift .9s cubic-bezier(.3, .9, .2, 1) both; animation-delay: calc(var(--i) * 90ms), 0s; }
+/* 演出：はじめは前の順位の位置に置いて点数を数え、数え終わったら（.slid）新しい順位へスライドする */
+.fx .st-row { animation: rowIn .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 90ms); transform: translateY(calc(var(--shift) * (100% + 6px))); transition: transform .9s cubic-bezier(.3, .9, .2, 1); }
+.fx.slid .st-row { transform: none; }
 @keyframes rowIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes rowShift { from { transform: translateY(calc(var(--shift) * (100% + 6px))); } to { transform: none; } }
 .st-rank { display: grid; justify-items: start; gap: 1px; }
 .st-rank b { font: 700 1.5rem/1 var(--f-tech); color: var(--text); }
 .st-row.fin .st-rank b { color: var(--amber); }
 .chg { font: 700 .62rem var(--f-tech); font-style: normal; }
 .chg.up { color: var(--good); } .chg.down { color: var(--bad); }
-.fx .chg { opacity: 0; transition: opacity .3s; } .fx.counted .chg { opacity: 1; }
+.fx .chg { opacity: 0; transition: opacity .3s .5s; } .fx.slid .chg { opacity: 1; }
 .st-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .st-name > div { display: grid; min-width: 0; }
 .st-name b { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

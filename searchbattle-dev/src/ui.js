@@ -976,8 +976,8 @@
                 <button class="btn${S.treasureMode ? ' primary' : ''}" data-act="treasure-mode" ${P.pieces.length ? '' : 'disabled'} aria-pressed="${S.treasureMode}">◆ トレジャー${P.treasure ? '（済）' : ''}</button>
               </div>
               <div class="su-ctrl-sub">
-                <button class="btn ghost" data-act="random">おまかせ配置</button>
-                <button class="btn ghost" data-act="clear" ${P.pieces.length ? '' : 'disabled'}>全部外す</button>
+                <button class="btn ghost" data-act="random">自動配置</button>
+                <button class="btn ghost" data-act="clear" ${P.pieces.length ? '' : 'disabled'}>リセット</button>
               </div>
             </div>
           </section>
@@ -1414,7 +1414,7 @@
       const bk = `はじめ${q.start}・撃破で奪った+${q.take}・奪われた−${q.taken}・勝利で奪った+${q.vicWon}・奪われた−${q.vicLost}${(q.spdWon | 0) || (q.spdLost | 0) ? `・スピードで奪った+${q.spdWon | 0}・奪われた−${q.spdLost | 0}` : ''}・宝石${p.gems | 0}つ（${(p.gems | 0) * TourE.GEM_PTS}点）`;
       const line = showLine && i === 2 ? '<div class="st-line" aria-hidden="true"><span>決勝ライン</span></div>' : '';
       return `${line}<div class="st-row${x.id === 0 ? ' me' : ''}${isFin ? ' fin' : ''}${champ ? ' champ' : ''}" style="--i:${i};--shift:${prev ? old - x.rank : 0}" data-id="${x.id}">
-        <div class="st-rank"><b>${x.rank}</b>${prev && chg ? `<i class="chg ${chg > 0 ? 'up' : 'down'}">${chg > 0 ? '▲' : '▼'}${Math.abs(chg)}</i>` : ''}</div>
+        <div class="st-rank"><b${prev && old !== x.rank ? ` data-rk="${x.rank}"` : ''}>${prev ? old : x.rank}</b>${prev && chg ? `<i class="chg ${chg > 0 ? 'up' : 'down'}">${chg > 0 ? '▲' : '▼'}${Math.abs(chg)}</i>` : ''}</div>
         <div class="st-name">${avatar(x.id)}<div><b>${esc(p.name)}</b><small>${TourE.persona(T, x.id) ? `${esc(TourE.PERSONAS[TourE.persona(T, x.id)].name)}・` : ''}${rec}${champ ? '・<span class="gold">優勝</span>' : isFin ? '・決勝' : ''}</small></div></div>
         <div class="st-pts" data-tip="${esc(bk)}"><b data-from="${from}" data-to="${x.total}">${prev ? from : x.total}</b><small>pt</small>${tieTag(i)}${prev && gain ? `<span class="gain ${gain > 0 ? 'up' : 'down'}">${gain > 0 ? '+' : ''}${gain}</span>` : ''}${gemsHTML(p.gems | 0, prev && prev.gems ? (p.gems | 0) - prev.gems[x.id] : 0)}</div>
         ${cubesHTML(p)}
@@ -1578,9 +1578,15 @@
         };
         requestAnimationFrame(step);
       });
-      if (fx.kind === 'round' && T.stage === 'qualify') SND.sfx(T.finalists.indexOf(0) >= 0 ? 'qualify' : 'eliminated');
-      else if (fx.kind === 'done') SND.sfx(T.champion === 0 ? 'champion' : T.finalists.indexOf(0) >= 0 ? 'eliminated' : 'rankUp');
-      else if (fx.kind === 'round') SND.sfx('rankUp');
+      // 点数を数え終わってから、順位を新しい並びへスライドする（v12.14の後。それまではスライドが先で、点数の増減が後だった）
+      setTimeout(() => {
+        if (!document.body.contains(scr)) return;
+        scr.classList.add('slid');
+        scr.querySelectorAll('.st-rank b[data-rk]').forEach((b) => { b.textContent = b.dataset.rk; });
+        if (fx.kind === 'round' && T.stage === 'qualify') SND.sfx(T.finalists.indexOf(0) >= 0 ? 'qualify' : 'eliminated');
+        else if (fx.kind === 'done') SND.sfx(T.champion === 0 ? 'champion' : T.finalists.indexOf(0) >= 0 ? 'eliminated' : 'rankUp');
+        else if (fx.kind === 'round') SND.sfx('rankUp');
+      }, reduce ? 0 : 1100);
     }, delay);
   }
 
@@ -2382,14 +2388,14 @@
     for (const k of [0, 1]) {
       document.getElementById('rp-lh' + k).textContent = `${g.players[k].name}のアクション`;
       const logEl = document.getElementById('rp-log' + k);
-      logEl.innerHTML = g.log.map((e, i) => {
+      // 新しいアクションを上に（対戦画面と同じ）。表示している場面までのログなので、いまの場面の行がいちばん上に来る
+      logEl.innerHTML = g.log.map((e, i) => [e, i]).reverse().map(([e, i]) => {
         if (e.actor != null && e.actor !== k) return '';
         const cls = [R.logFrame[i] === R.pos ? 'cur' : '', e.actor == null ? 'sys' : ''].filter(Boolean).join(' ');
         return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
       }).join('') || '<li class="none">まだありません</li>';
-      const curs = logEl.querySelectorAll('li.cur');
-      const last = curs.length ? curs[curs.length - 1] : logEl.lastElementChild;
-      if (last) logEl.scrollTop = Math.max(0, last.offsetTop - logEl.clientHeight + last.offsetHeight + 6);
+      const cur = logEl.querySelector('li.cur');
+      logEl.scrollTop = cur ? Math.max(0, cur.offsetTop - 6) : 0;
     }
     // 操作の欄
     const range = replayEl.querySelector('.rp-range');
@@ -2793,10 +2799,10 @@
       if (app.tour) {
         // 大会：CPUと同じ考え方（残りのキューブ・予選か決勝か）で置く。トレジャーもCPUと同じ選び方
         const plan = AI.tourSetupPlan(app.tour, 0, g.rules.kind === 'final' ? 'final' : 'prelim', null, Math.random);
-        if (!AI.setup(g, pi, plan)) { denied = true; toast('おまかせで置けませんでした。手で置いてください', 'warn'); return; }
+        if (!AI.setup(g, pi, plan)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
         const ps = g.players[pi].pieces;
         toast(`CPUと同じ考え方で置きました（${ps.length}個体・${ps.reduce((a, q) => a + q.size, 0)}マス）`, 'note');
-      } else if (!g.randomSetup(pi, AI.setupSizes(g, pi)) && !g.randomSetup(pi)) { denied = true; toast('おまかせで置けませんでした。手で置いてください', 'warn'); return; }
+      } else if (!g.randomSetup(pi, AI.setupSizes(g, pi)) && !g.randomSetup(pi)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
       app.setup.treasureMode = false; render();
     },
     clear() { G().clearSetup(app.setup.pi); render(); },
@@ -3297,7 +3303,7 @@
     h += `<section class="panel"><h3 class="ptitle">性格ごと<small>PERSONAS</small></h3><div class="sim-tw"><table class="sim-table">
       <thead><tr><th>性格</th><th>出場</th><th>予選通過</th><th>優勝</th><th>決勝の勝率</th><th>予選後の持ち点</th><th>1試合に置いた個体</th><th>1試合に使ったアイテム</th></tr></thead><tbody>
       ${sm.persona.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.n}</td><td>${scell(p.qual)}</td><td>${scell(p.champ, 'mg')}</td><td>${spc(p.finWin)}</td><td>${sn1(p.pts)}</td><td>${sn1(p.placed)}</td><td>${sn1(p.items)}</td></tr>`).join('')}
-      </tbody></table></div><p class="sim-note">標準＝あなたの席に座ったCPU（性格なし。大会のおまかせ配置と同じ考え方）。ほかの3席に、4つの性格から毎回3つが出場します。</p></section>`;
+      </tbody></table></div><p class="sim-note">標準＝あなたの席に座ったCPU（性格なし。大会の自動配置と同じ考え方）。ほかの3席に、4つの性格から毎回3つが出場します。</p></section>`;
     h += `<div class="sim-grid2">
       <section class="panel"><h3 class="ptitle">逆転<small>COMEBACK</small></h3><dl class="sim-kv">
         <dt>3試合目で決勝の2人が入れ替わる</dt><dd>${spc(cb.r3change)}</dd>

@@ -1420,11 +1420,11 @@
     return adj + noise;
   }
 
-  // planArg：配置の方針を直接渡す（大会の「おまかせ配置」で、あなたの分をCPUと同じ考え方で置くとき）
+  // planArg：配置の方針を直接渡す（大会の「自動配置」（v12.14の後に「おまかせ配置」から改名）で、あなたの分をCPUと同じ考え方で置くとき）
   function setup(game, pi, planArg) {
     const rng = game.rng;
     const pol = policy[pi] || {};
-    // 置き直し（おまかせを続けて押したとき）も、空の盤面から考える（置いた分で「置ける数」が減って見えないように）
+    // 置き直し（自動配置を続けて押したとき）も、空の盤面から考える（置いた分で「置ける数」が減って見えないように）
     game.clearSetup(pi);
     let sizes = setupSizes(game, pi);
     const fits = (list) => { const need = {}; for (const x of list) need[x] = (need[x] || 0) + 1; return Object.keys(need).every((x) => need[x] <= game.stockLeft(pi, +x)); };
@@ -1552,7 +1552,7 @@
     if (when === 'edge') return rank >= 2 || (rank === 1 && tot(1) - tot(2) < swing);
     return !(rank === 0 && tot(0) - tot(1) >= swing);
   }
-  // rngArg：抽選に使う乱数（あなたの「おまかせ」は押すたびに変えたいので Math.random を渡す）
+  // rngArg：抽選に使う乱数（あなたの「自動配置」は押すたびに変えたいので Math.random を渡す）
   function tourSetupPlan(T, id, kind, opt, rngArg) {
     const persona = E.Tour.persona ? E.Tour.persona(T, id) : null;
     const o = Object.assign({}, TOUR_SETUP, (persona && PERSONA_SETUP[persona]) || {}, (policy.tourSetup && policy.tourSetup[id]) || {}, opt || {});
