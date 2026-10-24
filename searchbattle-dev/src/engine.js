@@ -28,7 +28,7 @@
   const SHAPES_BY_SIZE = { 1: ['A1'], 2: ['D2'], 3: ['I3', 'L3'], 4: ['I4', 'O4', 'L4', 'T4'], 5: ['I5', 'L5', 'V5', 'T5', 'Y5'] };
 
   // 状態の形が変わったら上げる（公開ページの更新時に、古い対戦を新しいルールで再開しないため）
-  const VERSION = 17;
+  const VERSION = 18;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -183,6 +183,7 @@
     this.treasurePts = opts.treasurePts | 0;
     this.treasureSteal = !!opts.treasureSteal;   // 大会：トレジャー＝相手の宝石（見つけたら奪う）
     this.victoryPts = opts.victoryPts | 0;       // 大会：この試合の勝利点（表示用）
+    this.speedBonus = !!opts.speedBonus;         // 大会の予選：スピードボーナスあり（v12.14）
     this.clock = 0;
     this.turn = 1;
     this.first = opts.first != null ? opts.first : (this.rng() < 0.5 ? 0 : 1);
@@ -1004,6 +1005,11 @@
   // 勝者が負けた側から奪う勝利点：予選1試合目5・2試合目10・3試合目15・決勝20（v12.10。3試合目＝1・2試合目の合計で、最後まで逆転しやすい。宝石1つ＝1試合目の勝ち）
   const TOUR_VICTORY_BY = [5, 10, 15, 20];
   const TOUR_VICTORY = TOUR_VICTORY_BY[0];
+  // スピードボーナス（v12.14、予選だけ）：早いターンで負けた側は、勝った側にさらに点を奪われる。index＝決着したターン（1ターン＝両者の手番）。
+  // 1ターン目15・2ターン目14・3ターン目12・4ターン目9・5ターン目5、6ターン目（トレジャーチャンス3回目）からは0。
+  // 大差でリードしているときに2マス1個だけ置いて即負けし、キューブを温存する動きを防ぐ（アンサー失敗で差し出して負けても同じ）
+  const TOUR_SPEED = [0, 15, 14, 12, 9, 5];
+  function speedFor(turn) { return TOUR_SPEED[turn | 0] || 0; }
   function victoryFor(kind, round) { return kind === 'final' ? TOUR_VICTORY_BY[3] : TOUR_VICTORY_BY[Math.max(0, Math.min(2, round | 0))]; }
   function victorySteal() { return TOUR_VICTORY; }
   // 大会の初期アイテム：9種類を2つずつ（合計18個。v12.5で購入を廃止して1つずつ→2つずつ）
@@ -1013,6 +1019,8 @@
     TREASURE: TOUR_TREASURE,
     VICTORY: TOUR_VICTORY,
     VICTORY_BY: TOUR_VICTORY_BY,
+    SPEED: TOUR_SPEED,
+    speedFor,
     GEMS: TOUR_GEMS,
     GEM_PTS: TOUR_GEM_PTS,
     victoryFor,
@@ -1042,7 +1050,7 @@
         return {
           id: i, name, cpu: !!cpu[i], char: i > 0 ? lineup[i - 1] : null, stock: Object.assign({}, STOCK), inv,
           // take＝撃破で奪った、taken＝撃破で奪われた、vicWon／vicLost＝勝利で奪った／奪われた。gems＝持っている宝石（1つ5点）
-          pts: { start: TOUR_START, take: 0, taken: 0, vicWon: 0, vicLost: 0 }, gems: TOUR_GEMS, gemsWon: 0, gemsLost: 0, wins: 0, losses: 0, draws: 0,
+          pts: { start: TOUR_START, take: 0, taken: 0, vicWon: 0, vicLost: 0, spdWon: 0, spdLost: 0 }, gems: TOUR_GEMS, gemsWon: 0, gemsLost: 0, wins: 0, losses: 0, draws: 0,
           lotto: rng(),
         };
       });
@@ -1055,7 +1063,7 @@
       return { v: VERSION, players, rounds, round: 0, results: [], stage: 'intro', finalists: null, finalFirstBy: null, champion: null, log: [], personas };
     },
     // 持ち点の合計＝はじめ50＋撃破で奪った−奪われた＋勝利で奪った−奪われた＋宝石×5
-    total(p) { const q = p.pts; return q.start + q.take - q.taken + q.vicWon - q.vicLost + (p.gems | 0) * TOUR_GEM_PTS; },
+    total(p) { const q = p.pts; return q.start + q.take - q.taken + q.vicWon - q.vicLost + (q.spdWon | 0) - (q.spdLost | 0) + (p.gems | 0) * TOUR_GEM_PTS; },
     cubes(p) { return [2, 3, 4, 5].reduce((s, k) => s + (p.stock[k] || 0), 0); },
     cells(p) { return [2, 3, 4, 5].reduce((s, k) => s + k * (p.stock[k] || 0), 0); },
     items(p) { return ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
@@ -1084,7 +1092,7 @@
         stocks: [stockFor(pa), stockFor(pb)],
         inventory: [Object.assign({}, pa.inv), Object.assign({}, pb.inv)],
         oncePerMatch: !fin, draftEach: fin ? Math.floor(ITEM_KEYS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
-        victoryPts: victoryFor(kind, T.round),
+        victoryPts: victoryFor(kind, T.round), speedBonus: !fin,
       }, extra || {});
     },
     // 試合の結果を反映する（a, b は大会の番号。game の 0番が a、1番が b）
@@ -1100,7 +1108,10 @@
         const victory = win ? vp : lose ? -vp : 0;
         const gems = (s.treasureFound ? 1 : 0) - (o.treasureFound ? 1 : 0);
         const treasure = gems * TOUR_GEM_PTS;
-        return { take: s.attack, taken: o.attack, victory, gems, treasure, total: s.attack - o.attack + victory + treasure, placed: s.placed.length };
+        // スピードボーナス（予選だけ）：決着したターンで決まる点を、負けた側から勝った側へ
+        const sp = game.speedBonus && !r.draw ? speedFor(game.turn) : 0;
+        const speed = win ? sp : lose ? -sp : 0;
+        return { take: s.attack, taken: o.attack, victory, speed, gems, treasure, total: s.attack - o.attack + victory + speed + treasure, placed: s.placed.length };
       });
     },
     apply(T, a, b, game, kind) {
@@ -1115,6 +1126,7 @@
         if (sum[k].treasureFound) p.gemsWon = (p.gemsWon | 0) + 1;
         if (sum[1 - k].treasureFound) p.gemsLost = (p.gemsLost | 0) + 1;
         if (d.victory > 0) p.pts.vicWon += d.victory; else p.pts.vicLost -= d.victory;
+        if (d.speed > 0) p.pts.spdWon = (p.pts.spdWon | 0) + d.speed; else if (d.speed < 0) p.pts.spdLost = (p.pts.spdLost | 0) - d.speed;
         for (const size of s.lost) p.stock[size] = Math.max(0, (p.stock[size] || 0) - 1);
         p.inv = Object.assign({}, s.items);
         if (r.draw) p.draws += 1; else if (r.winner === k) p.wins += 1; else p.losses += 1;

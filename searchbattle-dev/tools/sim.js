@@ -32,13 +32,14 @@ function parseRules(str) {
   for (const part of String(str).split(',')) {
     const [k, v] = part.split('=').map((x) => x.trim());
     if (k === 'vic') r.vic = v.split('/').map(Number);
+    else if (k === 'speed') r.speed = [0].concat(v.split('/').map(Number));
     else if (k === 'gem' || k === 'gemPts') r.gemPts = +v;
     else if (k === 'gems') r.gems = +v;
     else if (k === 'start') r.start = +v;
   }
   return r;
 }
-const rulesLabel = (r) => `勝利${r.vic.join('/')}・宝石${r.gems}×${r.gemPts}・はじめ${r.start}+${r.gems * r.gemPts}`;
+const rulesLabel = (r) => `勝利${r.vic.join('/')}・宝石${r.gems}×${r.gemPts}・はじめ${r.start}+${r.gems * r.gemPts}・スピード${(r.speed || []).slice(1).join('/')}`;
 
 function parallel(cmdName, chunks, extra, onMsg) {
   return Promise.all(chunks.filter((c) => c.length).map((chunk) => new Promise((resolve, reject) => {

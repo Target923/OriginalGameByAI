@@ -14,7 +14,7 @@
 
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   // いまのゲームの点数のルール
-  const DEFAULT_RULES = { start: Tour.START, gems: Tour.GEMS, gemPts: Tour.GEM_PTS, vic: Tour.VICTORY_BY.slice() };
+  const DEFAULT_RULES = { start: Tour.START, gems: Tour.GEMS, gemPts: Tour.GEM_PTS, vic: Tour.VICTORY_BY.slice(), speed: Tour.SPEED.slice() };
   const PERSONA_KEYS = ['std', 'mass', 'save', 'steady', 'items'];
   const PERSONA_NAMES = { std: '標準', mass: '物量型', save: 'キューブ温存型', steady: '堅実型', items: 'アイテム浪費型' };
 
@@ -75,6 +75,9 @@
     r.vic = (r.vic || DEFAULT_RULES.vic).slice(0, 4).map((x) => +x || 0);
     while (r.vic.length < 4) r.vic.push(r.vic[r.vic.length - 1] || 0);
     r.start = +r.start || 0; r.gems = Math.max(0, r.gems | 0); r.gemPts = +r.gemPts || 0;
+    // スピードボーナス（予選だけ）：index＝決着したターン（0は使わない）
+    r.speed = [0].concat((r.speed || DEFAULT_RULES.speed).slice(1, 6).map((x) => Math.max(0, +x || 0)));
+    while (r.speed.length < 6) r.speed.push(0);
     return r;
   }
   const startTotal = (rules) => rules.start + rules.gems * rules.gemPts;
@@ -86,6 +89,7 @@
     A.take += m.at[0]; B.take += m.at[1];
     if (m.w === m.a) { A.total += v; B.total -= v; A.wins++; B.losses++; }
     else if (m.w === m.b) { B.total += v; A.total -= v; B.wins++; A.losses++; }
+    if (m.k === 'P' && m.w >= 0) { const sp = rules.speed[m.t] || 0; if (sp) { const W = m.w === m.a ? A : B, L = m.w === m.a ? B : A; W.total += sp; L.total -= sp; } }
     if (m.tf[0] && B.gems > 0) { B.gems--; A.gems++; A.total += rules.gemPts; B.total -= rules.gemPts; }
     if (m.tf[1] && A.gems > 0) { A.gems--; B.gems++; B.total += rules.gemPts; A.total -= rules.gemPts; }
   }
