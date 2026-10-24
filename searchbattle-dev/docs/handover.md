@@ -45,7 +45,7 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 ## ユーザーとの決まりごと
 - 返事は日本語。
 - 公開の手順：ビルド → dist/searchbattle.html を artifact に publish → dist/search_battle.html をリポジトリのルートの search_battle.html に上書き → searchbattle-dev/ の変更と一緒に1コミットで main に push。ルートだけ・フォルダだけの片方を更新しない（次のセッションは searchbattle-dev/ のソースから作り直すため）。
-- コミットメッセージ：英語で Conventional Commits の形にする（ユーザーの希望）。1行目は `type(searchbattle): summary`（type は feat・fix・docs・refactor・test・chore。作業途中を残すときだけ WIP）。本文に要点を英語で書き、最後に Claude がコミットしたとわかる署名行（Co-Authored-By: Claude …）を付ける。ルール変更は summary に v 番号を入れる（例：`feat(searchbattle): v12.13 ...`）。
+- コミットメッセージ：英語で Conventional Commits の形にする（ユーザーの希望）。1行目は `type(searchbattle): summary`（type は feat・fix・docs・refactor・test・chore。作業途中を残すときだけ WIP）。本文に要点を英語で書く。署名行（Co-Authored-By など）は付けない（ユーザーの希望。コミットの author 名を git -c user.name="Claude" -c user.email="noreply@anthropic.com" で「Claude」にして見分ける）。ルール変更は summary に v 番号を入れる（例：`feat(searchbattle): v12.13 ...`）。
 - push したら、何を変えたかと公開ページに反映されることを一言伝える。ファイルの送付・zip は不要になった（ユーザーが求めたときだけ）。
 - セッションが約40万トークンを超えたら新しいチャットに移る（ユーザーの運用）。
 - ルールを変えたら、docs/rules.md（変更履歴に v 番号）・docs/summary.md・プロジェクトのドキュメント・ルールブック（Docs）を更新する。ルールの形が変わったら engine.js の VERSION を上げる（途中の対戦・大会は引き継がない）。
