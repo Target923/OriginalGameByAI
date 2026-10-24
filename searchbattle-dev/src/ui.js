@@ -179,7 +179,7 @@
     return `<td class="gems" data-tip="${tip}" aria-label="${tip}">${html || '0'}</td>`;
   };
   // スピードボーナスの説明（予選だけ）
-  const speedText = () => `1ターン目の決着で${E.Tour.SPEED[1]}点、2〜5ターン目は${E.Tour.SPEED.slice(2).join('・')}点、6ターン目から0`;
+  const speedText = () => { const S = E.Tour.SPEED, n = S.length - 1; return `1ターン目の決着で${S[1]}点、2〜${n}ターン目は${S.slice(2).join('・')}点、${n + 1}ターン目から0`; };
   const vicText = () => E.Tour.VICTORY_BY.slice(0, 3).join('・') + '・決勝' + E.Tour.VICTORY_BY[3];
   // ノードショットの答え（つながりの数）：ひし形の中の数字。ヒットしたマスでは左下の小さな札にする
   const nodeMark = (k) => `<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5.5 34.5 20 20 34.5 5.5 20z"/><text x="20" y="21.3" class="ordn">${k}</text></svg>`;
@@ -1174,7 +1174,7 @@
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
         <p><b>回答</b>：◎＝その個体への最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない。全マスをコールされた個体は撃破されます。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
-        <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2マス×5・3マス×4・4マス×3・5マス×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破した個体のマス数を相手から奪います（アンサー失敗で差し出した個体も）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードボーナス</b>も奪われます（${speedText()}。2マス1個だけ置いて即負けする動きを防ぐため。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
+        <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2マス×5・3マス×4・4マス×3・5マス×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破した個体のマス数を相手から奪います（アンサー失敗で差し出した個体も）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで勝つと<b>スピードボーナス</b>も奪えます（${speedText()}。トレジャーチャンスを使い切る前の速い勝ちへのご褒美で、2マス1個だけ置いて即負けし、キューブを温存する動きも防ぎます。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
         <h3 class="legend-h">攻撃アイテム（相手フィールドに作用）</h3>
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
@@ -1472,7 +1472,7 @@
     if (T.stage === 'intro') {
       hero = `<p class="eyebrow">SEARCH BATTLE TOURNAMENT</p>
         <h2 class="tour-title glitch-in">大会スタート</h2>
-        <p class="tour-lede">4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は<b>${TourE.START + TourE.GEMS * TourE.GEM_PTS}点</b>（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）から。撃破したキューブのマス数を相手から奪い、勝てばさらに <b>${vicText()}点</b>を奪います。予選で5ターン目までに負けると、<b>スピードボーナス</b>（1ターン目15点〜5ターン目5点）も奪われます。トレジャーを見つけると相手の宝石を1つ奪えます。</p>
+        <p class="tour-lede">4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は<b>${TourE.START + TourE.GEMS * TourE.GEM_PTS}点</b>（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）から。撃破したキューブのマス数を相手から奪い、勝てばさらに <b>${vicText()}点</b>を奪います。予選で${TourE.SPEED.length - 1}ターン目までに勝つと（トレジャーチャンスを使い切る前）、<b>スピードボーナス</b>（1ターン目${TourE.SPEED[1]}点〜${TourE.SPEED.length - 1}ターン目${TourE.SPEED[TourE.SPEED.length - 1]}点）も奪えます。トレジャーを見つけると相手の宝石を1つ奪えます。</p>
         <div class="entrants">${T.players.map((p, i) => {
           const pk = TourE.persona(T, p.id), ps = pk && TourE.PERSONAS[pk];
           return `<div class="ent" style="--i:${i}">${avatar(p.id)}<b>${esc(p.name)}</b>${ps ? `<em class="persona">${esc(ps.name)}</em><small>${esc(ps.desc)}</small>` : `<small>${p.cpu ? 'CPU' : 'プレイヤー'}</small>`}</div>`;
@@ -3262,7 +3262,7 @@
     const S = simInit();
     const num = (id, d) => { const el = $s(id); const v = el ? parseFloat(el.value) : NaN; return isFinite(v) ? v : d; };
     const r = S.rules;
-    S.rules = SIM.normRules({ start: num('sim-start', r.start), gems: Math.max(0, Math.min(9, Math.round(num('sim-gems', r.gems)))), gemPts: num('sim-gemPts', r.gemPts), vic: [0, 1, 2, 3].map((i) => num('sim-v' + i, r.vic[i])), speed: [0, 1, 2, 3, 4, 5].map((i) => (i ? num('sim-s' + i, r.speed[i]) : 0)) });
+    S.rules = SIM.normRules({ start: num('sim-start', r.start), gems: Math.max(0, Math.min(9, Math.round(num('sim-gems', r.gems)))), gemPts: num('sim-gemPts', r.gemPts), vic: [0, 1, 2, 3].map((i) => num('sim-v' + i, r.vic[i])), speed: r.speed.map((v, i) => (i ? num('sim-s' + i, v) : 0)) });
     simStore.set('rules', S.rules);
   }
   const skpi = (k, v, s) => `<div class="sim-kpi"><span class="k">${esc(k)}</span><span class="v">${v}</span>${s ? `<span class="s">${s}</span>` : ''}</div>`;
@@ -3343,7 +3343,7 @@
     const rows = [{ r: S.rules, cur: true }].concat(S.compare.filter((r) => simKey(r) !== simKey(S.rules)).map((r) => ({ r })));
     h += `<section class="panel sim-cmp"><h3 class="ptitle">比較表<small>COMPARE</small></h3>${S.compare.length ? '' : '<p class="sim-note">点数のルールを変えて「比較表に追加」を押すと、同じ試合結果での違いをここに並べます。</p>'}
       <div class="sim-tw"><table class="sim-table"><thead><tr><th>点数のルール</th><th>3試合目で入れ替わる</th><th>2試合目の後4位→決勝</th><th>1勝で決勝</th><th>1試合目に勝った人の通過</th><th>トレジャーで決勝が変わる</th><th>2位3位が同点</th><th>優勝者の持ち点（平均・最高）</th><th>予選の最低</th><th></th></tr></thead><tbody>
-      ${rows.map(({ r, cur }) => { const s = cur ? sm : SIM.summarize(S.recs, r); return `<tr class="${cur ? 'cur' : ''}"><td class="lab">${cur ? '<b>いま</b>　' : ''}勝利 ${esc(r.vic.join('/'))}<small>宝石${r.gems}×${r.gemPts}・はじめ${r.start + r.gems * r.gemPts}・スピード${r.speed.slice(1).join('/')}</small></td><td>${spc(s.comeback.r3change)}</td><td>${spc(s.comeback.last2in)}</td><td>${spc(s.comeback.byWins[1].qual)}</td><td>${spc(s.comeback.wonR1)}</td><td>${spc(s.gems.changesFinalists)}</td><td>${spc(s.ties.line)}</td><td>${sn1(s.prize.mean)}・${sn0(s.prize.max)}${s.finals < s.tours ? `<small>（${s.finals}回）</small>` : ''}</td><td>${sn0(s.low.prelim)}</td><td>${cur ? '' : `<button type="button" class="sim-x" data-act="sim-rm" data-k="${esc(simKey(r))}" aria-label="比較表から外す">✕</button>`}</td></tr>`; }).join('')}
+      ${rows.map(({ r, cur }) => { const s = cur ? sm : SIM.summarize(S.recs, r); return `<tr class="${cur ? 'cur' : ''}"><td class="lab">${cur ? '<b>いま</b>　' : ''}勝利 ${esc(r.vic.join('/'))}<small>宝石${r.gems}×${r.gemPts}・はじめ${r.start + r.gems * r.gemPts}・スピード${SIM.speedLabel(r)}</small></td><td>${spc(s.comeback.r3change)}</td><td>${spc(s.comeback.last2in)}</td><td>${spc(s.comeback.byWins[1].qual)}</td><td>${spc(s.comeback.wonR1)}</td><td>${spc(s.gems.changesFinalists)}</td><td>${spc(s.ties.line)}</td><td>${sn1(s.prize.mean)}・${sn0(s.prize.max)}${s.finals < s.tours ? `<small>（${s.finals}回）</small>` : ''}</td><td>${sn0(s.low.prelim)}</td><td>${cur ? '' : `<button type="button" class="sim-x" data-act="sim-rm" data-k="${esc(simKey(r))}" aria-label="比較表から外す">✕</button>`}</td></tr>`; }).join('')}
       </tbody></table></div></section>`;
     return h;
   }
@@ -3399,7 +3399,7 @@
               <span class="sim-lab">勝利点</span>
               <div class="sim-vic">${['予選1', '予選2', '予選3', '決勝'].map((lab, i) => `<div><input class="sim-num" id="sim-v${i}" data-sim="rule" type="number" step="1" value="${r.vic[i]}" aria-label="${lab}の勝利点"><span>${lab}</span></div>`).join('')}</div>
               <span class="sim-lab">スピードボーナス（予選・決着したターン）</span>
-              <div class="sim-vic sim-spd">${[1, 2, 3, 4, 5].map((t) => `<div><input class="sim-num" id="sim-s${t}" data-sim="rule" type="number" min="0" step="1" value="${r.speed[t]}" aria-label="${t}ターン目に決着したときのスピードボーナス"><span>${t}T</span></div>`).join('')}</div>
+              <div class="sim-vic sim-spd">${r.speed.slice(1).map((v, k) => k + 1).map((t) => `<div><input class="sim-num" id="sim-s${t}" data-sim="rule" type="number" min="0" step="1" value="${r.speed[t]}" aria-label="${t}ターン目に決着したときのスピードボーナス"><span>${t}T</span></div>`).join('')}</div>
               <p class="sim-total" id="sim-tot">はじめの持ち点 <b>${SIM.startTotal(r)}</b>（${r.start}＋宝石${r.gems}×${r.gemPts}）</p>
               <div class="row"><button class="btn" data-act="sim-pin">比較表に追加</button><button class="btn ghost" data-act="sim-reset">ゲームの値に戻す</button></div>
               <p class="sim-note">試合の結果はそのままで、点数だけを当てはめ直します（CPUは持ち点を見ないので、試合の中身は変わりません）。</p>

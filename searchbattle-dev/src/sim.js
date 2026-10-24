@@ -76,11 +76,14 @@
     while (r.vic.length < 4) r.vic.push(r.vic[r.vic.length - 1] || 0);
     r.start = +r.start || 0; r.gems = Math.max(0, r.gems | 0); r.gemPts = +r.gemPts || 0;
     // スピードボーナス（予選だけ）：index＝決着したターン（0は使わない）
-    r.speed = [0].concat((r.speed || DEFAULT_RULES.speed).slice(1, 6).map((x) => Math.max(0, +x || 0)));
-    while (r.speed.length < 6) r.speed.push(0);
+    const SPN = DEFAULT_RULES.speed.length;
+    r.speed = [0].concat((r.speed || DEFAULT_RULES.speed).slice(1, SPN).map((x) => Math.max(0, +x || 0)));
+    while (r.speed.length < SPN) r.speed.push(0);
     return r;
   }
   const startTotal = (rules) => rules.start + rules.gems * rules.gemPts;
+  // スピードボーナスの表記（後ろの0は省く。例：52/42/33/25/18/12/7/3）
+  const speedLabel = (rules) => { const a = (rules.speed || []).slice(1); while (a.length && !a[a.length - 1]) a.pop(); return a.length ? a.join('/') : 'なし'; };
   // 1試合の持ち点の増減（m の a・b の順）。宝石は持っていなければ奪えない
   function applyMatch(st, m, rules) {
     const A = st[m.a], B = st[m.b];
@@ -185,7 +188,7 @@
   // 記録を保存するとき（予選の後の大会の状態は大きいので除く）
   function slim(rec) { const o = Object.assign({}, rec); delete o.post; return o; }
 
-  const api = { DEFAULT_RULES, PERSONA_KEYS, PERSONA_NAMES, mulberry32, runTour, playFinal, standing, finalistsOf, normRules, startTotal, summarize, missingFinals, slim };
+  const api = { DEFAULT_RULES, PERSONA_KEYS, PERSONA_NAMES, mulberry32, runTour, playFinal, standing, finalistsOf, normRules, startTotal, speedLabel, summarize, missingFinals, slim };
   if (isNode) module.exports = api;
   else root.SBSim = api;
 })(typeof window !== 'undefined' ? window : globalThis);
