@@ -523,6 +523,14 @@ h1, h2, h3 { text-wrap: balance; }
 .fit .wrap { padding-bottom: 10px; }
 @media (min-width: 1180px) { .fit .logcol { position: relative; top: auto; height: auto; max-height: none; contain: size; align-self: stretch; } }
 
+/* ログのアンサーにマウスを重ねたとき、盤の上で宣言したマスを囲む（hlAnswer） */
+.hl-layer { position: absolute; inset: 0; z-index: 7; pointer-events: none; filter: drop-shadow(0 0 6px rgba(255, 193, 74, .75)); }
+.hl-layer i { position: absolute; box-sizing: border-box; border: 0 solid var(--amber); background: rgba(255, 193, 74, .22); }
+.hl-layer.miss { filter: drop-shadow(0 0 6px rgba(255, 84, 104, .75)); }
+.hl-layer.miss i { border-color: var(--bad); border-style: dashed; background: rgba(255, 84, 104, .18); }
+li[data-hl] { cursor: help; }
+.loglist li[data-hl]:hover, .rp-log li[data-hl]:hover { background: rgba(255, 193, 74, .1); }
+
 /* ===== ドラフト ===== */
 .draft { display: grid; gap: 12px; }
 .prompt { font-weight: 700; margin: 0; }
@@ -782,9 +790,9 @@ body.replaying #app { display: none; }
 /* バズーカで分解されたマス（持ち主にだけ見せる）：ひびが走る */
 .fxo.crack { background: linear-gradient(118deg, transparent 44%, rgba(255, 244, 214, .95) 47%, transparent 50%), linear-gradient(28deg, transparent 58%, rgba(255, 193, 74, .9) 61%, transparent 64%); animation: crack .9s ease-out forwards; }
 @keyframes crack { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 40% { opacity: 1; clip-path: inset(0 0 0 0); } 100% { opacity: 0; } }
-.fxb.holo { display: grid; place-items: center; perspective: 500px; background: radial-gradient(circle, rgba(79, 227, 255, .2), transparent 60%); animation: flash 1.5s ease-in forwards; }
+.fxb.holo { display: grid; place-items: center; perspective: 500px; container-type: size; background: radial-gradient(circle, rgba(79, 227, 255, .2), transparent 60%); animation: flash 1.5s ease-in forwards; }
 .fxb.holo.enemy { background: radial-gradient(circle, rgba(255, 63, 143, .2), transparent 60%); }
-.holo-cube { position: relative; width: 34%; aspect-ratio: 1; transform-style: preserve-3d; animation: holospin 1.5s cubic-bezier(.2, .8, .2, 1) forwards; }
+.holo-cube { --hz: 17cqmin; position: relative; width: 34cqmin; height: 34cqmin; transform-style: preserve-3d; animation: holospin 1.5s cubic-bezier(.2, .8, .2, 1) forwards; }
 .holo-cube i { position: absolute; inset: 0; border: 2px solid var(--cyan); background: rgba(79, 227, 255, .12); box-shadow: 0 0 14px rgba(79, 227, 255, .6), inset 0 0 14px rgba(79, 227, 255, .5); }
 .fxb.holo.enemy .holo-cube i { border-color: var(--magenta); background: rgba(255, 63, 143, .12); box-shadow: 0 0 14px rgba(255, 63, 143, .6), inset 0 0 14px rgba(255, 63, 143, .5); }
 .holo-cube i:nth-child(1) { transform: translateZ(var(--hz)); } .holo-cube i:nth-child(2) { transform: rotateY(180deg) translateZ(var(--hz)); }

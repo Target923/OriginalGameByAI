@@ -269,8 +269,9 @@
     ev.turn = this.turn;
     this.events.push(ev);
   };
-  Game.prototype._log = function (actor, text, priv, kind, key) {
-    this.log.push({ id: this.log.length, turn: this.turn, actor, text, priv: priv || null, kind: kind || 'info', key: key || null });
+  // extra：表示に使う追加の情報（アンサーの cells＝宣言したマス。ログにマウスを重ねたとき、盤の上で光らせる）
+  Game.prototype._log = function (actor, text, priv, kind, key, extra) {
+    this.log.push(Object.assign({ id: this.log.length, turn: this.turn, actor, text, priv: priv || null, kind: kind || 'info', key: key || null }, extra || {}));
   };
 
   // ---------------- 配置 ----------------
@@ -513,14 +514,14 @@
     if (target) {
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true });
       this._destroy(target, 'answer');
-      this._log(pi, `${me.name}：アンサー成功（${where}）`, null, 'kill');
+      this._log(pi, `${me.name}：アンサー成功（${where}）`, null, 'kill', null, { cells: cells.slice() });
       this.lastAction = { kind: 'answer', pi, ok: true, cells };
       const ended = this._checkEnd();
       return { ok: true, success: true, size: target.size, ended };
     }
     me.kb.failedAnswers.push({ mask, t: this.clock });
     this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: false });
-    this._log(pi, `${me.name}：アンサー失敗（${where}）`, null, 'miss');
+    this._log(pi, `${me.name}：アンサー失敗（${where}）`, null, 'miss', null, { cells: cells.slice() });
     this.sub = 'sacrifice';
     this.pending = { kind: 'answerFail', who: pi };
     this.lastAction = { kind: 'answer', pi, ok: false, cells };

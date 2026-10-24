@@ -523,6 +523,14 @@ h1, h2, h3 { text-wrap: balance; }
 .fit .wrap { padding-bottom: 10px; }
 @media (min-width: 1180px) { .fit .logcol { position: relative; top: auto; height: auto; max-height: none; contain: size; align-self: stretch; } }
 
+/* ログのアンサーにマウスを重ねたとき、盤の上で宣言したマスを囲む（hlAnswer） */
+.hl-layer { position: absolute; inset: 0; z-index: 7; pointer-events: none; filter: drop-shadow(0 0 6px rgba(255, 193, 74, .75)); }
+.hl-layer i { position: absolute; box-sizing: border-box; border: 0 solid var(--amber); background: rgba(255, 193, 74, .22); }
+.hl-layer.miss { filter: drop-shadow(0 0 6px rgba(255, 84, 104, .75)); }
+.hl-layer.miss i { border-color: var(--bad); border-style: dashed; background: rgba(255, 84, 104, .18); }
+li[data-hl] { cursor: help; }
+.loglist li[data-hl]:hover, .rp-log li[data-hl]:hover { background: rgba(255, 193, 74, .1); }
+
 /* ===== ドラフト ===== */
 .draft { display: grid; gap: 12px; }
 .prompt { font-weight: 700; margin: 0; }
@@ -782,9 +790,9 @@ body.replaying #app { display: none; }
 /* バズーカで分解されたマス（持ち主にだけ見せる）：ひびが走る */
 .fxo.crack { background: linear-gradient(118deg, transparent 44%, rgba(255, 244, 214, .95) 47%, transparent 50%), linear-gradient(28deg, transparent 58%, rgba(255, 193, 74, .9) 61%, transparent 64%); animation: crack .9s ease-out forwards; }
 @keyframes crack { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 40% { opacity: 1; clip-path: inset(0 0 0 0); } 100% { opacity: 0; } }
-.fxb.holo { display: grid; place-items: center; perspective: 500px; background: radial-gradient(circle, rgba(79, 227, 255, .2), transparent 60%); animation: flash 1.5s ease-in forwards; }
+.fxb.holo { display: grid; place-items: center; perspective: 500px; container-type: size; background: radial-gradient(circle, rgba(79, 227, 255, .2), transparent 60%); animation: flash 1.5s ease-in forwards; }
 .fxb.holo.enemy { background: radial-gradient(circle, rgba(255, 63, 143, .2), transparent 60%); }
-.holo-cube { position: relative; width: 34%; aspect-ratio: 1; transform-style: preserve-3d; animation: holospin 1.5s cubic-bezier(.2, .8, .2, 1) forwards; }
+.holo-cube { --hz: 17cqmin; position: relative; width: 34cqmin; height: 34cqmin; transform-style: preserve-3d; animation: holospin 1.5s cubic-bezier(.2, .8, .2, 1) forwards; }
 .holo-cube i { position: absolute; inset: 0; border: 2px solid var(--cyan); background: rgba(79, 227, 255, .12); box-shadow: 0 0 14px rgba(79, 227, 255, .6), inset 0 0 14px rgba(79, 227, 255, .5); }
 .fxb.holo.enemy .holo-cube i { border-color: var(--magenta); background: rgba(255, 63, 143, .12); box-shadow: 0 0 14px rgba(255, 63, 143, .6), inset 0 0 14px rgba(255, 63, 143, .5); }
 .holo-cube i:nth-child(1) { transform: translateZ(var(--hz)); } .holo-cube i:nth-child(2) { transform: rotateY(180deg) translateZ(var(--hz)); }
@@ -1347,8 +1355,9 @@ body.replaying #app { display: none; }
     ev.turn = this.turn;
     this.events.push(ev);
   };
-  Game.prototype._log = function (actor, text, priv, kind, key) {
-    this.log.push({ id: this.log.length, turn: this.turn, actor, text, priv: priv || null, kind: kind || 'info', key: key || null });
+  // extra：表示に使う追加の情報（アンサーの cells＝宣言したマス。ログにマウスを重ねたとき、盤の上で光らせる）
+  Game.prototype._log = function (actor, text, priv, kind, key, extra) {
+    this.log.push(Object.assign({ id: this.log.length, turn: this.turn, actor, text, priv: priv || null, kind: kind || 'info', key: key || null }, extra || {}));
   };
 
   // ---------------- 配置 ----------------
@@ -1591,14 +1600,14 @@ body.replaying #app { display: none; }
     if (target) {
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true });
       this._destroy(target, 'answer');
-      this._log(pi, `${me.name}：アンサー成功（${where}）`, null, 'kill');
+      this._log(pi, `${me.name}：アンサー成功（${where}）`, null, 'kill', null, { cells: cells.slice() });
       this.lastAction = { kind: 'answer', pi, ok: true, cells };
       const ended = this._checkEnd();
       return { ok: true, success: true, size: target.size, ended };
     }
     me.kb.failedAnswers.push({ mask, t: this.clock });
     this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: false });
-    this._log(pi, `${me.name}：アンサー失敗（${where}）`, null, 'miss');
+    this._log(pi, `${me.name}：アンサー失敗（${where}）`, null, 'miss', null, { cells: cells.slice() });
     this.sub = 'sacrifice';
     this.pending = { kind: 'answerFail', who: pi };
     this.lastAction = { kind: 'answer', pi, ok: false, cells };
@@ -5439,13 +5448,52 @@ window.SBAudio = (function () {
       return `<li class="k-item wicon ${side}"><span class="t">T${pad2(e.turn)}</span><span class="li-ic ${side}">${ICON[e.key] || ''}</span><span class="x">${esc(txt)}</span></li>`;
     }).join('') + '</ol>';
   }
+  // アンサーのログ：宣言したマス（新しいログは cells、古いログは文字の座標から）
+  function answerCells(e, N) {
+    if (Array.isArray(e.cells)) return e.cells;
+    const m = /アンサー(成功|失敗)（([^）]*)）/.exec(e.text || '');
+    if (!m) return null;
+    const out = [];
+    for (const x of m[2].matchAll(/([A-Z])-(\d+)/g)) { const c = x[1].charCodeAt(0) - 65, r = +x[2] - 1; if (c >= 0 && c < N && r >= 0 && r < N) out.push(r * N + c); }
+    return out.length ? out : null;
+  }
+  // ログの行にマウスを重ねたとき光らせる盤：アンサーした人（actor）の相手の盤。me＝自分の席（自分の相手の盤が pred）
+  function hlAttrs(e, me, N) {
+    const cells = (e.kind === 'kill' || e.kind === 'miss') && e.actor != null ? answerCells(e, N) : null;
+    if (!cells) return '';
+    return ` data-hl="${cells.join(',')}" data-hl-to="${e.actor === me ? 'pred' : 'own'}" data-hl-k="${e.kind}"`;
+  }
   function callLogHTML(entries, v, empty) {
     if (!entries.length) return `<ol class="loglist"><li class="none"><span class="t">—</span><span class="x">${esc(empty)}</span></li></ol>`;
+    const N = G().N;
     return '<ol class="loglist">' + entries.slice().reverse().map((e) => {
       const txt = stripName(e.actor === v && e.priv ? e.priv : e.text);
-      return `<li class="k-${esc(e.kind)}"><span class="t">T${pad2(e.turn)}</span><span class="x">${esc(txt)}</span></li>`;
+      return `<li class="k-${esc(e.kind)}"${hlAttrs(e, v, N)}><span class="t">T${pad2(e.turn)}</span><span class="x">${esc(txt)}</span></li>`;
     }).join('') + '</ol>';
   }
+
+  // ログのアンサーにマウスを重ねると、宣言したマスを盤の上で枠で囲んで光らせる（成功＝金、失敗＝赤の点線）
+  function hlAnswer(el, on) {
+    const scope = el.closest('#replay') ? replayEl : root;
+    scope.querySelectorAll('.hl-layer').forEach((x) => x.remove());
+    if (!on) return;
+    const cellsEl = scope.querySelector(`.board[data-board="${el.dataset.hlTo}"] .cells`);
+    if (!cellsEl) return;
+    const N = Math.round(Math.sqrt(cellsEl.querySelectorAll('.cell[data-cell]').length));
+    const set = new Set((el.dataset.hl || '').split(',').filter((x) => x !== '').map(Number));
+    // 盤の上に重ねる（撃破済みのマスは暗くする効果がかかっているので、マスの中に置くと枠まで暗くなる）
+    const layer = document.createElement('div');
+    layer.className = 'hl-layer' + (el.dataset.hlK === 'miss' ? ' miss' : '');
+    let h = '';
+    for (const c of set) {
+      const t = !set.has(c - N), b = !set.has(c + N), l = c % N === 0 || !set.has(c - 1), r = c % N === N - 1 || !set.has(c + 1);
+      h += `<i style="left:${(c % N) / N * 100}%;top:${Math.floor(c / N) / N * 100}%;width:${100 / N}%;height:${100 / N}%;border-width:${t ? 3 : 0}px ${r ? 3 : 0}px ${b ? 3 : 0}px ${l ? 3 : 0}px"></i>`;
+    }
+    layer.innerHTML = h;
+    cellsEl.appendChild(layer);
+  }
+  document.addEventListener('mouseover', (ev) => { const el = ev.target.closest && ev.target.closest('[data-hl]'); if (el) hlAnswer(el, true); });
+  document.addEventListener('mouseout', (ev) => { const el = ev.target.closest && ev.target.closest('[data-hl]'); if (el && !(ev.relatedTarget && el.contains(ev.relatedTarget))) hlAnswer(el, false); });
 
   // ---------------- 操作ブロック ----------------
   function phaseText(mode) {
@@ -6772,7 +6820,8 @@ window.SBAudio = (function () {
           SND.sfx('i-cube', 0, pan);
           SND.sfx(ev.n ? 'readout' : 'none', 0.7 * k, Object.assign({ n: ev.n }, pan));
           if (!tb) return 0;
-          bover(tb, 'holo' + ecls, '<div class="holo-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>', 1550, { '--hz': Math.round(tbc.w * 0.17) + 'px' });
+          // 面の距離（立方体の半分）は CSS のコンテナ単位で決める（画面全体を拡大・縮小していても面がずれない）
+          bover(tb, 'holo' + ecls, '<div class="holo-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>', 1550);
           const what = ev.kind === 'cat' ? ev.value : ev.value + 'マス';
           setTimeout(() => text(tbc.x, tbc.y + tbc.h * 0.32, `${what}：残り ${ev.n} 体`, 'count' + ecls, 1600), 700 * k);
           return 1650 * k;
@@ -7309,7 +7358,7 @@ self.onmessage = function (e) {
       logEl.innerHTML = g.log.map((e, i) => [e, i]).reverse().map(([e, i]) => {
         if (e.actor != null && e.actor !== k) return '';
         const cls = [R.logFrame[i] === R.pos ? 'cur' : '', e.actor == null ? 'sys' : ''].filter(Boolean).join(' ');
-        return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
+        return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}${hlAttrs(e, 0, g.N)}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
       }).join('') || '<li class="none">まだありません</li>';
       const cur = logEl.querySelector('li.cur');
       logEl.scrollTop = cur ? Math.max(0, cur.offsetTop - 6) : 0;

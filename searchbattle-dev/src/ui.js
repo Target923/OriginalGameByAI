@@ -595,13 +595,52 @@
       return `<li class="k-item wicon ${side}"><span class="t">T${pad2(e.turn)}</span><span class="li-ic ${side}">${ICON[e.key] || ''}</span><span class="x">${esc(txt)}</span></li>`;
     }).join('') + '</ol>';
   }
+  // アンサーのログ：宣言したマス（新しいログは cells、古いログは文字の座標から）
+  function answerCells(e, N) {
+    if (Array.isArray(e.cells)) return e.cells;
+    const m = /アンサー(成功|失敗)（([^）]*)）/.exec(e.text || '');
+    if (!m) return null;
+    const out = [];
+    for (const x of m[2].matchAll(/([A-Z])-(\d+)/g)) { const c = x[1].charCodeAt(0) - 65, r = +x[2] - 1; if (c >= 0 && c < N && r >= 0 && r < N) out.push(r * N + c); }
+    return out.length ? out : null;
+  }
+  // ログの行にマウスを重ねたとき光らせる盤：アンサーした人（actor）の相手の盤。me＝自分の席（自分の相手の盤が pred）
+  function hlAttrs(e, me, N) {
+    const cells = (e.kind === 'kill' || e.kind === 'miss') && e.actor != null ? answerCells(e, N) : null;
+    if (!cells) return '';
+    return ` data-hl="${cells.join(',')}" data-hl-to="${e.actor === me ? 'pred' : 'own'}" data-hl-k="${e.kind}"`;
+  }
   function callLogHTML(entries, v, empty) {
     if (!entries.length) return `<ol class="loglist"><li class="none"><span class="t">—</span><span class="x">${esc(empty)}</span></li></ol>`;
+    const N = G().N;
     return '<ol class="loglist">' + entries.slice().reverse().map((e) => {
       const txt = stripName(e.actor === v && e.priv ? e.priv : e.text);
-      return `<li class="k-${esc(e.kind)}"><span class="t">T${pad2(e.turn)}</span><span class="x">${esc(txt)}</span></li>`;
+      return `<li class="k-${esc(e.kind)}"${hlAttrs(e, v, N)}><span class="t">T${pad2(e.turn)}</span><span class="x">${esc(txt)}</span></li>`;
     }).join('') + '</ol>';
   }
+
+  // ログのアンサーにマウスを重ねると、宣言したマスを盤の上で枠で囲んで光らせる（成功＝金、失敗＝赤の点線）
+  function hlAnswer(el, on) {
+    const scope = el.closest('#replay') ? replayEl : root;
+    scope.querySelectorAll('.hl-layer').forEach((x) => x.remove());
+    if (!on) return;
+    const cellsEl = scope.querySelector(`.board[data-board="${el.dataset.hlTo}"] .cells`);
+    if (!cellsEl) return;
+    const N = Math.round(Math.sqrt(cellsEl.querySelectorAll('.cell[data-cell]').length));
+    const set = new Set((el.dataset.hl || '').split(',').filter((x) => x !== '').map(Number));
+    // 盤の上に重ねる（撃破済みのマスは暗くする効果がかかっているので、マスの中に置くと枠まで暗くなる）
+    const layer = document.createElement('div');
+    layer.className = 'hl-layer' + (el.dataset.hlK === 'miss' ? ' miss' : '');
+    let h = '';
+    for (const c of set) {
+      const t = !set.has(c - N), b = !set.has(c + N), l = c % N === 0 || !set.has(c - 1), r = c % N === N - 1 || !set.has(c + 1);
+      h += `<i style="left:${(c % N) / N * 100}%;top:${Math.floor(c / N) / N * 100}%;width:${100 / N}%;height:${100 / N}%;border-width:${t ? 3 : 0}px ${r ? 3 : 0}px ${b ? 3 : 0}px ${l ? 3 : 0}px"></i>`;
+    }
+    layer.innerHTML = h;
+    cellsEl.appendChild(layer);
+  }
+  document.addEventListener('mouseover', (ev) => { const el = ev.target.closest && ev.target.closest('[data-hl]'); if (el) hlAnswer(el, true); });
+  document.addEventListener('mouseout', (ev) => { const el = ev.target.closest && ev.target.closest('[data-hl]'); if (el && !(ev.relatedTarget && el.contains(ev.relatedTarget))) hlAnswer(el, false); });
 
   // ---------------- 操作ブロック ----------------
   function phaseText(mode) {
@@ -1928,7 +1967,8 @@
           SND.sfx('i-cube', 0, pan);
           SND.sfx(ev.n ? 'readout' : 'none', 0.7 * k, Object.assign({ n: ev.n }, pan));
           if (!tb) return 0;
-          bover(tb, 'holo' + ecls, '<div class="holo-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>', 1550, { '--hz': Math.round(tbc.w * 0.17) + 'px' });
+          // 面の距離（立方体の半分）は CSS のコンテナ単位で決める（画面全体を拡大・縮小していても面がずれない）
+          bover(tb, 'holo' + ecls, '<div class="holo-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>', 1550);
           const what = ev.kind === 'cat' ? ev.value : ev.value + 'マス';
           setTimeout(() => text(tbc.x, tbc.y + tbc.h * 0.32, `${what}：残り ${ev.n} 体`, 'count' + ecls, 1600), 700 * k);
           return 1650 * k;
@@ -2465,7 +2505,7 @@ self.onmessage = function (e) {
       logEl.innerHTML = g.log.map((e, i) => [e, i]).reverse().map(([e, i]) => {
         if (e.actor != null && e.actor !== k) return '';
         const cls = [R.logFrame[i] === R.pos ? 'cur' : '', e.actor == null ? 'sys' : ''].filter(Boolean).join(' ');
-        return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
+        return `<li data-act="rp-jump" data-f="${R.logFrame[i]}"${cls ? ` class="${cls}"` : ''}${hlAttrs(e, 0, g.N)}><span class="t">T${e.turn}</span>${esc(e.priv || e.text)}</li>`;
       }).join('') || '<li class="none">まだありません</li>';
       const cur = logEl.querySelector('li.cur');
       logEl.scrollTop = cur ? Math.max(0, cur.offsetTop - 6) : 0;
