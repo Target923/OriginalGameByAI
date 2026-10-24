@@ -7108,6 +7108,7 @@ window.SBAudio = (function () {
     replayEl.hidden = false;
     replayEl.innerHTML = replaySkeleton();
     replayEl.scrollTop = 0;
+    replayStartWorker(app.replay);
     renderReplay();
     const pb = replayEl.querySelector('[data-act="rp-play"]');
     if (pb) pb.focus();
@@ -7116,6 +7117,7 @@ window.SBAudio = (function () {
     const R = app.replay;
     if (!R) return;
     R.playing = false; R.token++;
+    if (R.worker) { try { R.worker.terminate(); } catch (e) { /* なにもしない */ } R.worker = null; }
     app.replay = null;
     replayEl.hidden = true;
     replayEl.innerHTML = '';
@@ -7149,11 +7151,12 @@ window.SBAudio = (function () {
     </div>`;
   }
   // 個体ごとの「言い当てられる確率」：相手（攻める側）の推論で、その個体の本当の置き方の重み。確定なら1、◎のない個体は0
-  function replayProbs(g) {
+  // 引数だけで動く（Web Worker でも、この関数の文字列をそのまま使う）。mkRng()：場面ごとに決まった乱数を作る
+  function replayProbsCore(g, AI, mkRng) {
     return [0, 1].map((k) => {
       const m = {};
       let A = null;
-      try { A = AI.analyze(g.players[1 - k].kb, g.N, rpRng(4099 + g.clock)); } catch (e) { A = null; }
+      try { A = AI.analyze(g.players[1 - k].kb, g.N, mkRng()); } catch (e) { A = null; }
       const sure = new Set(A ? A.certain.map((c) => c.cand.mask) : []);
       for (const p of g.players[k].pieces) {
         if (!p.alive) continue;
@@ -7170,9 +7173,80 @@ window.SBAudio = (function () {
       }
       return m;
     });
+  }  function replayProbs(g) { return replayProbsCore(g, AI, () => rpRng(4099 + g.clock)); }
+  // 全場面の確率を、別のスレッド（Web Worker）で先に計算しておく（画面や演出を止めずに、「…」をなるべく出さないように）。
+  // いまの場面から先へ、次に前へと、まだ計算していない場面を1つずつ頼む（場面を移ったら、その近くから）。作れなければ、これまでどおりこの画面で計算する
+  let rpWorkerURL = null;
+  function rpMakeWorkerURL() {
+    if (rpWorkerURL) return rpWorkerURL;
+    const code = ['src-engine', 'src-ai'].map((id) => document.getElementById(id).textContent).join('\n;\n') + `
+;var rpRng = ${rpRng.toString()};
+var probsCore = ${replayProbsCore.toString()};
+var REC = null;
+self.onmessage = function (e) {
+  var d = e.data;
+  if (d.rec) { REC = d.rec; return; }
+  var p = null;
+  try { var g = SBEngine.replayGame(REC, d.n); p = probsCore(g, SBAI, function () { return rpRng(4099 + g.clock); }); } catch (err) { p = null; }
+  self.postMessage({ f: d.f, p: p });
+};`;
+    rpWorkerURL = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    return rpWorkerURL;
   }
+  function rpNextMissing(R) {
+    const ok = (f) => !R.prob[f] && !(R.probFail && R.probFail[f]);
+    for (let f = R.pos; f < R.frames.length; f++) if (ok(f)) return f;
+    for (let f = R.pos - 1; f >= 0; f--) if (ok(f)) return f;
+    return -1;
+  }
+  function replayStartWorker(R) {
+    let url = null, w = null;
+    try { url = rpMakeWorkerURL(); w = new Worker(url); } catch (e) { w = null; }
+    if (!w) return;
+    R.worker = w; R.probFail = {};
+    const feed = () => {
+      if (app.replay !== R || R.worker !== w) return;
+      const f = rpNextMissing(R);
+      if (f < 0) { w.terminate(); R.worker = null; return; }
+      w.postMessage({ f, n: R.frames[f].n });
+    };
+    w.onmessage = (ev) => {
+      const d = ev.data;
+      if (app.replay !== R || R.worker !== w) return;
+      if (d.p) { if (!R.prob[d.f]) R.prob[d.f] = d.p; } else R.probFail[d.f] = true;
+      if (d.f === R.pos) replayUpdatePcts();
+      feed();
+    };
+    w.onerror = (ev) => {
+      if (ev && ev.preventDefault) ev.preventDefault();
+      try { w.terminate(); } catch (e) { /* なにもしない */ }
+      if (R.worker === w) { R.worker = null; if (app.replay === R && !R.animating) renderReplay(); }
+    };
+    w.postMessage({ rec: R.rec });
+    feed();
+  }
+  // いまの場面の確率。まだなら、いちばん近い場面の値を薄く出す（stale）
+  function rpProbFor(R) {
+    if (R.prob[R.pos]) return { prob: R.prob[R.pos], stale: false };
+    for (let d = 1; d < R.frames.length; d++) {
+      if (R.prob[R.pos - d]) return { prob: R.prob[R.pos - d], stale: true };
+      if (R.prob[R.pos + d]) return { prob: R.prob[R.pos + d], stale: true };
+    }
+    return { prob: null, stale: false };
+  }
+  // 確率のラベルだけを描き直す（演出の途中でも、盤や演出を消さずに）
+  function replayUpdatePcts() {
+    const R = app.replay;
+    if (!R) return;
+    const { prob, stale } = rpProbFor(R);
+    document.querySelectorAll('#rp-stage .rp-field').forEach((fe, k) => {
+      const el = fe.querySelector('.rp-pcts');
+      if (el) el.outerHTML = pctOverlay(R.game, k, prob && prob[k], stale);
+    });
+  }
+
   // 確率のラベル：個体の重心（重心が個体の外なら、いちばん近いマスの中心）
-  function pctOverlay(g, k, m) {
+  function pctOverlay(g, k, m, stale) {
     const N = g.N;
     let h = '';
     for (const p of g.players[k].pieces) {
@@ -7187,7 +7261,7 @@ window.SBAudio = (function () {
       const v = m ? m[p.id] : null;
       const sure = v != null && v >= 0.9995;
       const txt = v == null ? '…' : sure ? '確定' : `${(v * 100).toFixed(1)}%`;
-      h += `<span class="rp-pct${sure ? ' sure' : ''}${v == null ? ' wait' : ''}" style="left:${(x / N * 100).toFixed(2)}%;top:${(y / N * 100).toFixed(2)}%">${txt}</span>`;
+      h += `<span class="rp-pct${sure ? ' sure' : ''}${v == null || stale ? ' wait' : ''}" style="left:${(x / N * 100).toFixed(2)}%;top:${(y / N * 100).toFixed(2)}%">${txt}</span>`;
     }
     return `<div class="rp-pcts" aria-hidden="true">${h}</div>`;
   }
@@ -7204,7 +7278,8 @@ window.SBAudio = (function () {
     const R = app.replay;
     if (!R) return;
     if (!replayEl.querySelector('.rp')) replayEl.innerHTML = replaySkeleton();
-    const g = R.game, fr = R.frames[R.pos], prob = R.prob[R.pos];
+    const g = R.game, fr = R.frames[R.pos];
+    const { prob, stale } = rpProbFor(R);
     const prevEv = R.pos > 0 ? R.frames[R.pos - 1].ev : 0;
     const prevLog = R.pos > 0 ? R.frames[R.pos - 1].log : Math.max(0, fr.log - 1);
     // いまの場面（その操作で出たログ）
@@ -7216,7 +7291,7 @@ window.SBAudio = (function () {
     const warp = warpOverlay(g, fr, prevEv);
     const target = !fr.start && fr.m === 'call' ? 1 - fr.actor : -1;
     const field = (k) => {
-      const ov = pctOverlay(g, k, prob && prob[k]) + (warp && warp.owner === k ? warp.svg : '');
+      const ov = pctOverlay(g, k, prob && prob[k], stale) + (warp && warp.owner === k ? warp.svg : '');
       const intel = intelFor(1 - k, k);
       const board = ownBoard(k, { kind: k === 0 ? 'own' : 'pred', intel, flash: target === k, overlay: ov });
       const atk = g.players[1 - k].name, def = g.players[k].name;
@@ -7225,9 +7300,7 @@ window.SBAudio = (function () {
       return `<section class="panel ${k === 0 ? 'own' : 'enemy'} rp-field"><div class="fhead"><b>${esc(def)}のフィールド</b><span class="rp-left">残り${g.living(k).length}体</span></div>${chips}${intelTagsHTML(intel, k === 1)}${board}</section>`;
     };
     document.getElementById('rp-stage').innerHTML = field(0) + field(1);
-    document.getElementById('rp-note').textContent = prob
-      ? '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。'
-      : '確率を計算中…';
+    document.getElementById('rp-note').textContent = '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。';
     // ログ：いまの場面まで。対戦画面と同じく、左＝相手（1番）、右＝あなた（0番）のアクションに分ける（誰のでもない行は両方に薄く出す）。いまの場面の行を強調
     for (const k of [0, 1]) {
       document.getElementById('rp-lh' + k).textContent = `${g.players[k].name}のアクション`;
@@ -7248,7 +7321,7 @@ window.SBAudio = (function () {
     const pb = replayEl.querySelector('[data-act="rp-play"]');
     if (pb) pb.textContent = R.playing ? '❚❚ 停止' : '▶ 自動再生';
     replayEl.querySelectorAll('[data-act="rp-unit"]').forEach((b) => { b.classList.toggle('on', b.dataset.v === R.unit); b.setAttribute('aria-pressed', b.dataset.v === R.unit); });
-    if (!prob && !R.animating) replayScheduleProb(R.pos);
+    if (!R.prob[R.pos] && !R.animating && !R.worker) replayScheduleProb(R.pos);
   }
   function replayScheduleProb(pos) {
     const R = app.replay;
@@ -7264,11 +7337,18 @@ window.SBAudio = (function () {
   }
   const rpTurnNext = (R) => { for (let f = R.pos + 1; f < R.frames.length; f++) if (R.frames[f].end) return f; return R.frames.length - 1; };
   const rpTurnPrev = (R) => { for (let f = R.pos - 1; f > 0; f--) if (R.frames[f].end) return f; return 0; };
+  const rpTurnPrevFrom = (R, at) => { for (let f = at - 1; f > 0; f--) if (R.frames[f].end) return f; return 0; };
   // 場面を移る。進むとき（animate）は1場面ずつ、盤面を出してからその操作の演出を流す
   async function replayGo(target, animate) {
     const R = app.replay;
     if (!R) return;
     target = Math.max(0, Math.min(R.frames.length - 1, target));
+    // 戻るときも演出を見せる：1つ前の区切り（1手なら1つ前の場面、手番なら前の手番の区切り）へ移ってから、target まで進めて見せる
+    if (animate && target < R.pos) {
+      const start = target <= 0 ? -1 : R.unit === 'turn' ? rpTurnPrevFrom(R, target) : target - 1;
+      if (start < 0) animate = false;
+      else { R.token++; R.animating = false; R.pos = start; R.game = E.replayGame(R.rec, R.frames[start].n); }
+    }
     if (!animate || target <= R.pos) {
       R.token++; R.animating = false;
       R.pos = target;
@@ -7293,7 +7373,7 @@ window.SBAudio = (function () {
       if (app.replay !== R) return;
       R.animating = false;
       if (R.token !== token) return;
-      if (!R.prob[R.pos]) { await nextPaint(); if (app.replay !== R || R.token !== token) return; R.prob[R.pos] = replayProbs(R.game); }
+      if (!R.prob[R.pos] && !R.worker) { await nextPaint(); if (app.replay !== R || R.token !== token) return; R.prob[R.pos] = replayProbs(R.game); }
       renderReplay();
     }
   }
@@ -7321,7 +7401,7 @@ window.SBAudio = (function () {
     if (R.playing) { R.playing = false; R.token++; }
     if (act === 'rp-first') replayGo(0, false);
     else if (act === 'rp-last') replayGo(R.frames.length - 1, false);
-    else if (act === 'rp-prev') replayGo(R.unit === 'turn' ? rpTurnPrev(R) : R.pos - 1, false);
+    else if (act === 'rp-prev') replayGo(R.unit === 'turn' ? rpTurnPrev(R) : R.pos - 1, true);
     else if (act === 'rp-next') replayGo(R.unit === 'turn' ? rpTurnNext(R) : R.pos + 1, true);
     else if (act === 'rp-jump') replayGo(+el.dataset.f, false);
   }
