@@ -28,8 +28,30 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
 #ititle{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;color:var(--cyan);letter-spacing:8px;text-align:center;opacity:0;animation:fi .9s ease forwards .8s;text-shadow:0 0 40px #00ffcc44;margin-top:14px}
 #isub{font-size:10px;color:var(--dim);letter-spacing:5px;margin-top:5px;opacity:0;animation:fi .6s ease forwards 1.3s;text-align:center}
 #idesc{font-size:9px;color:#353558;margin-top:12px;opacity:0;animation:fi .6s ease forwards 1.6s;text-align:center;line-height:2}
-#intro-cars{display:flex;gap:18px;margin-top:20px;opacity:0;animation:fi .7s ease forwards 1.9s}
-.ic{display:flex;flex-direction:column;align-items:center;gap:3px;animation:cf var(--cb2,.9s) ease-in-out infinite var(--cb,0s)}
+#playstyle-row{display:flex;gap:10px;width:388px;max-width:92vw;margin-top:12px;opacity:0;animation:fi .6s ease forwards 1.88s}
+.ps-btn{
+  flex:1;padding:7px 10px;background:rgba(8,12,32,.88);border:1px solid var(--bd);
+  border-radius:3px;font-family:'Orbitron',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:1.5px;
+  color:var(--dim);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.ps-btn:hover{border-color:#88aaff;color:#c0d0ff;transform:translateY(-1px)}
+.ps-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,204,.11);box-shadow:0 0 14px rgba(0,255,204,.25)}
+#intro-cars{display:flex;gap:14px;margin-top:14px;opacity:0;animation:fi .7s ease forwards 1.9s}
+.ic{display:flex;flex-direction:column;align-items:center;gap:3px;animation:cf var(--cb2,.9s) ease-in-out infinite var(--cb,0s);padding:6px 8px;border-radius:5px;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.ic:hover{background:rgba(255,255,255,.05);border-color:color-mix(in srgb,var(--cc) 50%,transparent)}
+#intro-cars.solo-pick .ic{opacity:.42;transform:scale(.94)}
+#intro-cars.solo-pick .ic.solo-selected{opacity:1;transform:scale(1.08);border-color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent);box-shadow:0 0 16px color-mix(in srgb,var(--cc) 38%,transparent)}
+#solo-unit-info{font-size:9px;color:#b8c4e8;margin-top:6px;min-height:16px;text-align:center;letter-spacing:1px;opacity:0;animation:fi .6s ease forwards 1.95s}
+#strip.solo-strip{justify-content:center}
+#strip.solo-strip .cslot{max-width:520px;border-left:1px solid #1a1a4a;border-right:1px solid #1a1a4a}
+.bm-type-switch{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.bm-type-btn{flex:1;max-width:220px;padding:8px 12px;border-radius:5px;border:1.5px solid #2a3060;background:#070a1e;color:#8890b8;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:1px}
+.bm-type-btn.active-en{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,204,.12);box-shadow:0 0 14px rgba(0,255,204,.28)}
+.bm-type-btn.active-core{border-color:var(--yellow);color:#ffe88a;background:rgba(255,204,0,.14);box-shadow:0 0 14px rgba(255,204,0,.28)}
+.bm-solo-choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.bm-solo-card{background:#0d1230;border:2px solid var(--bc,#00ffcc);border-radius:8px;padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .16s;font-family:'Share Tech Mono',monospace}
+.bm-solo-card:hover:not(:disabled){transform:translateY(-4px);background:rgba(255,255,255,.08);box-shadow:0 0 22px var(--bc,#00ffcc)}
+.bm-solo-card:disabled{opacity:.3;cursor:not-allowed}
 @keyframes cf{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .ic-b{width:50px;height:15px;border-radius:5px 5px 2px 2px;background:var(--cc);position:relative}
 .ic-b::before{content:'';position:absolute;top:3px;left:6px;right:6px;height:6px;background:rgba(0,0,0,.3);border-radius:2px}
@@ -635,13 +657,18 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
       <button class="itog-btn on-core" id="itog-core" onclick="toggleSettingSwitch('coreSystem')">💎 CORE SYSTEM: ON</button>
     </div>
     <div id="idesc" style="opacity:0;animation:fi .6s ease forwards 2.0s">5台のホバーカーで神殿を疾走せよ。<br>タイルを砕き、隠された真実を暴け。<br><span style="color:#00ffccaa;font-size:8px">※妨害ギミック：初期盤面の30%が耐久値2のバリアタイルに変化</span></div>
-    <div id="intro-cars">
-      <div class="ic" style="--cc:#00ffcc;--cb:0s"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">PILOT</div></div>
-      <div class="ic" style="--cc:#ff6b35;--cb:.14s"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">ENGNR</div></div>
-      <div class="ic" style="--cc:#7b5ea7;--cb:.28s"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">HACKER</div></div>
-      <div class="ic" style="--cc:#ff4444;--cb:.42s"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">SNIPER</div></div>
-      <div class="ic" style="--cc:#ffcc00;--cb:.56s"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">LEADER</div></div>
+    <div id="playstyle-row">
+      <button class="ps-btn active" id="ps-team" onclick="setPlayStyle('team')">👥 5機チーム (TEAM)</button>
+      <button class="ps-btn" id="ps-solo" onclick="setPlayStyle('solo')">👤 1機シングル (SOLO)</button>
     </div>
+    <div id="intro-cars">
+      <div class="ic" id="ic-unit-0" style="--cc:#00ffcc;--cb:0s" onclick="selectSoloUnit(0)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">PILOT</div></div>
+      <div class="ic" id="ic-unit-1" style="--cc:#ff6b35;--cb:.14s" onclick="selectSoloUnit(1)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">ENGNR</div></div>
+      <div class="ic" id="ic-unit-2" style="--cc:#7b5ea7;--cb:.28s" onclick="selectSoloUnit(2)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">HACKER</div></div>
+      <div class="ic" id="ic-unit-3" style="--cc:#ff4444;--cb:.42s" onclick="selectSoloUnit(3)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">SNIPER</div></div>
+      <div class="ic" id="ic-unit-4" style="--cc:#ffcc00;--cb:.56s" onclick="selectSoloUnit(4)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">LEADER</div></div>
+    </div>
+    <div id="solo-unit-info">👥 5機チーム編成（機体アイコンをクリックすると1機シングルで出撃できます）</div>
     <div id="mode-row">
       <button id="sbtn" class="mode-btn" onclick="startGame('normal')">▶ NORMAL</button>
       <button id="hbtn" class="mode-btn" onclick="startGame('hyper')">⚡ HYPER</button>
@@ -1412,6 +1439,7 @@ function selectWorld(wid){
   // ホバーカー名更新
   const carNames=document.querySelectorAll('.ic-n');
   carNames.forEach((el,i)=>el.textContent=wc.vehicleName[i]||wc.vehicleName[0]);
+  if(typeof syncPlayStyleUI==='function') syncPlayStyleUI();
   saveSettingsToStorage();
 }
 
@@ -1431,21 +1459,26 @@ const AREA_INFO=[
   {id:'a_rand9',  name:'CANNON', desc:'ランダム9マスを高速連射で即破壊 [💎3]'},
   {id:'a_charge', name:'CANNON', desc:'エナジーキャノン：3コア(💎3)を消費して自身のエネルギー+9ptに変換 [💎3 ➔ +9pt]'},
 ];
-// ── SETTINGS (ノーマル・ハイパー適用、エンドレスは無視) ──
+// ── SETTINGS (新エネルギールール：スタート時50pt / クリア時25pt / 突破ボーナス15pt or 💎5) ──
 const SETTINGS_DEFAULT={
-  initEnergy:5,      // 各問開始時の一人当たりエネルギー (5〜30)
-  bonusEnergy:10,    // レベル突破時リーダーへのボーナス
-  initCore:0,        // ゲーム開始時の初期タイルコア (0〜50)
+  initEnergy:50,     // ゲームスタート時（Q1開始時）の総エネルギー (1〜1000・プレイ人数で分配)
+  clearEnergy:25,    // 問題クリア時の補充総エネルギー (0〜1000・プレイ人数で分配)
+  bonusEnergy:15,    // レベル突破ボーナス総量 (0〜1000・エネルギー15pt or 💎5コア選択式)
+  initCore:0,        // ゲーム開始時の初期タイルコア (0〜1000)
   stageHazard:true,  // ステージ妨害ギミック ON/OFF (全モード適用)
   coreSystem:true,   // コアシステム ON/OFF (OFF時はCANNON=5pt・全モード適用)
 };
 let SETTINGS={...SETTINGS_DEFAULT};
-const SETTINGS_STORAGE_KEY='imagine_tile_settings_v1';
+let currentPlayStyle='team'; // 'team' (5機) or 'solo' (1機)
+let currentSoloUnit=0;       // 0..4 (PILOT, ENGNR, HACKER, SNIPER, LEADER)
+const SETTINGS_STORAGE_KEY='imagine_tile_settings_v2';
 function saveSettingsToStorage(){
   try{
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
       settings: SETTINGS,
-      world: currentWorld
+      world: currentWorld,
+      playStyle: currentPlayStyle,
+      soloUnit: currentSoloUnit
     }));
   }catch(e){}
 }
@@ -1460,11 +1493,61 @@ function loadSettingsFromStorage(){
     if(data&&data.world&&WORLD_CONFIGS[data.world]){
       currentWorld=data.world;
     }
+    if(data&&data.playStyle&&(data.playStyle==='team'||data.playStyle==='solo')){
+      currentPlayStyle=data.playStyle;
+    }
+    if(data&&typeof data.soloUnit==='number'&&data.soloUnit>=0&&data.soloUnit<=4){
+      currentSoloUnit=data.soloUnit;
+    }
   }catch(e){}
 }
 loadSettingsFromStorage();
 
-let G={qi:0,order:[],players:[],tid:null,tsec:30,rev:[],barrier:[],vine:[],sz:0,done:false,tileColors:[],mode:'normal',selPlayer:0,answering:false,world:'cyber'};
+let G={qi:0,order:[],players:[],tid:null,tsec:30,rev:[],barrier:[],vine:[],sz:0,done:false,tileColors:[],mode:'normal',selPlayer:0,answering:false,world:'cyber',playStyle:currentPlayStyle,soloUnit:currentSoloUnit};
+function getUnitIdx(pi){
+  const p=G.players&&G.players[pi];
+  return (p&&p.unitIdx!==undefined)?p.unitIdx:pi;
+}
+function setPlayStyle(style){
+  currentPlayStyle=(style==='solo')?'solo':'team';
+  G.playStyle=currentPlayStyle;
+  saveSettingsToStorage();
+  syncPlayStyleUI();
+}
+function selectSoloUnit(uIdx){
+  currentSoloUnit=Math.max(0,Math.min(4,parseInt(uIdx)||0));
+  currentPlayStyle='solo';
+  G.soloUnit=currentSoloUnit;
+  G.playStyle='solo';
+  saveSettingsToStorage();
+  syncPlayStyleUI();
+}
+function syncPlayStyleUI(){
+  const btnTeam=document.getElementById('ps-team');
+  const btnSolo=document.getElementById('ps-solo');
+  const carsWrap=document.getElementById('intro-cars');
+  const infoEl=document.getElementById('solo-unit-info');
+  if(btnTeam) btnTeam.classList.toggle('active', currentPlayStyle==='team');
+  if(btnSolo) btnSolo.classList.toggle('active', currentPlayStyle==='solo');
+  if(carsWrap){
+    carsWrap.classList.toggle('solo-pick', currentPlayStyle==='solo');
+    for(let i=0;i<5;i++){
+      const el=document.getElementById('ic-unit-'+i);
+      if(el) el.classList.toggle('solo-selected', currentPlayStyle==='solo' && currentSoloUnit===i);
+    }
+  }
+  if(infoEl){
+    if(currentPlayStyle==='solo'){
+      const pnames=getPNAMES();
+      const uName=pnames[currentSoloUnit]||PNAMES[currentSoloUnit];
+      const sp=SPEC_INFO[currentSoloUnit];
+      const ar=AREA_INFO[currentSoloUnit];
+      infoEl.innerHTML=`👤 シングル出撃機体: <strong style="color:${PC[currentSoloUnit]}">${uName}</strong> — SPEC: [${sp.name}] ${sp.desc.split(' [')[0]} / ${ar.desc.split(' [')[0]}`;
+    } else {
+      infoEl.innerHTML=`👥 5機チーム編成（下のホバーカーをクリックすると1機シングルで出撃機体を選べます）`;
+    }
+  }
+}
 function getBreakableLeft(){
   if(!G.sz)return 0;
   let cnt=0;
@@ -1495,7 +1578,7 @@ function isHazardOn(){
 const sh=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;};
 const totE=()=>G.players.reduce((s,p)=>s+p.energy,0);
 const totCore=()=>G.players.reduce((s,p)=>s+(p.core||0),0);
-const getAnsCost=p=>(p&&p.ansCost)?p.ansCost:1;
+const getAnsCost=()=>Math.max(1, Math.ceil((G.sz||7)/Math.max(1, (G.players&&G.players.length)||5)));
 
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -2342,37 +2425,109 @@ function startGame(mode='normal'){
   G.world=(mode==='custom'&&G.customSchedule&&G.customSchedule[0])?G.customSchedule[0].world:currentWorld;
   const initAccent=WORLD_CONFIGS[G.world||'cyber'].accentCol;
   document.documentElement.style.setProperty('--cyan',initAccent);
-  G.players=getPNAMES().map(n=>({name:n,energy:0,core:(!SETTINGS.coreSystem||G.mode==='endless')?0:(SETTINGS.initCore||0),specUsed:false,ansCost:1}));
+  G.playStyle=currentPlayStyle;
+  G.soloUnit=currentSoloUnit;
+  const allPNames=getPNAMES();
+  const startCore=(!SETTINGS.coreSystem||G.mode==='endless')?0:(SETTINGS.initCore||0);
+  if(G.playStyle==='solo'){
+    const u=G.soloUnit||0;
+    G.players=[{name:allPNames[u],unitIdx:u,energy:0,core:startCore,specUsed:false}];
+  } else {
+    G.players=allPNames.map((n,idx)=>({name:n,unitIdx:idx,energy:0,core:startCore,specUsed:false}));
+  }
+  G.selPlayer=0;
   preloadQuestionPool(G.order.slice(0,15));
   const startTheme=mode==='hyper'?1:mode==='endless'?6:0;
   G.qi=0;G.paused=false;showTravelAnim(startTheme,()=>loadQ());
 }
+
+function setBonusRewardType(type){
+  G._bonusRewardType=(type==='core'&&SETTINGS.coreSystem)?'core':'energy';
+  renderLeaderBonusModalContent();
+}
+
+function renderLeaderBonusModalContent(){
+  const amount=G._bonusAmount||15;
+  const coreAmt=Math.max(1, Math.ceil(amount/3));
+  const rType=(SETTINGS.coreSystem && G._bonusRewardType==='core')?'core':'energy';
+  const descEl=document.getElementById('bm-desc');
+  const row=document.getElementById('bm-cars-row');
+  const pnames=getPNAMES();
+
+  if(G.players.length===1){
+    const p=G.players[0];
+    const u=getUnitIdx(0);
+    if(descEl){
+      descEl.innerHTML=SETTINGS.coreSystem
+        ?`レベル突破ボーナス！ <strong>エネルギー +${amount}pt</strong> または <strong>タイルコア +💎${coreAmt}</strong> を選択してください（数字キー [1] / [2] でも選択可）`
+        :`レベル突破ボーナス！ <strong>エネルギー +${amount}pt</strong> を獲得します（数字キー [1] でも決定可）`;
+    }
+    row.className='bm-solo-choices';
+    row.innerHTML=`
+      <button class="bm-solo-card" style="--bc:${PC[u]}" onclick="chooseLeaderBonus(0,${amount},'energy')">
+        <div style="font-size:11px;color:${PC[u]};font-weight:700">[1] ⚡ ENERGY CHARGE</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#fff">+${amount}pt</div>
+        <div style="font-size:11px;color:#b0b8e0">${p.energy}pt ➔ <strong style="color:var(--cyan)">${p.energy+amount}pt</strong></div>
+      </button>
+      <button class="bm-solo-card" style="--bc:#ffcc00" onclick="chooseLeaderBonus(0,${coreAmt},'core')" ${!SETTINGS.coreSystem?'disabled':''}>
+        <div style="font-size:11px;color:#ffe88a;font-weight:700">[2] 💎 TILE CORE</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#ffe88a">+💎${coreAmt}</div>
+        <div style="font-size:11px;color:#b0b8e0">${SETTINGS.coreSystem?`💎${p.core||0} ➔ <strong style="color:#ffe88a">💎${(p.core||0)+coreAmt}</strong>`:'CORE SYSTEM OFF'}</div>
+      </button>
+    `;
+  } else {
+    if(descEl){
+      descEl.innerHTML=`リーダー指名：報酬タイプ（<strong>+${amount}pt</strong> または <strong>+💎${coreAmt}</strong>）を選び、付与するホバーカーを選択してください（数字キー 1〜5 でも選択可）` +
+        (SETTINGS.coreSystem ? `
+        <div class="bm-type-switch">
+          <button class="bm-type-btn ${rType==='energy'?'active-en':''}" onclick="setBonusRewardType('energy')">⚡ エネルギー +${amount}pt</button>
+          <button class="bm-type-btn ${rType==='core'?'active-core':''}" onclick="setBonusRewardType('core')">💎 タイルコア +${coreAmt}</button>
+        </div>` : '');
+    }
+    row.className='bm-cars';
+    row.innerHTML=G.players.map((p,i)=>{
+      const u=getUnitIdx(i);
+      const valNow=rType==='core'?`💎${p.core||0}`:`${p.energy}pt`;
+      const plusTxt=rType==='core'?`➔ +💎${coreAmt}`:`➔ +${amount}pt`;
+      const rewardVal=rType==='core'?coreAmt:amount;
+      return `
+        <button class="bm-car-btn" style="--cc:${PC[u]}" onclick="chooseLeaderBonus(${i},${rewardVal},'${rType}')">
+          <div class="bm-car-name">${pnames[u]||p.name}</div>
+          <div class="bm-car-en">${valNow}</div>
+          <div class="bm-car-plus">${plusTxt}</div>
+        </button>
+      `;
+    }).join('');
+  }
+}
+
 function promptLeaderBonus(amount, onChosen){
   if(amount<=0){onChosen();return;}
   const modal=document.getElementById('bonus-modal');
-  document.getElementById('bm-amt').textContent=amount;
-  const row=document.getElementById('bm-cars-row');
-  const pnames=getPNAMES();
-  row.innerHTML=G.players.map((p,i)=>`
-    <button class="bm-car-btn" style="--cc:${PC[i]}" onclick="chooseLeaderBonus(${i},${amount})">
-      <div class="bm-car-name">${pnames[i]||p.name}</div>
-      <div class="bm-car-en">${p.energy}pt</div>
-      <div class="bm-car-plus">➔ +${amount}pt</div>
-    </button>
-  `).join('');
   G._bonusCallback=onChosen;
   G._bonusAmount=amount;
+  G._bonusRewardType='energy';
+  renderLeaderBonusModalContent();
   modal.classList.add('active');
   seLevelUp();
 }
 
-function chooseLeaderBonus(pi, amount){
+function chooseLeaderBonus(pi, amount, rewardType){
   const modal=document.getElementById('bonus-modal');
   if(!modal.classList.contains('active'))return;
+  const rType=rewardType||G._bonusRewardType||'energy';
+  if(rType==='core' && !SETTINGS.coreSystem)return;
   modal.classList.remove('active');
+  const p=G.players[pi]||G.players[0];
+  const u=getUnitIdx(pi);
   const pnames=getPNAMES();
-  G.players[pi].energy+=amount;
-  addLog(`レベル突破ボーナス！リーダー指名で ${pnames[pi]||G.players[pi].name} に +${amount}pt 付与！`,'ok');
+  if(rType==='core'){
+    p.core=(p.core||0)+amount;
+    addLog(`レベル突破ボーナス！ ${pnames[u]||p.name} に +💎${amount} (TILE CORE) 付与！`,'ok');
+  } else {
+    p.energy+=amount;
+    addLog(`レベル突破ボーナス！ ${pnames[u]||p.name} に +${amount}pt (ENERGY) 付与！`,'ok');
+  }
   seCorrect();
   updateStripLight();
   const cb=G._bonusCallback;
@@ -2406,7 +2561,10 @@ function loadQ(){
     const wcNow=WORLD_CONFIGS[G.world||'cyber'];
     document.documentElement.style.setProperty('--cyan',wcNow.accentCol);
     const pnamesNow=getPNAMES();
-    G.players.forEach((p,idx)=>{p.name=pnamesNow[idx]||p.name;});
+    G.players.forEach((p,idx)=>{
+      const u=getUnitIdx(idx);
+      p.name=pnamesNow[u]||p.name;
+    });
   } else if(endless){
     sz=7+Math.floor(step/2);
   } else {
@@ -2429,15 +2587,31 @@ function loadQ(){
   }
   G.diff=pickDifficulty(step);
 
+  const numP=Math.max(1, G.players.length);
+  const ansCostNow=getAnsCost();
+  G.players.forEach(p=>{p.ansCost=ansCostNow;});
+
   if(endless){
-    G.players.forEach(p=>p.energy+=sz);
-    addLog('エネルギー +'+sz+'pt×5 ('+sz+'×'+sz+'グリッド)','info');
-  } else if(custom){
-    const gainE=CUSTOM_CONFIG.scaleEnergy?Math.max(SETTINGS.initEnergy, sz):SETTINGS.initEnergy;
+    // エンドレスは初期エネルギーの概念がなく、Q1(7×7)から一貫して (sz×5)÷プレイ人数（切り上げ）を付与
+    const gainE=Math.ceil((sz*5)/numP);
     G.players.forEach(p=>p.energy+=gainE);
-    addLog(`エネルギー +${gainE}pt×5 (${sz}×${sz}グリッド)`,'info');
+    addLog(`エネルギー +${gainE}pt${numP>1?'×'+numP:''} (${sz}×${sz}グリッド / ANSWERコスト:${ansCostNow}pt)`,'info');
+  } else if(custom){
+    const basePool=(step===0)
+      ?(CUSTOM_CONFIG.scaleEnergy?Math.max(SETTINGS.initEnergy, sz*5):SETTINGS.initEnergy)
+      :(CUSTOM_CONFIG.scaleEnergy?Math.max(SETTINGS.clearEnergy, sz*5):SETTINGS.clearEnergy);
+    const gainE=Math.ceil(basePool/numP);
+    G.players.forEach(p=>p.energy+=gainE);
+    if(gainE>0){
+      addLog(`${step===0?'スタート時エネルギー':'問題クリアエネルギー'} +${gainE}pt${numP>1?'×'+numP:''} (ANSWERコスト:${ansCostNow}pt)`,'info');
+    }
   } else {
-    G.players.forEach(p=>p.energy+=SETTINGS.initEnergy);
+    const basePool=(step===0)?SETTINGS.initEnergy:SETTINGS.clearEnergy;
+    const gainE=Math.ceil(basePool/numP);
+    G.players.forEach(p=>p.energy+=gainE);
+    if(gainE>0){
+      addLog(`${step===0?'スタート時エネルギー':'問題クリアエネルギー'} +${gainE}pt${numP>1?'×'+numP:''} (ANSWERコスト:${ansCostNow}pt)`,'info');
+    }
   }
 
   const lv=custom&&curCustom
@@ -2935,7 +3109,8 @@ function getLeaderMinCore(s){
 function getSpecTargetCount(pi, anchorIdx){
   const s=G.sz;
   if(s<=0)return 0;
-  if(pi===3){
+  const u=getUnitIdx(pi);
+  if(u===3){
     const {unrev}=getSniperBoxInfo(anchorIdx);
     const want=Math.ceil(s*s*0.25);
     return Math.min(want, unrev.length);
@@ -2956,14 +3131,15 @@ function updateSpecCostOverlayForTarget(pi, tileIdx){
 function previewSpecButtonHover(pi){
   if(G.done)return;
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   const held=p?(p.core||0):0;
-  if(pi===4){
+  if(u===4){
     // E. LEADER: 中央渦巻き破壊 (全コア消費・所持コア×3枚破壊・25%相当コア以上必要)
     const minCore=getLeaderMinCore(G.sz);
-    const tg=getSpecTargets(4,-1);
+    const tg=getSpecTargets(pi,-1);
     const lack=(held<minCore || tg.length===0);
     const dispCost=held>=minCore ? held : minCore;
-    showSpecCostOverlay(dispCost, 4, lack);
+    showSpecCostOverlay(dispCost, pi, lack);
   } else {
     // 0, 1, 2, 3: ボタンホバー時も中央基準の消費コアと消費後所持コア(点滅)を表示
     const centerIdx=Math.floor(G.sz/2)*G.sz+Math.floor(G.sz/2);
@@ -2974,10 +3150,11 @@ function previewSpecButtonHover(pi){
 function previewAreaButtonHover(pi){
   if(G.done||!SETTINGS.coreSystem)return;
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   const held=p?(p.core||0):0;
   const cost=3;
   const unrevLeft=getBreakableLeft();
-  const lack=(held<cost || (pi!==4 && unrevLeft===0));
+  const lack=(held<cost || (u!==4 && unrevLeft===0));
   showSpecCostOverlay(cost, pi, lack);
 }
 
@@ -3057,8 +3234,9 @@ function getSniperBoxInfo(anchorIdx){
 function getSpecTargets(pi, anchorIdx){
   const s=G.sz;
   if(s<=0)return [];
+  const u=getUnitIdx(pi);
   const raw=[];
-  if(pi===0){
+  if(u===0){
     // A. PILOT: (N/2)が1辺の正方形破壊（盤面内クランプ）
     const side=Math.max(1,Math.floor(s/2));
     const ar=anchorIdx>=0?(0|anchorIdx/s):Math.floor(s/2);
@@ -3069,7 +3247,7 @@ function getSpecTargets(pi, anchorIdx){
     for(let rr=r0;rr<r0+side;rr++){
       for(let cc=c0;cc<c0+side;cc++) raw.push(rr*s+cc);
     }
-  } else if(pi===1){
+  } else if(u===1){
     // B. ENGNR: (N/7)幅の十字ライン全破壊（盤面内クランプ）
     const w=Math.max(1,Math.round(s/7));
     const ar=anchorIdx>=0?(0|anchorIdx/s):Math.floor(s/2);
@@ -3082,7 +3260,7 @@ function getSpecTargets(pi, anchorIdx){
         if((rr>=r0&&rr<r0+w)||(cc>=c0&&cc<c0+w)) raw.push(rr*s+cc);
       }
     }
-  } else if(pi===2){
+  } else if(u===2){
     // C. HACKER: (N/7)幅のクロス(X字)ライン全破壊（端で片側が潰れないようクランプ）
     const w=Math.max(1,Math.round(s/7));
     const margin=s<=2?0:Math.max(1,Math.floor(s/3));
@@ -3098,15 +3276,15 @@ function getSpecTargets(pi, anchorIdx){
         if((d1>=low&&d1<=high)||(d2>=low&&d2<=high)) raw.push(rr*s+col);
       }
     }
-  } else if(pi===3){
+  } else if(u===3){
     // D. SNIPER: 盤面の一辺の70%の正方形範囲内で、盤面全体の25%分の枚数をランダム破壊（範囲内の約50%に相当）
     const {unrev}=getSniperBoxInfo(anchorIdx);
     const want=Math.ceil(s*s*0.25);
     const shuffled=sh(unrev);
     return shuffled.slice(0,Math.min(want,shuffled.length));
-  } else if(pi===4){
+  } else if(u===4){
     // E. LEADER: 中央から時計回り渦巻き連続破壊（未破壊・非ツタのみ飛ばしながら 所持コア×3枚 破壊）
-    const p=G.players[4];
+    const p=G.players[pi]||G.players[0];
     const maxCnt=(p?(p.core||0):0)*3;
     const spiral=getSpiralOrder(s);
     const unrevSpiral=spiral.filter(idx=>!G.rev[idx]&&!(G.vine&&G.vine[idx]));
@@ -3121,10 +3299,11 @@ function getSpecTargets(pi, anchorIdx){
 function getSpecReqInfo(pi){
   const s=G.sz||7;
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   if(!p||p.specUsed)return {canUse:false,cost:0,label:'SPEC'};
   const unrevLeft=getBreakableLeft();
   if(unrevLeft<=0)return {canUse:false,cost:0,label:'SPEC'};
-  if(pi===4){
+  if(u===4){
     const minCore=getLeaderMinCore(s);
     const canUse=(p.core||0)>=minCore;
     return {canUse, cost:p.core||0, minCore, label:`SPEC(💎${minCore}~)`};
@@ -3147,7 +3326,7 @@ function onTH(e){
     e.currentTarget.classList.add('sh-anchor');
     _hlTiles.push(e.currentTarget);
     // SNIPER(3)は一辺70%の正方形範囲全体をプレビュー表示し、その中の25%を破壊する
-    const previewIdxs=(specPlayer===3)?getSniperBoxInfo(i).unrev:getSpecTargets(specPlayer,i);
+    const previewIdxs=(getUnitIdx(specPlayer)===3)?getSniperBoxInfo(i).unrev:getSpecTargets(specPlayer,i);
     for(let k=0;k<previewIdxs.length;k++){
       const t=getTileEl(previewIdxs[k]);
       if(t&&!t.classList.contains('revealed')){
@@ -3228,7 +3407,8 @@ function revTile(i){
 // ── 高速連続タイル破壊アニメーション（大盤面でも処理落ちしないバッチ連射制御） ──
 function fireSequentialTiles(pi, tgHits, originPt, totalTargetMs=680){
   if(!tgHits||!tgHits.length)return;
-  const col=PC[pi];
+  const u=getUnitIdx(pi);
+  const col=PC[u];
   const fromPt=originPt||getCarCenter(pi);
   const maxSteps=45;
   const batchSize=Math.max(1, Math.ceil(tgHits.length/maxSteps));
@@ -3266,6 +3446,7 @@ function doRand(pi){
   if(specPlayer>=0||areaPlayer>=0)cancelArea();
   hideSpecCostOverlay();
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   if(p.energy<1){addLog(`${p.name}: エネルギー不足(1pt)`,'err');return;}
   const shotCnt=Math.min(getShotCount(), p.energy);
   const h=[];for(let i=0;i<G.sz*G.sz;i++)if(!G.rev[i]&&!(G.vine&&G.vine[i]))h.push(i);
@@ -3274,12 +3455,11 @@ function doRand(pi){
   const cc=getCarCenter(pi);
   p.energy-=picked.length;
   const tgHits=picked.map(ti=>({idx:ti,hitType:commitTileHit(ti)}));
-  seShot(PC[pi]);
-  // レーザー描画負荷を抑えるため、同時レーザー演出は最大2本に集約し、着弾時に全対象タイルを一括反映
+  seShot(PC[u]);
   const repItem=tgHits[0];
   const tc=repItem?getTileCenter(repItem.idx):null;
   if(cc&&tc&&laserAnims.length<16){
-    laserFire(cc.x,cc.y,tc.x,tc.y,PC[pi],()=>{
+    laserFire(cc.x,cc.y,tc.x,tc.y,PC[u],()=>{
       for(let k=0;k<tgHits.length;k++) applyTileHitVisual(tgHits[k].idx,tgHits[k].hitType);
     });
   } else {
@@ -3291,9 +3471,10 @@ function doRand(pi){
 // ── 新エリアキャノン：各機体の9マス形状をランダム位置へ即発射（3💎消費 / LEADERは3💎➔+9pt変換） ──
 function getAreaPatternForAnchor(pi, anchorIdx){
   const s=G.sz;
+  const u=getUnitIdx(pi);
   const ar=0|anchorIdx/s, ac=anchorIdx%s;
   const raw=[];
-  if(pi===0){
+  if(u===0){
     // A. PILOT: 中心と周囲8マスの3×3正方形 (9マス・クランプ)
     const side=Math.min(3,s);
     const r0=Math.max(0,Math.min(s-side,ar-1));
@@ -3301,7 +3482,7 @@ function getAreaPatternForAnchor(pi, anchorIdx){
     for(let rr=r0;rr<r0+side;rr++){
       for(let cc=c0;cc<c0+side;cc++) raw.push(rr*s+cc);
     }
-  } else if(pi===1){
+  } else if(u===1){
     // B. ENGNR: 中心と上下左右に2タイルずつ (計9マス・クランプ)
     const cr=s<5?Math.floor(s/2):Math.max(2,Math.min(s-3,ar));
     const cc=s<5?Math.floor(s/2):Math.max(2,Math.min(s-3,ac));
@@ -3312,7 +3493,7 @@ function getAreaPatternForAnchor(pi, anchorIdx){
       if(cc-d>=0) raw.push(cr*s+(cc-d));
       if(cc+d<s)  raw.push(cr*s+(cc+d));
     }
-  } else if(pi===2){
+  } else if(u===2){
     // C. HACKER: 中心と斜め4方向に2タイルずつ (計9マス・クランプ)
     const cr=s<5?Math.floor(s/2):Math.max(2,Math.min(s-3,ar));
     const cc=s<5?Math.floor(s/2):Math.max(2,Math.min(s-3,ac));
@@ -3332,6 +3513,7 @@ function toggleArea(pi){
   if(specPlayer>=0)cancelArea();
   hideSpecCostOverlay();
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   const useCore=!!SETTINGS.coreSystem;
 
   if(useCore){
@@ -3339,10 +3521,11 @@ function toggleArea(pi){
       addLog(`${p.name}: タイルコア不足 (💎3必要 / 所持💎${p.core||0})`,'err');
       return;
     }
-    // E. LEADER (pi===4): コアシステムON時は 3💎 ➔ +9pt 変換
-    if(pi===4){
+    // E. LEADER (u===4): コアシステムON時は 3💎 ➔ +9pt 変換
+    if(u===4){
       p.core-=3;
       p.energy+=9;
+      addLog(`${p.name}: エナジーキャノン発動！ -💎3 ➔ +9pt エネルギー補充！`,'ok');
       seLevelUp();
       updateStripLight();
       return;
@@ -3364,9 +3547,9 @@ function toggleArea(pi){
   }
   let tg=[];
   let chosenAnchor=unrev[0|Math.random()*unrev.length];
-  if(pi===3){
+  if(u===3){
     tg=sh(unrev).slice(0,Math.min(9,unrev.length));
-  } else if(pi===4){
+  } else if(u===4){
     // コアシステムOFF時のLEADERは中央渦巻き順から9マスを即座に攻撃
     const spiral=getSpiralOrder(s).filter(idx=>!G.rev[idx]&&!(G.vine&&G.vine[idx]));
     tg=spiral.slice(0,Math.min(9,spiral.length));
@@ -3392,12 +3575,12 @@ function toggleArea(pi){
   seArea();
 
   const cc=getCarCenter(pi);
-  if(pi===3||pi===4){
+  if(u===3||u===4){
     fireSequentialTiles(pi, tgHits, cc, 320);
   } else {
     const tc=getTileCenter(chosenAnchor)||getBoardCenter();
     if(cc&&tc){
-      laserFire(cc.x,cc.y,tc.x,tc.y,PC[pi],()=>{
+      laserFire(cc.x,cc.y,tc.x,tc.y,PC[u],()=>{
         tgHits.forEach(item=>applyTileHitVisual(item.idx, item.hitType));
       });
     } else {
@@ -3418,11 +3601,12 @@ function seSpec(){
 function triggerSpec(pi){
   if(G.done||!SETTINGS.coreSystem)return;
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   if(p.specUsed){addLog(p.name+': この問題では既にスペシャルを使用済みです','err');return;}
   if(specPlayer===pi){cancelArea();return;}
 
   const s=G.sz;
-  const sp=SPEC_INFO[pi];
+  const sp=SPEC_INFO[u];
   if(sp.targetable){
     if(getBreakableLeft()<=0){addLog('破壊できるタイルがありません','err');return;}
     if((p.core||0)<1){
@@ -3434,14 +3618,14 @@ function triggerSpec(pi){
     updateSpecCostOverlayForTarget(pi, centerIdx);
     addLog(`${p.name}: SPECIAL [${sp.name}] — 目標タイルを選択してください`,'info');
   } else {
-    // 即発動型(3:25%RND, 4:SPIRAL)
-    if(pi===4){
+    // 即発動型(4:SPIRAL)
+    if(u===4){
       const minCore=getLeaderMinCore(s);
       if((p.core||0)<minCore){
         addLog(`${p.name}: SPIRAL発動には💎${minCore}以上のコアが必要です(所持💎${p.core||0})`,'err');
         return;
       }
-      const tg=getSpecTargets(4,-1);
+      const tg=getSpecTargets(pi,-1);
       if(!tg.length){addLog('破壊できるタイルがありません','err');return;}
       const spent=p.core;
       p.core=0;
@@ -3450,27 +3634,10 @@ function triggerSpec(pi){
       const tgHits=tg.map(x=>({idx:x, hitType:commitTileHit(x)}));
       seSpec();
       addLog(`${p.name}: SPECIAL [SPIRAL] 発動！全💎${spent}解放 ➔ 中央から渦巻き${tgHits.length}マス連続攻撃！`,'ok');
-      const cc=getCarCenter(4), bc=getBoardCenter();
-      laserFire(cc.x,cc.y,bc.x,bc.y,PC[4],()=>{
-        fireSequentialTiles(4, tgHits, bc, 720);
+      const cc=getCarCenter(pi), bc=getBoardCenter();
+      laserFire(cc.x,cc.y,bc.x,bc.y,PC[u],()=>{
+        fireSequentialTiles(pi, tgHits, bc, 720);
       });
-      renderStrip();
-    } else if(pi===3){
-      const tg=getSpecTargets(3,-1);
-      if(!tg.length){addLog('破壊できるタイルがありません','err');return;}
-      const cost=tilesToCoreCost(tg.length);
-      if((p.core||0)<cost){
-        addLog(`${p.name}: タイルコア不足 (💎${cost}必要 / 所持💎${p.core||0})`,'err');
-        return;
-      }
-      p.core-=cost;
-      p.specUsed=true;
-      cancelArea();
-      const tgHits=tg.map(x=>({idx:x, hitType:commitTileHit(x)}));
-      seSpec();
-      addLog(`${p.name}: SPECIAL [25% BURST] 発動！ -💎${cost} ➔ ${tgHits.length}マス高速連射攻撃！`,'ok');
-      const cc=getCarCenter(3);
-      fireSequentialTiles(3, tgHits, cc, 650);
       renderStrip();
     }
   }
@@ -3478,6 +3645,7 @@ function triggerSpec(pi){
 
 function execTargetedSpec(pi, anchorIdx){
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   if(!p||p.specUsed){cancelArea();return;}
   const tg=getSpecTargets(pi, anchorIdx);
   if(!tg.length){
@@ -3491,7 +3659,7 @@ function execTargetedSpec(pi, anchorIdx){
   }
   p.core-=cost;
   p.specUsed=true;
-  const sp=SPEC_INFO[pi];
+  const sp=SPEC_INFO[u];
   const tgHits=tg.map(x=>({idx:x, hitType:commitTileHit(x)}));
   seSpec();
   addLog(`${p.name}: SPECIAL [${sp.name}] 発動！ -💎${cost} ➔ ${tgHits.length}マス攻撃！`,'ok');
@@ -3503,23 +3671,23 @@ function execTargetedSpec(pi, anchorIdx){
   const ts=br.width/s;
   const applyAll=()=>tgHits.forEach(item=>applyTileHitVisual(item.idx, item.hitType));
 
-  if(pi===0){
+  if(u===0){
     const side=Math.max(1,Math.floor(s/2));
     const ar=0|anchorIdx/s, ac=anchorIdx%s, half=Math.floor((side-1)/2);
     const r0=Math.max(0,Math.min(s-side,ar-half));
     const c0=Math.max(0,Math.min(s-side,ac-half));
     const box={x:br.left+c0*ts, y:br.top+r0*ts, w:side*ts, h:side*ts};
     const start=performance.now();
-    laserAnims.push({x1:cc.x,y1:cc.y,x2:box.x+box.w/2,y2:box.y+box.h/2,color:PC[pi],start,dur:520,type:'spec_square',box,onDone:applyAll,done:false});
-  } else if(pi===1){
+    laserAnims.push({x1:cc.x,y1:cc.y,x2:box.x+box.w/2,y2:box.y+box.h/2,color:PC[u],start,dur:520,type:'spec_square',box,onDone:applyAll,done:false});
+  } else if(u===1){
     const w=Math.max(1,Math.round(s/7));
     const ar=0|anchorIdx/s, ac=anchorIdx%s, half=Math.floor((w-1)/2);
     const r0=Math.max(0,Math.min(s-w,ar-half));
     const c0=Math.max(0,Math.min(s-w,ac-half));
     const cx=br.left+(c0+w/2)*ts, cy=br.top+(r0+w/2)*ts;
     const start=performance.now();
-    laserAnims.push({x1:cc.x,y1:cc.y,x2:cx,y2:cy,color:PC[pi],start,dur:520,type:'spec_cross',boardRect:{left:br.left,top:br.top,width:br.width,height:br.height,bandW:w*ts},onDone:applyAll,done:false});
-  } else if(pi===2){
+    laserAnims.push({x1:cc.x,y1:cc.y,x2:cx,y2:cy,color:PC[u],start,dur:520,type:'spec_cross',boardRect:{left:br.left,top:br.top,width:br.width,height:br.height,bandW:w*ts},onDone:applyAll,done:false});
+  } else if(u===2){
     const w=Math.max(1,Math.round(s/7));
     const margin=Math.max(1,Math.floor(s/3));
     const ar=0|anchorIdx/s, ac=anchorIdx%s;
@@ -3527,12 +3695,12 @@ function execTargetedSpec(pi, anchorIdx){
     const ccol=Math.max(margin,Math.min(s-1-margin,ac));
     const cx=br.left+(ccol+0.5)*ts, cy=br.top+(cr+0.5)*ts;
     const start=performance.now();
-    laserAnims.push({x1:cc.x,y1:cc.y,x2:cx,y2:cy,color:PC[pi],start,dur:520,type:'spec_xcross',bandW:w*ts*0.8,onDone:applyAll,done:false});
-  } else if(pi===3){
+    laserAnims.push({x1:cc.x,y1:cc.y,x2:cx,y2:cy,color:PC[u],start,dur:520,type:'spec_xcross',bandW:w*ts*0.8,onDone:applyAll,done:false});
+  } else if(u===3){
     const {side,r0,c0}=getSniperBoxInfo(anchorIdx);
     const box={x:br.left+c0*ts, y:br.top+r0*ts, w:side*ts, h:side*ts};
     const start=performance.now();
-    laserAnims.push({x1:cc.x,y1:cc.y,x2:box.x+box.w/2,y2:box.y+box.h/2,color:PC[pi],start,dur:520,type:'spec_square',box,onDone:()=>fireSequentialTiles(3, tgHits, cc, 480),done:false});
+    laserAnims.push({x1:cc.x,y1:cc.y,x2:box.x+box.w/2,y2:box.y+box.h/2,color:PC[u],start,dur:520,type:'spec_square',box,onDone:()=>fireSequentialTiles(pi, tgHits, cc, 480),done:false});
   } else {
     applyAll();
   }
@@ -3540,19 +3708,20 @@ function execTargetedSpec(pi, anchorIdx){
   checkDead();
 }
 
-// Per-car answer (案2: 各機体1ptスタート・BEAMを撃つたび次回コスト+1pt加算)
+// Per-car answer (新ルール: ceil(1辺の長さ / プレイ人数) で固定)
 function submitAns(pi){
   if(G.done)return;
   if(specPlayer>=0||areaPlayer>=0)cancelArea();
   hideSpecCostOverlay();
   const p=G.players[pi];
+  const u=getUnitIdx(pi);
   const cost=getAnsCost(p);
 
   const inp=document.getElementById('ainp-'+pi);
   const a=inp.value.trim();if(!a)return;
   if(p.energy<cost){addLog(`${p.name}: エネルギー不足(${cost}pt必要)`,'err');return;}
   p.energy-=cost;
-  p.ansCost=cost+1; // 正解・誤答を問わずBEAM発射ごとに次回コスト+1pt
+  p.ansCost=cost; // 1辺の長さ÷プレイ人数（切り上げ）で固定
   updateStripLight();
   inp.value='';
   inp.focus(); // フォーカス維持
@@ -3566,15 +3735,15 @@ function submitAns(pi){
   // ビームをホバー→ボード中央に発射
   auInit();
   G.answering=true;
-  laserFire(cc.x,cc.y,bc.x,bc.y,PC[pi],()=>{
+  laserFire(cc.x,cc.y,bc.x,bc.y,PC[u],()=>{
     G.answering=false;
     if(correct){
       seCorrect();
-      addLog(`${p.name}: 正解！「${cor}」 -${cost}pt (次回ANSWER:${p.ansCost}pt)`,'ok');
+      addLog(`${p.name}: 正解！「${cor}」 -${cost}pt`,'ok');
       stageClr();
     } else {
       seWrong();
-      addLog(`${p.name}: 不正解「${a}」 -${cost}pt (次回ANSWER:${p.ansCost}pt)`,'err');
+      addLog(`${p.name}: 不正解「${a}」 -${cost}pt`,'err');
       showWrongEffect(a);
       checkDead();
     }
@@ -3600,11 +3769,12 @@ function updateStripLight(){
   const unrevLeft=getBreakableLeft();
   const useCore=!!SETTINGS.coreSystem;
   G.players.forEach((p,i)=>{
+    const u=getUnitIdx(i);
     const ac=getAnsCost(p);
     const badge=document.querySelector('.cslot:nth-child('+(i+1)+') .car-badge');
     if(badge){
       badge.textContent=p.energy+'pt';
-      badge.className=p.energy===0?'car-badge empty':p.energy<ac?'car-badge low':'car-badge';
+      badge.className=p.energy===0?'car-badge empty':p.energy<=ac?'car-badge low':'car-badge';
     }
     const cbadge=document.querySelector('.cslot:nth-child('+(i+1)+') .car-core-badge');
     if(cbadge){
@@ -3637,8 +3807,8 @@ function updateStripLight(){
     }
     if(area){
       if(useCore){
-        area.textContent=AREA_INFO[i].name;
-        area.disabled=G.done||(p.core||0)<3||(i!==4&&unrevLeft===0);
+        area.textContent=AREA_INFO[u].name;
+        area.disabled=G.done||(p.core||0)<3||(u!==4&&unrevLeft===0);
       } else {
         area.textContent='CANNON 5pt';
         area.disabled=G.done||p.energy<5||unrevLeft===0;
@@ -3648,7 +3818,7 @@ function updateStripLight(){
       spec.style.display=useCore?'':'none';
       if(useCore){
         const req=getSpecReqInfo(i);
-        spec.textContent=SPEC_INFO[i].name;
+        spec.textContent=SPEC_INFO[u].name;
         spec.disabled=G.done||!!p.specUsed||(!req.canUse&&specPlayer!==i);
       }
     }
@@ -3657,6 +3827,7 @@ function updateStripLight(){
 
 function selectPlayer(i){
   if(G.done)return;
+  if(i<0||i>=G.players.length)return;
   G.selPlayer=i;
   document.querySelectorAll('.cslot').forEach((s,idx)=>{
     s.classList.toggle('selected', idx===i);
@@ -3667,15 +3838,18 @@ function selectPlayer(i){
 
 function renderStrip(){
   const strip=document.getElementById('strip');strip.innerHTML='';
+  strip.classList.toggle('solo-strip', G.players.length===1);
   const _pnames=getPNAMES();
   const unrevLeft=getBreakableLeft();
   const useCore=!!SETTINGS.coreSystem;
+  if(G.selPlayer>=G.players.length) G.selPlayer=0;
   G.players.forEach((p,i)=>{
+    const u=getUnitIdx(i);
     const sel=G.selPlayer===i;
     const ac=getAnsCost(p);
     const slot=document.createElement('div');
     slot.className='cslot'+(sel?' selected':'');
-    slot.style.setProperty('--cc',PC[i]);
+    slot.style.setProperty('--cc',PC[u]);
     // ショートカットヒント
     const hint=document.createElement('div');hint.className='shortcut-hint';
     hint.textContent=sel?getShortcutHintText():'';
@@ -3689,7 +3863,7 @@ function renderStrip(){
     // answer row at TOP
     const ansRow=document.createElement('div');ansRow.className='car-ans-row';
     const inp=document.createElement('input');inp.className='car-ans';inp.type='text';
-    inp.id='ainp-'+i;inp.placeholder='回答…';inp.style.setProperty('--cc2',PC[i]);
+    inp.id='ainp-'+i;inp.placeholder='回答…';inp.style.setProperty('--cc2',PC[u]);
     inp.disabled=G.done||p.energy<ac;
     inp.addEventListener('focus',()=>selectPlayer(i));
     inp.addEventListener('keydown',e=>{
@@ -3713,15 +3887,15 @@ function renderStrip(){
       }
     });
     const beamBtn=document.createElement('button');beamBtn.className='car-beam';
-    beamBtn.style.setProperty('--cc2',PC[i]);
+    beamBtn.style.setProperty('--cc2',PC[u]);
     beamBtn.textContent=`ANSWER ${ac}pt`;
-    beamBtn.title=`ANSWER発射 (-${ac}pt / 発射ごとに次回コスト+1pt) [A ➔ Enter]`;
+    beamBtn.title=`ANSWER発射 (-${ac}pt 固定: ceil(1辺${G.sz}÷${G.players.length}人)) [A ➔ Enter]`;
     beamBtn.disabled=G.done||p.energy<ac;
     beamBtn.onclick=()=>{selectPlayer(i);submitAns(i);};
     ansRow.appendChild(inp);ansRow.appendChild(beamBtn);
     slot.appendChild(ansRow);
 
-    // stationary status row (Tile Core 💎 on left, Energy pt on right — never bobs, large font, zero overlap)
+    // stationary status row
     const statRow=document.createElement('div');statRow.className='car-stat-row';
     const cbadge=document.createElement('div');
     if(_previewCorePlayer===i){
@@ -3736,36 +3910,36 @@ function renderStrip(){
     if(!useCore) cbadge.style.display='none';
 
     const badge=document.createElement('div');
-    badge.className=p.energy===0?'car-badge empty':p.energy<ac?'car-badge low':'car-badge';
-    badge.style.setProperty('--cc',PC[i]);badge.textContent=p.energy+'pt';
-    badge.title=`所持エネルギー (現在のANSWER必要コスト: ${ac}pt)`;
+    badge.className=p.energy===0?'car-badge empty':p.energy<=ac?'car-badge low':'car-badge';
+    badge.style.setProperty('--cc',PC[u]);badge.textContent=p.energy+'pt';
+    badge.title=`所持エネルギー (ANSWER必要コスト: ${ac}pt)`;
 
     statRow.appendChild(cbadge);
     statRow.appendChild(badge);
     slot.appendChild(statRow);
 
     // car visual (floating hovercar icon + name)
-    const vis=document.createElement('div');vis.className='car-vis';vis.style.setProperty('--cb',CB[i]);
-    const body=document.createElement('div');body.className='car-bdy';body.style.setProperty('--cc',PC[i]);
-    const exh=document.createElement('div');exh.className='car-exh';exh.style.setProperty('--cc',PC[i]);exh.style.setProperty('--cb',CB[i]);
-    const lbl=document.createElement('div');lbl.className='car-lbl';lbl.style.setProperty('--cc',PC[i]);lbl.textContent=_pnames[i]||p.name;
+    const vis=document.createElement('div');vis.className='car-vis';vis.style.setProperty('--cb',CB[u]);
+    const body=document.createElement('div');body.className='car-bdy';body.style.setProperty('--cc',PC[u]);
+    const exh=document.createElement('div');exh.className='car-exh';exh.style.setProperty('--cc',PC[u]);exh.style.setProperty('--cb',CB[u]);
+    const lbl=document.createElement('div');lbl.className='car-lbl';lbl.style.setProperty('--cc',PC[u]);lbl.textContent=_pnames[u]||p.name;
     vis.appendChild(body);vis.appendChild(exh);vis.appendChild(lbl);
     slot.appendChild(vis);
 
     // action buttons: SHOT | AREA | SPEC
     const acts=document.createElement('div');acts.className='car-acts';
     const effShot=Math.min(getShotCount(), Math.max(1, p.energy));
-    const bR=document.createElement('button');bR.className='ca';bR.style.setProperty('--cc2',PC[i]);
+    const bR=document.createElement('button');bR.className='ca';bR.style.setProperty('--cc2',PC[u]);
     bR.textContent=effShot>1?`SHOT×${effShot}`:'SHOT';
     bR.title=effShot>1?`RANDOM SHOT ×${effShot} (-${effShot}pt) [S]`:'RANDOM SHOT -1pt [S]';
     bR.disabled=G.done||p.energy<1||unrevLeft===0;
     bR.onclick=()=>{selectPlayer(i);doRand(i);};
     const bA=document.createElement('button');
-    bA.className='ca';bA.style.setProperty('--cc2',PC[i]);
+    bA.className='ca';bA.style.setProperty('--cc2',PC[u]);
     if(useCore){
-      bA.textContent=AREA_INFO[i].name;
-      bA.title=`${AREA_INFO[i].desc} [C]`;
-      bA.disabled=G.done||(p.core||0)<3||(i!==4&&unrevLeft===0);
+      bA.textContent=AREA_INFO[u].name;
+      bA.title=`${AREA_INFO[u].desc} [C]`;
+      bA.disabled=G.done||(p.core||0)<3||(u!==4&&unrevLeft===0);
     } else {
       bA.textContent='CANNON 5pt';
       bA.title='エリアキャノン：9マスを即破壊 (-5pt) [C]';
@@ -3777,8 +3951,8 @@ function renderStrip(){
     const req=getSpecReqInfo(i);
     const bS=document.createElement('button');
     bS.className='ca spec'+(specPlayer===i?' arm':'');
-    bS.textContent=SPEC_INFO[i].name;
-    bS.title=`SPECIAL [${SPEC_INFO[i].name}]: ${SPEC_INFO[i].desc} (目安:💎${req.cost} / 各問1人1回まで) [↑ / Space]`;
+    bS.textContent=SPEC_INFO[u].name;
+    bS.title=`SPECIAL [${SPEC_INFO[u].name}]: ${SPEC_INFO[u].desc} (目安:💎${req.cost} / 各問1人1回まで) [↑ / Space]`;
     bS.disabled=G.done||!!p.specUsed||(!req.canUse&&specPlayer!==i);
     if(!useCore) bS.style.display='none';
     bS.onmouseenter=()=>previewSpecButtonHover(i);
@@ -3793,14 +3967,22 @@ function renderStrip(){
 function checkDead(){
   if(G.done)return;
   if(G.answering)return;
-  // いずれかの機体が自身の現在ANSWERコスト以上のエネルギーを持っていれば続行可能、全員不足なら即ゲームオーバー
-  const anyCanAnswer=G.players.some(p=>p.energy>=getAnsCost(p));
+  // いずれかの機体がANSWERコスト以上のエネルギー（またはLEADERのコア変換込み）を持っていれば続行可能
+  const anyCanAnswer=G.players.some((p,idx)=>{
+    const ac=getAnsCost(p);
+    if(p.energy>=ac) return true;
+    if(SETTINGS.coreSystem && getUnitIdx(idx)===4){
+      const convPt=Math.floor((p.core||0)/3)*9;
+      if(p.energy+convPt>=ac) return true;
+    }
+    return false;
+  });
   if(!anyCanAnswer){
     G.done=true;clearInterval(G.tid);renderStrip();
     const total=G.mode==='custom'?(G.customSchedule?G.customSchedule.length:1):G.mode==='hyper'?HYPER_TOTAL:NORMAL_TOTAL;
     showGO(G.mode==='endless'
-      ?'エネルギー枯渇（全員ANSWER発射不能）！\n'+(G.endlessScore||0)+'問クリア！ '+G.sz+'×'+G.sz+'で力尽きた…'
-      :'エネルギー枯渇（全員ANSWER発射不能）！\nQ'+(G.qi+1)+'/'+total+'で力尽きた…');
+      ?'エネルギー枯渇（ANSWER発射不能）！\n'+(G.endlessScore||0)+'問クリア！ '+G.sz+'×'+G.sz+'で力尽きた…'
+      :'エネルギー枯渇（ANSWER発射不能）！\nQ'+(G.qi+1)+'/'+total+'で力尽きた…');
   } else {
     renderStrip();
   }
@@ -3859,12 +4041,14 @@ function startTimer(resumeOnly=false){
 function stageClr(){
   if(G.done)return; // 0.1秒ギリギリ時にタイムアップと競合防止
   G.done=true;clearInterval(G.tid);areaPlayer=-1;specPlayer=-1;hideSpecCostOverlay();
-  // ── タイルコア獲得計算: コアシステムON時、ツタタイルを除く残タイル数 ÷ 25 (端数切り上げ) ──
+  // ── タイルコア獲得計算: コアシステムON時、ceil(残タイル÷25)×5 をプレイ人数で分配（1機シングル時は5倍！） ──
   const unrevealedLeft=getBreakableLeft();
-  const gainCore=(SETTINGS.coreSystem && unrevealedLeft>0)?Math.ceil(unrevealedLeft/25):0;
+  const baseCore=(SETTINGS.coreSystem && unrevealedLeft>0)?Math.ceil(unrevealedLeft/25):0;
+  const numP=Math.max(1, G.players.length);
+  const gainCore=baseCore>0 ? Math.ceil((baseCore*5)/numP) : 0;
   if(gainCore>0){
     G.players.forEach(p=>{p.core=(p.core||0)+gainCore;});
-    addLog(`残タイル ${unrevealedLeft}枚 ➔ 全員に +💎${gainCore} (TILE CORE)！`,'ok');
+    addLog(`残タイル ${unrevealedLeft}枚 ➔ ${numP===1?'+💎'+gainCore+' (シングル5倍！)':'全員に +💎'+gainCore} (TILE CORE)！`,'ok');
   }
   // 動画停止
   const _v=document.getElementById('hvid');if(_v){_v.pause();}
@@ -3927,7 +4111,7 @@ function stageClr(){
         const sz2=document.createElement('div');sz2.style.cssText='font-family:Orbitron,sans-serif;font-size:28px;color:#aa44ff;letter-spacing:4px;font-weight:900;text-shadow:0 0 24px #aa44ff88;';
         sz2.textContent='SIZE UP → '+newSz+'×'+newSz;
         const sub2=document.createElement('div');sub2.style.cssText='font-family:Share Tech Mono,monospace;font-size:11px;color:#6040a0;letter-spacing:3px;';
-        sub2.textContent='+'+newSz+'pt エネルギー/ホバー';
+        const nextGainE=Math.ceil((newSz*5)/Math.max(1,G.players.length));sub2.textContent='+'+nextGainE+'pt エネルギー'+(G.players.length>1?'/ホバー':'');
         ov.appendChild(sz2);ov.appendChild(sub2);document.body.appendChild(ov);
         setTimeout(()=>{ov.style.opacity='0';setTimeout(()=>ov.remove(),320);},1100);
         seLevelUp();
@@ -3988,11 +4172,12 @@ function showMC(){
 
   const row=document.getElementById('mc-cr');row.innerHTML='';
   const pnames = getPNAMES();
-  PC.forEach((col,i)=>{
-    const p = G.players[i] || {energy:0, core:0};
-    const d=document.createElement('div');d.className='mcc';d.style.cssText=`--cc:${col};--cb:${CB[i]}`;
+  G.players.forEach((p,i)=>{
+    const u = getUnitIdx(i);
+    const col = PC[u];
+    const d=document.createElement('div');d.className='mcc';d.style.cssText=`--cc:${col};--cb:${CB[u]}`;
     d.innerHTML=`<div class="mcc-b" style="--cc:${col}"></div><div class="mcc-t" style="--cc:${col}"></div>` +
-      `<div class="mcc-n" style="--cc:${col}">${pnames[i]||PNAMES[i]}</div>` +
+      `<div class="mcc-n" style="--cc:${col}">${pnames[u]||PNAMES[u]}</div>` +
       `<div style="font-family:'Orbitron',sans-serif;font-size:9px;color:#c0c0e8;margin-top:2px">${p.energy}pt / <span style="color:#ffe88a">💎${p.core||0}</span></div>`;
     row.appendChild(d);
   });
@@ -4628,12 +4813,20 @@ function showTravelAnim(lvIdx,onDone){
   // Build cars
   carsEl.innerHTML='';
   const pc=['#00ffcc','#ff6b35','#7b5ea7','#ff4444','#ffcc00'];
-  const pn=['PILOT','ENGNR','HACKER','SNIPER','LEADER'];
-  pc.forEach((col,i)=>{
-    const d=document.createElement('div');d.className='tg-car';d.style.cssText=`--cc:${col};--tb:${i*0.12}s`;
-    d.innerHTML=`<div class="tg-car-b" style="background:${col}"></div><div class="tg-car-ex" style="background:linear-gradient(90deg,transparent,${col})"></div><div class="tg-car-n" style="color:${col}">${pn[i]}</div>`;
+  const pn=WORLD_CONFIGS[G.world||'cyber'].vehicleName||['PILOT','ENGNR','HACKER','SNIPER','LEADER'];
+  if(G.players&&G.players.length===1){
+    const u=getUnitIdx(0);
+    const col=pc[u];
+    const d=document.createElement('div');d.className='tg-car';d.style.cssText=`--cc:${col};--tb:0s`;
+    d.innerHTML=`<div class="tg-car-b" style="background:${col}"></div><div class="tg-car-ex" style="background:linear-gradient(90deg,transparent,${col})"></div><div class="tg-car-n" style="color:${col}">${pn[u]} (SOLO)</div>`;
     carsEl.appendChild(d);
-  });
+  } else {
+    pc.forEach((col,i)=>{
+      const d=document.createElement('div');d.className='tg-car';d.style.cssText=`--cc:${col};--tb:${i*0.12}s`;
+      d.innerHTML=`<div class="tg-car-b" style="background:${col}"></div><div class="tg-car-ex" style="background:linear-gradient(90deg,transparent,${col})"></div><div class="tg-car-n" style="color:${col}">${pn[i]}</div>`;
+      carsEl.appendChild(d);
+    });
+  }
 
   // Reset state
   ov.classList.add('active');
@@ -5041,13 +5234,21 @@ document.addEventListener('keydown',e=>{
   const isInput=tag==='INPUT'||tag==='TEXTAREA';
 
   const bm=document.getElementById('bonus-modal');
-  if(bm&&bm.classList.contains('active')&&e.key>='1'&&e.key<='5'){
-    e.preventDefault();
-    chooseLeaderBonus(parseInt(e.key)-1, G._bonusAmount||10);
-    return;
+  if(bm&&bm.classList.contains('active')){
+    const amt=G._bonusAmount||15;
+    const coreAmt=Math.max(1, Math.ceil(amt/3));
+    if(G.players.length===1){
+      if(e.key==='1'){e.preventDefault();chooseLeaderBonus(0, amt, 'energy');return;}
+      if(e.key==='2'&&SETTINGS.coreSystem){e.preventDefault();chooseLeaderBonus(0, coreAmt, 'core');return;}
+    } else if(e.key>='1'&&e.key<=String(G.players.length)){
+      e.preventDefault();
+      const rType=G._bonusRewardType||'energy';
+      chooseLeaderBonus(parseInt(e.key)-1, rType==='core'?coreAmt:amt, rType);
+      return;
+    }
   }
   // 数字 1-5 でプレイヤー選択（入力中でも反応しないように）
-  if(!isInput&&e.key>='1'&&e.key<='5'){
+  if(!isInput&&e.key>='1'&&e.key<=String(G.players.length)){
     e.preventDefault();
     selectPlayer(parseInt(e.key)-1);
     return;
@@ -5189,6 +5390,8 @@ function toggleSettingSwitch(key){
 function syncSettingsUI(){
   const svInit=document.getElementById('sv-init');
   if(svInit)svInit.value=SETTINGS.initEnergy;
+  const svClear=document.getElementById('sv-clear');
+  if(svClear)svClear.value=SETTINGS.clearEnergy;
   const svBonus=document.getElementById('sv-bonus');
   if(svBonus)svBonus.value=SETTINGS.bonusEnergy;
   const sc=document.getElementById('sv-core');
@@ -5196,6 +5399,8 @@ function syncSettingsUI(){
 
   const cmInit=document.getElementById('cm-init-en');
   if(cmInit)cmInit.value=SETTINGS.initEnergy;
+  const cmClear=document.getElementById('cm-clear-en');
+  if(cmClear)cmClear.value=SETTINGS.clearEnergy;
   const cmCore=document.getElementById('cm-init-core');
   if(cmCore)cmCore.value=SETTINGS.initCore||0;
   const cmBonus=document.getElementById('cm-bonus-en');
@@ -5221,18 +5426,19 @@ function syncSettingsUI(){
     icBtn.textContent='💎 CORE SYSTEM: '+(SETTINGS.coreSystem?'ON':'OFF');
     icBtn.classList.toggle('on-core', !!SETTINGS.coreSystem);
   }
+  syncPlayStyleUI();
 }
 function setSettingDirect(key,val){
-  const mins={initEnergy:1,bonusEnergy:0,initCore:0};
-  const maxs={initEnergy:1000,bonusEnergy:1000,initCore:1000};
+  const mins={initEnergy:1,clearEnergy:0,bonusEnergy:0,initCore:0};
+  const maxs={initEnergy:1000,clearEnergy:1000,bonusEnergy:1000,initCore:1000};
   const num=parseInt(val);
   SETTINGS[key]=Math.max(mins[key],Math.min(maxs[key],isNaN(num)?mins[key]:num));
   saveSettingsToStorage();
   syncSettingsUI();
 }
 function adjSetting(key,delta){
-  const mins={initEnergy:1,bonusEnergy:0,initCore:0};
-  const maxs={initEnergy:1000,bonusEnergy:1000,initCore:1000};
+  const mins={initEnergy:1,clearEnergy:0,bonusEnergy:0,initCore:0};
+  const maxs={initEnergy:1000,clearEnergy:1000,bonusEnergy:1000,initCore:1000};
   SETTINGS[key]=Math.max(mins[key],Math.min(maxs[key],(SETTINGS[key]||0)+delta));
   saveSettingsToStorage();
   syncSettingsUI();
@@ -5456,24 +5662,36 @@ window.addEventListener('DOMContentLoaded',()=>{
     <div class="sp-body">
       <div class="sp-row">
         <div class="sp-label">
-          <div class="sp-label-main">初期エネルギー (1〜1000)</div>
-          <div class="sp-label-sub">各問開始時、一人当たりの補充量</div>
+          <div class="sp-label-main">スタート時エネルギー (1〜1000)</div>
+          <div class="sp-label-sub">ゲーム開始時(Q1)の総エネルギー（プレイ人数で分配 / 初期値50pt）</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('initEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('initEnergy',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-init" min="1" max="1000" value="5" style="width:68px;color:#88aaff" onchange="setSettingDirect('initEnergy',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-init" min="1" max="1000" value="50" style="width:68px;color:#88aaff" onchange="setSettingDirect('initEnergy',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('initEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('initEnergy',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
 
       <div class="sp-row">
         <div class="sp-label">
+          <div class="sp-label-main">問題クリア時エネルギー (0〜1000)</div>
+          <div class="sp-label-sub">各問クリア時の補充総エネルギー（プレイ人数で分配 / 初期値25pt）</div>
+        </div>
+        <div class="sp-control">
+          <button class="sp-btn" onmousedown="spHoldStart('clearEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('clearEnergy',-1)" ontouchend="spHoldEnd()">−</button>
+          <input type="number" class="cm-num-inp" id="sv-clear" min="0" max="1000" value="25" style="width:68px;color:#88aaff" onchange="setSettingDirect('clearEnergy',this.value)">
+          <button class="sp-btn" onmousedown="spHoldStart('clearEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('clearEnergy',1)" ontouchend="spHoldEnd()">+</button>
+        </div>
+      </div>
+
+      <div class="sp-row">
+        <div class="sp-label">
           <div class="sp-label-main">レベル突破ボーナス (0〜1000)</div>
-          <div class="sp-label-sub">レベル変わり目、リーダー指名での追加エネルギー</div>
+          <div class="sp-label-sub">レベル変わり目に【エネルギーpt】または【1/3相当の💎コア】を選択 (初期値15pt＝💎5)</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('bonusEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('bonusEnergy',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-bonus" min="0" max="1000" value="10" style="width:68px;color:#88aaff" onchange="setSettingDirect('bonusEnergy',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-bonus" min="0" max="1000" value="15" style="width:68px;color:#88aaff" onchange="setSettingDirect('bonusEnergy',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('bonusEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('bonusEnergy',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
@@ -5539,28 +5757,36 @@ window.addEventListener('DOMContentLoaded',()=>{
         <button class="cm-preset-btn" onclick="applyCustomPreset('debug100')">100×100 テスト(1問)</button>
         <button class="cm-preset-btn" onclick="applyCustomPreset('step1to100')">1➔10➔50➔100階段</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#08081c;border:1px solid #1e1e48;border-radius:4px;padding:8px 10px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#08081c;border:1px solid #1e1e48;border-radius:4px;padding:8px 8px">
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:9px;color:#b0b0e0;letter-spacing:1px">初期エネルギー (1〜1000)</span>
+          <span style="font-size:8.5px;color:#b0b0e0;letter-spacing:0.5px">スタート時EN (÷人数)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('initEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-init-en" min="1" max="1000" value="5" style="width:62px;color:var(--cyan)" onchange="setSettingDirect('initEnergy',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-init-en" min="1" max="1000" value="50" style="width:54px;color:var(--cyan)" onchange="setSettingDirect('initEnergy',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('initEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:9px;color:#ffe88a;letter-spacing:1px">初期コア 💎 (0〜1000)</span>
+          <span style="font-size:8.5px;color:#88d8ff;letter-spacing:0.5px">クリア時EN (÷人数)</span>
+          <div class="cm-field">
+            <button class="cm-step-btn" onmousedown="spHoldStart('clearEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
+            <input type="number" class="cm-num-inp" id="cm-clear-en" min="0" max="1000" value="25" style="width:54px;color:#88d8ff" onchange="setSettingDirect('clearEnergy',this.value)">
+            <button class="cm-step-btn" onmousedown="spHoldStart('clearEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:8.5px;color:#ffe88a;letter-spacing:0.5px">初期コア 💎</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('initCore',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-init-core" min="0" max="1000" value="0" style="width:62px;color:#ffcc00" onchange="setSettingDirect('initCore',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-init-core" min="0" max="1000" value="0" style="width:54px;color:#ffcc00" onchange="setSettingDirect('initCore',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('initCore',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:9px;color:#ff9e75;letter-spacing:1px">突破ボーナス (0〜1000)</span>
+          <span style="font-size:8.5px;color:#ff9e75;letter-spacing:0.5px">突破ボーナス (EN/💎)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('bonusEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-bonus-en" min="0" max="1000" value="10" style="width:62px;color:var(--orange)" onchange="setSettingDirect('bonusEnergy',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-bonus-en" min="0" max="1000" value="15" style="width:54px;color:var(--orange)" onchange="setSettingDirect('bonusEnergy',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('bonusEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
