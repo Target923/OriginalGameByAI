@@ -620,6 +620,234 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
 }
 
 
+
+/* ══ MULTIPLAYER, CUSTOM FORMATION & VIEWPORT-HEIGHT RESPONSIVE LAYOUT ══ */
+html,body{height:100%;height:100dvh;overflow:hidden}
+#iw{flex-shrink:0;transform-origin:center center;will-change:transform}
+.gos-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;flex-shrink:0;transform-origin:center center}
+.mci{flex-shrink:0;transform-origin:center center}
+.sp-box{flex-shrink:0;transform-origin:center center}
+.cm-box{max-width:none;max-height:740px;flex-shrink:0;transform-origin:center center}
+.bm-box{max-width:660px !important;flex-shrink:0;transform-origin:center center}
+.pm-box{flex-shrink:0;transform-origin:center center}
+.eprev,.eprevp{height:clamp(140px,34vh,330px);min-height:clamp(140px,34vh,330px)}
+
+/* ── GAME SCREEN VIEWPORT-HEIGHT SCALING (#game) ── */
+#game{height:100%;height:100dvh;overflow:hidden}
+.hud{padding:clamp(2px,0.6vh,8px) 10px clamp(2px,0.5vh,6px);gap:clamp(4px,0.6vw,8px)}
+.hb{padding:clamp(2px,0.45vh,6px) 6px}
+.hl{font-size:clamp(6px,0.85vh,9px)}
+.hv{font-size:clamp(11px,1.85vh,19px)}
+.sbar{padding:clamp(1px,0.3vh,4px) 6px;font-size:clamp(7px,1.02vh,10px)}
+#bcol{min-height:0;height:100%}
+#lpanel,#rpanel{width:clamp(118px,13vw,190px);flex:0 0 clamp(118px,13vw,190px);min-height:0}
+.lp-t{padding:clamp(3px,0.55vh,7px) 8px;font-size:clamp(6.5px,0.9vh,8.5px)}
+.logbox{font-size:clamp(8px,1.12vh,10.5px);line-height:1.68;padding:clamp(3px,0.5vh,7px) 8px}
+.rp-block{padding:clamp(4px,1.05vh,13px) clamp(6px,0.8vw,12px)}
+.rp-label{font-size:clamp(6px,0.85vh,8.5px);margin-bottom:clamp(2px,0.45vh,6px)}
+.rp-hint{font-size:clamp(11px,1.75vh,16px)}
+.rp-tiles{font-size:clamp(18px,3.3vh,34px)}
+.rp-tiles-sub{font-size:clamp(7px,0.95vh,9px);margin-top:clamp(1px,0.28vh,4px)}
+.rp-diff-row{padding:clamp(3px,0.85vh,10px) clamp(6px,0.8vw,12px)}
+.rp-diff-key{font-size:clamp(6px,0.85vh,8px);margin-bottom:clamp(1px,0.3vh,4px)}
+.rp-diff-val{font-size:clamp(13px,2.25vh,23px)}
+#tv{font-size:clamp(26px,5.2vh,54px)}
+.sco-val{font-size:clamp(32px,6.5vh,68px)}
+.tg-title{font-size:clamp(28px,6.5vh,62px)}
+#travel-gate{gap:clamp(8px,2vh,18px)}
+
+/* ── BOTTOM HOVERCAR STRIP HEIGHT SCALING ── */
+#strip{min-height:0}
+.cslot{padding:clamp(3px,0.8vh,10px) clamp(3px,0.45vw,8px);gap:clamp(2px,0.48vh,6px)}
+.shortcut-hint{font-size:clamp(6px,0.8vh,7.5px);top:2px;right:4px}
+.car-ans{padding:clamp(2px,0.55vh,7px) 6px;font-size:clamp(9.5px,1.35vh,13px)}
+.car-beam{padding:clamp(2px,0.55vh,7px) clamp(5px,0.6vw,10px);font-size:clamp(8.5px,1.2vh,12px)}
+.car-stat-row{margin:0;gap:clamp(4px,0.55vw,10px)}
+.car-badge,.car-core-badge{
+  padding:clamp(1px,0.28vh,4px) clamp(6px,0.7vw,12px);
+  font-size:clamp(10px,1.55vh,15px);
+  min-width:clamp(48px,4.4vw,72px);
+}
+.car-vis{gap:clamp(1px,0.25vh,3px);margin:0}
+.car-bdy{width:clamp(40px,6.8vh,68px);height:clamp(11px,1.9vh,20px)}
+.car-exh{width:clamp(24px,4.2vh,42px)}
+.car-lbl{font-size:clamp(7px,1vh,9.5px)}
+.car-acts{gap:clamp(2px,0.35vw,5px)}
+.ca{padding:clamp(2px,0.5vh,6px) clamp(5px,0.65vw,12px);font-size:clamp(8.5px,1.2vh,11.5px)}
+.ca.spec{padding:clamp(2px,0.5vh,6px) clamp(4px,0.5vw,9px);font-size:clamp(8px,1.1vh,10.5px)}
+
+/* ── INTRO PLAYSTYLE & HOVERCAR FORMATION ── */
+#playstyle-row{display:flex;gap:6px;width:540px;max-width:94vw;margin-top:11px;opacity:0;animation:fi .6s ease forwards 1.88s}
+.ps-btn{
+  flex:1;padding:7px 6px;background:rgba(8,12,32,.88);border:1px solid var(--bd);
+  border-radius:3px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;
+  color:var(--dim);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;
+}
+.ps-btn:hover{border-color:#88aaff;color:#c0d0ff;transform:translateY(-1px)}
+.ps-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,204,.11);box-shadow:0 0 14px rgba(0,255,204,.25)}
+.ps-btn.online-btn{border-color:#ff9e44;color:#ffbb66;background:rgba(255,140,40,.11)}
+.ps-btn.online-btn:hover{border-color:#ffcc00;color:#ffe88a;background:rgba(255,204,0,.20);box-shadow:0 0 18px rgba(255,180,0,.38)}
+
+#intro-cars{display:flex;gap:12px;margin-top:11px;opacity:0;animation:fi .7s ease forwards 1.9s}
+.ic{display:flex;flex-direction:column;align-items:center;gap:3px;animation:cf var(--cb2,.9s) ease-in-out infinite var(--cb,0s);padding:6px 8px;border-radius:5px;border:1px solid transparent;cursor:pointer;transition:all .15s;user-select:none}
+.ic:hover{background:rgba(255,255,255,.05);border-color:color-mix(in srgb,var(--cc) 50%,transparent)}
+.ic.unit-off{opacity:.28;transform:scale(.92);filter:grayscale(.55)}
+.ic.unit-on{opacity:1;border-color:color-mix(in srgb,var(--cc) 65%,transparent);background:color-mix(in srgb,var(--cc) 11%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--cc) 26%,transparent)}
+#intro-cars.solo-pick .ic.unit-on{transform:scale(1.07);border-color:var(--cc);background:color-mix(in srgb,var(--cc) 16%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--cc) 42%,transparent)}
+.ic-chk{font-size:7px;font-family:'Orbitron',sans-serif;padding:1px 5px;border-radius:2px;letter-spacing:1px;border:1px solid currentColor;margin-top:1px}
+.ic.unit-on .ic-chk{color:var(--cc);background:rgba(0,0,0,.45)}
+.ic.unit-off .ic-chk{color:#555a7a;border-color:#2a2e4a}
+#solo-unit-info{font-size:9px;color:#b8c4e8;margin-top:5px;min-height:15px;text-align:center;letter-spacing:.8px;opacity:0;animation:fi .6s ease forwards 1.95s}
+
+#strip.solo-strip{justify-content:center}
+#strip.solo-strip .cslot{max-width:520px;border-left:1px solid #1a1a4a;border-right:1px solid #1a1a4a}
+#strip.compact-strip{justify-content:center}
+#strip.compact-strip .cslot{max-width:360px;border-left:1px solid #121232}
+.car-pilot-tag{
+  font-size:clamp(7px,1vh,9px);padding:1px 6px;border-radius:10px;letter-spacing:.8px;
+  border:1px solid color-mix(in srgb,var(--cc,#00ffcc) 55%,transparent);
+  background:rgba(6,10,28,.9);color:#d8e2ff;white-space:nowrap;max-width:96%;
+  overflow:hidden;text-overflow:ellipsis;line-height:1.25;
+}
+.car-pilot-tag.is-you{
+  border-color:var(--cc,#00ffcc);color:#04040f;background:var(--cc,#00ffcc);
+  font-weight:900;box-shadow:0 0 10px color-mix(in srgb,var(--cc,#00ffcc) 50%,transparent);
+}
+.cslot.remote-ally{background:rgba(4,6,18,.72);cursor:default}
+.cslot.remote-ally:hover{background:rgba(4,6,18,.72)}
+.cslot.remote-ally .car-ans{opacity:.38;border-style:dashed}
+
+/* ── LEVEL CLEAR BONUS (MULTI & INDIVIDUAL CHOICE) ── */
+.bm-multi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(106px,1fr));gap:8px;margin-top:14px}
+.bm-mcard{background:#0b1028;border:1.5px solid var(--cc,#00ffcc);border-radius:6px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bm-mcard-opts{display:flex;flex-direction:column;gap:5px;width:100%;margin-top:2px}
+.bm-mopt{width:100%;padding:6px 4px;border-radius:4px;border:1px solid #283060;background:#060818;color:#7d86b0;font-family:'Orbitron',sans-serif;font-size:9.5px;font-weight:700;cursor:pointer;transition:all .12s}
+.bm-mopt:hover:not(:disabled){border-color:#88aaff;color:#dce4ff}
+.bm-mopt.sel-en{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,204,.16);box-shadow:0 0 10px rgba(0,255,204,.28)}
+.bm-mopt.sel-core{border-color:var(--yellow);color:#ffe88a;background:rgba(255,204,0,.17);box-shadow:0 0 10px rgba(255,204,0,.28)}
+.bm-mopt:disabled{opacity:.28;cursor:not-allowed}
+.bm-confirm-btn{margin-top:14px;width:100%;max-width:340px;padding:11px 18px;border-radius:5px;border:1.5px solid var(--yellow);background:var(--yellow);color:#04040f;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;letter-spacing:2.5px;cursor:pointer;transition:all .15s;box-shadow:0 0 18px rgba(255,204,0,.35)}
+.bm-confirm-btn:hover{background:#ffe566;transform:scale(1.02);box-shadow:0 0 26px rgba(255,204,0,.6)}
+.bm-solo-card.picked{background:rgba(0,255,204,.16);box-shadow:0 0 24px var(--bc,#00ffcc);transform:translateY(-2px)}
+.bm-peer-status{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px;padding-top:10px;border-top:1px solid #1a2048}
+.bm-peer-pill{font-size:9.5px;padding:3px 10px;border-radius:12px;border:1px solid #2a3260;background:#070a1c;color:#9098c0}
+.bm-peer-pill.done{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,204,.11)}
+
+/* ── ONLINE MULTIPLAYER LOBBY MODAL ── */
+#online-lobby{
+  position:fixed;inset:0;background:rgba(2,4,16,.96);z-index:430;
+  display:none;flex-direction:column;align-items:center;justify-content:center;padding:12px;overflow:hidden;
+}
+#online-lobby.active{display:flex}
+.ol-box{
+  background:#06081a;border:1.5px solid var(--cyan);border-radius:8px;
+  width:760px;flex-shrink:0;display:flex;flex-direction:column;
+  overflow:hidden;box-shadow:0 0 44px rgba(0,255,204,.18);transform-origin:center center;
+}
+@media(max-width:650px){
+  .ol-box{width:95vw;max-height:92dvh}
+}
+.ol-head{
+  display:flex;align-items:center;justify-content:space-between;padding:10px 18px;
+  border-bottom:1px solid var(--bd);background:#080c24;flex-shrink:0;
+}
+.ol-head h2{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:3px;display:flex;align-items:center;gap:8px}
+.ol-body{padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;flex:1}
+.ol-body::-webkit-scrollbar{width:4px}.ol-body::-webkit-scrollbar-thumb{background:var(--bd)}
+.ol-name-bar{
+  display:flex;align-items:center;gap:10px;background:#090d26;border:1px solid #1e2658;
+  padding:9px 14px;border-radius:5px;flex-wrap:wrap;
+}
+.ol-inp{
+  background:#040614;border:1px solid #2a3470;color:#fff;padding:7px 11px;
+  border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:13px;outline:none;
+}
+.ol-inp:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,255,204,.28)}
+.ol-entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.ol-entry-grid{grid-template-columns:1fr}}
+.ol-entry-card{
+  background:#090d24;border:1px solid #222a60;border-radius:6px;padding:18px 16px;
+  display:flex;flex-direction:column;gap:10px;justify-content:space-between;
+}
+.ol-entry-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;letter-spacing:2px;color:#e0e8ff}
+.ol-entry-desc{font-size:9.5px;color:#8a94c0;line-height:1.7}
+.ol-btn{
+  padding:10px 16px;border-radius:4px;font-family:'Orbitron',sans-serif;font-size:11px;
+  font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .15s;border:1.5px solid var(--cyan);
+  background:rgba(0,255,204,.12);color:var(--cyan);text-align:center;
+}
+.ol-btn:hover:not(:disabled){background:var(--cyan);color:#04040f;box-shadow:0 0 18px rgba(0,255,204,.45)}
+.ol-btn:disabled{opacity:.32;cursor:not-allowed}
+.ol-btn.gold{border-color:#ffcc00;background:rgba(255,204,0,.14);color:#ffe88a}
+.ol-btn.gold:hover:not(:disabled){background:#ffcc00;color:#04040f;box-shadow:0 0 22px rgba(255,204,0,.55)}
+.ol-btn.danger{border-color:var(--red);background:transparent;color:#ff8080;padding:6px 12px;font-size:9.5px}
+.ol-btn.danger:hover:not(:disabled){background:var(--red);color:#fff}
+
+.ol-room-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(90deg,#081228,#0c1030);border:1px solid rgba(0,255,204,.4);
+  border-radius:6px;padding:9px 14px;
+}
+.ol-room-code{
+  font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--cyan);
+  letter-spacing:5px;text-shadow:0 0 16px rgba(0,255,204,.45);
+}
+.ol-unassigned-bar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:rgba(255,204,0,.09);border:1px dashed rgba(255,204,0,.55);
+  border-radius:5px;padding:6px 10px;margin-bottom:8px;font-size:9.5px;color:#ffe88a;
+}
+.ol-unassigned-pill{
+  padding:2px 9px;border-radius:12px;border:1px solid rgba(255,204,0,.45);
+  background:rgba(10,12,30,.9);color:#ffe88a;font-weight:700;
+}
+.ol-unassigned-pill.mine{
+  border-color:var(--cyan);color:#04040f;background:var(--cyan);
+  box-shadow:0 0 10px rgba(0,255,204,.45);
+}
+.ol-units-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media(max-width:650px){.ol-units-grid{grid-template-columns:repeat(2,1fr)}}
+.ol-ucard{
+  background:#090c22;border:1.5px solid #202652;border-radius:6px;padding:9px 7px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;
+  transition:all .15s;position:relative;text-align:center;user-select:none;
+}
+.ol-ucard:hover:not(.taken-other){border-color:var(--cc);transform:translateY(-2px);background:rgba(255,255,255,.04)}
+.ol-ucard.mine{
+  border-color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent);
+  box-shadow:0 0 18px color-mix(in srgb,var(--cc) 34%,transparent);
+}
+.ol-ucard.mine:hover{
+  background:color-mix(in srgb,var(--cc) 22%,transparent);
+}
+.ol-ucard.taken-other{
+  border-color:color-mix(in srgb,var(--cc) 45%,#1a2040);opacity:.78;cursor:not-allowed;
+  background:rgba(12,16,38,.85);
+}
+.ol-ucard-pilot{
+  font-size:9px;padding:2px 7px;border-radius:10px;width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;
+}
+.ol-ucard-sub{
+  font-size:7.5px;color:var(--cc,#00ffcc);opacity:.85;letter-spacing:.5px;line-height:1.1;
+}
+.ol-cfg-box{
+  background:#080b20;border:1px solid #1c2250;border-radius:6px;padding:9px 12px;
+  display:flex;flex-direction:column;gap:7px;
+}
+.ol-cfg-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ol-chip{
+  padding:5px 10px;border-radius:3px;border:1px solid #252c60;background:#050716;
+  color:#8892c0;font-family:'Orbitron',sans-serif;font-size:9.5px;cursor:pointer;transition:all .12s;
+}
+.ol-chip.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,204,.13);box-shadow:0 0 10px rgba(0,255,204,.22)}
+.ol-chip:disabled{cursor:default;opacity:.85}
+.ol-footer{
+  padding:10px 18px;border-top:1px solid var(--bd);background:#080b20;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;flex-shrink:0;
+}
+.ol-err{color:#ff7788;font-size:10px;min-height:14px}
+.res-btn-group{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;z-index:2;position:relative}
 </style>
 </head>
 <body>
@@ -658,15 +886,17 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
     </div>
     <div id="idesc" style="opacity:0;animation:fi .6s ease forwards 2.0s">5台のホバーカーで神殿を疾走せよ。<br>タイルを砕き、隠された真実を暴け。<br><span style="color:#00ffccaa;font-size:8px">※妨害ギミック：初期盤面の30%が耐久値2のバリアタイルに変化</span></div>
     <div id="playstyle-row">
-      <button class="ps-btn active" id="ps-team" onclick="setPlayStyle('team')">👥 5機チーム (TEAM)</button>
-      <button class="ps-btn" id="ps-solo" onclick="setPlayStyle('solo')">👤 1機シングル (SOLO)</button>
+      <button class="ps-btn active" id="ps-team" onclick="setPlayStyle('team')" title="5機フル編成で出撃">👥 全5機 (TEAM)</button>
+      <button class="ps-btn" id="ps-solo" onclick="setPlayStyle('solo')" title="好きな1機を選んで5倍リソースで出撃">👤 1機 (SOLO)</button>
+      <button class="ps-btn" id="ps-free" onclick="setPlayStyle('custom_units')" title="下の機体をクリックして1〜5機の好きな組み合わせで出撃">🛸 自由編成 (1-5)</button>
+      <button class="ps-btn online-btn" id="ps-online" onclick="openOnlineLobby()" title="部屋コードで2〜5人の仲間と協力プレイ">🌐 ONLINE MULTI</button>
     </div>
     <div id="intro-cars">
-      <div class="ic" id="ic-unit-0" style="--cc:#00ffcc;--cb:0s" onclick="selectSoloUnit(0)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">PILOT</div></div>
-      <div class="ic" id="ic-unit-1" style="--cc:#ff6b35;--cb:.14s" onclick="selectSoloUnit(1)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">ENGNR</div></div>
-      <div class="ic" id="ic-unit-2" style="--cc:#7b5ea7;--cb:.28s" onclick="selectSoloUnit(2)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">HACKER</div></div>
-      <div class="ic" id="ic-unit-3" style="--cc:#ff4444;--cb:.42s" onclick="selectSoloUnit(3)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">SNIPER</div></div>
-      <div class="ic" id="ic-unit-4" style="--cc:#ffcc00;--cb:.56s" onclick="selectSoloUnit(4)" title="クリックで1機シングル出撃機体を選択"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">LEADER</div></div>
+      <div class="ic unit-on" id="ic-unit-0" style="--cc:#00ffcc;--cb:0s" onclick="selectSoloUnit(0)" title="クリックで出撃機体を切替 / ON・OFF"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">PILOT</div><div class="ic-chk">✓ ON</div></div>
+      <div class="ic unit-on" id="ic-unit-1" style="--cc:#ff6b35;--cb:.14s" onclick="selectSoloUnit(1)" title="クリックで出撃機体を切替 / ON・OFF"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">ENGNR</div><div class="ic-chk">✓ ON</div></div>
+      <div class="ic unit-on" id="ic-unit-2" style="--cc:#7b5ea7;--cb:.28s" onclick="selectSoloUnit(2)" title="クリックで出撃機体を切替 / ON・OFF"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">HACKER</div><div class="ic-chk">✓ ON</div></div>
+      <div class="ic unit-on" id="ic-unit-3" style="--cc:#ff4444;--cb:.42s" onclick="selectSoloUnit(3)" title="クリックで出撃機体を切替 / ON・OFF"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">SNIPER</div><div class="ic-chk">✓ ON</div></div>
+      <div class="ic unit-on" id="ic-unit-4" style="--cc:#ffcc00;--cb:.56s" onclick="selectSoloUnit(4)" title="クリックで出撃機体を切替 / ON・OFF"><div class="ic-b"></div><div class="ic-ex"></div><div class="ic-n">LEADER</div><div class="ic-chk">✓ ON</div></div>
     </div>
     <div id="solo-unit-info">👥 5機チーム編成（機体アイコンをクリックすると1機シングルで出撃できます）</div>
     <div id="mode-row">
@@ -781,25 +1011,1033 @@ html,body{width:100%;height:100%;background:#04040f;color:#e0e0ff;font-family:'S
 
 <div id="ca"></div>
 <div id="cmsg"></div>
-<div id="gos" class="scr"><h2>GAME OVER</h2><p id="gomsg"></p>
+<div id="gos" class="scr"><div class="gos-inner"><h2>GAME OVER</h2><p id="gomsg"></p>
   <div id="go-reveal" style="display:none;flex-direction:column;align-items:center;gap:8px;margin:4px 0">
     <div style="font-size:9px;color:#5a3a5a;letter-spacing:3px;text-transform:uppercase;font-family:'Share Tech Mono',monospace">CORRECT ANSWER WAS</div>
     <div id="go-ans-txt" style="font-family:'Orbitron',sans-serif;font-size:28px;color:#ff9090;text-shadow:0 0 20px #ff444488;letter-spacing:4px"></div>
     <img id="go-ans-img" src="" alt="" style="width:200px;height:134px;object-fit:cover;border-radius:4px;border:2px solid rgba(255,68,68,.4);box-shadow:0 0 24px rgba(255,0,0,.15)">
     <div id="go-unsplash-credit" style="display:none"></div>
   </div>
-  <button class="sb r" onclick="retryGame()">RETRY MISSION</button></div>
+  <div id="go-actions" class="res-btn-group"><button class="sb r" onclick="retryGame()">RETRY MISSION</button></div></div></div>
 <div id="mcs" class="scr">
   <canvas id="mccanvas"></canvas>
   <div class="mci">
     <div id="mct">MISSION COMPLETE</div>
     <div id="mcsub">全10ステージ突破！<br>残エネルギー合計: <span id="mcen">0</span>pt</div>
     <div id="mc-cr"></div>
-    <button class="sb c" id="mcbtn" onclick="retryGame()">PLAY AGAIN</button>
+    <div id="mc-actions" class="res-btn-group"><button class="sb c" id="mcbtn" onclick="retryGame()">PLAY AGAIN</button></div>
+  </div>
+</div>
+<!-- ONLINE MULTIPLAYER LOBBY MODAL -->
+<div id="online-lobby">
+  <div class="ol-box">
+    <div class="ol-head">
+      <h2>🌐 ONLINE CO-OP MULTIPLAYER <span id="ol-net-badge" style="font-size:9px;color:#ffe88a;font-family:'Share Tech Mono',monospace;letter-spacing:1px">P2P (2〜5 PLAYERS)</span></h2>
+      <button class="sp-head-x" onclick="closeOnlineLobby()">✕ CLOSE</button>
+    </div>
+    <div class="ol-body">
+      <!-- ENTRY VIEW (CREATE OR JOIN) -->
+      <div id="ol-entry-view" style="display:flex;flex-direction:column;gap:14px">
+        <div class="ol-name-bar">
+          <span style="font-size:10px;color:var(--cyan);letter-spacing:1.5px;font-weight:700">👤 PLAYER NAME:</span>
+          <input id="ol-name-inp" class="ol-inp" type="text" maxlength="12" placeholder="あなたの名前 (最大12文字)" style="flex:1;min-width:180px" onchange="saveOnlinePlayerName(this.value)">
+          <span style="font-size:9px;color:var(--dim)">※5機のホバーカーを仲間と分担して挑むリアルタイム協力モード</span>
+        </div>
+        <div class="ol-entry-grid">
+          <div class="ol-entry-card">
+            <div>
+              <div class="ol-entry-title" style="color:var(--cyan)">🏠 部屋を作る (HOST)</div>
+              <div class="ol-entry-desc" style="margin-top:6px">新しいルームを開設し、6文字の部屋コードを発行します。<br>ワールド・難易度・エネルギー設定をホストとして選択できます。</div>
+            </div>
+            <button id="ol-create-btn" class="ol-btn" onclick="createOnlineRoom()">▶ 部屋を作成する</button>
+          </div>
+          <div class="ol-entry-card">
+            <div>
+              <div class="ol-entry-title" style="color:#ffe88a">🔑 コードで参加 (JOIN)</div>
+              <div class="ol-entry-desc" style="margin-top:6px">ホストから共有された6文字の部屋コードを入力して合流します。</div>
+              <input id="ol-code-inp" class="ol-inp" type="text" maxlength="10" placeholder="例: K7P2QX" style="width:100%;margin-top:8px;text-align:center;font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:4px;text-transform:uppercase" onkeydown="if(event.key==='Enter'){event.preventDefault();joinOnlineRoomByInput();}">
+            </div>
+            <button id="ol-join-btn" class="ol-btn gold" onclick="joinOnlineRoomByInput()">🚀 部屋に参加する</button>
+          </div>
+        </div>
+        <div id="ol-entry-status" class="ol-err"></div>
+      </div>
+
+      <!-- ROOM LOBBY VIEW -->
+      <div id="ol-room-view" style="display:none;flex-direction:column;gap:10px">
+        <div class="ol-room-banner">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:8px;color:var(--dim);letter-spacing:2px">ROOM CODE</div>
+              <div class="ol-room-code" id="ol-disp-code">------</div>
+            </div>
+            <button class="eb2 p" style="padding:6px 12px;font-size:10px" onclick="copyOnlineRoomCode()">📋 コードをコピー</button>
+            <div style="padding:4px 10px;background:#050818;border:1px solid #243068;border-radius:4px;font-size:10px;color:#b8c8ff">
+              参加者: <strong id="ol-player-cnt" style="color:var(--cyan);font-family:'Orbitron',sans-serif">1</strong> / 5人
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:9px;color:var(--dim)">名前:</span>
+            <input id="ol-room-name-inp" class="ol-inp" type="text" maxlength="12" style="width:130px;padding:4px 8px;font-size:11px" onchange="updateNameInRoom(this.value)">
+            <button class="ol-btn danger" onclick="leaveOnlineRoom()">退室</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px">
+            <span style="font-size:9.5px;color:var(--cyan);letter-spacing:1.2px;font-weight:700">🛸 搭乗ホバーカー選択（重複なし・自分の機体を再クリックで解除／入れ替え可）</span>
+            <span id="ol-unit-rule-hint" style="font-size:9px;color:#98a4d0"></span>
+          </div>
+          <div id="ol-unassigned-bar" class="ol-unassigned-bar" style="display:none"></div>
+          <div class="ol-units-grid" id="ol-units-grid"></div>
+        </div>
+
+        <div class="ol-cfg-box" id="ol-cfg-box"></div>
+      </div>
+    </div>
+    <div class="ol-footer" id="ol-room-footer" style="display:none">
+      <div id="ol-footer-msg" style="font-size:10px;color:#a8b4e0"></div>
+      <div style="display:flex;gap:10px;align-items:center" id="ol-footer-btns"></div>
+    </div>
   </div>
 </div>
 
 <script>
+/* IMAGINE TILE — Multiplayer & Formation Core Module (P2P Host-Authoritative)
+ * Works in both Browser (window.ITMulti) and Node.js (module.exports) for automated testing.
+ */
+(function (root) {
+  'use strict';
+
+  const APP = 'imaginetile';
+  const NET_VERSION = 1;
+  const MAX_PLAYERS = 5;
+  const PEER_PREFIX = 'imaginetile-';
+  const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const CODE_LEN = 6;
+  const PEERJS_URL = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js';
+  const PING_MS = 4000;
+  const TIMEOUT_MS = 45000;
+  const JOIN_TIMEOUT_MS = 20000;
+
+  function randomInt(n) {
+    const c = root && root.crypto;
+    if (c && c.getRandomValues) {
+      const a = new Uint32Array(1);
+      c.getRandomValues(a);
+      return a[0] % n;
+    }
+    return Math.floor(Math.random() * n);
+  }
+
+  function makeCode(rand) {
+    const r = rand || randomInt;
+    let s = '';
+    for (let i = 0; i < CODE_LEN; i++) s += CODE_CHARS[r(CODE_CHARS.length)];
+    return s;
+  }
+
+  function normCode(s) {
+    const t = String(s == null ? '' : s).normalize('NFKC').toUpperCase().replace(/[\s\-ー－]/g, '');
+    if (t.length !== CODE_LEN) return null;
+    for (const ch of t) {
+      if (CODE_CHARS.indexOf(ch) < 0) return null;
+    }
+    return t;
+  }
+
+  function cleanName(s, fallback) {
+    const t = String(s == null ? '' : s)
+      .normalize('NFKC')
+      .replace(/[\u0000-\u001f\u007f<>&"'`:]/g, '')
+      .trim();
+    return Array.from(t).slice(0, 12).join('') || (fallback || 'PILOT');
+  }
+
+  // Deterministic PRNG for syncing tile color palettes across all peers with a single integer seed
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0;
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // ── Resource & Math Rules (1〜5 players) ──
+  function calcBonusPerPlayer(bonusPool, numPlayers) {
+    const b = Math.max(0, parseInt(bonusPool, 10) || 0);
+    const p = Math.max(1, parseInt(numPlayers, 10) || 1);
+    if (b <= 0) return { en: 0, core: 0 };
+    return {
+      en: Math.ceil(b / p),
+      core: Math.max(1, Math.ceil(b / (3 * p)))
+    };
+  }
+
+  function calcPoolPerPlayer(pool, numPlayers) {
+    const b = Math.max(0, parseInt(pool, 10) || 0);
+    const p = Math.max(1, parseInt(numPlayers, 10) || 1);
+    return b <= 0 ? 0 : Math.ceil(b / p);
+  }
+
+  function calcEndlessEn(sz, numPlayers) {
+    const s = Math.max(1, parseInt(sz, 10) || 7);
+    const p = Math.max(1, parseInt(numPlayers, 10) || 1);
+    return Math.ceil((s * 5) / p);
+  }
+
+  function calcAnsCost(sz, numPlayers) {
+    const s = Math.max(1, parseInt(sz, 10) || 7);
+    const p = Math.max(1, parseInt(numPlayers, 10) || 1);
+    return Math.max(1, Math.ceil(s / p));
+  }
+
+  function calcStageClearCore(unrevealedLeft, numPlayers, coreSystemOn) {
+    if (!coreSystemOn || unrevealedLeft <= 0) return 0;
+    const baseCore = Math.ceil(unrevealedLeft / 25);
+    const p = Math.max(1, parseInt(numPlayers, 10) || 1);
+    return Math.ceil((baseCore * 5) / p);
+  }
+
+  function sanitizeUnitsList(arr) {
+    if (!Array.isArray(arr)) return [0, 1, 2, 3, 4];
+    const seen = new Set();
+    const out = [];
+    for (const v of arr) {
+      const n = parseInt(v, 10);
+      if (Number.isInteger(n) && n >= 0 && n <= 4 && !seen.has(n)) {
+        seen.add(n);
+        out.push(n);
+      }
+    }
+    out.sort((a, b) => a - b);
+    return out.length ? out : [0];
+  }
+
+  // ── Host Room Controller (Star Topology: 1 Host + up to 4 Guests) ──
+  class HostRoom {
+    constructor(opts) {
+      const o = opts || {};
+      this.code = o.code || makeCode();
+      this.phase = 'lobby'; // 'lobby' | 'playing'
+      this.hostName = cleanName(o.hostName, 'HOST');
+      this.nextGuestSeq = 1;
+      this.members = [
+        {
+          peerId: 'host',
+          name: this.hostName,
+          unitIdx: Number.isInteger(o.hostUnit) && o.hostUnit >= 0 && o.hostUnit <= 4 ? o.hostUnit : 0,
+          ready: true,
+          isHost: true,
+          connected: true,
+          controlledByHost: true
+        }
+      ];
+      this.links = new Map(); // peerId -> link
+      this.config = {
+        world: o.world || 'cyber',
+        mode: o.mode || 'normal',
+        settings: Object.assign({
+          initEnergy: 50,
+          clearEnergy: 25,
+          bonusEnergy: 50,
+          initCore: 0,
+          stageHazard: true,
+          coreSystem: true
+        }, o.settings || {}),
+        customSummary: o.customSummary || ''
+      };
+      this.onLobbyChange = o.onLobbyChange || null;
+      this.onGuestAction = o.onGuestAction || null;
+      this.onPeerLeftInGame = o.onPeerLeftInGame || null;
+      this.closed = false;
+    }
+
+    _firstFreeUnit() {
+      const used = new Set(this.members.filter(m => m.unitIdx >= 0).map(m => m.unitIdx));
+      for (let u = 0; u < 5; u++) {
+        if (!used.has(u)) return u;
+      }
+      return -1;
+    }
+
+    getLobbyState() {
+      return {
+        code: this.code,
+        phase: this.phase,
+        members: this.members.map(m => ({
+          peerId: m.peerId,
+          name: m.name,
+          unitIdx: m.unitIdx,
+          ready: !!m.ready,
+          isHost: !!m.isHost,
+          connected: !!m.connected
+        })),
+        config: JSON.parse(JSON.stringify(this.config))
+      };
+    }
+
+    broadcast(msg, exceptPeerId) {
+      for (const [pid, link] of this.links.entries()) {
+        if (pid === exceptPeerId || link.closed) continue;
+        link.send(msg);
+      }
+    }
+
+    sendTo(peerId, msg) {
+      const link = this.links.get(peerId);
+      if (link && !link.closed) link.send(msg);
+    }
+
+    _notifyLobby() {
+      const st = this.getLobbyState();
+      this.broadcast({ t: 'lobby_state', state: st });
+      if (this.onLobbyChange) this.onLobbyChange(st);
+    }
+
+    setHostName(name) {
+      this.hostName = cleanName(name, 'HOST');
+      const hm = this.members.find(m => m.peerId === 'host');
+      if (hm) hm.name = this.hostName;
+      this._notifyLobby();
+    }
+
+    updateConfig(partial) {
+      if (partial.world) this.config.world = partial.world;
+      if (partial.mode) this.config.mode = partial.mode;
+      if (partial.settings) this.config.settings = Object.assign({}, this.config.settings, partial.settings);
+      if (partial.customSummary !== undefined) this.config.customSummary = partial.customSummary;
+      this._notifyLobby();
+    }
+
+    pickUnit(peerId, unitIdx) {
+      if (this.phase !== 'lobby') return { ok: false, reason: '進行中は変更できません' };
+      const u = parseInt(unitIdx, 10);
+      if (!Number.isInteger(u) || u < -1 || u > 4) return { ok: false, reason: '不正な機体番号です' };
+      const me = this.members.find(m => m.peerId === peerId);
+      if (!me) return { ok: false, reason: '参加者が見つかりません' };
+      // 自分の搭乗中機体を再クリック（または -1 指定）で搭乗解除 ➔ 5人満員時でも機体入れ替えが可能
+      if (u === -1 || me.unitIdx === u) {
+        if (me.unitIdx === -1) return { ok: true, unselected: true };
+        me.unitIdx = -1;
+        this._notifyLobby();
+        return { ok: true, unselected: true };
+      }
+      const conflict = this.members.find(m => m.peerId !== peerId && m.unitIdx === u);
+      if (conflict) return { ok: false, reason: `${conflict.name} が搭乗中です` };
+      me.unitIdx = u;
+      this._notifyLobby();
+      return { ok: true, unselected: false };
+    }
+
+    setReady(peerId, ready) {
+      if (this.phase !== 'lobby') return;
+      const me = this.members.find(m => m.peerId === peerId);
+      if (!me || me.isHost) return;
+      if (ready && (!Number.isInteger(me.unitIdx) || me.unitIdx < 0 || me.unitIdx > 4)) return;
+      me.ready = !!ready;
+      this._notifyLobby();
+    }
+
+    canStart() {
+      if (this.phase !== 'lobby') return { ok: false, reason: 'すでに開始しています' };
+      if (this.members.length < 2) return { ok: false, reason: '2人以上で出撃できます（現在1人）' };
+      if (this.members.length > MAX_PLAYERS) return { ok: false, reason: '定員オーバーです' };
+      const unpicked = this.members.filter(m => !Number.isInteger(m.unitIdx) || m.unitIdx < 0 || m.unitIdx > 4);
+      if (unpicked.length > 0) {
+        return { ok: false, reason: `機体を選択中のメンバーがいます (${unpicked.map(m => m.name).join(', ')})` };
+      }
+      const notReady = this.members.filter(m => !m.isHost && !m.ready);
+      if (notReady.length > 0) {
+        return { ok: false, reason: `準備待ちのメンバーがいます (${notReady.map(m => m.name).join(', ')})` };
+      }
+      return { ok: true };
+    }
+
+    buildOrderedPlayers(vehicleNames, initCore) {
+      const sorted = this.members.slice().sort((a, b) => a.unitIdx - b.unitIdx);
+      return sorted.map(m => ({
+        name: (vehicleNames && vehicleNames[m.unitIdx]) || ('UNIT-' + (m.unitIdx + 1)),
+        playerName: m.name,
+        peerId: m.peerId,
+        controlledByHost: !!m.isHost || !m.connected,
+        unitIdx: m.unitIdx,
+        energy: 0,
+        core: initCore || 0,
+        specUsed: false
+      }));
+    }
+
+    attachGuestLink(rawLink) {
+      if (this.closed) {
+        rawLink.close({ t: 'bye', reason: 'closed' });
+        return;
+      }
+      let assignedPeerId = null;
+      rawLink.onmessage = (msg) => {
+        if (!msg || typeof msg !== 'object') return;
+        if (!assignedPeerId) {
+          if (msg.t !== 'hello') return;
+          if (msg.app !== APP || msg.net !== NET_VERSION) {
+            rawLink.close({ t: 'bye', reason: 'version' });
+            return;
+          }
+          if (this.phase !== 'lobby') {
+            rawLink.close({ t: 'bye', reason: 'playing' });
+            return;
+          }
+          if (this.members.length >= MAX_PLAYERS) {
+            rawLink.close({ t: 'bye', reason: 'full' });
+            return;
+          }
+          const freeU = this._firstFreeUnit();
+          if (freeU < 0) {
+            rawLink.close({ t: 'bye', reason: 'full' });
+            return;
+          }
+          assignedPeerId = 'g' + (this.nextGuestSeq++);
+          const gName = cleanName(msg.name, 'GUEST ' + (this.nextGuestSeq - 1));
+          this.members.push({
+            peerId: assignedPeerId,
+            name: gName,
+            unitIdx: freeU,
+            ready: true,
+            isHost: false,
+            connected: true,
+            controlledByHost: false
+          });
+          this.links.set(assignedPeerId, rawLink);
+          rawLink.send({
+            t: 'welcome',
+            peerId: assignedPeerId,
+            code: this.code,
+            state: this.getLobbyState()
+          });
+          this._notifyLobby();
+          return;
+        }
+
+        // Subsequent messages from authenticated guest
+        switch (msg.t) {
+          case 'pick_unit': {
+            const res = this.pickUnit(assignedPeerId, msg.unitIdx);
+            if (!res.ok) rawLink.send({ t: 'reject', reason: res.reason });
+            break;
+          }
+          case 'set_ready':
+            this.setReady(assignedPeerId, !!msg.ready);
+            break;
+          case 'set_name': {
+            if (this.phase === 'lobby') {
+              const m = this.members.find(x => x.peerId === assignedPeerId);
+              if (m) {
+                m.name = cleanName(msg.name, m.name);
+                this._notifyLobby();
+              }
+            }
+            break;
+          }
+          case 'act':
+            if (this.phase === 'playing' && this.onGuestAction) {
+              this.onGuestAction(assignedPeerId, msg);
+            }
+            break;
+          case 'bye':
+            this._handleGuestDisconnect(assignedPeerId);
+            break;
+        }
+      };
+
+      rawLink.onclose = () => {
+        if (assignedPeerId) this._handleGuestDisconnect(assignedPeerId);
+      };
+    }
+
+    _handleGuestDisconnect(peerId) {
+      const link = this.links.get(peerId);
+      if (link) {
+        this.links.delete(peerId);
+        try { link.close(); } catch (e) {}
+      }
+      const idx = this.members.findIndex(m => m.peerId === peerId);
+      if (idx < 0) return;
+      const member = this.members[idx];
+      if (!member.connected) return;
+
+      if (this.phase === 'lobby') {
+        this.members.splice(idx, 1);
+        this._notifyLobby();
+      } else {
+        member.connected = false;
+        member.controlledByHost = true;
+        this.broadcast({ t: 'peer_left', peerId, name: member.name });
+        if (this.onPeerLeftInGame) this.onPeerLeftInGame(peerId, member);
+      }
+    }
+
+    returnToLobby() {
+      this.phase = 'lobby';
+      this.members = this.members.filter(m => m.isHost || m.connected);
+      this.members.forEach(m => {
+        if (!m.isHost) m.ready = true;
+      });
+      const st = this.getLobbyState();
+      this.broadcast({ t: 'back_to_lobby', state: st });
+      if (this.onLobbyChange) this.onLobbyChange(st);
+    }
+
+    closeRoom() {
+      if (this.closed) return;
+      this.closed = true;
+      for (const link of this.links.values()) {
+        try { link.close({ t: 'bye', reason: 'host_closed' }); } catch (e) {}
+      }
+      this.links.clear();
+    }
+  }
+
+  // ── Guest Client Controller ──
+  class GuestClient {
+    constructor(link, opts) {
+      const o = opts || {};
+      this.link = link;
+      this.peerId = null;
+      this.code = null;
+      this.name = cleanName(o.name, 'GUEST');
+      this.lobbyState = null;
+      this.handlers = o.handlers || {};
+      this.closed = false;
+
+      link.onmessage = (msg) => {
+        if (!msg || typeof msg !== 'object') return;
+        if (msg.t === 'welcome') {
+          this.peerId = msg.peerId;
+          this.code = msg.code;
+          this.lobbyState = msg.state;
+          if (this.handlers.welcome) this.handlers.welcome(msg);
+          return;
+        }
+        if (msg.t === 'lobby_state') {
+          this.lobbyState = msg.state;
+          if (this.handlers.lobby_state) this.handlers.lobby_state(msg.state);
+          return;
+        }
+        if (msg.t === 'back_to_lobby') {
+          this.lobbyState = msg.state;
+          if (this.handlers.back_to_lobby) this.handlers.back_to_lobby(msg.state);
+          return;
+        }
+        if (msg.t === 'bye') {
+          this.closed = true;
+          if (this.handlers.bye) this.handlers.bye(msg.reason || 'left');
+          return;
+        }
+        if (this.handlers[msg.t]) {
+          this.handlers[msg.t](msg);
+        }
+      };
+
+      link.onclose = (reason) => {
+        if (this.closed) return;
+        this.closed = true;
+        if (this.handlers.bye) this.handlers.bye(reason || 'disconnected');
+      };
+
+      link.send({
+        t: 'hello',
+        app: APP,
+        net: NET_VERSION,
+        name: this.name
+      });
+    }
+
+    pickUnit(unitIdx) {
+      if (!this.closed) this.link.send({ t: 'pick_unit', unitIdx });
+    }
+
+    setReady(ready) {
+      if (!this.closed) this.link.send({ t: 'set_ready', ready: !!ready });
+    }
+
+    setName(name) {
+      this.name = cleanName(name, this.name);
+      if (!this.closed) this.link.send({ t: 'set_name', name: this.name });
+    }
+
+    sendAct(payload) {
+      if (!this.closed) this.link.send(Object.assign({ t: 'act' }, payload));
+    }
+
+    leave() {
+      if (this.closed) return;
+      this.closed = true;
+      try { this.link.close({ t: 'bye', reason: 'left' }); } catch (e) {}
+    }
+  }
+
+  // ── In-Memory Link Pair (for deterministic unit testing) ──
+  function createMemoryLinkPair() {
+    let closed = false;
+    const a = { onmessage: null, onclose: null, closed: false };
+    const b = { onmessage: null, onclose: null, closed: false };
+    a.send = (msg) => {
+      if (closed) return;
+      const copy = JSON.parse(JSON.stringify(msg));
+      queueMicrotask(() => { if (!closed && b.onmessage) b.onmessage(copy); });
+    };
+    b.send = (msg) => {
+      if (closed) return;
+      const copy = JSON.parse(JSON.stringify(msg));
+      queueMicrotask(() => { if (!closed && a.onmessage) a.onmessage(copy); });
+    };
+    a.close = (lastMsg) => {
+      if (closed) return;
+      if (lastMsg && b.onmessage) {
+        const copy = JSON.parse(JSON.stringify(lastMsg));
+        b.onmessage(copy);
+      }
+      closed = true;
+      a.closed = true;
+      b.closed = true;
+      queueMicrotask(() => { if (b.onclose) b.onclose('close'); });
+    };
+    b.close = (lastMsg) => {
+      if (closed) return;
+      if (lastMsg && a.onmessage) {
+        const copy = JSON.parse(JSON.stringify(lastMsg));
+        a.onmessage(copy);
+      }
+      closed = true;
+      a.closed = true;
+      b.closed = true;
+      queueMicrotask(() => { if (a.onclose) a.onclose('close'); });
+    };
+    return [a, b];
+  }
+
+  // ── BroadcastChannel Transport (Same-Origin Multi-Tab / Local Fallback) ──
+  function openBroadcastRoom(code, onGuestLink) {
+    if (typeof BroadcastChannel !== 'function') return null;
+    const chName = PEER_PREFIX + 'bc-' + code;
+    const hub = new BroadcastChannel(chName);
+    const links = new Map();
+
+    hub.onmessage = (ev) => {
+      const d = ev.data;
+      if (!d || typeof d !== 'object') return;
+      if (d.bcType === 'connect' && d.clientId) {
+        const cid = d.clientId;
+        if (links.has(cid)) return;
+        const link = {
+          closed: false,
+          onmessage: null,
+          onclose: null,
+          send(msg) {
+            if (link.closed) return;
+            hub.postMessage({ bcType: 's2c', to: cid, msg });
+          },
+          close(lastMsg) {
+            if (link.closed) return;
+            if (lastMsg) hub.postMessage({ bcType: 's2c', to: cid, msg: lastMsg });
+            link.closed = true;
+            links.delete(cid);
+            hub.postMessage({ bcType: 'closed', to: cid });
+          }
+        };
+        links.set(cid, link);
+        hub.postMessage({ bcType: 'accepted', to: cid });
+        onGuestLink(link);
+      } else if (d.bcType === 'c2s' && d.from) {
+        const link = links.get(d.from);
+        if (link && !link.closed && link.onmessage) link.onmessage(d.msg);
+      } else if (d.bcType === 'c_close' && d.from) {
+        const link = links.get(d.from);
+        if (link && !link.closed) {
+          link.closed = true;
+          links.delete(d.from);
+          if (link.onclose) link.onclose('close');
+        }
+      }
+    };
+
+    return {
+      close() {
+        for (const l of links.values()) l.close({ t: 'bye', reason: 'host_closed' });
+        links.clear();
+        try { hub.close(); } catch (e) {}
+      }
+    };
+  }
+
+  function joinBroadcastRoom(code, callbacks) {
+    if (typeof BroadcastChannel !== 'function') {
+      callbacks.onError('BroadcastChannel非対応のブラウザです');
+      return { close() {} };
+    }
+    const cid = 'bc_' + Date.now() + '_' + randomInt(1000000);
+    const ch = new BroadcastChannel(PEER_PREFIX + 'bc-' + code);
+    let connected = false;
+    let closed = false;
+
+    const link = {
+      closed: false,
+      onmessage: null,
+      onclose: null,
+      send(msg) {
+        if (link.closed) return;
+        ch.postMessage({ bcType: 'c2s', from: cid, msg });
+      },
+      close(lastMsg) {
+        if (link.closed) return;
+        if (lastMsg) ch.postMessage({ bcType: 'c2s', from: cid, msg: lastMsg });
+        link.closed = true;
+        closed = true;
+        ch.postMessage({ bcType: 'c_close', from: cid });
+        setTimeout(() => { try { ch.close(); } catch (e) {} }, 100);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      if (!connected && !closed) {
+        closed = true;
+        link.closed = true;
+        try { ch.close(); } catch (e) {}
+        callbacks.onError('同じブラウザ内にそのコードの部屋が見つかりませんでした');
+      }
+    }, 5000);
+
+    ch.onmessage = (ev) => {
+      const d = ev.data;
+      if (!d || d.to !== cid) return;
+      if (d.bcType === 'accepted' && !connected) {
+        connected = true;
+        clearTimeout(timer);
+        callbacks.onLink(link);
+      } else if (d.bcType === 's2c') {
+        if (!link.closed && link.onmessage) link.onmessage(d.msg);
+      } else if (d.bcType === 'closed') {
+        if (!link.closed) {
+          link.closed = true;
+          try { ch.close(); } catch (e) {}
+          if (link.onclose) link.onclose('close');
+        }
+      }
+    };
+
+    ch.postMessage({ bcType: 'connect', clientId: cid });
+    return {
+      close() {
+        clearTimeout(timer);
+        link.close();
+      }
+    };
+  }
+
+  // ── PeerJS WebRTC Transport ──
+  let peerjsLoading = null;
+  function loadPeerJS() {
+    if (root.Peer) return Promise.resolve(root.Peer);
+    if (!peerjsLoading) {
+      peerjsLoading = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = PEERJS_URL;
+        s.async = true;
+        s.onload = () => (root.Peer ? resolve(root.Peer) : reject(new Error('Peer not found')));
+        s.onerror = () => { peerjsLoading = null; reject(new Error('load failed')); };
+        (document.head || document.documentElement).appendChild(s);
+      });
+    }
+    return peerjsLoading;
+  }
+
+  function peerOptions() {
+    const o = { debug: 0 };
+    try {
+      const m = /[?&]peer=([^&#]+)/.exec((root.location && root.location.search) || '');
+      if (m) {
+        const hp = decodeURIComponent(m[1]).split(':');
+        Object.assign(o, { host: hp[0], port: +hp[1] || 9000, path: '/', secure: false, config: { iceServers: [] } });
+      }
+    } catch (e) {}
+    return o;
+  }
+
+  const ERR_TEXT = {
+    'browser-incompatible': 'このブラウザはオンライン協力（WebRTC）に対応していません',
+    network: '通信仲介サーバーに接続できません。ネット接続を確認してください',
+    'server-error': '通信仲介サーバーが一時的に混雑しています',
+    'socket-error': '通信仲介サーバーとの接続が切れました',
+    'socket-closed': '通信仲介サーバーとの接続が閉じられました',
+    'unavailable-id': '部屋コードが重複しました。もう一度作成してください',
+    'peer-unavailable': 'その部屋コードは見つかりませんでした。コードを確認してください',
+    webrtc: '直接通信を確立できませんでした。別の回線でお試しください',
+    'ssl-unavailable': '安全な接続（HTTPS）が必要です'
+  };
+  function errorText(err) {
+    return ERR_TEXT[err && err.type] || '通信エラーが発生しました';
+  }
+
+  function wrapPeerConn(conn, destroyPeerOnClose) {
+    const link = { onmessage: null, onclose: null, closed: false };
+    let lastSeen = Date.now();
+    let timer = null;
+    const end = (reason) => {
+      if (link.closed) return;
+      link.closed = true;
+      clearInterval(timer);
+      try { conn.close(); } catch (e) {}
+      if (destroyPeerOnClose) {
+        try { destroyPeerOnClose.destroy(); } catch (e) {}
+      }
+      if (link.onclose) link.onclose(reason);
+    };
+    link.send = (msg) => {
+      if (link.closed) return;
+      try { conn.send(msg); } catch (e) { end('error'); }
+    };
+    link.close = (lastMsg) => {
+      if (link.closed) return;
+      if (lastMsg) link.send(lastMsg);
+      link.onclose = null;
+      link.onmessage = null;
+      setTimeout(() => end('local'), 250);
+    };
+    timer = setInterval(() => {
+      if (Date.now() - lastSeen > TIMEOUT_MS) end('timeout');
+      else link.send({ t: 'ping' });
+    }, PING_MS);
+    conn.on('data', (msg) => {
+      lastSeen = Date.now();
+      if (msg && msg.t === 'ping') return;
+      if (link.onmessage) link.onmessage(msg);
+    });
+    conn.on('close', () => end('close'));
+    conn.on('error', () => end('error'));
+    return link;
+  }
+
+  function openPeerRoom(opts) {
+    let peer = null, bcHub = null, stopped = false, tries = 0;
+    const useLocalOnly = opts && opts.localOnly;
+
+    if (useLocalOnly) {
+      const code = makeCode();
+      bcHub = openBroadcastRoom(code, (link) => { if (!stopped) opts.onGuest(link); });
+      setTimeout(() => { if (!stopped) opts.onOpen(code); }, 10);
+      return {
+        close() {
+          stopped = true;
+          if (bcHub) bcHub.close();
+        }
+      };
+    }
+
+    const start = (Peer) => {
+      if (stopped) return;
+      const code = makeCode();
+      const p = new Peer(PEER_PREFIX + code, peerOptions());
+      peer = p;
+      p.on('open', () => {
+        if (!stopped && peer === p) {
+          // Also open BroadcastChannel on same browser for instant zero-latency local tab join if needed
+          bcHub = openBroadcastRoom(code, (link) => { if (!stopped) opts.onGuest(link); });
+          opts.onOpen(code);
+        }
+      });
+      p.on('connection', (conn) => {
+        if (stopped) {
+          conn.on('open', () => conn.close());
+          return;
+        }
+        conn.on('open', () => {
+          if (!stopped) opts.onGuest(wrapPeerConn(conn, null));
+        });
+      });
+      p.on('disconnected', () => {
+        if (!stopped && peer === p) {
+          try { p.reconnect(); } catch (e) {}
+        }
+      });
+      p.on('error', (err) => {
+        if (stopped || peer !== p) return;
+        if (err && err.type === 'unavailable-id' && tries++ < 4) {
+          try { p.destroy(); } catch (e) {}
+          start(Peer);
+          return;
+        }
+        // Only abort if room hasn't opened yet
+        if (!bcHub) {
+          stopped = true;
+          try { p.destroy(); } catch (e) {}
+          opts.onError(errorText(err));
+        }
+      });
+    };
+
+    loadPeerJS().then(start, () => {
+      if (!stopped) {
+        // Fallback to BroadcastChannel if offline/CDN blocked
+        const code = makeCode();
+        bcHub = openBroadcastRoom(code, (link) => { if (!stopped) opts.onGuest(link); });
+        if (bcHub) {
+          opts.onOpen(code, true);
+        } else {
+          stopped = true;
+          opts.onError('通信ライブラリ（PeerJS）を読み込めませんでした');
+        }
+      }
+    });
+
+    return {
+      close() {
+        stopped = true;
+        if (bcHub) { try { bcHub.close(); } catch (e) {} bcHub = null; }
+        if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
+      }
+    };
+  }
+
+  function joinPeerRoom(rawCode, opts) {
+    const code = normCode(rawCode);
+    if (!code) {
+      opts.onError('6文字の部屋コードを正しく入力してください');
+      return { close() {} };
+    }
+    if (opts && opts.localOnly) {
+      return joinBroadcastRoom(code, opts);
+    }
+
+    let peer = null, done = false, bcAttempt = null;
+    const finishLink = (link) => {
+      if (done) {
+        try { link.close(); } catch (e) {}
+        return;
+      }
+      done = true;
+      clearTimeout(timer);
+      if (bcAttempt) { try { bcAttempt.close(); } catch (e) {} bcAttempt = null; }
+      opts.onLink(link);
+    };
+    const fail = (text) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
+      opts.onError(text);
+    };
+
+    // Fast path: check if host is open in another tab of the same browser first (within 350ms), while PeerJS connects in parallel!
+    if (typeof BroadcastChannel === 'function') {
+      let bcDone = false;
+      const cid = 'bc_' + Date.now() + '_' + randomInt(1000000);
+      const ch = new BroadcastChannel(PEER_PREFIX + 'bc-' + code);
+      const bcLink = {
+        closed: false,
+        onmessage: null,
+        onclose: null,
+        send(msg) { if (!bcLink.closed) ch.postMessage({ bcType: 'c2s', from: cid, msg }); },
+        close(lastMsg) {
+          if (bcLink.closed) return;
+          if (lastMsg) ch.postMessage({ bcType: 'c2s', from: cid, msg: lastMsg });
+          bcLink.closed = true;
+          ch.postMessage({ bcType: 'c_close', from: cid });
+          setTimeout(() => { try { ch.close(); } catch (e) {} }, 80);
+        }
+      };
+      ch.onmessage = (ev) => {
+        const d = ev.data;
+        if (!d || d.to !== cid) return;
+        if (d.bcType === 'accepted' && !bcDone && !done) {
+          bcDone = true;
+          if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
+          bcAttempt = null;
+          finishLink(bcLink);
+        } else if (d.bcType === 's2c') {
+          if (!bcLink.closed && bcLink.onmessage) bcLink.onmessage(d.msg);
+        } else if (d.bcType === 'closed') {
+          if (!bcLink.closed) {
+            bcLink.closed = true;
+            try { ch.close(); } catch (e) {}
+            if (bcLink.onclose) bcLink.onclose('close');
+          }
+        }
+      };
+      bcAttempt = {
+        close() {
+          if (!bcDone) {
+            bcLink.closed = true;
+            try { ch.close(); } catch (e) {}
+          }
+        }
+      };
+      ch.postMessage({ bcType: 'connect', clientId: cid });
+    }
+
+    const timer = setTimeout(() => fail('部屋に接続できませんでした。コードを確認してもう一度お試しください'), JOIN_TIMEOUT_MS);
+
+    loadPeerJS().then((Peer) => {
+      if (done) return;
+      peer = new Peer(peerOptions());
+      peer.on('open', () => {
+        if (done) { try { peer.destroy(); } catch (e) {} return; }
+        const conn = peer.connect(PEER_PREFIX + code, { reliable: true });
+        conn.on('open', () => {
+          if (done) { try { conn.close(); peer.destroy(); } catch (e) {} return; }
+          finishLink(wrapPeerConn(conn, peer));
+        });
+        conn.on('error', () => fail('相手との通信に失敗しました'));
+      });
+      peer.on('error', (err) => fail(errorText(err)));
+    }, () => {
+      // Wait briefly in case BroadcastChannel succeeds on offline local tabs
+      setTimeout(() => fail('通信ライブラリ（PeerJS）を読み込めませんでした'), 800);
+    });
+
+    return {
+      close() {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          if (bcAttempt) { try { bcAttempt.close(); } catch (e) {} }
+          if (peer) { try { peer.destroy(); } catch (e) {} }
+        }
+      }
+    };
+  }
+
+  const api = {
+    APP,
+    NET_VERSION,
+    MAX_PLAYERS,
+    PEER_PREFIX,
+    CODE_CHARS,
+    CODE_LEN,
+    makeCode,
+    normCode,
+    cleanName,
+    mulberry32,
+    calcBonusPerPlayer,
+    calcPoolPerPlayer,
+    calcEndlessEn,
+    calcAnsCost,
+    calcStageClearCore,
+    sanitizeUnitsList,
+    HostRoom,
+    GuestClient,
+    createMemoryLinkPair,
+    openBroadcastRoom,
+    joinBroadcastRoom,
+    openPeerRoom,
+    joinPeerRoom
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.ITMulti = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
 // ── STARS ──
 function initStars(id){
   const c=document.getElementById(id);if(!c||c.dataset.inited)return;
@@ -1083,15 +2321,18 @@ function getActiveTilePalettes(){
 }
 // タイル用シャッフル済みパレット（buildBoard ごとに生成）
 let _shuffledPalette=[];
-function shuffleTilePalette(){
+function shuffleTilePalette(explicitSeed){
   const tidx=getTileThemeIdx();
   const palettes=getActiveTilePalettes();
   const base=palettes[Math.min(tidx,palettes.length-1)];
+  const rng=(explicitSeed!==undefined && explicitSeed!==null)
+    ? ITMulti.mulberry32(explicitSeed)
+    : Math.random;
   // 2500個以上生成（50×50以上の超巨大盤面にも完全対応）
   const need=Math.max(2500,(G.sz||50)*(G.sz||50));
   _shuffledPalette=Array.from({length:need},()=>{
-    const [r,g,b]=base[0|Math.random()*base.length];
-    const j=()=>Math.floor((Math.random()-.5)*4);
+    const [r,g,b]=base[0|rng()*base.length];
+    const j=()=>Math.floor((rng()-.5)*4);
     return [r+j(),g+j(),b+j()];
   });
 }
@@ -1459,26 +2700,2071 @@ const AREA_INFO=[
   {id:'a_rand9',  name:'CANNON', desc:'ランダム9マスを高速連射で即破壊 [💎3]'},
   {id:'a_charge', name:'CANNON', desc:'エナジーキャノン：3コア(💎3)を消費して自身のエネルギー+9ptに変換 [💎3 ➔ +9pt]'},
 ];
-// ── SETTINGS (新エネルギールール：スタート時50pt / クリア時25pt / 突破ボーナス15pt or 💎5) ──
+// ── SETTINGS (新エネルギールール：スタート時50pt / クリア時25pt / 突破ボーナス50pt[÷人数 or 1/3コア選択]) ──
 const SETTINGS_DEFAULT={
   initEnergy:50,     // ゲームスタート時（Q1開始時）の総エネルギー (1〜1000・プレイ人数で分配)
   clearEnergy:25,    // 問題クリア時の補充総エネルギー (0〜1000・プレイ人数で分配)
-  bonusEnergy:15,    // レベル突破ボーナス総量 (0〜1000・エネルギー15pt or 💎5コア選択式)
+  bonusEnergy:50,    // レベル突破ボーナス総量 (0〜1000・プレイ人数で分配しENまたは1/3コアを個別選択)
   initCore:0,        // ゲーム開始時の初期タイルコア (0〜1000)
   stageHazard:true,  // ステージ妨害ギミック ON/OFF (全モード適用)
   coreSystem:true,   // コアシステム ON/OFF (OFF時はCANNON=5pt・全モード適用)
 };
 let SETTINGS={...SETTINGS_DEFAULT};
-let currentPlayStyle='team'; // 'team' (5機) or 'solo' (1機)
+let currentPlayStyle='team'; // 'team' (5機) | 'solo' (1機) | 'custom_units' (1〜5機自由編成)
 let currentSoloUnit=0;       // 0..4 (PILOT, ENGNR, HACKER, SNIPER, LEADER)
 const SETTINGS_STORAGE_KEY='imagine_tile_settings_v2';
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── MULTIPLAYER (P2P CO-OP) & FREE UNIT FORMATION CONTROLLER ──
+// ══════════════════════════════════════════════════════════════════════════
+
+const ONLINE_NAME_KEY = 'imagine_tile_player_name_v1';
+let currentSelectedUnits = [0, 1, 2, 3, 4];
+
+const NET = {
+  active: false,
+  role: null, // 'host' | 'guest' | null
+  myPeerId: null,
+  roomCode: '',
+  hostRoom: null,
+  guestClient: null,
+  transportHandle: null,
+  lobbyState: null,
+  playerName: (function(){
+    try { return ITMulti.cleanName(localStorage.getItem(ONLINE_NAME_KEY) || '', ''); } catch(e) { return ''; }
+  })(),
+  savedSettingsBackup: null,
+  bonusSafetyTimer: null,
+  nextQTimer: null
+};
+
+function isOnlineGame(){
+  return !!NET.active;
+}
+
+function canControlPlayer(pi){
+  if(!NET.active) return true;
+  const p = G.players && G.players[pi];
+  if(!p) return false;
+  if(NET.role === 'host') return !!p.controlledByHost;
+  return p.peerId === NET.myPeerId;
+}
+
+function getMyControllablePis(){
+  if(!G.players || !G.players.length) return [0];
+  const res = [];
+  for(let i = 0; i < G.players.length; i++){
+    if(canControlPlayer(i)) res.push(i);
+  }
+  return res;
+}
+
+function getMyDefaultPlayerIdx(){
+  const pis = getMyControllablePis();
+  return pis.length ? pis[0] : 0;
+}
+
+function getCurrentQuestionObj(){
+  if(NET.active && NET.role === 'guest' && G.onlineCurrentQ){
+    return G.onlineCurrentQ;
+  }
+  return (G.order && G.order[G.qi] != null) ? QS[G.order[G.qi]] : null;
+}
+
+// ── シングル(オフライン) 1〜5機 自由編成ロジック ──
+function setPlayStyle(style){
+  if(style === 'solo'){
+    currentPlayStyle = 'solo';
+    const u = (currentSelectedUnits && currentSelectedUnits.length === 1) ? currentSelectedUnits[0] : (currentSoloUnit || 0);
+    currentSoloUnit = u;
+    currentSelectedUnits = [u];
+  } else if(style === 'custom_units'){
+    currentPlayStyle = 'custom_units';
+    currentSelectedUnits = ITMulti.sanitizeUnitsList(currentSelectedUnits);
+  } else {
+    currentPlayStyle = 'team';
+    currentSelectedUnits = [0, 1, 2, 3, 4];
+  }
+  G.playStyle = currentPlayStyle;
+  G.soloUnit = currentSoloUnit;
+  saveSettingsToStorage();
+  syncPlayStyleUI();
+}
+
+function selectSoloUnit(uIdx){
+  const u = Math.max(0, Math.min(4, parseInt(uIdx) || 0));
+  if(currentPlayStyle === 'solo'){
+    currentSoloUnit = u;
+    currentSelectedUnits = [u];
+  } else {
+    // team または custom_units の時はクリックした機体の出撃ON/OFFをトグル
+    const has = currentSelectedUnits.includes(u);
+    if(has){
+      if(currentSelectedUnits.length <= 1){
+        toast('最低1機は出撃が必要です', true);
+        return;
+      }
+      currentSelectedUnits = currentSelectedUnits.filter(x => x !== u);
+    } else {
+      currentSelectedUnits = ITMulti.sanitizeUnitsList([...currentSelectedUnits, u]);
+    }
+    if(currentSelectedUnits.length === 5){
+      currentPlayStyle = 'team';
+    } else {
+      currentPlayStyle = 'custom_units';
+      if(currentSelectedUnits.length === 1) currentSoloUnit = currentSelectedUnits[0];
+    }
+  }
+  G.soloUnit = currentSoloUnit;
+  G.playStyle = currentPlayStyle;
+  saveSettingsToStorage();
+  syncPlayStyleUI();
+}
+
+function syncPlayStyleUI(){
+  const btnTeam = document.getElementById('ps-team');
+  const btnSolo = document.getElementById('ps-solo');
+  const btnFree = document.getElementById('ps-free');
+  const carsWrap = document.getElementById('intro-cars');
+  const infoEl = document.getElementById('solo-unit-info');
+
+  currentSelectedUnits = ITMulti.sanitizeUnitsList(currentSelectedUnits);
+  const cnt = currentSelectedUnits.length;
+
+  if(btnTeam) btnTeam.classList.toggle('active', currentPlayStyle === 'team' && cnt === 5);
+  if(btnSolo) btnSolo.classList.toggle('active', currentPlayStyle === 'solo' && cnt === 1);
+  if(btnFree) btnFree.classList.toggle('active', currentPlayStyle === 'custom_units' || (currentPlayStyle !== 'solo' && cnt < 5));
+
+  if(carsWrap){
+    carsWrap.classList.toggle('solo-pick', cnt === 1);
+    for(let i = 0; i < 5; i++){
+      const el = document.getElementById('ic-unit-' + i);
+      if(!el) continue;
+      const isOn = currentSelectedUnits.includes(i);
+      el.classList.toggle('unit-on', isOn);
+      el.classList.toggle('unit-off', !isOn);
+      el.classList.toggle('solo-selected', cnt === 1 && isOn);
+      let chk = el.querySelector('.ic-chk');
+      if(!chk){
+        chk = document.createElement('div');
+        chk.className = 'ic-chk';
+        el.appendChild(chk);
+      }
+      chk.textContent = isOn ? '✓ ON' : 'OFF';
+    }
+  }
+
+  if(infoEl){
+    const pnames = getPNAMES();
+    const initPerP = ITMulti.calcPoolPerPlayer(SETTINGS.initEnergy, cnt);
+    const clrPerP = ITMulti.calcPoolPerPlayer(SETTINGS.clearEnergy, cnt);
+    const coreMul = (5 / cnt).toFixed(cnt === 3 ? 2 : 1).replace(/\.0$/, '');
+    if(cnt === 1){
+      const u = currentSelectedUnits[0];
+      const sp = SPEC_INFO[u];
+      infoEl.innerHTML = `👤 1機シングル: <strong style="color:${PC[u]}">${pnames[u]}</strong> — 初期EN <strong>${initPerP}pt</strong> / クリア<strong>+${clrPerP}pt</strong> / コア<strong>${coreMul}倍</strong> (SPEC: ${sp.name})`;
+    } else if(cnt === 5){
+      infoEl.innerHTML = `👥 5機フル編成 — 初期EN 各<strong>${initPerP}pt</strong> / クリア各<strong>+${clrPerP}pt</strong>（機体クリックで1〜5機の自由編成も可能）`;
+    } else {
+      const namesHtml = currentSelectedUnits.map(u => `<strong style="color:${PC[u]}">${pnames[u].split('.')[1] || pnames[u]}</strong>`).join('・');
+      infoEl.innerHTML = `🛸 自由編成 (${cnt}機: ${namesHtml}) — 初期EN 各<strong>${initPerP}pt</strong> / クリア各<strong>+${clrPerP}pt</strong> / コア<strong>${coreMul}倍</strong>`;
+    }
+  }
+  if(typeof scheduleViewportFit === 'function') scheduleViewportFit();
+}
+
+// ── レベル突破ボーナス（人数割り＆各プレイヤー個別選択） ──
+function setAllOfflineBonusType(rType){
+  if(!SETTINGS.coreSystem && rType === 'core') return;
+  if(!G._multiBonusPicks) return;
+  G._multiBonusPicks = G.players.map(() => rType);
+  renderLeaderBonusModalContent();
+}
+
+function toggleOfflinePlayerBonusType(pi, explicitType){
+  if(!G._multiBonusPicks || pi < 0 || pi >= G.players.length) return;
+  if(!SETTINGS.coreSystem){
+    G._multiBonusPicks[pi] = 'energy';
+  } else if(explicitType){
+    G._multiBonusPicks[pi] = explicitType;
+  } else {
+    G._multiBonusPicks[pi] = (G._multiBonusPicks[pi] === 'core') ? 'energy' : 'core';
+  }
+  renderLeaderBonusModalContent();
+}
+
+function commitOfflineMultiBonus(){
+  const modal = document.getElementById('bonus-modal');
+  if(!modal || !modal.classList.contains('active')) return;
+  if(NET.active) return;
+  const { en: enAmt, core: coreAmt } = ITMulti.calcBonusPerPlayer(G._bonusAmount || 0, G.players.length);
+  const picks = G._multiBonusPicks || G.players.map(() => 'energy');
+  modal.classList.remove('active');
+  const pnames = getPNAMES();
+  const summary = [];
+  G.players.forEach((p, i) => {
+    const u = getUnitIdx(i);
+    const label = pnames[u] || p.name;
+    const pick = (picks[i] === 'core' && SETTINGS.coreSystem) ? 'core' : 'energy';
+    if(pick === 'core'){
+      p.core = (p.core || 0) + coreAmt;
+      summary.push(`${label}:+💎${coreAmt}`);
+    } else {
+      p.energy += enAmt;
+      summary.push(`${label}:+${enAmt}pt`);
+    }
+  });
+  addLog(`レベル突破ボーナス獲得！ (${summary.join(' / ')})`, 'ok');
+  seCorrect();
+  updateStripLight();
+  const cb = G._bonusCallback;
+  G._bonusCallback = null;
+  if(cb) cb();
+}
+
+function pickOnlineBonusForPi(pi, rType){
+  if(!NET.active) return;
+  const validType = (rType === 'core' && SETTINGS.coreSystem) ? 'core' : 'energy';
+  if(NET.role === 'host'){
+    hostRecordBonusPick(pi, validType);
+  } else if(NET.guestClient){
+    G._localPickedBonus = G._localPickedBonus || {};
+    G._localPickedBonus[pi] = validType;
+    NET.guestClient.sendAct({ act: 'bonus_pick', pi, rType: validType });
+    renderLeaderBonusModalContent();
+  }
+}
+
+function hostRecordBonusPick(pi, rType){
+  if(NET.role !== 'host' || !G._onlineBonusPending) return;
+  if(pi < 0 || pi >= G.players.length) return;
+  const validType = (rType === 'core' && SETTINGS.coreSystem) ? 'core' : 'energy';
+  G._onlineBonusChoices = G._onlineBonusChoices || {};
+  G._onlineBonusChoices[pi] = validType;
+  renderLeaderBonusModalContent();
+
+  if(NET.hostRoom){
+    NET.hostRoom.broadcast({ t: 'bonus_status', choices: G._onlineBonusChoices });
+  }
+
+  const allChosen = G.players.every((_, idx) => !!G._onlineBonusChoices[idx]);
+  if(allChosen){
+    hostFinalizeBonusAndStartQ();
+  }
+}
+
+function hostFinalizeBonusAndStartQ(){
+  if(NET.role !== 'host' || !G._onlineBonusPending) return;
+  G._onlineBonusPending = false;
+  clearTimeout(NET.bonusSafetyTimer);
+  const { en: enAmt, core: coreAmt } = ITMulti.calcBonusPerPlayer(G._bonusAmount || 0, G.players.length);
+  const choices = G._onlineBonusChoices || {};
+  G.players.forEach((_, i) => {
+    if(!choices[i]) choices[i] = 'energy';
+  });
+
+  applyCommittedBonusChoices(choices, enAmt, coreAmt);
+  if(NET.hostRoom){
+    NET.hostRoom.broadcast({
+      t: 'bonus_commit',
+      choices,
+      enAmt,
+      coreAmt,
+      playersSync: serializePlayersState()
+    });
+  }
+  const cb = G._bonusCallback;
+  G._bonusCallback = null;
+  if(cb) cb();
+}
+
+function applyCommittedBonusChoices(choices, enAmt, coreAmt, alreadySyncedFromHost=false){
+  const modal = document.getElementById('bonus-modal');
+  if(modal) modal.classList.remove('active');
+  const pnames = getPNAMES();
+  const summary = [];
+  G.players.forEach((p, i) => {
+    const u = getUnitIdx(i);
+    const who = p.playerName ? `${p.playerName}(${(pnames[u] || p.name).split('.')[1] || p.name})` : (pnames[u] || p.name);
+    const pick = (choices && choices[i] === 'core' && SETTINGS.coreSystem) ? 'core' : 'energy';
+    if(pick === 'core'){
+      if(!alreadySyncedFromHost) p.core = (p.core || 0) + coreAmt;
+      summary.push(`${who}:+💎${coreAmt}`);
+    } else {
+      if(!alreadySyncedFromHost) p.energy += enAmt;
+      summary.push(`${who}:+${enAmt}pt`);
+    }
+  });
+  addLog(`レベル突破ボーナス！ ${summary.join(' / ')}`, 'ok');
+  seCorrect();
+  updateStripLight();
+}
+
+// ── ONLINE LOBBY UI & LIFECYCLE ──
+function saveOnlinePlayerName(val){
+  const cleaned = ITMulti.cleanName(val, 'PILOT');
+  NET.playerName = cleaned;
+  try { localStorage.setItem(ONLINE_NAME_KEY, cleaned); } catch(e){}
+  const inp1 = document.getElementById('ol-name-inp');
+  const inp2 = document.getElementById('ol-room-name-inp');
+  if(inp1 && inp1.value !== cleaned) inp1.value = cleaned;
+  if(inp2 && inp2.value !== cleaned) inp2.value = cleaned;
+}
+
+function openOnlineLobby(){
+  auInit();
+  const modal = document.getElementById('online-lobby');
+  if(!modal) return;
+  const inp = document.getElementById('ol-name-inp');
+  if(inp){
+    if(!NET.playerName) NET.playerName = 'PLAYER';
+    inp.value = NET.playerName;
+  }
+  setOnlineEntryError('');
+  if(NET.active && NET.lobbyState){
+    showOnlineLobbyView('room');
+    renderOnlineRoomLobby(NET.lobbyState);
+  } else {
+    showOnlineLobbyView('entry');
+  }
+  modal.classList.add('active');
+  scheduleViewportFit();
+}
+
+function closeOnlineLobby(){
+  if(NET.active && (NET.hostRoom || NET.guestClient)){
+    // ロビー入室中に閉じる場合は退室確認
+    leaveOnlineRoom();
+  }
+  const modal = document.getElementById('online-lobby');
+  if(modal) modal.classList.remove('active');
+}
+
+function showOnlineLobbyView(which){
+  const ev = document.getElementById('ol-entry-view');
+  const rv = document.getElementById('ol-room-view');
+  const ft = document.getElementById('ol-room-footer');
+  if(ev) ev.style.display = (which === 'entry') ? 'flex' : 'none';
+  if(rv) rv.style.display = (which === 'room') ? 'flex' : 'none';
+  if(ft) ft.style.display = (which === 'room') ? 'flex' : 'none';
+  scheduleViewportFit();
+}
+
+function setOnlineEntryError(msg, isInfo=false){
+  const el = document.getElementById('ol-entry-status');
+  if(!el) return;
+  el.style.color = isInfo ? 'var(--cyan)' : '#ff7788';
+  el.textContent = msg || '';
+}
+
+function buildCustomSummaryText(){
+  const stages = CUSTOM_CONFIG && CUSTOM_CONFIG.stages ? CUSTOM_CONFIG.stages : [];
+  const totQ = stages.reduce((s, x) => s + (parseInt(x.count) || 1), 0);
+  return `${stages.length}LEVEL / 計${totQ}問`;
+}
+
+function isLocalTransportForced(){
+  try { return /[?&]net=local\b/.test(window.location.search || ''); } catch(e) { return false; }
+}
+
+function createOnlineRoom(){
+  const nameInp = document.getElementById('ol-name-inp');
+  saveOnlinePlayerName(nameInp ? nameInp.value : NET.playerName || 'HOST');
+  const createBtn = document.getElementById('ol-create-btn');
+  const joinBtn = document.getElementById('ol-join-btn');
+  if(createBtn) createBtn.disabled = true;
+  if(joinBtn) joinBtn.disabled = true;
+  setOnlineEntryError('部屋を作成しています…', true);
+
+  cleanupOnlineConnectionsOnly();
+
+  NET.transportHandle = ITMulti.openPeerRoom({
+    localOnly: isLocalTransportForced(),
+    onOpen(code, isFallbackLocal){
+      if(createBtn) createBtn.disabled = false;
+      if(joinBtn) joinBtn.disabled = false;
+      setOnlineEntryError('');
+      const initUnit = (currentSelectedUnits && currentSelectedUnits.length) ? currentSelectedUnits[0] : 0;
+      NET.active = true;
+      NET.role = 'host';
+      NET.myPeerId = 'host';
+      NET.roomCode = code;
+      NET.hostRoom = new ITMulti.HostRoom({
+        code,
+        hostName: NET.playerName || 'HOST',
+        hostUnit: initUnit,
+        world: currentWorld || 'cyber',
+        mode: G.lobbyMode || 'normal',
+        settings: { ...SETTINGS },
+        customSummary: buildCustomSummaryText(),
+        onLobbyChange(st){
+          NET.lobbyState = st;
+          renderOnlineRoomLobby(st);
+        },
+        onGuestAction(peerId, msg){
+          handleGuestMessageOnHost(peerId, msg);
+        },
+        onPeerLeftInGame(peerId, member){
+          handlePeerLeftDuringGameOnHost(peerId, member);
+        }
+      });
+      NET.lobbyState = NET.hostRoom.getLobbyState();
+      const badge = document.getElementById('ol-net-badge');
+      if(badge) badge.textContent = isFallbackLocal ? 'LOCAL TAB MODE' : 'P2P (2〜5 PLAYERS)';
+      showOnlineLobbyView('room');
+      renderOnlineRoomLobby(NET.lobbyState);
+      toast(`部屋を作成しました！コード: ${code}`);
+    },
+    onGuest(link){
+      if(NET.hostRoom) NET.hostRoom.attachGuestLink(link);
+    },
+    onError(errMsg){
+      if(createBtn) createBtn.disabled = false;
+      if(joinBtn) joinBtn.disabled = false;
+      setOnlineEntryError(errMsg);
+    }
+  });
+}
+
+function joinOnlineRoomByInput(){
+  const nameInp = document.getElementById('ol-name-inp');
+  saveOnlinePlayerName(nameInp ? nameInp.value : NET.playerName || 'GUEST');
+  const codeInp = document.getElementById('ol-code-inp');
+  const rawCode = codeInp ? codeInp.value : '';
+  const code = ITMulti.normCode(rawCode);
+  if(!code){
+    setOnlineEntryError('6文字の部屋コードを正しく入力してください（例: K7P2QX）');
+    return;
+  }
+
+  const createBtn = document.getElementById('ol-create-btn');
+  const joinBtn = document.getElementById('ol-join-btn');
+  if(createBtn) createBtn.disabled = true;
+  if(joinBtn) joinBtn.disabled = true;
+  setOnlineEntryError(`部屋 [${code}] に接続しています…`, true);
+
+  cleanupOnlineConnectionsOnly();
+
+  NET.transportHandle = ITMulti.joinPeerRoom(code, {
+    localOnly: isLocalTransportForced(),
+    onLink(link){
+      NET.savedSettingsBackup = {
+        settings: { ...SETTINGS },
+        world: currentWorld
+      };
+      NET.active = true;
+      NET.role = 'guest';
+      NET.roomCode = code;
+      NET.guestClient = new ITMulti.GuestClient(link, {
+        name: NET.playerName || 'GUEST',
+        handlers: {
+          welcome(msg){
+            if(createBtn) createBtn.disabled = false;
+            if(joinBtn) joinBtn.disabled = false;
+            setOnlineEntryError('');
+            NET.myPeerId = msg.peerId;
+            NET.roomCode = msg.code;
+            NET.lobbyState = msg.state;
+            applyHostConfigOnGuest(msg.state.config);
+            showOnlineLobbyView('room');
+            renderOnlineRoomLobby(msg.state);
+            toast(`部屋 [${msg.code}] に参加しました！`);
+          },
+          lobby_state(st){
+            NET.lobbyState = st;
+            applyHostConfigOnGuest(st.config);
+            renderOnlineRoomLobby(st);
+          },
+          reject(msg){
+            if(msg && msg.reason) toast(msg.reason, true);
+          },
+          match_init(msg){
+            guestOnMatchInit(msg);
+          },
+          travel_anim(msg){
+            showTravelAnim(msg.themeIdx, null);
+          },
+          q_init(msg){
+            guestOnQuestionInit(msg);
+          },
+          q_fallback(msg){
+            guestOnQuestionFallback(msg);
+          },
+          bonus_status(msg){
+            G._onlineBonusChoices = msg.choices || {};
+            renderLeaderBonusModalContent();
+          },
+          bonus_commit(msg){
+            syncPlayersFromHost(msg.playersSync);
+            applyCommittedBonusChoices(msg.choices, msg.enAmt, msg.coreAmt, true);
+          },
+          q_go(msg){
+            showQIntro(msg.qnLabel, msg.hintDisp, () => {
+              startGuestSmoothTimer(msg.tsecMs || 30000);
+            });
+          },
+          tick(msg){
+            if(!G.done && typeof msg.tsecMs === 'number'){
+              G.tsecMs = msg.tsecMs;
+              G.tsec = G.tsecMs / 1000;
+              updateTimerHudDisplay();
+            }
+          },
+          vine_spread(msg){
+            if(!G.done){
+              if(typeof msg.tsecMs === 'number') G.tsecMs = msg.tsecMs;
+              applyVineSpreadIndices(msg.picked || []);
+            }
+          },
+          ev(msg){
+            applyActionEventVisual(msg);
+          },
+          game_over(msg){
+            guestOnGameOver(msg);
+          },
+          peer_left(msg){
+            toast(`${msg.name || 'プレイヤー'} の接続が切れました（ホストが機体を引き継ぎます）`, true);
+            addLog(`⚠ ${msg.name || '仲間'} が通信切断（ホストへ操作引継）`, 'err');
+          },
+          back_to_lobby(st){
+            NET.lobbyState = st;
+            applyHostConfigOnGuest(st.config);
+            returnClientViewToLobby(st);
+          },
+          bye(reason){
+            handleGuestDisconnectedFromHost(reason);
+          }
+        }
+      });
+    },
+    onError(errMsg){
+      if(createBtn) createBtn.disabled = false;
+      if(joinBtn) joinBtn.disabled = false;
+      setOnlineEntryError(errMsg);
+    }
+  });
+}
+
+function applyHostConfigOnGuest(cfg){
+  if(!cfg) return;
+  if(cfg.settings){
+    SETTINGS = { ...SETTINGS_DEFAULT, ...cfg.settings };
+  }
+  if(cfg.world && WORLD_CONFIGS[cfg.world]){
+    G.world = cfg.world;
+  }
+}
+
+function syncHostConfigToLobby(){
+  if(NET.active && NET.role === 'host' && NET.hostRoom && NET.hostRoom.phase === 'lobby'){
+    NET.hostRoom.updateConfig({
+      world: currentWorld,
+      mode: G.lobbyMode || 'normal',
+      settings: { ...SETTINGS },
+      customSummary: buildCustomSummaryText()
+    });
+  }
+}
+
+function setOnlineLobbyWorld(wid){
+  if(NET.role !== 'host') return;
+  selectWorld(wid);
+  syncHostConfigToLobby();
+}
+
+function setOnlineLobbyMode(mode){
+  if(NET.role !== 'host') return;
+  G.lobbyMode = mode;
+  syncHostConfigToLobby();
+}
+
+function toggleOnlineLobbySwitch(key){
+  if(NET.role !== 'host') return;
+  toggleSettingSwitch(key);
+  syncHostConfigToLobby();
+}
+
+function updateNameInRoom(val){
+  saveOnlinePlayerName(val);
+  if(NET.role === 'host' && NET.hostRoom){
+    NET.hostRoom.setHostName(NET.playerName);
+  } else if(NET.role === 'guest' && NET.guestClient){
+    NET.guestClient.setName(NET.playerName);
+  }
+}
+
+function pickOnlineLobbyUnit(uIdx){
+  if(!NET.active) return;
+  if(NET.role === 'host' && NET.hostRoom){
+    const res = NET.hostRoom.pickUnit('host', uIdx);
+    if(!res.ok && res.reason) toast(res.reason, true);
+  } else if(NET.role === 'guest' && NET.guestClient){
+    NET.guestClient.pickUnit(uIdx);
+  }
+}
+
+function toggleGuestReady(){
+  if(NET.role !== 'guest' || !NET.guestClient || !NET.lobbyState) return;
+  const me = NET.lobbyState.members.find(m => m.peerId === NET.myPeerId);
+  if(!me) return;
+  if(me.unitIdx < 0){
+    toast('先に搭乗するホバーカーを選択してください', true);
+    return;
+  }
+  NET.guestClient.setReady(!me.ready);
+}
+
+function copyOnlineRoomCode(){
+  if(!NET.roomCode) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(NET.roomCode).then(() => {
+      toast(`部屋コード [${NET.roomCode}] をコピーしました！`);
+    }).catch(() => {
+      toast(`部屋コード: ${NET.roomCode}`);
+    });
+  } else {
+    toast(`部屋コード: ${NET.roomCode}`);
+  }
+}
+
+function renderOnlineRoomLobby(st){
+  if(!st) return;
+  const codeEl = document.getElementById('ol-disp-code');
+  const cntEl = document.getElementById('ol-player-cnt');
+  const rName = document.getElementById('ol-room-name-inp');
+  const ruleHint = document.getElementById('ol-unit-rule-hint');
+  const grid = document.getElementById('ol-units-grid');
+  const cfgBox = document.getElementById('ol-cfg-box');
+  const fMsg = document.getElementById('ol-footer-msg');
+  const fBtns = document.getElementById('ol-footer-btns');
+
+  if(codeEl) codeEl.textContent = st.code || '------';
+  const numP = st.members ? st.members.length : 1;
+  if(cntEl) cntEl.textContent = String(numP);
+  if(rName && document.activeElement !== rName) rName.value = NET.playerName || '';
+
+  const cfg = st.config || {};
+  const s = cfg.settings || SETTINGS;
+  const wId = cfg.world || 'cyber';
+  const wc = WORLD_CONFIGS[wId] || WORLD_CONFIGS.cyber;
+  const vNames = wc.vehicleName || ['PILOT','ENGNR','HACKER','SNIPER','LEADER'];
+
+  const initPerP = ITMulti.calcPoolPerPlayer(s.initEnergy, numP);
+  const clrPerP = ITMulti.calcPoolPerPlayer(s.clearEnergy, numP);
+  const bonusVals = ITMulti.calcBonusPerPlayer(s.bonusEnergy, numP);
+  if(ruleHint){
+    ruleHint.innerHTML = `${numP}人出撃時: 初期EN <strong>${initPerP}pt</strong> / クリア<strong>+${clrPerP}pt</strong> / 突破ボーナス <strong>+${bonusVals.en}pt or 💎${bonusVals.core}</strong>`;
+  }
+
+  const unassBar = document.getElementById('ol-unassigned-bar');
+  if(unassBar){
+    const unassigned = (st.members || []).filter(m => !Number.isInteger(m.unitIdx) || m.unitIdx < 0 || m.unitIdx > 4);
+    if(unassigned.length > 0){
+      unassBar.style.display = 'flex';
+      unassBar.innerHTML = `<span>🔄 機体選択中（未搭乗）:</span>` + unassigned.map(m => {
+        const isMe = m.peerId === NET.myPeerId;
+        return `<span class="ol-unassigned-pill ${isMe ? 'mine' : ''}">${isMe ? `★ ${m.name} (YOU: 空き機体をクリックして搭乗)` : `👤 ${m.name} (選択中…)`}</span>`;
+      }).join('');
+    } else {
+      unassBar.style.display = 'none';
+      unassBar.innerHTML = '';
+    }
+  }
+
+  if(grid){
+    grid.innerHTML = [0,1,2,3,4].map(u => {
+      const occupant = st.members.find(m => m.unitIdx === u);
+      const isMine = occupant && occupant.peerId === NET.myPeerId;
+      const isTakenOther = occupant && !isMine;
+      const col = PC[u];
+      const sp = SPEC_INFO[u];
+      let badgeHtml = '';
+      if(isMine){
+        badgeHtml = `<div class="ol-ucard-pilot" style="background:${col};color:#04040f">★ ${occupant.name} (YOU)</div><div class="ol-ucard-sub">再クリックで搭乗解除</div>`;
+      } else if(isTakenOther){
+        const rdyMark = occupant.isHost ? 'HOST' : (occupant.ready ? '✓READY' : '⏳準備中');
+        badgeHtml = `<div class="ol-ucard-pilot" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid ${col}">👤 ${occupant.name} <span style="font-size:7.5px;color:${occupant.ready||occupant.isHost?'#00ffcc':'#ffcc00'}">[${rdyMark}]</span></div>`;
+      } else {
+        badgeHtml = `<div class="ol-ucard-pilot" style="color:#6c76a8;border:1px dashed #2a3468">空き — クリックで搭乗</div>`;
+      }
+      return `
+        <div class="ol-ucard ${isMine ? 'mine' : isTakenOther ? 'taken-other' : ''}" style="--cc:${col}" onclick="${isTakenOther ? '' : `pickOnlineLobbyUnit(${u})`}" title="${isMine ? 'クリックすると搭乗を解除して他の人と機体を入れ替えられます' : isTakenOther ? '他のプレイヤーが搭乗中です' : 'クリックしてこの機体に搭乗します'}">
+          <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:900;color:${col};letter-spacing:1px">${'ABCDE'[u]}.${vNames[u]}</div>
+          <div class="ic-b" style="--cc:${col};margin:3px 0"></div>
+          <div style="font-size:8px;color:#ffd866;font-weight:700">SPEC: ${sp.name}</div>
+          <div style="font-size:7.5px;color:#98a2cc;line-height:1.35;min-height:22px">${u===4?'💎3➔+9pt変換 & 中央渦巻':sp.desc.split(' [')[0]}</div>
+          ${badgeHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
+  const isHost = (NET.role === 'host');
+  const curMode = cfg.mode || 'normal';
+  if(cfgBox){
+    if(isHost){
+      cfgBox.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <span style="font-size:9.5px;color:#ffe88a;font-weight:700;letter-spacing:1.5px">⚙ 出撃ミッション設定（ホスト操作）</span>
+          <div style="display:flex;gap:6px">
+            <button class="eb2" style="padding:3px 9px;font-size:9px;border-color:#ffcc00;color:#ffcc00" onclick="openCustomMode()">🛠 CUSTOMステージ編集</button>
+            <button class="eb2" style="padding:3px 9px;font-size:9px;border-color:#88aaff;color:#88aaff" onclick="openSettings()">⚙ エネルギー詳細設定</button>
+          </div>
+        </div>
+        <div class="ol-cfg-row">
+          <span style="font-size:9px;color:var(--dim);min-width:54px">WORLD:</span>
+          <button class="ol-chip ${wId==='cyber'?'active':''}" onclick="setOnlineLobbyWorld('cyber')">⚡ CYBER</button>
+          <button class="ol-chip ${wId==='ocean'?'active':''}" onclick="setOnlineLobbyWorld('ocean')">🌊 OCEAN</button>
+          <button class="ol-chip ${wId==='jungle'?'active':''}" onclick="setOnlineLobbyWorld('jungle')">🌿 JUNGLE</button>
+          <span style="margin-left:8px;font-size:9px;color:var(--dim)">OPTIONS:</span>
+          <button class="ol-chip ${s.stageHazard?'active':''}" onclick="toggleOnlineLobbySwitch('stageHazard')">⚠ 妨害: ${s.stageHazard?'ON':'OFF'}</button>
+          <button class="ol-chip ${s.coreSystem?'active':''}" onclick="toggleOnlineLobbySwitch('coreSystem')">💎 コア: ${s.coreSystem?'ON':'OFF'}</button>
+        </div>
+        <div class="ol-cfg-row">
+          <span style="font-size:9px;color:var(--dim);min-width:54px">MODE:</span>
+          <button class="ol-chip ${curMode==='normal'?'active':''}" onclick="setOnlineLobbyMode('normal')">▶ NORMAL (10問)</button>
+          <button class="ol-chip ${curMode==='hyper'?'active':''}" onclick="setOnlineLobbyMode('hyper')">⚡ HYPER (10問)</button>
+          <button class="ol-chip ${curMode==='endless'?'active':''}" onclick="setOnlineLobbyMode('endless')">∞ ENDLESS</button>
+          <button class="ol-chip ${curMode==='custom'?'active':''}" onclick="setOnlineLobbyMode('custom')">🛠 CUSTOM (${cfg.customSummary || buildCustomSummaryText()})</button>
+        </div>
+      `;
+    } else {
+      const modeNames = { normal: '▶ NORMAL (10問)', hyper: '⚡ HYPER (10問)', endless: '∞ ENDLESS', custom: `🛠 CUSTOM (${cfg.customSummary || ''})` };
+      cfgBox.innerHTML = `
+        <div style="font-size:9.5px;color:#98a8dc;letter-spacing:1px">📋 ホスト設定（リアルタイム同期中）</div>
+        <div class="ol-cfg-row" style="font-size:10px;color:#e0e8ff;gap:12px">
+          <span>WORLD: <strong style="color:${wc.accentCol}">${wId.toUpperCase()}</strong></span>
+          <span>MODE: <strong style="color:#ffe88a">${modeNames[curMode] || curMode}</strong></span>
+          <span>妨害ギミック: <strong>${s.stageHazard ? 'ON' : 'OFF'}</strong></span>
+          <span>コアシステム: <strong>${s.coreSystem ? 'ON' : 'OFF'}</strong></span>
+          <span>EN設定(総量): 初期<strong>${s.initEnergy}</strong> / クリア<strong>${s.clearEnergy}</strong> / 突破<strong>${s.bonusEnergy}</strong></span>
+        </div>
+      `;
+    }
+  }
+
+  if(fMsg && fBtns){
+    if(isHost){
+      const chk = NET.hostRoom ? NET.hostRoom.canStart() : { ok: false, reason: '' };
+      fMsg.innerHTML = chk.ok
+        ? `<span style="color:var(--cyan)">✔ 全員準備完了！出撃できます（${numP}機編成）</span>`
+        : `<span style="color:#ffcc66">⏳ ${chk.reason}</span>`;
+      fBtns.innerHTML = `
+        <button class="ol-btn gold" ${chk.ok ? '' : 'disabled'} onclick="hostStartOnlineMatch()">🚀 START MISSION (${numP}人出撃)</button>
+      `;
+    } else {
+      const me = st.members.find(m => m.peerId === NET.myPeerId);
+      const unseated = !me || me.unitIdx < 0;
+      const isRdy = me && me.ready && !unseated;
+      if(unseated){
+        fMsg.innerHTML = `<span style="color:#ffcc66">🔄 搭乗解除中 — 空いているホバーカーをクリックして選択してください</span>`;
+        fBtns.innerHTML = `<button class="ol-btn" disabled>⏳ 機体を選択してください</button>`;
+      } else {
+        fMsg.innerHTML = isRdy
+          ? `<span style="color:var(--cyan)">✔ 準備完了！ホストの出撃開始を待っています…</span>`
+          : `<span style="color:#ffcc66">機体を選んだら「準備完了」を押してください</span>`;
+        fBtns.innerHTML = `
+          <button class="ol-btn ${isRdy ? '' : 'gold'}" onclick="toggleGuestReady()">${isRdy ? '✓ READY (クリックで解除)' : '▶ 準備完了にする (READY)'}</button>
+        `;
+      }
+    }
+  }
+  scheduleViewportFit();
+}
+
+function cleanupOnlineConnectionsOnly(){
+  clearTimeout(NET.bonusSafetyTimer);
+  clearTimeout(NET.nextQTimer);
+  if(NET.hostRoom){ try { NET.hostRoom.closeRoom(); } catch(e){} NET.hostRoom = null; }
+  if(NET.guestClient){ try { NET.guestClient.leave(); } catch(e){} NET.guestClient = null; }
+  if(NET.transportHandle){ try { NET.transportHandle.close(); } catch(e){} NET.transportHandle = null; }
+  if(NET.savedSettingsBackup){
+    SETTINGS = { ...SETTINGS_DEFAULT, ...NET.savedSettingsBackup.settings };
+    currentWorld = NET.savedSettingsBackup.world || currentWorld;
+    NET.savedSettingsBackup = null;
+    syncSettingsUI();
+  }
+  NET.active = false;
+  NET.role = null;
+  NET.myPeerId = null;
+  NET.roomCode = '';
+  NET.lobbyState = null;
+}
+
+function leaveOnlineRoom(){
+  cleanupOnlineConnectionsOnly();
+  showOnlineLobbyView('entry');
+  const createBtn = document.getElementById('ol-create-btn');
+  const joinBtn = document.getElementById('ol-join-btn');
+  if(createBtn) createBtn.disabled = false;
+  if(joinBtn) joinBtn.disabled = false;
+  setOnlineEntryError('');
+}
+
+function leaveOnlineRoomAndHome(){
+  cleanupOnlineConnectionsOnly();
+  const modal = document.getElementById('online-lobby');
+  if(modal) modal.classList.remove('active');
+  stopBGM();
+  clearInterval(G.tid);
+  retryGame();
+}
+
+function handleGuestDisconnectedFromHost(reason){
+  const msgMap = {
+    full: '部屋が満員（最大5人）のため入室できませんでした',
+    playing: '現在ミッション進行中のため入室できませんでした',
+    version: 'ゲームのバージョンがホストと異なります',
+    host_closed: 'ホストが部屋を閉じました',
+    timeout: 'ホストとの通信がタイムアウトしました'
+  };
+  const txt = msgMap[reason] || 'ホストとの接続が終了しました';
+  const wasInGame = document.getElementById('game').style.display !== 'none';
+  cleanupOnlineConnectionsOnly();
+  if(wasInGame){
+    clearInterval(G.tid);
+    stopBGM();
+    retryGame();
+    openOnlineLobby();
+  } else {
+    showOnlineLobbyView('entry');
+    const createBtn = document.getElementById('ol-create-btn');
+    const joinBtn = document.getElementById('ol-join-btn');
+    if(createBtn) createBtn.disabled = false;
+    if(joinBtn) joinBtn.disabled = false;
+  }
+  setOnlineEntryError(txt);
+  toast(txt, true);
+}
+
+function handlePeerLeftDuringGameOnHost(peerId, member){
+  if(NET.role !== 'host') return;
+  let tookOver = false;
+  if(G.players){
+    G.players.forEach(p => {
+      if(p.peerId === peerId){
+        p.controlledByHost = true;
+        tookOver = true;
+      }
+    });
+  }
+  addLog(`⚠ ${member.name} が切断 — ホストが機体操作を引き継ぎました`, 'err');
+  toast(`${member.name} が切断しました（ホストが機体を引き継ぎます）`, true);
+  if(tookOver){
+    renderStrip();
+    // もしボーナス選択待ち中なら、切断プレイヤーの未選択分をホストが選べるor自動チェック
+    const bm = document.getElementById('bonus-modal');
+    if(bm && bm.classList.contains('active')){
+      renderLeaderBonusModalContent();
+    }
+  }
+}
+
+// ── ONLINE MATCH EXECUTION (HOST & GUEST SYNC) ──
+function serializePlayersState(){
+  return (G.players || []).map(p => ({
+    name: p.name,
+    playerName: p.playerName || '',
+    peerId: p.peerId || '',
+    controlledByHost: !!p.controlledByHost,
+    unitIdx: p.unitIdx,
+    energy: p.energy,
+    core: p.core || 0,
+    specUsed: !!p.specUsed,
+    ansCost: p.ansCost || 1
+  }));
+}
+
+function syncPlayersFromHost(arr){
+  if(!Array.isArray(arr)) return;
+  G.players = arr.map(p => ({ ...p }));
+}
+
+function packQuestionForSync(qIdx){
+  const q = QS[qIdx];
+  if(!q) return { answer: 'りんご', hint: '果物', img: '' };
+  applyCachedCreditToQuestion(q);
+  return {
+    answer: q.answer,
+    hint: q.hint || '—',
+    img: q.img || '',
+    video: q.video || '',
+    author: q.author || '',
+    authorUrl: q.authorUrl || '',
+    photoLink: q.photoLink || '',
+    creditVerified: !!q.creditVerified,
+    verifiedSlug: q.verifiedSlug || ''
+  };
+}
+
+function hostStartOnlineMatch(){
+  if(NET.role !== 'host' || !NET.hostRoom) return;
+  const chk = NET.hostRoom.canStart();
+  if(!chk.ok){ toast(chk.reason, true); return; }
+
+  const mode = (NET.hostRoom.config && NET.hostRoom.config.mode) || 'normal';
+  if(QS.length < 1){ toast('問題が1問以上必要です', true); return; }
+  if(mode === 'normal' || mode === 'hyper'){
+    const total = mode === 'hyper' ? HYPER_TOTAL : NORMAL_TOTAL;
+    if(QS.length < total){ toast(`問題が${total}問以上必要です（現在${QS.length}問）`, true); return; }
+  }
+
+  NET.hostRoom.phase = 'playing';
+  auInit();
+  G.mode = mode;
+  G.endlessScore = 0;
+  G.endlessStep = 0;
+  G.qi = 0;
+  G.paused = false;
+  G.roundLocked = false;
+
+  if(mode === 'endless'){
+    G.order = sh([...Array(QS.length).keys()]);
+  } else if(mode === 'custom'){
+    G.customSchedule = buildCustomSchedule();
+    const total = G.customSchedule.length;
+    G.order = [];
+    while(G.order.length < total) G.order.push(...sh([...Array(QS.length).keys()]));
+    G.order = G.order.slice(0, total);
+  } else {
+    const total = mode === 'hyper' ? HYPER_TOTAL : NORMAL_TOTAL;
+    G.order = sh([...Array(QS.length).keys()]).slice(0, total);
+  }
+
+  G.world = (mode === 'custom' && G.customSchedule && G.customSchedule[0]) ? G.customSchedule[0].world : currentWorld;
+  const initAccent = WORLD_CONFIGS[G.world || 'cyber'].accentCol;
+  document.documentElement.style.setProperty('--cyan', initAccent);
+
+  const allPNames = getPNAMES();
+  const startCore = (!SETTINGS.coreSystem || G.mode === 'endless') ? 0 : (SETTINGS.initCore || 0);
+  G.players = NET.hostRoom.buildOrderedPlayers(allPNames, startCore);
+  G.selPlayer = getMyDefaultPlayerIdx();
+
+  // UI切り替え
+  document.getElementById('online-lobby').classList.remove('active');
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('custom-mode-panel').style.display = 'none';
+  document.getElementById('gos').style.display = 'none';
+  document.getElementById('mcs').style.display = 'none';
+  const lb = document.getElementById('logbox'); if(lb) lb.innerHTML = '';
+  document.getElementById('game').style.display = 'flex';
+
+  const preloadUrls = G.order.slice(0, 12).map(idx => QS[idx] && QS[idx].img).filter(Boolean);
+  preloadQuestionPool(G.order.slice(0, 12));
+
+  const startTheme = mode === 'hyper' ? 1 : mode === 'endless' ? 6 : 0;
+  NET.hostRoom.broadcast({
+    t: 'match_init',
+    mode,
+    world: G.world,
+    settings: { ...SETTINGS },
+    customSchedule: G.customSchedule || null,
+    players: serializePlayersState(),
+    preloadUrls,
+    startTheme
+  });
+
+  showTravelAnim(startTheme, () => {
+    if(NET.active && NET.role === 'host') hostLoadQuestion();
+  });
+}
+
+function guestOnMatchInit(msg){
+  auInit();
+  SETTINGS = { ...SETTINGS_DEFAULT, ...(msg.settings || {}) };
+  G.mode = msg.mode || 'normal';
+  G.world = msg.world || 'cyber';
+  G.customSchedule = msg.customSchedule || null;
+  G.endlessScore = 0;
+  G.endlessStep = 0;
+  G.qi = 0;
+  G.paused = false;
+  G.done = false;
+  G.roundLocked = false;
+  syncPlayersFromHost(msg.players || []);
+  G.selPlayer = getMyDefaultPlayerIdx();
+
+  const initAccent = WORLD_CONFIGS[G.world || 'cyber'].accentCol;
+  document.documentElement.style.setProperty('--cyan', initAccent);
+
+  document.getElementById('online-lobby').classList.remove('active');
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('custom-mode-panel').style.display = 'none';
+  document.getElementById('gos').style.display = 'none';
+  document.getElementById('mcs').style.display = 'none';
+  const lb = document.getElementById('logbox'); if(lb) lb.innerHTML = '';
+  document.getElementById('game').style.display = 'flex';
+
+  if(Array.isArray(msg.preloadUrls)){
+    msg.preloadUrls.forEach(u => preloadImageUrl(u));
+  }
+  showTravelAnim(msg.startTheme || 0, null);
+}
+
+function hostLoadQuestion(){
+  if(NET.role !== 'host' || !NET.hostRoom) return;
+  clearInterval(G.tid);
+  areaPlayer = -1; specPlayer = -1; G.answering = false; G.roundLocked = false;
+  G.players.forEach(p => { p.specUsed = false; });
+
+  const endless = G.mode === 'endless';
+  const hyper = G.mode === 'hyper';
+  const custom = G.mode === 'custom';
+
+  if(endless){
+    if(G.endlessStep === undefined) G.endlessStep = 0;
+    if(G.qi >= G.order.length){
+      G.order = sh([...Array(QS.length).keys()]);
+      G.qi = 0;
+    }
+  }
+
+  const total = custom ? (G.customSchedule ? G.customSchedule.length : 1) : hyper ? HYPER_TOTAL : NORMAL_TOTAL;
+  const step = endless ? G.endlessStep : G.qi;
+  const curCustom = custom && G.customSchedule ? G.customSchedule[step] : null;
+  let sz;
+  if(custom && curCustom){
+    sz = curCustom.size;
+    if(curCustom.world && G.world !== curCustom.world) G.world = curCustom.world;
+  } else if(endless){
+    sz = 7 + Math.floor(step / 2);
+  } else {
+    const LSIZES = hyper ? LSIZES_HYPER : LSIZES_NORMAL;
+    sz = LSIZES[step + 1] || 10;
+  }
+
+  const wcNow = WORLD_CONFIGS[G.world || 'cyber'];
+  document.documentElement.style.setProperty('--cyan', wcNow.accentCol);
+  const pnamesNow = getPNAMES();
+  G.players.forEach((p, idx) => {
+    const u = getUnitIdx(idx);
+    p.name = pnamesNow[u] || p.name;
+  });
+
+  const qObj = packQuestionForSync(G.order[G.qi]);
+  G.onlineCurrentQ = qObj;
+  G.sz = sz;
+  G.rev = new Array(sz * sz).fill(false);
+  G.barrier = new Array(sz * sz).fill(false);
+  G.vine = new Array(sz * sz).fill(false);
+  G.done = false;
+  G.tsec = 30;
+  G.tsecMs = 30000;
+
+  if(isHazardOn() && G.world === 'cyber'){
+    const bCnt = Math.ceil(sz * sz * 0.30);
+    sh([...Array(sz * sz).keys()]).slice(0, bCnt).forEach(idx => { G.barrier[idx] = true; });
+  } else if(isHazardOn() && G.world === 'jungle'){
+    const vCnt = Math.ceil(sz * sz * 0.03);
+    sh([...Array(sz * sz).keys()]).slice(0, vCnt).forEach(idx => { G.vine[idx] = true; });
+  }
+  G.diff = pickDifficulty(step);
+  G.paletteSeed = (Math.random() * 0xFFFFFFFF) >>> 0;
+
+  const numP = Math.max(1, G.players.length);
+  const ansCostNow = getAnsCost();
+  G.players.forEach(p => { p.ansCost = ansCostNow; });
+
+  let gainLog = '';
+  if(endless){
+    const gainE = ITMulti.calcEndlessEn(sz, numP);
+    G.players.forEach(p => p.energy += gainE);
+    gainLog = `エネルギー +${gainE}pt×${numP} (${sz}×${sz}グリッド / ANSWERコスト:${ansCostNow}pt)`;
+  } else if(custom){
+    const basePool = (step === 0)
+      ? (CUSTOM_CONFIG.scaleEnergy ? Math.max(SETTINGS.initEnergy, sz * 5) : SETTINGS.initEnergy)
+      : (CUSTOM_CONFIG.scaleEnergy ? Math.max(SETTINGS.clearEnergy, sz * 5) : SETTINGS.clearEnergy);
+    const gainE = ITMulti.calcPoolPerPlayer(basePool, numP);
+    G.players.forEach(p => p.energy += gainE);
+    if(gainE > 0) gainLog = `${step === 0 ? 'スタート時エネルギー' : '問題クリアエネルギー'} +${gainE}pt×${numP} (ANSWERコスト:${ansCostNow}pt)`;
+  } else {
+    const basePool = (step === 0) ? SETTINGS.initEnergy : SETTINGS.clearEnergy;
+    const gainE = ITMulti.calcPoolPerPlayer(basePool, numP);
+    G.players.forEach(p => p.energy += gainE);
+    if(gainE > 0) gainLog = `${step === 0 ? 'スタート時エネルギー' : '問題クリアエネルギー'} +${gainE}pt×${numP} (ANSWERコスト:${ansCostNow}pt)`;
+  }
+
+  const nextPreloads = [];
+  for(let k = 1; k <= 3; k++){
+    const ni = (G.qi + k) % G.order.length;
+    const nq = QS[G.order[ni]];
+    if(nq && nq.img){
+      preloadImageUrl(nq.img);
+      nextPreloads.push(nq.img);
+    }
+  }
+
+  const bonusQis = [3, 6, 9];
+  const isBonusTiming = custom ? !!(curCustom && curCustom.isStageStart) : (!endless && bonusQis.includes(step));
+  const needBonus = isBonusTiming && SETTINGS.bonusEnergy > 0;
+
+  const qInitPayload = {
+    t: 'q_init',
+    qi: G.qi,
+    endlessStep: G.endlessStep || 0,
+    endlessScore: G.endlessScore || 0,
+    total,
+    sz,
+    world: G.world,
+    diff: G.diff,
+    barrier: G.barrier,
+    vine: G.vine,
+    paletteSeed: G.paletteSeed,
+    qData: qObj,
+    nextPreloads,
+    playersSync: serializePlayersState(),
+    gainLog,
+    needBonus,
+    bonusPool: SETTINGS.bonusEnergy
+  };
+
+  applySharedQuestionDOM(qInitPayload);
+  NET.hostRoom.broadcast(qInitPayload);
+
+  const qn = step + 1;
+  const isFinal = !endless && (qn === total);
+  const hintDisp = (isFinal && !custom || (endless && step >= 30)) ? '???' : (qObj.hint || '—');
+  const qnLabel = endless ? (qn + '問目') : qn;
+
+  const launchIntroAndTimer = () => {
+    if(!NET.active || NET.role !== 'host') return;
+    NET.hostRoom.broadcast({ t: 'q_go', qnLabel, hintDisp, tsecMs: 30000 });
+    showQIntro(qnLabel, hintDisp, () => {
+      if(NET.active && NET.role === 'host') startHostMasterTimer();
+    });
+  };
+
+  if(needBonus){
+    G._onlineBonusPending = true;
+    G._onlineBonusChoices = {};
+    G._localPickedBonus = {};
+    promptLeaderBonus(SETTINGS.bonusEnergy, launchIntroAndTimer);
+    clearTimeout(NET.bonusSafetyTimer);
+    NET.bonusSafetyTimer = setTimeout(() => {
+      if(NET.active && NET.role === 'host' && G._onlineBonusPending){
+        hostFinalizeBonusAndStartQ();
+      }
+    }, 30000);
+  } else {
+    launchIntroAndTimer();
+  }
+}
+
+function guestOnQuestionInit(msg){
+  clearInterval(G.tid);
+  areaPlayer = -1; specPlayer = -1; G.answering = false; G.roundLocked = false;
+  G.qi = msg.qi;
+  G.endlessStep = msg.endlessStep || 0;
+  G.endlessScore = msg.endlessScore || 0;
+  G.sz = msg.sz;
+  G.world = msg.world || 'cyber';
+  G.diff = msg.diff;
+  G.barrier = [...(msg.barrier || [])];
+  G.vine = [...(msg.vine || [])];
+  G.rev = new Array(msg.sz * msg.sz).fill(false);
+  G.paletteSeed = msg.paletteSeed;
+  G.onlineCurrentQ = msg.qData;
+  G.done = false;
+  G.tsec = 30;
+  G.tsecMs = 30000;
+  syncPlayersFromHost(msg.playersSync);
+  if(!canControlPlayer(G.selPlayer)) G.selPlayer = getMyDefaultPlayerIdx();
+
+  if(Array.isArray(msg.nextPreloads)){
+    msg.nextPreloads.forEach(u => preloadImageUrl(u));
+  }
+  applySharedQuestionDOM(msg);
+
+  if(msg.needBonus){
+    G._onlineBonusChoices = {};
+    G._localPickedBonus = {};
+    promptLeaderBonus(msg.bonusPool || SETTINGS.bonusEnergy, null);
+  }
+}
+
+function guestOnQuestionFallback(msg){
+  if(!msg || !msg.qData) return;
+  G.onlineCurrentQ = msg.qData;
+  const hv = document.getElementById('hintv');
+  if(hv && msg.hintDisp) hv.textContent = msg.hintDisp;
+  const im = document.getElementById('himg');
+  if(im && msg.qData.img) im.src = msg.qData.img;
+}
+
+function applySharedQuestionDOM(msg){
+  const endless = G.mode === 'endless';
+  const hyper = G.mode === 'hyper';
+  const custom = G.mode === 'custom';
+  const step = endless ? G.endlessStep : G.qi;
+  const total = msg.total || (custom ? (G.customSchedule ? G.customSchedule.length : 1) : hyper ? HYPER_TOTAL : NORMAL_TOTAL);
+  const curCustom = custom && G.customSchedule ? G.customSchedule[step] : null;
+  const sz = msg.sz;
+  const qn = step + 1;
+  const q = msg.qData;
+
+  const wcNow = WORLD_CONFIGS[G.world || 'cyber'];
+  document.documentElement.style.setProperty('--cyan', wcNow.accentCol);
+
+  const lv = custom && curCustom
+    ? curCustom.stageNum
+    : endless
+    ? (step <= 3 ? 1 : step <= 5 ? 2 : step <= 7 ? 3 : step <= 13 ? 4 : 'CHAOS')
+    : hyper ? (step < 3 ? 2 : step < 6 ? 3 : step < 9 ? 4 : 5)
+    : (step < 3 ? 1 : step < 6 ? 2 : step < 9 ? 3 : 4);
+  const isFinal = !endless && (qn === total);
+
+  document.getElementById('qnum').textContent = endless ? (qn + '問目 ∞') : (qn + '/' + total);
+  document.getElementById('lvval').textContent = custom ? ('STG ' + lv) : endless ? lv : hyper ? (lv + (isFinal ? 'CHAOS' : '') + '⚡') : isFinal ? 'FINAL' : lv;
+  document.getElementById('tv').textContent = '30';
+  document.getElementById('tv').className = '';
+  document.getElementById('gval').textContent = sz + '×' + sz;
+
+  const _bgmLvl = custom && curCustom
+    ? Math.min(5, curCustom.stageIdx)
+    : endless
+    ? (step >= 14 ? 5 : step >= 8 ? 4 : step >= 6 ? 3 : step >= 4 ? 2 : step >= 2 ? 1 : 0)
+    : hyper ? (step >= 9 ? 5 : step >= 6 ? 4 : step >= 3 ? 2 : 1)
+    : (step >= 9 ? 5 : step >= 6 ? 2 : step >= 3 ? 1 : 0);
+  playBGM(_bgmLvl);
+
+  const diffTag = G.diff && G.diff.tags && G.diff.tags.length ? '  ⚠ ' + G.diff.tags.join(' ') : '';
+  const stageName = custom && curCustom
+    ? (`CUSTOM STAGE ${lv} (${curCustom.qInStage}/${curCustom.stageCount}問・${sz}×${sz})`)
+    : endless
+    ? (wcNow.endlessPrefix + sz + '×' + sz)
+    : hyper ? (wcNow.hyperStageNames[step < 3 ? 0 : step < 6 ? 1 : step < 9 ? 2 : 3] || 'FINAL')
+    : (wcNow.stageNames[lv - 1] || STAGES[lv - 1]);
+  const roomBadge = NET.active && NET.roomCode ? ` [🌐ROOM:${NET.roomCode}]` : '';
+  document.getElementById('sbar').textContent = (endless ? '∞ ' : custom ? '🛠 ' : ('— LEVEL ' + lv + ' : ')) + stageName + (isFinal ? ' ⚡ FINAL' : '') + ' ' + diffTag + roomBadge;
+
+  const hintDisp = (isFinal && !custom || (endless && step >= 30)) ? '???' : (q.hint || '—');
+  document.getElementById('hintv').textContent = hintDisp;
+
+  updateGameBg();
+  updateDiffDisplay();
+  hideBoardUnsplashCredit();
+  buildBoard(sz, q.video || q.img || '');
+  renderStrip();
+  updateHUD();
+
+  if(msg.gainLog) addLog(msg.gainLog, 'info');
+  addLog((isFinal && !custom || (endless && step >= 30)) ? 'Q' + qn + (endless ? ' — ヒントなし！' : ' FINAL — ヒントなし！') : 'Q' + qn + ' ヒント:「' + q.hint + '」', 'info');
+  if(isHazardOn()){
+    if(G.world === 'cyber'){
+      addLog(`⚡排除システム作動：バリアタイル ${G.barrier.filter(Boolean).length}枚(30%)出現！`, 'info');
+    } else if(G.world === 'ocean' && G.diff && G.diff.oceanBoostLabel){
+      addLog(`🌊深層妨害：${G.diff.oceanBoostLabel}`, 'info');
+    } else if(G.world === 'jungle'){
+      addLog(`🌿ツタの脅威：開始時(${G.vine.filter(Boolean).length}枚)＆3秒ごとに盤面の3%がツタ化（計30%）！`, 'info');
+    }
+  }
+}
+
+function updateTimerHudDisplay(){
+  const tv = document.getElementById('tv');
+  if(!tv) return;
+  const disp = G.tsec > 10 ? G.tsec.toFixed(0) : Math.max(0, G.tsec).toFixed(2);
+  tv.textContent = disp;
+  if(G.tsec <= 10) tv.className = 'warn';
+}
+
+function startHostMasterTimer(){
+  clearInterval(G.tid);
+  G.tsecMs = 30000;
+  G.tsec = 30;
+  hostCheckDead();
+  if(G.done) return;
+  let lastSeTimer = -1;
+  G.tid = setInterval(() => {
+    if(G.done || G.roundLocked) return;
+    G.tsecMs -= 100;
+    G.tsec = G.tsecMs / 1000;
+    updateTimerHudDisplay();
+
+    if(G.tsecMs > 0 && G.tsecMs % 1000 === 0 && NET.hostRoom){
+      NET.hostRoom.broadcast({ t: 'tick', tsecMs: G.tsecMs });
+    }
+    if(isHazardOn() && G.world === 'jungle' && G.tsecMs > 0 && G.tsecMs < 30000 && G.tsecMs % 3000 === 0){
+      const picked = pickJungleVineIndices();
+      if(picked.length){
+        applyVineSpreadIndices(picked);
+        if(NET.hostRoom) NET.hostRoom.broadcast({ t: 'vine_spread', picked, tsecMs: G.tsecMs });
+      }
+    }
+    if(G.tsec <= 10 && G.tsec > 0){
+      const secFloor = Math.ceil(G.tsec);
+      if(secFloor !== lastSeTimer){ lastSeTimer = secFloor; seTimer(); }
+    }
+    if(G.tsecMs <= 0){
+      clearInterval(G.tid);
+      if(!G.done && !G.roundLocked){
+        const total = G.mode === 'custom' ? (G.customSchedule ? G.customSchedule.length : 1) : G.mode === 'hyper' ? HYPER_TOTAL : NORMAL_TOTAL;
+        const reason = G.mode === 'endless'
+          ? `タイムアップ！\n${G.endlessScore || 0}問クリア！ ${G.sz}×${G.sz}で壁に阻まれた…`
+          : `タイムアップ！\nQ${G.qi + 1}/${total}で壁に阻まれた…`;
+        hostTriggerGameOver(reason);
+      }
+    }
+  }, 100);
+}
+
+function startGuestSmoothTimer(initialMs){
+  clearInterval(G.tid);
+  G.tsecMs = initialMs || 30000;
+  G.tsec = G.tsecMs / 1000;
+  let lastSeTimer = -1;
+  G.tid = setInterval(() => {
+    if(G.done || G.roundLocked) return;
+    G.tsecMs = Math.max(0, G.tsecMs - 100);
+    G.tsec = G.tsecMs / 1000;
+    updateTimerHudDisplay();
+    if(G.tsec <= 10 && G.tsec > 0){
+      const secFloor = Math.ceil(G.tsec);
+      if(secFloor !== lastSeTimer){ lastSeTimer = secFloor; seTimer(); }
+    }
+  }, 100);
+}
+
+function pickJungleVineIndices(){
+  if(G.done || !isHazardOn() || G.world !== 'jungle' || !G.sz) return [];
+  const unrev = [];
+  for(let i = 0; i < G.sz * G.sz; i++){
+    if(!G.rev[i] && !(G.vine && G.vine[i])) unrev.push(i);
+  }
+  if(!unrev.length) return [];
+  const cnt = Math.max(1, Math.ceil((G.sz * G.sz) * 0.03));
+  return sh(unrev).slice(0, Math.min(cnt, unrev.length));
+}
+
+function applyVineSpreadIndices(picked){
+  if(!picked || !picked.length) return;
+  picked.forEach(idx => {
+    G.vine[idx] = true;
+    const t = getTileEl(idx);
+    if(t){
+      t.classList.remove('barrier', 'ah', 'sh');
+      t.classList.add('vine');
+      if(G.sz <= 22){
+        t.classList.add('vine-new');
+        setTimeout(() => t.classList.remove('vine-new'), 350);
+      }
+    }
+  });
+  seVineGrow();
+  scheduleBoardSync();
+}
+
+function hostTriggerGameOver(reasonText){
+  if(G.done) return;
+  G.done = true;
+  clearInterval(G.tid);
+  renderStrip();
+  const qData = getCurrentQuestionObj();
+  if(NET.hostRoom){
+    NET.hostRoom.broadcast({
+      t: 'game_over',
+      reasonText,
+      qData,
+      playersSync: serializePlayersState()
+    });
+  }
+  showGO(reasonText);
+}
+
+function guestOnGameOver(msg){
+  if(G.done) return;
+  G.done = true;
+  clearInterval(G.tid);
+  if(msg.playersSync) syncPlayersFromHost(msg.playersSync);
+  if(msg.qData) G.onlineCurrentQ = msg.qData;
+  renderStrip();
+  showGO(msg.reasonText || 'GAME OVER');
+}
+
+function isTeamOutOfAnswerEnergy(){
+  return !G.players.some((p, idx) => {
+    const ac = getAnsCost(p);
+    if(p.energy >= ac) return true;
+    if(SETTINGS.coreSystem && getUnitIdx(idx) === 4){
+      const convPt = Math.floor((p.core || 0) / 3) * 9;
+      if(p.energy + convPt >= ac) return true;
+    }
+    return false;
+  });
+}
+
+function hostCheckDead(){
+  if(G.done || G.roundLocked || G.answering) return;
+  if(isTeamOutOfAnswerEnergy()){
+    const total = G.mode === 'custom' ? (G.customSchedule ? G.customSchedule.length : 1) : G.mode === 'hyper' ? HYPER_TOTAL : NORMAL_TOTAL;
+    const reason = G.mode === 'endless'
+      ? `エネルギー枯渇（ANSWER発射不能）！\n${G.endlessScore || 0}問クリア！ ${G.sz}×${G.sz}で力尽きた…`
+      : `エネルギー枯渇（ANSWER発射不能）！\nQ${G.qi + 1}/${total}で力尽きた…`;
+    hostTriggerGameOver(reason);
+  } else {
+    updateStripLight();
+  }
+}
+
+// ── ホスト権威アクション実行＆全員への演出配信 ──
+function handleGuestMessageOnHost(peerId, msg){
+  if(NET.role !== 'host' || !msg) return;
+  const pi = parseInt(msg.pi, 10);
+  if(!Number.isInteger(pi) || pi < 0 || pi >= G.players.length) return;
+  const p = G.players[pi];
+  if(!p || p.peerId !== peerId) return; // 自分の担当機体以外の操作は厳格拒否
+
+  if(msg.act === 'bonus_pick'){
+    hostRecordBonusPick(pi, msg.rType);
+    return;
+  }
+  hostExecuteAction(pi, msg);
+}
+
+function hostExecuteAction(pi, actMsg){
+  if(G.done || G.roundLocked) return;
+  const p = G.players[pi];
+  if(!p) return;
+  const u = getUnitIdx(pi);
+  const actorLabel = p.playerName ? `${p.playerName}(${p.name})` : p.name;
+
+  if(actMsg.act === 'shot'){
+    if(p.energy < 1) return;
+    const shotCnt = Math.min(getShotCount(), p.energy);
+    const h = [];
+    for(let i = 0; i < G.sz * G.sz; i++) if(!G.rev[i] && !(G.vine && G.vine[i])) h.push(i);
+    if(!h.length) return;
+    const picked = sh(h).slice(0, Math.min(shotCnt, h.length));
+    p.energy -= picked.length;
+    const tgHits = picked.map(ti => ({ idx: ti, hitType: commitTileHit(ti) }));
+    const ev = {
+      t: 'ev',
+      evType: 'shot',
+      pi,
+      tgHits,
+      playersSync: serializePlayersState()
+    };
+    if(NET.hostRoom) NET.hostRoom.broadcast(ev);
+    applyActionEventVisual(ev, true);
+    hostCheckDead();
+    return;
+  }
+
+  if(actMsg.act === 'cannon'){
+    const useCore = !!SETTINGS.coreSystem;
+    if(useCore){
+      if((p.core || 0) < 3) return;
+      if(u === 4){
+        p.core -= 3;
+        p.energy += 9;
+        const ev = {
+          t: 'ev',
+          evType: 'cannon_charge',
+          pi,
+          actorLabel,
+          playersSync: serializePlayersState()
+        };
+        if(NET.hostRoom) NET.hostRoom.broadcast(ev);
+        applyActionEventVisual(ev, true);
+        return;
+      }
+    } else {
+      if(p.energy < 5) return;
+    }
+
+    const s = G.sz;
+    const unrev = [];
+    for(let i = 0; i < s * s; i++) if(!G.rev[i] && !(G.vine && G.vine[i])) unrev.push(i);
+    if(!unrev.length) return;
+
+    let tg = [];
+    let chosenAnchor = unrev[0 | Math.random() * unrev.length];
+    if(u === 3){
+      tg = sh(unrev).slice(0, Math.min(9, unrev.length));
+    } else if(u === 4){
+      const spiral = getSpiralOrder(s).filter(idx => !G.rev[idx] && !(G.vine && G.vine[idx]));
+      tg = spiral.slice(0, Math.min(9, spiral.length));
+      if(tg.length) chosenAnchor = tg[0];
+    } else {
+      const candidates = sh(unrev).slice(0, 12);
+      let bestTg = [];
+      for(const cand of candidates){
+        const pat = getAreaPatternForAnchor(pi, cand);
+        if(pat.length > bestTg.length){
+          bestTg = pat;
+          chosenAnchor = cand;
+          if(bestTg.length >= 9) break;
+        }
+      }
+      tg = bestTg.length ? bestTg : [chosenAnchor];
+    }
+
+    if(useCore) p.core -= 3;
+    else p.energy -= 5;
+
+    const tgHits = tg.map(x => ({ idx: x, hitType: commitTileHit(x) }));
+    const ev = {
+      t: 'ev',
+      evType: 'cannon_fire',
+      pi,
+      chosenAnchor,
+      tgHits,
+      playersSync: serializePlayersState()
+    };
+    if(NET.hostRoom) NET.hostRoom.broadcast(ev);
+    applyActionEventVisual(ev, true);
+    hostCheckDead();
+    return;
+  }
+
+  if(actMsg.act === 'spec'){
+    if(!SETTINGS.coreSystem || p.specUsed) return;
+    const s = G.sz;
+    const anchorIdx = parseInt(actMsg.anchorIdx, 10);
+    if(u === 4){
+      const minCore = getLeaderMinCore(s);
+      if((p.core || 0) < minCore) return;
+      const tg = getSpecTargets(pi, -1);
+      if(!tg.length) return;
+      const spent = p.core;
+      p.core = 0;
+      p.specUsed = true;
+      const tgHits = tg.map(x => ({ idx: x, hitType: commitTileHit(x) }));
+      const ev = {
+        t: 'ev',
+        evType: 'spec_spiral',
+        pi,
+        actorLabel,
+        spent,
+        tgHits,
+        playersSync: serializePlayersState()
+      };
+      if(NET.hostRoom) NET.hostRoom.broadcast(ev);
+      applyActionEventVisual(ev, true);
+      hostCheckDead();
+    } else {
+      if(!Number.isInteger(anchorIdx) || anchorIdx < 0 || anchorIdx >= s * s) return;
+      const tg = getSpecTargets(pi, anchorIdx);
+      if(!tg.length) return;
+      const cost = tilesToCoreCost(tg.length);
+      if((p.core || 0) < cost) return;
+      p.core -= cost;
+      p.specUsed = true;
+      const tgHits = tg.map(x => ({ idx: x, hitType: commitTileHit(x) }));
+      const ev = {
+        t: 'ev',
+        evType: 'spec_target',
+        pi,
+        actorLabel,
+        anchorIdx,
+        cost,
+        tgHits,
+        playersSync: serializePlayersState()
+      };
+      if(NET.hostRoom) NET.hostRoom.broadcast(ev);
+      applyActionEventVisual(ev, true);
+      hostCheckDead();
+    }
+    return;
+  }
+
+  if(actMsg.act === 'ans'){
+    const text = String(actMsg.text || '').trim().slice(0, 40);
+    if(!text) return;
+    const cost = getAnsCost(p);
+    if(p.energy < cost) return;
+    p.energy -= cost;
+    p.ansCost = cost;
+
+    const qObj = getCurrentQuestionObj();
+    const cor = qObj ? qObj.answer : '';
+    const correct = checkAnswer(text, cor);
+
+    let gainCore = 0;
+    let unrevealedLeft = 0;
+    let isFinal = false;
+    if(correct){
+      G.roundLocked = true;
+      clearInterval(G.tid);
+      unrevealedLeft = getBreakableLeft();
+      gainCore = ITMulti.calcStageClearCore(unrevealedLeft, G.players.length, SETTINGS.coreSystem);
+      if(gainCore > 0){
+        G.players.forEach(pl => { pl.core = (pl.core || 0) + gainCore; });
+      }
+      const endless = G.mode === 'endless';
+      const hyper = G.mode === 'hyper';
+      const custom = G.mode === 'custom';
+      const total = custom ? (G.customSchedule ? G.customSchedule.length : 1) : hyper ? HYPER_TOTAL : NORMAL_TOTAL;
+      isFinal = !endless && (G.qi >= total - 1);
+      if(endless) G.endlessScore = (G.endlessScore || 0) + 1;
+    }
+
+    const ev = {
+      t: 'ev',
+      evType: 'ans',
+      pi,
+      actorLabel,
+      text,
+      cor,
+      cost,
+      correct,
+      gainCore,
+      unrevealedLeft,
+      isFinal,
+      endlessScore: G.endlessScore || 0,
+      playersSync: serializePlayersState()
+    };
+    if(NET.hostRoom) NET.hostRoom.broadcast(ev);
+    applyActionEventVisual(ev, true);
+  }
+}
+
+function applyActionEventVisual(ev, isAlreadyCommittedOnHost=false){
+  if(!ev) return;
+  const pi = ev.pi;
+  const u = getUnitIdx(pi);
+
+  // ゲスト側は内部フラグ(G.rev/G.barrier)も確定させる
+  if(!isAlreadyCommittedOnHost && Array.isArray(ev.tgHits)){
+    ev.tgHits.forEach(item => {
+      if(item.hitType === 'barrier'){
+        if(G.barrier) G.barrier[item.idx] = false;
+      } else if(item.hitType === 'reveal'){
+        if(G.rev) G.rev[item.idx] = true;
+        if(G.barrier) G.barrier[item.idx] = false;
+      }
+    });
+  }
+  if(ev.playersSync) syncPlayersFromHost(ev.playersSync);
+
+  // 自分が指定型SPECIALのエイム中なら他人の攻撃でエイム解除せず、コスト表示だけ最新化する
+  const refreshMyAimIfActive = () => {
+    if(specPlayer >= 0 && specPlayer !== pi){
+      const centerIdx = Math.floor(G.sz / 2) * G.sz + Math.floor(G.sz / 2);
+      updateSpecCostOverlayForTarget(specPlayer, centerIdx);
+    }
+  };
+
+  if(ev.evType === 'shot'){
+    if(specPlayer === pi) cancelArea();
+    seShot(PC[u]);
+    const cc = getCarCenter(pi);
+    const repItem = ev.tgHits && ev.tgHits[0];
+    const tc = repItem ? getTileCenter(repItem.idx) : null;
+    if(cc && tc && laserAnims.length < 16){
+      laserFire(cc.x, cc.y, tc.x, tc.y, PC[u], () => {
+        ev.tgHits.forEach(it => applyTileHitVisual(it.idx, it.hitType));
+        refreshMyAimIfActive();
+      });
+    } else if(ev.tgHits){
+      ev.tgHits.forEach(it => applyTileHitVisual(it.idx, it.hitType));
+      refreshMyAimIfActive();
+    }
+    updateStripLight();
+    return;
+  }
+
+  if(ev.evType === 'cannon_charge'){
+    if(specPlayer === pi) cancelArea();
+    addLog(`${ev.actorLabel}: エナジーキャノン発動！ -💎3 ➔ +9pt エネルギー補充！`, 'ok');
+    seLevelUp();
+    updateStripLight();
+    return;
+  }
+
+  if(ev.evType === 'cannon_fire'){
+    if(specPlayer === pi) cancelArea();
+    seArea();
+    const cc = getCarCenter(pi);
+    if(u === 3 || u === 4){
+      fireSequentialTiles(pi, ev.tgHits, cc, 320);
+    } else {
+      const tc = getTileCenter(ev.chosenAnchor) || getBoardCenter();
+      if(cc && tc){
+        laserFire(cc.x, cc.y, tc.x, tc.y, PC[u], () => {
+          ev.tgHits.forEach(it => applyTileHitVisual(it.idx, it.hitType));
+          refreshMyAimIfActive();
+        });
+      } else {
+        ev.tgHits.forEach(it => applyTileHitVisual(it.idx, it.hitType));
+        refreshMyAimIfActive();
+      }
+    }
+    updateStripLight();
+    return;
+  }
+
+  if(ev.evType === 'spec_spiral'){
+    if(specPlayer === pi) cancelArea();
+    seSpec();
+    addLog(`${ev.actorLabel}: SPECIAL [SPIRAL] 発動！全💎${ev.spent}解放 ➔ 中央から渦巻き${ev.tgHits.length}マス連続攻撃！`, 'ok');
+    const cc = getCarCenter(pi), bc = getBoardCenter();
+    laserFire(cc.x, cc.y, bc.x, bc.y, PC[u], () => {
+      fireSequentialTiles(pi, ev.tgHits, bc, 720);
+      refreshMyAimIfActive();
+    });
+    updateStripLight();
+    return;
+  }
+
+  if(ev.evType === 'spec_target'){
+    if(specPlayer === pi) cancelArea();
+    seSpec();
+    const sp = SPEC_INFO[u];
+    addLog(`${ev.actorLabel}: SPECIAL [${sp.name}] 発動！ -💎${ev.cost} ➔ ${ev.tgHits.length}マス攻撃！`, 'ok');
+    const cc = getCarCenter(pi);
+    const s = G.sz;
+    const bwEl = document.getElementById('bwrap');
+    const br = bwEl ? bwEl.getBoundingClientRect() : { left: 0, top: 0, width: 400, height: 400 };
+    const ts = br.width / s;
+    const anchorIdx = ev.anchorIdx;
+    const applyAll = () => {
+      ev.tgHits.forEach(it => applyTileHitVisual(it.idx, it.hitType));
+      refreshMyAimIfActive();
+    };
+
+    if(u === 0){
+      const side = Math.max(1, Math.floor(s / 2));
+      const ar = 0 | anchorIdx / s, ac = anchorIdx % s, half = Math.floor((side - 1) / 2);
+      const r0 = Math.max(0, Math.min(s - side, ar - half));
+      const c0 = Math.max(0, Math.min(s - side, ac - half));
+      const box = { x: br.left + c0 * ts, y: br.top + r0 * ts, w: side * ts, h: side * ts };
+      laserAnims.push({ x1: cc.x, y1: cc.y, x2: box.x + box.w / 2, y2: box.y + box.h / 2, color: PC[u], start: performance.now(), dur: 520, type: 'spec_square', box, onDone: applyAll, done: false });
+    } else if(u === 1){
+      const w = Math.max(1, Math.round(s / 7));
+      const ar = 0 | anchorIdx / s, ac = anchorIdx % s, half = Math.floor((w - 1) / 2);
+      const r0 = Math.max(0, Math.min(s - w, ar - half));
+      const c0 = Math.max(0, Math.min(s - w, ac - half));
+      const cx = br.left + (c0 + w / 2) * ts, cy = br.top + (r0 + w / 2) * ts;
+      laserAnims.push({ x1: cc.x, y1: cc.y, x2: cx, y2: cy, color: PC[u], start: performance.now(), dur: 520, type: 'spec_cross', boardRect: { left: br.left, top: br.top, width: br.width, height: br.height, bandW: w * ts }, onDone: applyAll, done: false });
+    } else if(u === 2){
+      const w = Math.max(1, Math.round(s / 7));
+      const margin = Math.max(1, Math.floor(s / 3));
+      const ar = 0 | anchorIdx / s, ac = anchorIdx % s;
+      const cr = Math.max(margin, Math.min(s - 1 - margin, ar));
+      const ccol = Math.max(margin, Math.min(s - 1 - margin, ac));
+      const cx = br.left + (ccol + 0.5) * ts, cy = br.top + (cr + 0.5) * ts;
+      laserAnims.push({ x1: cc.x, y1: cc.y, x2: cx, y2: cy, color: PC[u], start: performance.now(), dur: 520, type: 'spec_xcross', bandW: w * ts * 0.8, onDone: applyAll, done: false });
+    } else if(u === 3){
+      const { side, r0, c0 } = getSniperBoxInfo(anchorIdx);
+      const box = { x: br.left + c0 * ts, y: br.top + r0 * ts, w: side * ts, h: side * ts };
+      laserAnims.push({ x1: cc.x, y1: cc.y, x2: box.x + box.w / 2, y2: box.y + box.h / 2, color: PC[u], start: performance.now(), dur: 520, type: 'spec_square', box, onDone: () => { fireSequentialTiles(pi, ev.tgHits, cc, 480); refreshMyAimIfActive(); }, done: false });
+    } else {
+      applyAll();
+    }
+    updateStripLight();
+    return;
+  }
+
+  if(ev.evType === 'ans'){
+    if(ev.correct){
+      G.roundLocked = true;
+      clearInterval(G.tid);
+      if(specPlayer >= 0 || areaPlayer >= 0) cancelArea();
+      hideSpecCostOverlay();
+    }
+    updateStripLight();
+    const cc = getCarCenter(pi);
+    const bc = getBoardCenter();
+    const beamType = ev.correct ? 'beam_correct' : 'beam_wrong';
+    auInit();
+    G.answering = true;
+    laserFire(cc.x, cc.y, bc.x, bc.y, PC[u], () => {
+      G.answering = false;
+      if(ev.correct){
+        seCorrect();
+        addLog(`${ev.actorLabel}: 正解！「${ev.cor}」 -${ev.cost}pt`, 'ok');
+        completeOnlineStageClearVisual(ev);
+      } else {
+        seWrong();
+        addLog(`${ev.actorLabel}: 不正解「${ev.text}」 -${ev.cost}pt`, 'err');
+        showWrongEffect(ev.text);
+        if(NET.role === 'host') hostCheckDead();
+      }
+    }, beamType);
+  }
+}
+
+function completeOnlineStageClearVisual(ev){
+  if(G.done) return;
+  G.done = true;
+  clearInterval(G.tid);
+  areaPlayer = -1; specPlayer = -1; hideSpecCostOverlay();
+
+  if(ev.gainCore > 0){
+    const numP = Math.max(1, G.players.length);
+    addLog(`残タイル ${ev.unrevealedLeft}枚 ➔ ${numP === 1 ? '+💎' + ev.gainCore : '全員に +💎' + ev.gainCore} (TILE CORE)！`, 'ok');
+  }
+
+  const _v = document.getElementById('hvid'); if(_v) _v.pause();
+  if(_ytBlurRaf){ cancelAnimationFrame(_ytBlurRaf); _ytBlurRaf = null; }
+  setTimeout(seStageClear, 180);
+
+  G.rev = G.rev.map(() => true);
+  if(G.vine) G.vine = G.vine.map(() => false);
+  if(G.barrier) G.barrier = G.barrier.map(() => false);
+  updateTilesLeft();
+
+  ['himg','hvid'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && el.style.display !== 'none') el.style.transition = 'filter .5s ease, width .5s ease, height .5s ease';
+  });
+  const _frm = document.getElementById('hframe');
+  if(_frm && _frm.style.display !== 'none') _frm.style.transition = 'width .5s ease, height .5s ease';
+  applyImgStyle();
+
+  const bd = document.getElementById('board');
+  if(bd) bd.querySelectorAll('.tile:not(.revealed)').forEach(t => { t.classList.remove('dy','ah','barrier','vine'); t.classList.add('revealed'); });
+
+  const clearedQ = getCurrentQuestionObj();
+  if(clearedQ){
+    applyCachedCreditToQuestion(clearedQ);
+    showBoardUnsplashCredit(clearedQ);
+  }
+
+  renderStrip();
+  fireP();
+
+  const endless = G.mode === 'endless';
+  const hyper = G.mode === 'hyper';
+  const custom = G.mode === 'custom';
+  const cm = document.getElementById('cmsg');
+  if(endless){
+    G.endlessScore = ev.endlessScore || ((G.endlessScore || 0) + 1);
+    cm.textContent = 'STAGE CLEAR! ×' + G.endlessScore;
+  } else {
+    cm.textContent = ev.isFinal ? 'MISSION COMPLETE!' : 'STAGE CLEAR!';
+  }
+  cm.style.display = 'block';
+
+  if(ev.isFinal){
+    clearTimeout(G._mcTimer1); clearTimeout(G._mcTimer2);
+    G._mcTimer1 = setTimeout(() => { cm.style.display = 'none'; }, 2000);
+    G._mcTimer2 = setTimeout(() => {
+      try { seMissionComplete(); } catch(e){}
+      showMC();
+    }, 2100);
+  } else {
+    setTimeout(() => { cm.style.display = 'none'; }, 1500);
+    addLog('クリア！' + (endless ? '次へ (計' + G.endlessScore + '問)…' : '次ステージへ…'), 'ok');
+
+    if(NET.role === 'host'){
+      G.qi++;
+      if(endless){
+        G.endlessStep = (G.endlessStep || 0) + 1;
+        clearTimeout(NET.nextQTimer);
+        NET.nextQTimer = setTimeout(() => { if(NET.active && NET.role === 'host') hostLoadQuestion(); }, 1800);
+      } else if(custom && G.customSchedule){
+        const curS = G.customSchedule[G.qi];
+        const prevS = G.customSchedule[G.qi - 1];
+        const lvChanged = curS && prevS && curS.stageIdx !== prevS.stageIdx;
+        const thIdx = curS ? Math.min(5, curS.stageIdx) : 0;
+        clearTimeout(NET.nextQTimer);
+        NET.nextQTimer = setTimeout(() => {
+          if(!NET.active || NET.role !== 'host') return;
+          if(curS && curS.world) G.world = curS.world;
+          if(lvChanged){
+            if(NET.hostRoom) NET.hostRoom.broadcast({ t: 'travel_anim', themeIdx: thIdx });
+            showTravelAnim(thIdx, () => { if(NET.active && NET.role === 'host') hostLoadQuestion(); });
+          } else {
+            hostLoadQuestion();
+          }
+        }, 1800);
+      } else {
+        const newLvTheme = hyper ? hyperLvTheme(G.qi) : normalLvTheme(G.qi);
+        const prevLvTheme = hyper ? hyperLvTheme(G.qi - 1) : normalLvTheme(G.qi - 1);
+        const lvChanged = newLvTheme !== prevLvTheme;
+        clearTimeout(NET.nextQTimer);
+        NET.nextQTimer = setTimeout(() => {
+          if(!NET.active || NET.role !== 'host') return;
+          if(lvChanged){
+            if(NET.hostRoom) NET.hostRoom.broadcast({ t: 'travel_anim', themeIdx: newLvTheme });
+            showTravelAnim(newLvTheme, () => { if(NET.active && NET.role === 'host') hostLoadQuestion(); });
+          } else {
+            hostLoadQuestion();
+          }
+        }, 1800);
+      }
+    }
+  }
+}
+
+function hostRematchFromResult(){
+  if(NET.role !== 'host' || !NET.hostRoom) return;
+  NET.hostRoom.members = NET.hostRoom.members.filter(m => m.isHost || m.connected);
+  NET.hostRoom.members.forEach(m => { if(!m.isHost) m.ready = true; });
+  NET.hostRoom.phase = 'lobby';
+  if(NET.hostRoom.members.length < 2){
+    toast('他のプレイヤーが退室したためロビーへ戻ります', true);
+    hostReturnToLobbyFromResult();
+    return;
+  }
+  hostStartOnlineMatch();
+}
+
+function hostReturnToLobbyFromResult(){
+  if(NET.role !== 'host' || !NET.hostRoom) return;
+  NET.hostRoom.returnToLobby();
+  returnClientViewToLobby(NET.hostRoom.getLobbyState());
+}
+
+function returnClientViewToLobby(st){
+  stopBGM();
+  clearInterval(G.tid);
+  clearTimeout(G._mcTimer1); clearTimeout(G._mcTimer2);
+  document.getElementById('gos').style.display = 'none';
+  document.getElementById('mcs').style.display = 'none';
+  document.getElementById('go-reveal').style.display = 'none';
+  document.getElementById('cmsg').style.display = 'none';
+  document.getElementById('pause-modal').classList.remove('active');
+  document.getElementById('bonus-modal').classList.remove('active');
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('intro').style.display = 'flex';
+  selectWorld(currentWorld);
+  showOnlineLobbyView('room');
+  renderOnlineRoomLobby(st);
+  document.getElementById('online-lobby').classList.add('active');
+}
+
+function renderResultScreenActions(containerId, isComplete){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  if(!NET.active){
+    el.innerHTML = isComplete
+      ? `<button class="sb c" onclick="restartCurrentMode()">↻ PLAY AGAIN</button><button class="sb c" style="border-color:#88aaff;color:#88aaff" onclick="retryGame()">⌂ TITLE</button>`
+      : `<button class="sb r" onclick="restartCurrentMode()">↻ RETRY MISSION</button><button class="sb c" style="border-color:#88aaff;color:#88aaff" onclick="retryGame()">⌂ TITLE</button>`;
+    return;
+  }
+  if(NET.role === 'host'){
+    // 切断済みメンバーがいればロビー復帰や再戦時にホストルーム側を整理
+    el.innerHTML = `
+      <button class="sb c" onclick="hostRematchFromResult()">↻ 同じ編成でもう一度</button>
+      <button class="sb c" style="border-color:#ffcc00;color:#ffe88a" onclick="hostReturnToLobbyFromResult()">🏠 ロビーへ戻る (編成変更)</button>
+      <button class="sb r" onclick="leaveOnlineRoomAndHome()">✕ 部屋を閉じる</button>
+    `;
+  } else {
+    el.innerHTML = `
+      <div style="font-size:11px;color:#b8c8ff;font-family:'Share Tech Mono',monospace;padding:8px 14px;border:1px solid #283468;border-radius:4px;background:#070a1e">⏳ ホストの次の選択（再戦 / ロビー復帰）を待っています…</div>
+      <button class="sb r" onclick="leaveOnlineRoomAndHome()">✕ 退室してタイトルへ</button>
+    `;
+  }
+}
+
+// ── VIEWPORT-HEIGHT RESPONSIVE LAYOUT & SMOOTH BOARD RESIZE ──
+function scaleBoxToViewport(el, padX=24, padY=24, maxScale=1.35){
+  if(!el) return 1;
+  const natW = el.offsetWidth;
+  const natH = el.offsetHeight;
+  if(!natW || !natH) return 1;
+  const availW = Math.max(180, window.innerWidth - padX);
+  const availH = Math.max(160, window.innerHeight - padY);
+  const raw = Math.min(availW / natW, availH / natH, maxScale);
+  const s = Math.max(0.32, Math.round(raw * 1000) / 1000);
+  if(Math.abs(s - 1) < 0.012){
+    el.style.transform = '';
+    return 1;
+  }
+  el.style.transform = `scale(${s})`;
+  return s;
+}
+
+function fitViewportLayout(){
+  const intro = document.getElementById('intro');
+  if(intro && intro.style.display !== 'none'){
+    scaleBoxToViewport(document.getElementById('iw'), 24, 24, 1.45);
+  }
+  const ol = document.getElementById('online-lobby');
+  if(ol && ol.classList.contains('active')){
+    const olBox = ol.querySelector('.ol-box');
+    if(olBox){
+      if(window.innerWidth <= 650){
+        olBox.style.transform = '';
+      } else {
+        scaleBoxToViewport(olBox, 28, 28, 1.35);
+      }
+    }
+  }
+  const st = document.getElementById('settings');
+  if(st && st.style.display !== 'none'){
+    scaleBoxToViewport(st.querySelector('.sp-box'), 24, 24, 1.3);
+  }
+  const cm = document.getElementById('custom-mode-panel');
+  if(cm && cm.style.display !== 'none'){
+    scaleBoxToViewport(cm.querySelector('.cm-box'), 28, 28, 1.25);
+  }
+  const bm = document.getElementById('bonus-modal');
+  if(bm && bm.classList.contains('active')){
+    scaleBoxToViewport(bm.querySelector('.bm-box'), 28, 28, 1.3);
+  }
+  const pm = document.getElementById('pause-modal');
+  if(pm && pm.classList.contains('active')){
+    scaleBoxToViewport(pm.querySelector('.pm-box'), 24, 24, 1.3);
+  }
+  const gos = document.getElementById('gos');
+  if(gos && gos.style.display !== 'none'){
+    scaleBoxToViewport(gos.querySelector('.gos-inner'), 28, 28, 1.35);
+  }
+  const mcs = document.getElementById('mcs');
+  if(mcs && mcs.style.display !== 'none'){
+    scaleBoxToViewport(mcs.querySelector('.mci'), 28, 28, 1.35);
+  }
+}
+
+let _vpFitRaf = 0;
+function scheduleViewportFit(){
+  if(_vpFitRaf) cancelAnimationFrame(_vpFitRaf);
+  _vpFitRaf = requestAnimationFrame(() => {
+    _vpFitRaf = 0;
+    resizeBoardToViewport();
+    fitViewportLayout();
+  });
+}
+
+function resizeBoardToViewport(){
+  const gm = document.getElementById('game');
+  if(!gm || gm.style.display === 'none' || !G.sz) return;
+  const bw = document.getElementById('bwrap');
+  const bd = document.getElementById('board');
+  if(!bw || !bd) return;
+  const px = computeBoardPx();
+  const actual = G.sz > 30 ? px : Math.max(G.sz, Math.floor(px / G.sz) * G.sz);
+  bw.style.width = actual + 'px';
+  bw.style.height = actual + 'px';
+  bd.style.width = actual + 'px';
+  bd.style.height = actual + 'px';
+  const bc = document.getElementById('blur-canvas');
+  if(bc && bc.style.display !== 'none'){
+    bc.width = actual;
+    bc.height = actual;
+  }
+  applyImgStyle();
+}
+
+function initViewportResizeSystem(){
+  if(typeof ResizeObserver === 'function'){
+    const ro = new ResizeObserver(() => scheduleViewportFit());
+    ['#iw', '.ol-box', '.sp-box', '.cm-box', '.bm-box', '.pm-box', '.gos-inner', '.mci', '#strip'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if(el) ro.observe(el);
+    });
+  }
+  if(window.visualViewport && window.visualViewport.addEventListener){
+    window.visualViewport.addEventListener('resize', scheduleViewportFit);
+  }
+  fitViewportLayout();
+}
+
+
 function saveSettingsToStorage(){
   try{
+    if(NET.active && NET.role==='guest') return; // ゲスト参加中はホスト設定でローカル設定を上書き保存しない
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
       settings: SETTINGS,
       world: currentWorld,
       playStyle: currentPlayStyle,
-      soloUnit: currentSoloUnit
+      soloUnit: currentSoloUnit,
+      selectedUnits: currentSelectedUnits,
+      bonusDefault50Migrated: true
     }));
   }catch(e){}
 }
@@ -1489,15 +4775,26 @@ function loadSettingsFromStorage(){
     const data=JSON.parse(raw);
     if(data&&data.settings){
       SETTINGS={...SETTINGS_DEFAULT, ...data.settings};
+      // 旧初期値(15)が残っていた場合は新初期値(50)へ1度だけ自動移行
+      if(!data.bonusDefault50Migrated && data.settings.bonusEnergy===15){
+        SETTINGS.bonusEnergy=50;
+      }
     }
     if(data&&data.world&&WORLD_CONFIGS[data.world]){
       currentWorld=data.world;
     }
-    if(data&&data.playStyle&&(data.playStyle==='team'||data.playStyle==='solo')){
-      currentPlayStyle=data.playStyle;
-    }
     if(data&&typeof data.soloUnit==='number'&&data.soloUnit>=0&&data.soloUnit<=4){
       currentSoloUnit=data.soloUnit;
+    }
+    if(data&&data.playStyle&&['team','solo','custom_units'].includes(data.playStyle)){
+      currentPlayStyle=data.playStyle;
+    }
+    if(data&&Array.isArray(data.selectedUnits)&&data.selectedUnits.length>=1){
+      currentSelectedUnits=ITMulti.sanitizeUnitsList(data.selectedUnits);
+    } else if(currentPlayStyle==='solo'){
+      currentSelectedUnits=[currentSoloUnit];
+    } else {
+      currentSelectedUnits=[0,1,2,3,4];
     }
   }catch(e){}
 }
@@ -1507,46 +4804,6 @@ let G={qi:0,order:[],players:[],tid:null,tsec:30,rev:[],barrier:[],vine:[],sz:0,
 function getUnitIdx(pi){
   const p=G.players&&G.players[pi];
   return (p&&p.unitIdx!==undefined)?p.unitIdx:pi;
-}
-function setPlayStyle(style){
-  currentPlayStyle=(style==='solo')?'solo':'team';
-  G.playStyle=currentPlayStyle;
-  saveSettingsToStorage();
-  syncPlayStyleUI();
-}
-function selectSoloUnit(uIdx){
-  currentSoloUnit=Math.max(0,Math.min(4,parseInt(uIdx)||0));
-  currentPlayStyle='solo';
-  G.soloUnit=currentSoloUnit;
-  G.playStyle='solo';
-  saveSettingsToStorage();
-  syncPlayStyleUI();
-}
-function syncPlayStyleUI(){
-  const btnTeam=document.getElementById('ps-team');
-  const btnSolo=document.getElementById('ps-solo');
-  const carsWrap=document.getElementById('intro-cars');
-  const infoEl=document.getElementById('solo-unit-info');
-  if(btnTeam) btnTeam.classList.toggle('active', currentPlayStyle==='team');
-  if(btnSolo) btnSolo.classList.toggle('active', currentPlayStyle==='solo');
-  if(carsWrap){
-    carsWrap.classList.toggle('solo-pick', currentPlayStyle==='solo');
-    for(let i=0;i<5;i++){
-      const el=document.getElementById('ic-unit-'+i);
-      if(el) el.classList.toggle('solo-selected', currentPlayStyle==='solo' && currentSoloUnit===i);
-    }
-  }
-  if(infoEl){
-    if(currentPlayStyle==='solo'){
-      const pnames=getPNAMES();
-      const uName=pnames[currentSoloUnit]||PNAMES[currentSoloUnit];
-      const sp=SPEC_INFO[currentSoloUnit];
-      const ar=AREA_INFO[currentSoloUnit];
-      infoEl.innerHTML=`👤 シングル出撃機体: <strong style="color:${PC[currentSoloUnit]}">${uName}</strong> — SPEC: [${sp.name}] ${sp.desc.split(' [')[0]} / ${ar.desc.split(' [')[0]}`;
-    } else {
-      infoEl.innerHTML=`👥 5機チーム編成（下のホバーカーをクリックすると1機シングルで出撃機体を選べます）`;
-    }
-  }
 }
 function getBreakableLeft(){
   if(!G.sz)return 0;
@@ -2425,16 +5682,20 @@ function startGame(mode='normal'){
   G.world=(mode==='custom'&&G.customSchedule&&G.customSchedule[0])?G.customSchedule[0].world:currentWorld;
   const initAccent=WORLD_CONFIGS[G.world||'cyber'].accentCol;
   document.documentElement.style.setProperty('--cyan',initAccent);
+  if(NET.active){
+    cleanupOnlineConnectionsOnly();
+  }
+  G.onlineCurrentQ=null;
+  G.paletteSeed=null;
+  G.roundLocked=false;
   G.playStyle=currentPlayStyle;
   G.soloUnit=currentSoloUnit;
   const allPNames=getPNAMES();
   const startCore=(!SETTINGS.coreSystem||G.mode==='endless')?0:(SETTINGS.initCore||0);
-  if(G.playStyle==='solo'){
-    const u=G.soloUnit||0;
-    G.players=[{name:allPNames[u],unitIdx:u,energy:0,core:startCore,specUsed:false}];
-  } else {
-    G.players=allPNames.map((n,idx)=>({name:n,unitIdx:idx,energy:0,core:startCore,specUsed:false}));
-  }
+  const unitsToDeploy = (G.playStyle==='solo')
+    ? [G.soloUnit||0]
+    : (G.playStyle==='team' ? [0,1,2,3,4] : ITMulti.sanitizeUnitsList(currentSelectedUnits));
+  G.players=unitsToDeploy.map(u=>({name:allPNames[u],playerName:'',unitIdx:u,energy:0,core:startCore,specUsed:false}));
   G.selPlayer=0;
   preloadQuestionPool(G.order.slice(0,15));
   const startTheme=mode==='hyper'?1:mode==='endless'?6:0;
@@ -2442,32 +5703,74 @@ function startGame(mode='normal'){
 }
 
 function setBonusRewardType(type){
-  G._bonusRewardType=(type==='core'&&SETTINGS.coreSystem)?'core':'energy';
-  renderLeaderBonusModalContent();
+  setAllOfflineBonusType((type==='core'&&SETTINGS.coreSystem)?'core':'energy');
 }
 
 function renderLeaderBonusModalContent(){
-  const amount=G._bonusAmount||15;
-  const coreAmt=Math.max(1, Math.ceil(amount/3));
-  const rType=(SETTINGS.coreSystem && G._bonusRewardType==='core')?'core':'energy';
+  const pool=G._bonusAmount||0;
+  const numP=Math.max(1, G.players.length);
+  const { en: enAmt, core: coreAmt } = ITMulti.calcBonusPerPlayer(pool, numP);
   const descEl=document.getElementById('bm-desc');
   const row=document.getElementById('bm-cars-row');
   const pnames=getPNAMES();
 
-  if(G.players.length===1){
+  // ① オンライン協力マルチ時：自分の担当機体の報酬を選択し、全員揃うのを待つ
+  if(NET.active){
+    const myPis=getMyControllablePis();
+    const choices=Object.assign({}, G._localPickedBonus||{}, G._onlineBonusChoices||{});
+    if(descEl){
+      descEl.innerHTML=`レベル突破ボーナス（総量${pool} ➔ ${numP}人分配）！<br>あなたの機体の報酬を <strong>⚡ +${enAmt}pt</strong> または <strong>💎 +${coreAmt}</strong> から選択してください`;
+    }
+    row.className='';
+    const myCardsHtml=myPis.map(pi=>{
+      const p=G.players[pi];
+      const u=getUnitIdx(pi);
+      const picked=choices[pi];
+      const titleLabel=myPis.length>1?`<div style="font-size:10px;color:${PC[u]};margin-bottom:6px;font-weight:700">担当機体: ${p.playerName?p.playerName+' / ':''}${pnames[u]||p.name}</div>`:'';
+      return `
+        ${titleLabel}
+        <div class="bm-solo-choices" style="margin-top:8px">
+          <button class="bm-solo-card ${picked==='energy'?'picked':''}" style="--bc:${PC[u]}" onclick="pickOnlineBonusForPi(${pi},'energy')">
+            <div style="font-size:11px;color:${PC[u]};font-weight:700">[1] ⚡ ENERGY CHARGE ${picked==='energy'?'✔':''}</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#fff">+${enAmt}pt</div>
+            <div style="font-size:11px;color:#b0b8e0">${p.energy}pt ➔ <strong style="color:var(--cyan)">${p.energy+enAmt}pt</strong></div>
+          </button>
+          <button class="bm-solo-card ${picked==='core'?'picked':''}" style="--bc:#ffcc00" onclick="pickOnlineBonusForPi(${pi},'core')" ${!SETTINGS.coreSystem?'disabled':''}>
+            <div style="font-size:11px;color:#ffe88a;font-weight:700">[2] 💎 TILE CORE ${picked==='core'?'✔':''}</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#ffe88a">+💎${coreAmt}</div>
+            <div style="font-size:11px;color:#b0b8e0">${SETTINGS.coreSystem?`💎${p.core||0} ➔ <strong style="color:#ffe88a">💎${(p.core||0)+coreAmt}</strong>`:'CORE SYSTEM OFF'}</div>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    const peerStatusHtml=`<div class="bm-peer-status">` + G.players.map((p,i)=>{
+      const u=getUnitIdx(i);
+      const done=!!(G._onlineBonusChoices&&G._onlineBonusChoices[i]) || !!(G._localPickedBonus&&G._localPickedBonus[i]);
+      const who=p.playerName||pnames[u]||p.name;
+      return `<span class="bm-peer-pill ${done?'done':''}" style="${done?'border-color:'+PC[u]+';color:'+PC[u]:''}">${who}: ${done?'✔ 選択完了':'⏳ 選択中…'}</span>`;
+    }).join('') + `</div>`;
+
+    row.innerHTML=myCardsHtml + peerStatusHtml;
+    scheduleViewportFit();
+    return;
+  }
+
+  // ② オフライン 1機編成時：ワンクリック即決定
+  if(numP===1){
     const p=G.players[0];
     const u=getUnitIdx(0);
     if(descEl){
       descEl.innerHTML=SETTINGS.coreSystem
-        ?`レベル突破ボーナス！ <strong>エネルギー +${amount}pt</strong> または <strong>タイルコア +💎${coreAmt}</strong> を選択してください（数字キー [1] / [2] でも選択可）`
-        :`レベル突破ボーナス！ <strong>エネルギー +${amount}pt</strong> を獲得します（数字キー [1] でも決定可）`;
+        ?`レベル突破ボーナス！ <strong>エネルギー +${enAmt}pt</strong> または <strong>タイルコア +💎${coreAmt}</strong> を選択してください（数字キー [1] / [2] でも選択可）`
+        :`レベル突破ボーナス！ <strong>エネルギー +${enAmt}pt</strong> を獲得します（数字キー [1] でも決定可）`;
     }
     row.className='bm-solo-choices';
     row.innerHTML=`
-      <button class="bm-solo-card" style="--bc:${PC[u]}" onclick="chooseLeaderBonus(0,${amount},'energy')">
+      <button class="bm-solo-card" style="--bc:${PC[u]}" onclick="chooseLeaderBonus(0,${enAmt},'energy')">
         <div style="font-size:11px;color:${PC[u]};font-weight:700">[1] ⚡ ENERGY CHARGE</div>
-        <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#fff">+${amount}pt</div>
-        <div style="font-size:11px;color:#b0b8e0">${p.energy}pt ➔ <strong style="color:var(--cyan)">${p.energy+amount}pt</strong></div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#fff">+${enAmt}pt</div>
+        <div style="font-size:11px;color:#b0b8e0">${p.energy}pt ➔ <strong style="color:var(--cyan)">${p.energy+enAmt}pt</strong></div>
       </button>
       <button class="bm-solo-card" style="--bc:#ffcc00" onclick="chooseLeaderBonus(0,${coreAmt},'core')" ${!SETTINGS.coreSystem?'disabled':''}>
         <div style="font-size:11px;color:#ffe88a;font-weight:700">[2] 💎 TILE CORE</div>
@@ -2475,47 +5778,69 @@ function renderLeaderBonusModalContent(){
         <div style="font-size:11px;color:#b0b8e0">${SETTINGS.coreSystem?`💎${p.core||0} ➔ <strong style="color:#ffe88a">💎${(p.core||0)+coreAmt}</strong>`:'CORE SYSTEM OFF'}</div>
       </button>
     `;
-  } else {
-    if(descEl){
-      descEl.innerHTML=`リーダー指名：報酬タイプ（<strong>+${amount}pt</strong> または <strong>+💎${coreAmt}</strong>）を選び、付与するホバーカーを選択してください（数字キー 1〜5 でも選択可）` +
-        (SETTINGS.coreSystem ? `
-        <div class="bm-type-switch">
-          <button class="bm-type-btn ${rType==='energy'?'active-en':''}" onclick="setBonusRewardType('energy')">⚡ エネルギー +${amount}pt</button>
-          <button class="bm-type-btn ${rType==='core'?'active-core':''}" onclick="setBonusRewardType('core')">💎 タイルコア +${coreAmt}</button>
-        </div>` : '');
-    }
-    row.className='bm-cars';
-    row.innerHTML=G.players.map((p,i)=>{
-      const u=getUnitIdx(i);
-      const valNow=rType==='core'?`💎${p.core||0}`:`${p.energy}pt`;
-      const plusTxt=rType==='core'?`➔ +💎${coreAmt}`:`➔ +${amount}pt`;
-      const rewardVal=rType==='core'?coreAmt:amount;
-      return `
-        <button class="bm-car-btn" style="--cc:${PC[u]}" onclick="chooseLeaderBonus(${i},${rewardVal},'${rType}')">
-          <div class="bm-car-name">${pnames[u]||p.name}</div>
-          <div class="bm-car-en">${valNow}</div>
-          <div class="bm-car-plus">${plusTxt}</div>
-        </button>
-      `;
-    }).join('');
+    scheduleViewportFit();
+    return;
   }
+
+  // ③ オフライン 2〜5機編成時：各機体ごとに EN (+enAmt) または コア (+coreAmt) を個別に選んで一括確定
+  if(!G._multiBonusPicks || G._multiBonusPicks.length!==numP){
+    G._multiBonusPicks=G.players.map(()=>'energy');
+  }
+  const allEn=G._multiBonusPicks.every(x=>x==='energy');
+  const allCore=SETTINGS.coreSystem && G._multiBonusPicks.every(x=>x==='core');
+
+  if(descEl){
+    descEl.innerHTML=`レベル突破ボーナス（総量${pool} ➔ ${numP}機分配）！<br>各機体ごとに <strong>⚡ +${enAmt}pt</strong> または <strong>💎 +${coreAmt}</strong> を選択してください（キー [1]〜[${numP}] で切替 / [Enter] で決定）` +
+      (SETTINGS.coreSystem ? `
+      <div class="bm-type-switch">
+        <button class="bm-type-btn ${allEn?'active-en':''}" onclick="setAllOfflineBonusType('energy')">全員 ⚡ +${enAmt}pt にする</button>
+        <button class="bm-type-btn ${allCore?'active-core':''}" onclick="setAllOfflineBonusType('core')">全員 💎 +${coreAmt} にする</button>
+      </div>` : '');
+  }
+  row.className='';
+  row.innerHTML=`<div class="bm-multi-grid">` + G.players.map((p,i)=>{
+    const u=getUnitIdx(i);
+    const pick=(SETTINGS.coreSystem && G._multiBonusPicks[i]==='core')?'core':'energy';
+    return `
+      <div class="bm-mcard" style="--cc:${PC[u]}">
+        <div class="bm-car-name">[${i+1}] ${pnames[u]||p.name}</div>
+        <div style="font-size:9.5px;color:#b8c0e4">${p.energy}pt / <span style="color:#ffe88a">💎${p.core||0}</span></div>
+        <div class="bm-mcard-opts">
+          <button class="bm-mopt ${pick==='energy'?'sel-en':''}" onclick="toggleOfflinePlayerBonusType(${i},'energy')">⚡ +${enAmt}pt</button>
+          <button class="bm-mopt ${pick==='core'?'sel-core':''}" onclick="toggleOfflinePlayerBonusType(${i},'core')" ${!SETTINGS.coreSystem?'disabled':''}>💎 +${coreAmt}</button>
+        </div>
+      </div>
+    `;
+  }).join('') + `</div>
+  <button class="bm-confirm-btn" onclick="commitOfflineMultiBonus()">▶ 決定して次へ [ENTER]</button>`;
+  scheduleViewportFit();
 }
 
 function promptLeaderBonus(amount, onChosen){
-  if(amount<=0){onChosen();return;}
+  if(amount<=0){if(onChosen)onChosen();return;}
   const modal=document.getElementById('bonus-modal');
   G._bonusCallback=onChosen;
   G._bonusAmount=amount;
   G._bonusRewardType='energy';
+  G._multiBonusPicks=G.players.map(()=>'energy');
   renderLeaderBonusModalContent();
   modal.classList.add('active');
+  scheduleViewportFit();
   seLevelUp();
 }
 
 function chooseLeaderBonus(pi, amount, rewardType){
   const modal=document.getElementById('bonus-modal');
   if(!modal.classList.contains('active'))return;
-  const rType=rewardType||G._bonusRewardType||'energy';
+  if(NET.active){
+    pickOnlineBonusForPi(pi, rewardType);
+    return;
+  }
+  if(G.players.length>1){
+    toggleOfflinePlayerBonusType(pi, rewardType);
+    return;
+  }
+  const rType=rewardType||'energy';
   if(rType==='core' && !SETTINGS.coreSystem)return;
   modal.classList.remove('active');
   const p=G.players[pi]||G.players[0];
@@ -2586,6 +5911,7 @@ function loadQ(){
     idxs.forEach(idx=>{G.vine[idx]=true;});
   }
   G.diff=pickDifficulty(step);
+  G.paletteSeed=(Math.random()*0xFFFFFFFF)>>>0;
 
   const numP=Math.max(1, G.players.length);
   const ansCostNow=getAnsCost();
@@ -2744,13 +6070,21 @@ function updateDiffDisplay(){
 }
 
 function computeBoardPx(){
-  const leftW=160,rightW=160,padH=16;
-  const hudH=document.querySelector('.hud').offsetHeight||42;
-  const sbarH=document.querySelector('.sbar').offsetHeight||18;
-  const stripH=document.getElementById('strip').offsetHeight||130;
-  const maxW=window.innerWidth-leftW-rightW-padH;
-  const maxH=window.innerHeight-hudH-sbarH-stripH-16;
-  return Math.min(maxW,maxH,620);
+  const lp=document.getElementById('lpanel');
+  const rp=document.getElementById('rpanel');
+  const leftW=(lp&&lp.offsetWidth)||160;
+  const rightW=(rp&&rp.offsetWidth)||160;
+  const padW=Math.max(12, Math.round(window.innerWidth*0.015));
+  const padH=Math.max(10, Math.round(window.innerHeight*0.018));
+  const hudEl=document.querySelector('.hud');
+  const sbarEl=document.querySelector('.sbar');
+  const stripEl=document.getElementById('strip');
+  const hudH=(hudEl&&hudEl.offsetHeight)||40;
+  const sbarH=(sbarEl&&sbarEl.offsetHeight)||18;
+  const stripH=(stripEl&&stripEl.offsetHeight)||110;
+  const maxW=window.innerWidth-leftW-rightW-padW;
+  const maxH=window.innerHeight-hudH-sbarH-stripH-padH;
+  return Math.max(120, Math.min(maxW, maxH));
 }
 
 // ── DIFFICULTY SYSTEM ──
@@ -2934,13 +6268,13 @@ function applyImgStyle(){
 }
 
 function buildBoard(sz,src){
-  shuffleTilePalette(); // テーマカラーでランダムタイルパレット生成
+  shuffleTilePalette(G.paletteSeed); // テーマカラーでランダムタイルパレット生成（オンライン時はシード同期）
   const px=computeBoardPx();
   const actual=sz>30 ? px : Math.max(sz, Math.floor(px/sz)*sz);
   const bw=document.getElementById('bwrap');
   bw.style.cssText=`width:${actual}px;height:${actual}px;overflow:hidden;position:relative;`;
   // メディアタイプ判定
-  const q_current=QS[G.order[G.qi]];
+  const q_current=getCurrentQuestionObj();
   const mediaType=q_current&&q_current.video?detectMediaType(q_current.video):'image';
   G.mediaType=mediaType;
   const im=document.getElementById('himg');
@@ -2996,7 +6330,9 @@ function buildBoard(sz,src){
       }
     };
     im.onerror=()=>{
-      // 万が一外部画像が読み込めなかった場合、同じヒントまたは別問題へ自動フォールバックして黒画面を防ぐ
+      // オンラインのゲスト側は勝手に別問題へ差し替えない（ホストからのq_fallback通知に従う）
+      if(NET.active && NET.role==='guest') return;
+      // 万が一外部画像が読み込めなかった場合、別問題へ自動フォールバックして黒画面を防ぐ
       const fallbackIdx = QS.findIndex((cand, idx)=>idx!==G.order[G.qi] && !G.order.includes(idx) && cand.img);
       if(fallbackIdx>=0 && !im.dataset.retried){
         im.dataset.retried='1';
@@ -3005,8 +6341,14 @@ function buildBoard(sz,src){
         const step=(G.mode==='endless')?(G.endlessStep||0):G.qi;
         const total=(G.mode==='hyper')?HYPER_TOTAL:NORMAL_TOTAL;
         const isFinal=(G.mode!=='endless')&&(step+1===total);
-        document.getElementById('hintv').textContent=(isFinal||(G.mode==='endless'&&step>=30))?'???':(nq.hint||'—');
+        const hintDisp=(isFinal||(G.mode==='endless'&&step>=30))?'???':(nq.hint||'—');
+        document.getElementById('hintv').textContent=hintDisp;
         im.src=nq.img;
+        if(NET.active && NET.role==='host' && NET.hostRoom){
+          const packed=packQuestionForSync(fallbackIdx);
+          G.onlineCurrentQ=packed;
+          NET.hostRoom.broadcast({ t:'q_fallback', qData:packed, hintDisp });
+        }
       }
     };
     delete im.dataset.retried;
@@ -3036,7 +6378,7 @@ function buildBoard(sz,src){
     const bg=tileColor(i);
     G.tileColors.push({bg});
     const t=document.createElement('div');
-    t.className='tile'+((G.barrier&&G.barrier[i])?' barrier':'')+((G.vine&&G.vine[i])?' vine':'');
+    t.className='tile'+((G.rev&&G.rev[i])?' revealed':(((G.barrier&&G.barrier[i])?' barrier':'')+((G.vine&&G.vine[i])?' vine':'')));
     t.dataset.i=i;
     t.style.background=bg;
     G.tileEls[i]=t;
@@ -3442,7 +6784,16 @@ function fireSequentialTiles(pi, tgHits, originPt, totalTargetMs=680){
 }
 
 function doRand(pi){
-  if(G.done)return;
+  if(G.done||G.roundLocked||!canControlPlayer(pi))return;
+  if(NET.active){
+    const p=G.players[pi];
+    if(!p||p.energy<1){if(p)addLog(`${p.name}: エネルギー不足(1pt)`,'err');return;}
+    if(getBreakableLeft()<=0){addLog('破壊できるタイルがありません','err');return;}
+    if(specPlayer===pi||areaPlayer===pi)cancelArea();
+    if(NET.role==='host') hostExecuteAction(pi, {act:'shot', pi});
+    else if(NET.guestClient) NET.guestClient.sendAct({act:'shot', pi});
+    return;
+  }
   if(specPlayer>=0||areaPlayer>=0)cancelArea();
   hideSpecCostOverlay();
   const p=G.players[pi];
@@ -3509,7 +6860,23 @@ function getAreaPatternForAnchor(pi, anchorIdx){
 }
 
 function toggleArea(pi){
-  if(G.done)return;
+  if(G.done||G.roundLocked||!canControlPlayer(pi))return;
+  if(NET.active){
+    const p=G.players[pi];
+    const u=getUnitIdx(pi);
+    if(!p)return;
+    if(SETTINGS.coreSystem){
+      if((p.core||0)<3){addLog(`${p.name}: タイルコア不足 (💎3必要 / 所持💎${p.core||0})`,'err');return;}
+      if(u!==4 && getBreakableLeft()<=0){addLog('破壊できるタイルがありません','err');return;}
+    } else {
+      if(p.energy<5){addLog(`${p.name}: エネルギー不足 (CANNONには5pt必要 / 所持${p.energy}pt)`,'err');return;}
+      if(getBreakableLeft()<=0){addLog('破壊できるタイルがありません','err');return;}
+    }
+    if(specPlayer===pi)cancelArea();
+    if(NET.role==='host') hostExecuteAction(pi, {act:'cannon', pi});
+    else if(NET.guestClient) NET.guestClient.sendAct({act:'cannon', pi});
+    return;
+  }
   if(specPlayer>=0)cancelArea();
   hideSpecCostOverlay();
   const p=G.players[pi];
@@ -3599,7 +6966,17 @@ function seSpec(){
 
 // スペシャルボタン押下時（指定型はモード切替、即発動型は即実行）
 function triggerSpec(pi){
-  if(G.done||!SETTINGS.coreSystem)return;
+  if(G.done||G.roundLocked||!SETTINGS.coreSystem||!canControlPlayer(pi))return;
+  if(NET.active && getUnitIdx(pi)===4){
+    const p=G.players[pi];
+    if(!p||p.specUsed){if(p)addLog(p.name+': この問題では既にスペシャルを使用済みです','err');return;}
+    const minCore=getLeaderMinCore(G.sz);
+    if((p.core||0)<minCore){addLog(`${p.name}: SPIRAL発動には💎${minCore}以上のコアが必要です(所持💎${p.core||0})`,'err');return;}
+    if(getBreakableLeft()<=0){addLog('破壊できるタイルがありません','err');return;}
+    if(NET.role==='host') hostExecuteAction(pi, {act:'spec', pi, anchorIdx:-1});
+    else if(NET.guestClient) NET.guestClient.sendAct({act:'spec', pi, anchorIdx:-1});
+    return;
+  }
   const p=G.players[pi];
   const u=getUnitIdx(pi);
   if(p.specUsed){addLog(p.name+': この問題では既にスペシャルを使用済みです','err');return;}
@@ -3646,7 +7023,17 @@ function triggerSpec(pi){
 function execTargetedSpec(pi, anchorIdx){
   const p=G.players[pi];
   const u=getUnitIdx(pi);
-  if(!p||p.specUsed){cancelArea();return;}
+  if(!p||p.specUsed||!canControlPlayer(pi)){cancelArea();return;}
+  if(NET.active){
+    const tg=getSpecTargets(pi, anchorIdx);
+    if(!tg.length){addLog('その位置には未破壊タイルがありません','err');return;}
+    const cost=tilesToCoreCost(tg.length);
+    if((p.core||0)<cost){addLog(`${p.name}: タイルコア不足 (この位置は💎${cost}必要 / 所持💎${p.core||0})`,'err');return;}
+    cancelArea();
+    if(NET.role==='host') hostExecuteAction(pi, {act:'spec', pi, anchorIdx});
+    else if(NET.guestClient) NET.guestClient.sendAct({act:'spec', pi, anchorIdx});
+    return;
+  }
   const tg=getSpecTargets(pi, anchorIdx);
   if(!tg.length){
     addLog('その位置には未破壊タイルがありません','err');
@@ -3710,7 +7097,22 @@ function execTargetedSpec(pi, anchorIdx){
 
 // Per-car answer (新ルール: ceil(1辺の長さ / プレイ人数) で固定)
 function submitAns(pi){
-  if(G.done)return;
+  if(G.done||G.roundLocked||!canControlPlayer(pi))return;
+  if(NET.active){
+    if(specPlayer===pi||areaPlayer===pi)cancelArea();
+    hideSpecCostOverlay();
+    const p=G.players[pi];
+    const cost=getAnsCost(p);
+    const inp=document.getElementById('ainp-'+pi);
+    const a=inp?inp.value.trim():'';
+    if(!a)return;
+    if(p.energy<cost){addLog(`${p.name}: エネルギー不足(${cost}pt必要)`,'err');return;}
+    inp.value='';
+    inp.focus();
+    if(NET.role==='host') hostExecuteAction(pi, {act:'ans', pi, text:a});
+    else if(NET.guestClient) NET.guestClient.sendAct({act:'ans', pi, text:a});
+    return;
+  }
   if(specPlayer>=0||areaPlayer>=0)cancelArea();
   hideSpecCostOverlay();
   const p=G.players[pi];
@@ -3790,28 +7192,30 @@ function updateStripLight(){
         }
       }
     }
+    const mine=canControlPlayer(i);
+    const locked=G.done||G.roundLocked||!mine;
     const inp=document.getElementById('ainp-'+i);
     const beam=document.querySelector('.cslot:nth-child('+(i+1)+') .car-beam');
     const btns=document.querySelectorAll('.cslot:nth-child('+(i+1)+') .ca');
     const shot=btns[0], area=btns[1], spec=btns[2];
-    if(inp){inp.disabled=G.done||p.energy<ac;}
+    if(inp){inp.disabled=locked||p.energy<ac;}
     if(beam){
       beam.textContent=`ANSWER ${ac}pt`;
-      beam.disabled=G.done||p.energy<ac;
+      beam.disabled=locked||p.energy<ac;
     }
     const effShot=Math.min(getShotCount(), Math.max(1, p.energy));
     if(shot){
       shot.textContent=effShot>1?`SHOT×${effShot}`:'SHOT';
       shot.title=effShot>1?`RANDOM SHOT ×${effShot} (-${effShot}pt) [S]`:'RANDOM SHOT -1pt [S]';
-      shot.disabled=G.done||p.energy<1||unrevLeft===0;
+      shot.disabled=locked||p.energy<1||unrevLeft===0;
     }
     if(area){
       if(useCore){
         area.textContent=AREA_INFO[u].name;
-        area.disabled=G.done||(p.core||0)<3||(u!==4&&unrevLeft===0);
+        area.disabled=locked||(p.core||0)<3||(u!==4&&unrevLeft===0);
       } else {
         area.textContent='CANNON 5pt';
-        area.disabled=G.done||p.energy<5||unrevLeft===0;
+        area.disabled=locked||p.energy<5||unrevLeft===0;
       }
     }
     if(spec){
@@ -3819,7 +7223,7 @@ function updateStripLight(){
       if(useCore){
         const req=getSpecReqInfo(i);
         spec.textContent=SPEC_INFO[u].name;
-        spec.disabled=G.done||!!p.specUsed||(!req.canUse&&specPlayer!==i);
+        spec.disabled=locked||!!p.specUsed||(!req.canUse&&specPlayer!==i);
       }
     }
   });
@@ -3828,27 +7232,39 @@ function updateStripLight(){
 function selectPlayer(i){
   if(G.done)return;
   if(i<0||i>=G.players.length)return;
+  if(!canControlPlayer(i))return;
   G.selPlayer=i;
   document.querySelectorAll('.cslot').forEach((s,idx)=>{
     s.classList.toggle('selected', idx===i);
     const h=s.querySelector('.shortcut-hint');
-    if(h)h.textContent=idx===i?getShortcutHintText():'';
+    if(h)h.textContent=(idx===i && canControlPlayer(idx))?getShortcutHintText():'';
   });
+}
+
+function cycleControllablePlayer(dir){
+  const pis=getMyControllablePis();
+  if(pis.length<=1)return;
+  const curPos=Math.max(0, pis.indexOf(G.selPlayer));
+  const nextPi=pis[(curPos+dir+pis.length)%pis.length];
+  selectPlayer(nextPi);
 }
 
 function renderStrip(){
   const strip=document.getElementById('strip');strip.innerHTML='';
   strip.classList.toggle('solo-strip', G.players.length===1);
+  strip.classList.toggle('compact-strip', G.players.length>=2 && G.players.length<=3);
   const _pnames=getPNAMES();
   const unrevLeft=getBreakableLeft();
   const useCore=!!SETTINGS.coreSystem;
-  if(G.selPlayer>=G.players.length) G.selPlayer=0;
+  if(G.selPlayer>=G.players.length || !canControlPlayer(G.selPlayer)) G.selPlayer=getMyDefaultPlayerIdx();
   G.players.forEach((p,i)=>{
     const u=getUnitIdx(i);
-    const sel=G.selPlayer===i;
+    const mine=canControlPlayer(i);
+    const locked=G.done||G.roundLocked||!mine;
+    const sel=mine && G.selPlayer===i;
     const ac=getAnsCost(p);
     const slot=document.createElement('div');
-    slot.className='cslot'+(sel?' selected':'');
+    slot.className='cslot'+(sel?' selected':'')+(!mine?' remote-ally':'');
     slot.style.setProperty('--cc',PC[u]);
     // ショートカットヒント
     const hint=document.createElement('div');hint.className='shortcut-hint';
@@ -3856,6 +7272,7 @@ function renderStrip(){
     slot.appendChild(hint);
     // クリックで選択
     slot.addEventListener('click',e=>{
+      if(!mine)return;
       if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;
       e.preventDefault();
       selectPlayer(i);
@@ -3863,8 +7280,8 @@ function renderStrip(){
     // answer row at TOP
     const ansRow=document.createElement('div');ansRow.className='car-ans-row';
     const inp=document.createElement('input');inp.className='car-ans';inp.type='text';
-    inp.id='ainp-'+i;inp.placeholder='回答…';inp.style.setProperty('--cc2',PC[u]);
-    inp.disabled=G.done||p.energy<ac;
+    inp.id='ainp-'+i;inp.placeholder=mine?'回答…':(p.playerName||'仲間')+'が操作中';inp.style.setProperty('--cc2',PC[u]);
+    inp.disabled=locked||p.energy<ac;
     inp.addEventListener('focus',()=>selectPlayer(i));
     inp.addEventListener('keydown',e=>{
       if(e.key==='Enter'){
@@ -3878,19 +7295,19 @@ function renderStrip(){
         e.preventDefault();
         e.stopPropagation();
         inp.blur();
-        selectPlayer((i+G.players.length-1)%G.players.length);
+        cycleControllablePlayer(-1);
       } else if(e.key==='ArrowRight'){
         e.preventDefault();
         e.stopPropagation();
         inp.blur();
-        selectPlayer((i+1)%G.players.length);
+        cycleControllablePlayer(1);
       }
     });
     const beamBtn=document.createElement('button');beamBtn.className='car-beam';
     beamBtn.style.setProperty('--cc2',PC[u]);
     beamBtn.textContent=`ANSWER ${ac}pt`;
     beamBtn.title=`ANSWER発射 (-${ac}pt 固定: ceil(1辺${G.sz}÷${G.players.length}人)) [A ➔ Enter]`;
-    beamBtn.disabled=G.done||p.energy<ac;
+    beamBtn.disabled=locked||p.energy<ac;
     beamBtn.onclick=()=>{selectPlayer(i);submitAns(i);};
     ansRow.appendChild(inp);ansRow.appendChild(beamBtn);
     slot.appendChild(ansRow);
@@ -3924,6 +7341,13 @@ function renderStrip(){
     const exh=document.createElement('div');exh.className='car-exh';exh.style.setProperty('--cc',PC[u]);exh.style.setProperty('--cb',CB[u]);
     const lbl=document.createElement('div');lbl.className='car-lbl';lbl.style.setProperty('--cc',PC[u]);lbl.textContent=_pnames[u]||p.name;
     vis.appendChild(body);vis.appendChild(exh);vis.appendChild(lbl);
+    if(NET.active && p.playerName){
+      const ptag=document.createElement('div');
+      const isDirectMe=(NET.role==='host' ? p.peerId==='host' : p.peerId===NET.myPeerId);
+      ptag.className='car-pilot-tag'+(isDirectMe?' is-you':'');
+      ptag.textContent=isDirectMe ? ('★ '+p.playerName+' (YOU)') : (mine ? ('⚡ '+p.playerName+' (引継)') : ('👤 '+p.playerName));
+      vis.appendChild(ptag);
+    }
     slot.appendChild(vis);
 
     // action buttons: SHOT | AREA | SPEC
@@ -3932,36 +7356,37 @@ function renderStrip(){
     const bR=document.createElement('button');bR.className='ca';bR.style.setProperty('--cc2',PC[u]);
     bR.textContent=effShot>1?`SHOT×${effShot}`:'SHOT';
     bR.title=effShot>1?`RANDOM SHOT ×${effShot} (-${effShot}pt) [S]`:'RANDOM SHOT -1pt [S]';
-    bR.disabled=G.done||p.energy<1||unrevLeft===0;
-    bR.onclick=()=>{selectPlayer(i);doRand(i);};
+    bR.disabled=locked||p.energy<1||unrevLeft===0;
+    bR.onclick=()=>{if(!mine)return;selectPlayer(i);doRand(i);};
     const bA=document.createElement('button');
     bA.className='ca';bA.style.setProperty('--cc2',PC[u]);
     if(useCore){
       bA.textContent=AREA_INFO[u].name;
       bA.title=`${AREA_INFO[u].desc} [C]`;
-      bA.disabled=G.done||(p.core||0)<3||(u!==4&&unrevLeft===0);
+      bA.disabled=locked||(p.core||0)<3||(u!==4&&unrevLeft===0);
     } else {
       bA.textContent='CANNON 5pt';
       bA.title='エリアキャノン：9マスを即破壊 (-5pt) [C]';
-      bA.disabled=G.done||p.energy<5||unrevLeft===0;
+      bA.disabled=locked||p.energy<5||unrevLeft===0;
     }
-    bA.onmouseenter=()=>previewAreaButtonHover(i);
+    bA.onmouseenter=()=>{if(mine)previewAreaButtonHover(i);};
     bA.onmouseleave=()=>endPreviewSpecButtonHover();
-    bA.onclick=()=>{selectPlayer(i);toggleArea(i);};
+    bA.onclick=()=>{if(!mine)return;selectPlayer(i);toggleArea(i);};
     const req=getSpecReqInfo(i);
     const bS=document.createElement('button');
     bS.className='ca spec'+(specPlayer===i?' arm':'');
     bS.textContent=SPEC_INFO[u].name;
     bS.title=`SPECIAL [${SPEC_INFO[u].name}]: ${SPEC_INFO[u].desc} (目安:💎${req.cost} / 各問1人1回まで) [↑ / Space]`;
-    bS.disabled=G.done||!!p.specUsed||(!req.canUse&&specPlayer!==i);
+    bS.disabled=locked||!!p.specUsed||(!req.canUse&&specPlayer!==i);
     if(!useCore) bS.style.display='none';
-    bS.onmouseenter=()=>previewSpecButtonHover(i);
+    bS.onmouseenter=()=>{if(mine)previewSpecButtonHover(i);};
     bS.onmouseleave=()=>endPreviewSpecButtonHover();
-    bS.onclick=()=>{selectPlayer(i);triggerSpec(i);};
+    bS.onclick=()=>{if(!mine)return;selectPlayer(i);triggerSpec(i);};
     acts.appendChild(bR);acts.appendChild(bA);acts.appendChild(bS);
     slot.appendChild(acts);
     strip.appendChild(slot);
   });
+  scheduleViewportFit();
 }
 
 function checkDead(){
@@ -4176,34 +7601,37 @@ function showMC(){
     const u = getUnitIdx(i);
     const col = PC[u];
     const d=document.createElement('div');d.className='mcc';d.style.cssText=`--cc:${col};--cb:${CB[u]}`;
+    const pilotLbl=p.playerName?`<div style="font-size:8.5px;color:#fff;margin-top:2px">${p.playerName}</div>`:'';
     d.innerHTML=`<div class="mcc-b" style="--cc:${col}"></div><div class="mcc-t" style="--cc:${col}"></div>` +
-      `<div class="mcc-n" style="--cc:${col}">${pnames[u]||PNAMES[u]}</div>` +
+      `<div class="mcc-n" style="--cc:${col}">${pnames[u]||PNAMES[u]}</div>` + pilotLbl +
       `<div style="font-family:'Orbitron',sans-serif;font-size:9px;color:#c0c0e8;margin-top:2px">${p.energy}pt / <span style="color:#ffe88a">💎${p.core||0}</span></div>`;
     row.appendChild(d);
   });
+  renderResultScreenActions('mc-actions', true);
   document.getElementById('mcs').style.display='flex';
+  scheduleViewportFit();
 }
 function showGO(m){
   stopBGM();setTimeout(seGameOver,100);
   const statLine = `\n[ 残エネルギー合計: ${totE()}pt  /  残タイルコア合計: 💎${totCore()} ]`;
   document.getElementById('gomsg').textContent = m + statLine;
   // Show correct answer
-  if(G.order&&G.order[G.qi]!=null){
-    const q=QS[G.order[G.qi]];
-    if(q){
-      applyCachedCreditToQuestion(q);
-      document.getElementById('go-ans-txt').textContent=q.answer;
-      document.getElementById('go-ans-img').src=q.img;
-      const goCred=document.getElementById('go-unsplash-credit');
-      if(goCred){
-        const credHtml=buildUnsplashAttributionHtml(q);
-        goCred.innerHTML=credHtml;
-        goCred.style.display=credHtml?'block':'none';
-      }
-      document.getElementById('go-reveal').style.display='flex';
+  const q=getCurrentQuestionObj();
+  if(q){
+    applyCachedCreditToQuestion(q);
+    document.getElementById('go-ans-txt').textContent=q.answer;
+    document.getElementById('go-ans-img').src=q.img||'';
+    const goCred=document.getElementById('go-unsplash-credit');
+    if(goCred){
+      const credHtml=buildUnsplashAttributionHtml(q);
+      goCred.innerHTML=credHtml;
+      goCred.style.display=credHtml?'block':'none';
     }
+    document.getElementById('go-reveal').style.display='flex';
   }
+  renderResultScreenActions('go-actions', false);
   document.getElementById('gos').style.display='flex';
+  scheduleViewportFit();
 }
 function retryGame(){
   document.getElementById('gos').style.display='none';document.getElementById('mcs').style.display='none';
@@ -4219,6 +7647,7 @@ function retryGame(){
   G.qi=0;G.mode='normal';G.endlessScore=0;G.endlessStep=0;G.players.forEach(p=>{p.energy=0;p.core=0;p.specUsed=false;p.ansCost=1;});
   document.getElementById('game').style.display='none';document.getElementById('intro').style.display='flex';
   selectWorld(currentWorld);
+  scheduleViewportFit();
 }
 
 function addLog(m,type){
@@ -4230,10 +7659,8 @@ function addLog(m,type){
 }
 window.addEventListener('resize',()=>{
   resizeFX();
-  if(G.sz>0&&!G.done){
-    const q=QS[G.order[G.qi]];
-    if(q)buildBoard(G.sz,q.video||q.img||'');
-  }
+  resizeBoardToViewport();
+  fitViewportLayout();
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -4814,12 +8241,15 @@ function showTravelAnim(lvIdx,onDone){
   carsEl.innerHTML='';
   const pc=['#00ffcc','#ff6b35','#7b5ea7','#ff4444','#ffcc00'];
   const pn=WORLD_CONFIGS[G.world||'cyber'].vehicleName||['PILOT','ENGNR','HACKER','SNIPER','LEADER'];
-  if(G.players&&G.players.length===1){
-    const u=getUnitIdx(0);
-    const col=pc[u];
-    const d=document.createElement('div');d.className='tg-car';d.style.cssText=`--cc:${col};--tb:0s`;
-    d.innerHTML=`<div class="tg-car-b" style="background:${col}"></div><div class="tg-car-ex" style="background:linear-gradient(90deg,transparent,${col})"></div><div class="tg-car-n" style="color:${col}">${pn[u]} (SOLO)</div>`;
-    carsEl.appendChild(d);
+  if(G.players&&G.players.length>=1){
+    G.players.forEach((pl,i)=>{
+      const u=getUnitIdx(i);
+      const col=pc[u];
+      const lbl=pl.playerName ? `${pn[u]} (${pl.playerName})` : (G.players.length===1 ? `${pn[u]} (SOLO)` : pn[u]);
+      const d=document.createElement('div');d.className='tg-car';d.style.cssText=`--cc:${col};--tb:${i*0.12}s`;
+      d.innerHTML=`<div class="tg-car-b" style="background:${col}"></div><div class="tg-car-ex" style="background:linear-gradient(90deg,transparent,${col})"></div><div class="tg-car-n" style="color:${col}">${lbl}</div>`;
+      carsEl.appendChild(d);
+    });
   } else {
     pc.forEach((col,i)=>{
       const d=document.createElement('div');d.className='tg-car';d.style.cssText=`--cc:${col};--tb:${i*0.12}s`;
@@ -5235,22 +8665,39 @@ document.addEventListener('keydown',e=>{
 
   const bm=document.getElementById('bonus-modal');
   if(bm&&bm.classList.contains('active')){
-    const amt=G._bonusAmount||15;
-    const coreAmt=Math.max(1, Math.ceil(amt/3));
-    if(G.players.length===1){
-      if(e.key==='1'){e.preventDefault();chooseLeaderBonus(0, amt, 'energy');return;}
-      if(e.key==='2'&&SETTINGS.coreSystem){e.preventDefault();chooseLeaderBonus(0, coreAmt, 'core');return;}
-    } else if(e.key>='1'&&e.key<=String(G.players.length)){
-      e.preventDefault();
-      const rType=G._bonusRewardType||'energy';
-      chooseLeaderBonus(parseInt(e.key)-1, rType==='core'?coreAmt:amt, rType);
+    const { en: enAmt, core: coreAmt } = ITMulti.calcBonusPerPlayer(G._bonusAmount||0, G.players.length);
+    if(NET.active){
+      const myPis=getMyControllablePis();
+      const unpickedPi=myPis.find(idx=>!(G._onlineBonusChoices&&G._onlineBonusChoices[idx])&&!(G._localPickedBonus&&G._localPickedBonus[idx]));
+      const myPi=(unpickedPi!==undefined)?unpickedPi:getMyDefaultPlayerIdx();
+      if(e.key==='1'){e.preventDefault();pickOnlineBonusForPi(myPi,'energy');return;}
+      if(e.key==='2'&&SETTINGS.coreSystem){e.preventDefault();pickOnlineBonusForPi(myPi,'core');return;}
       return;
     }
+    if(G.players.length===1){
+      if(e.key==='1'){e.preventDefault();chooseLeaderBonus(0, enAmt, 'energy');return;}
+      if(e.key==='2'&&SETTINGS.coreSystem){e.preventDefault();chooseLeaderBonus(0, coreAmt, 'core');return;}
+    } else {
+      if(e.key>='1'&&e.key<=String(G.players.length)){
+        e.preventDefault();
+        toggleOfflinePlayerBonusType(parseInt(e.key)-1);
+        return;
+      }
+      if(e.key==='Enter'){
+        e.preventDefault();
+        commitOfflineMultiBonus();
+        return;
+      }
+    }
+    return;
   }
-  // 数字 1-5 でプレイヤー選択（入力中でも反応しないように）
+  // 数字 1-5 でプレイヤー選択（操作可能な機体のみ）
   if(!isInput&&e.key>='1'&&e.key<=String(G.players.length)){
-    e.preventDefault();
-    selectPlayer(parseInt(e.key)-1);
+    const targetPi=parseInt(e.key)-1;
+    if(canControlPlayer(targetPi)){
+      e.preventDefault();
+      selectPlayer(targetPi);
+    }
     return;
   }
 
@@ -5260,16 +8707,16 @@ document.addEventListener('keydown',e=>{
       document.activeElement.blur();
       return;
     }
-    // リザルト画面(クリア/ゲームオーバー)表示中にESCを押したらホームへ戻る
     if(document.getElementById('mcs').style.display==='flex' || document.getElementById('gos').style.display==='flex'){
-      retryGame();
+      if(!NET.active) retryGame();
       return;
     }
-    // クリア演出待機中(G.done)にESCを押した場合も即ポーズまたはホーム復帰できるようにする
     if(G.done){
-      clearTimeout(G._mcTimer1);clearTimeout(G._mcTimer2);
-      document.getElementById('cmsg').style.display='none';
-      retryGame();
+      if(!NET.active){
+        clearTimeout(G._mcTimer1);clearTimeout(G._mcTimer2);
+        document.getElementById('cmsg').style.display='none';
+        retryGame();
+      }
       return;
     }
     if(areaPlayer>=0||specPlayer>=0){
@@ -5280,18 +8727,18 @@ document.addEventListener('keydown',e=>{
     return;
   }
 
-  // ポーズ中・入力中はショートカット無効
-  if(G.paused||isInput)return;
+  // ポーズ中・入力中はショートカット無効（オンライン中はタイマー非停止のためポーズ中でも自機メニュー以外は操作可）
+  if((G.paused && !NET.active)||isInput)return;
 
-  // 左右キーでホバーカー切り替え（両手操作対応）
+  // 左右キーで操作可能なホバーカー切り替え
   if(e.key==='ArrowLeft'){
     e.preventDefault();
-    if(!G.done)selectPlayer((G.selPlayer+G.players.length-1)%G.players.length);
+    if(!G.done)cycleControllablePlayer(-1);
     return;
   }
   if(e.key==='ArrowRight'){
     e.preventDefault();
-    if(!G.done)selectPlayer((G.selPlayer+1)%G.players.length);
+    if(!G.done)cycleControllablePlayer(1);
     return;
   }
   // [S] ショット
@@ -5336,17 +8783,21 @@ document.addEventListener('keydown',e=>{
 function togglePause(){
   if(document.getElementById('game').style.display==='none')return;
   if(G.done)return;
-  // ボーナス選択モーダル表示中はポーズしない
   const bm=document.getElementById('bonus-modal');
   if(bm&&bm.classList.contains('active'))return;
   const pm=document.getElementById('pause-modal');
-  if(!G.paused){
-    G.paused=true;
+  const retryBtn=pm?pm.querySelector('.pm-btn.retry'):null;
+  const homeBtn=pm?pm.querySelector('.pm-btn.home'):null;
+  if(!pm.classList.contains('active')){
+    if(!NET.active) G.paused=true; // オンライン協力中はタイマーを止めない
     const step=(G.mode==='endless')?(G.endlessStep||0):G.qi;
     const modeLabel=G.mode==='hyper'?'HYPER MODE':G.mode==='endless'?'ENDLESS MODE':G.mode==='custom'?'CUSTOM MODE':'NORMAL MODE';
-    document.getElementById('pm-stage-info').textContent=`${modeLabel} — STAGE ${step+1} (${G.sz}×${G.sz})`;
+    document.getElementById('pm-stage-info').textContent=`${modeLabel} — STAGE ${step+1} (${G.sz}×${G.sz})${NET.active?' [ONLINE 進行中]':''}`;
+    if(retryBtn) retryBtn.style.display=NET.active?'none':'';
+    if(homeBtn) homeBtn.textContent=NET.active?'✕ LEAVE ROOM (退室してタイトルへ)':'⌂ HOME (タイトルへ戻る)';
     pm.classList.add('active');
-    if(AU.bgmGain&&AU.ctx)AU.bgmGain.gain.setTargetAtTime(0.08,AU.ctx.currentTime,0.15);
+    scheduleViewportFit();
+    if(!NET.active&&AU.bgmGain&&AU.ctx)AU.bgmGain.gain.setTargetAtTime(0.08,AU.ctx.currentTime,0.15);
   } else {
     G.paused=false;
     pm.classList.remove('active');
@@ -5357,6 +8808,9 @@ function togglePause(){
 function restartCurrentMode(){
   const pm=document.getElementById('pause-modal');
   if(pm)pm.classList.remove('active');
+  document.getElementById('gos').style.display='none';
+  document.getElementById('mcs').style.display='none';
+  document.getElementById('go-reveal').style.display='none';
   G.paused=false;
   clearInterval(G.tid);
   hideSpecCostOverlay();
@@ -5370,6 +8824,10 @@ function pauseToHome(){
   G.paused=false;
   clearInterval(G.tid);
   hideSpecCostOverlay();
+  if(NET.active){
+    leaveOnlineRoomAndHome();
+    return;
+  }
   stopBGM();
   retryGame();
 }
@@ -5377,10 +8835,13 @@ function pauseToHome(){
 function openSettings(){
   syncSettingsUI();
   document.getElementById('settings').style.display='flex';
+  scheduleViewportFit();
 }
 function closeSettings(){
   saveSettingsToStorage();
   document.getElementById('settings').style.display='none';
+  syncHostConfigToLobby();
+  scheduleViewportFit();
 }
 function toggleSettingSwitch(key){
   SETTINGS[key]=!SETTINGS[key];
@@ -5500,10 +8961,13 @@ function openCustomMode(){
   syncSettingsUI();
   renderCustomStageList();
   document.getElementById('custom-mode-panel').style.display='flex';
+  scheduleViewportFit();
 }
 function closeCustomMode(){
   saveCustomToStorage();
   document.getElementById('custom-mode-panel').style.display='none';
+  syncHostConfigToLobby();
+  scheduleViewportFit();
 }
 function renderCustomStageList(){
   const list=document.getElementById('cm-stage-list');
@@ -5548,6 +9012,7 @@ function renderCustomStageList(){
     enBtn.textContent=CUSTOM_CONFIG.scaleEnergy?'サイズ連動(推奨)':'設定値固定';
     enBtn.classList.toggle('on', !!CUSTOM_CONFIG.scaleEnergy);
   }
+  scheduleViewportFit();
 }
 function setCustomStageGimmick(idx, gmode){
   const st=CUSTOM_CONFIG.stages[idx];
@@ -5616,6 +9081,13 @@ function applyCustomPreset(type){
 }
 function startCustomGame(){
   saveCustomToStorage();
+  if(NET.active && NET.role==='host' && NET.hostRoom && NET.hostRoom.phase==='lobby'){
+    G.lobbyMode='custom';
+    syncHostConfigToLobby();
+    document.getElementById('custom-mode-panel').style.display='none';
+    toast('CUSTOM構成をロビーに反映しました！');
+    return;
+  }
   startGame('custom');
 }
 
@@ -5623,6 +9095,7 @@ function startCustomGame(){
 window.addEventListener('DOMContentLoaded',()=>{
   selectWorld(currentWorld);
   syncSettingsUI();
+  initViewportResizeSystem();
 });
 
 </script>
@@ -5687,11 +9160,11 @@ window.addEventListener('DOMContentLoaded',()=>{
       <div class="sp-row">
         <div class="sp-label">
           <div class="sp-label-main">レベル突破ボーナス (0〜1000)</div>
-          <div class="sp-label-sub">レベル変わり目に【エネルギーpt】または【1/3相当の💎コア】を選択 (初期値15pt＝💎5)</div>
+          <div class="sp-label-sub">プレイ人数で分配し各機が【⚡EN】か【1/3相当の💎コア】を個別選択 (初期値50：5人時+10pt or 💎4)</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('bonusEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('bonusEnergy',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-bonus" min="0" max="1000" value="15" style="width:68px;color:#88aaff" onchange="setSettingDirect('bonusEnergy',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-bonus" min="0" max="1000" value="50" style="width:68px;color:#88aaff" onchange="setSettingDirect('bonusEnergy',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('bonusEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('bonusEnergy',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
@@ -5783,10 +9256,10 @@ window.addEventListener('DOMContentLoaded',()=>{
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:8.5px;color:#ff9e75;letter-spacing:0.5px">突破ボーナス (EN/💎)</span>
+          <span style="font-size:8.5px;color:#ff9e75;letter-spacing:0.5px">突破ボーナス (÷人数)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('bonusEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-bonus-en" min="0" max="1000" value="15" style="width:54px;color:var(--orange)" onchange="setSettingDirect('bonusEnergy',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-bonus-en" min="0" max="1000" value="50" style="width:54px;color:var(--orange)" onchange="setSettingDirect('bonusEnergy',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('bonusEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
