@@ -55,6 +55,13 @@ async function runTests() {
     assert.strictEqual(ITMulti.calcPoolPerPlayer(50, 3), 17);
     assert.strictEqual(ITMulti.calcPoolPerPlayer(50, 1), 50);
 
+    // 初期コア (initCore) 人数割り計算 (上限5000対応)
+    assert.strictEqual(ITMulti.calcPoolPerPlayer(20, 5), 4);
+    assert.strictEqual(ITMulti.calcPoolPerPlayer(20, 3), 7);
+    assert.strictEqual(ITMulti.calcPoolPerPlayer(20, 1), 20);
+    assert.strictEqual(ITMulti.calcPoolPerPlayer(5000, 5), 1000);
+    assert.strictEqual(ITMulti.calcPoolPerPlayer(5000, 3), 1667);
+
     assert.strictEqual(ITMulti.calcAnsCost(7, 1), 7);
     assert.strictEqual(ITMulti.calcAnsCost(7, 2), 4);
     assert.strictEqual(ITMulti.calcAnsCost(7, 3), 3);

@@ -489,6 +489,26 @@ async function main() {
     assert.deepStrictEqual(selUnits, [0, 2, 4], 'Should have 3 units [0, 2, 4] selected');
     assert.strictEqual(soloTab.eval('currentPlayStyle'), 'custom_units');
 
+    // Test setSettingDirect up to 5000 and test initCore = 15 split among 3 units
+    soloTab.eval(`
+      setSettingDirect('initCore', 5000);
+      setSettingDirect('initEnergy', 5000);
+      setSettingDirect('clearEnergy', 5000);
+      setSettingDirect('bonusEnergy', 5000);
+    `);
+    assert.strictEqual(soloTab.eval('SETTINGS.initCore'), 5000);
+    assert.strictEqual(soloTab.eval('SETTINGS.initEnergy'), 5000);
+    assert.strictEqual(soloTab.eval('SETTINGS.clearEnergy'), 5000);
+    assert.strictEqual(soloTab.eval('SETTINGS.bonusEnergy'), 5000);
+
+    // Reset settings for standard scenario (with initCore = 15)
+    soloTab.eval(`
+      setSettingDirect('initCore', 15);
+      setSettingDirect('initEnergy', 50);
+      setSettingDirect('clearEnergy', 25);
+      setSettingDirect('bonusEnergy', 50);
+    `);
+
     // Start Normal Game with 3 units
     soloTab.eval(`startGame('normal')`);
     await waitUntil(() => soloTab.eval('G.sz === 7 && G.tid !== null'), 2000, 'Offline Q1 loaded');
@@ -497,6 +517,8 @@ async function main() {
     assert.deepStrictEqual(soloTab.eval('G.players.map(p => p.unitIdx)'), [0, 2, 4]);
     // 50 / 3 = ceil(16.66) = 17pt per unit!
     assert.deepStrictEqual(soloTab.eval('G.players.map(p => p.energy)'), [17, 17, 17]);
+    // 15 initCore / 3 units = 5 cores per unit!
+    assert.deepStrictEqual(soloTab.eval('G.players.map(p => p.core)'), [5, 5, 5]);
     // Answer cost on 7x7 with 3 units = ceil(7/3) = 3pt!
     assert.strictEqual(soloTab.eval('getAnsCost()'), 3);
 

@@ -631,6 +631,8 @@ html,body{height:100%;height:100dvh;overflow:hidden}
 .bm-box{max-width:660px !important;flex-shrink:0;transform-origin:center center}
 .pm-box{flex-shrink:0;transform-origin:center center}
 .eprev,.eprevp{height:clamp(140px,34vh,330px);min-height:clamp(140px,34vh,330px)}
+input.cm-num-inp::-webkit-outer-spin-button,input.cm-num-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input.cm-num-inp{-moz-appearance:textfield}
 
 /* ── GAME SCREEN VIEWPORT-HEIGHT SCALING (#game) ── */
 #game{height:100%;height:100dvh;overflow:hidden}
@@ -2702,10 +2704,10 @@ const AREA_INFO=[
 ];
 // ── SETTINGS (新エネルギールール：スタート時50pt / クリア時25pt / 突破ボーナス50pt[÷人数 or 1/3コア選択]) ──
 const SETTINGS_DEFAULT={
-  initEnergy:50,     // ゲームスタート時（Q1開始時）の総エネルギー (1〜1000・プレイ人数で分配)
-  clearEnergy:25,    // 問題クリア時の補充総エネルギー (0〜1000・プレイ人数で分配)
-  bonusEnergy:50,    // レベル突破ボーナス総量 (0〜1000・プレイ人数で分配しENまたは1/3コアを個別選択)
-  initCore:0,        // ゲーム開始時の初期タイルコア (0〜1000)
+  initEnergy:50,     // ゲームスタート時（Q1開始時）の総エネルギー (1〜5000・プレイ人数で分配)
+  clearEnergy:25,    // 問題クリア時の補充総エネルギー (0〜5000・プレイ人数で分配)
+  bonusEnergy:50,    // レベル突破ボーナス総量 (0〜5000・プレイ人数で分配しENまたは1/3コアを個別選択)
+  initCore:0,        // ゲーム開始時の初期タイルコア (0〜5000・プレイ人数で分配)
   stageHazard:true,  // ステージ妨害ギミック ON/OFF (全モード適用)
   coreSystem:true,   // コアシステム ON/OFF (OFF時はCANNON=5pt・全モード適用)
 };
@@ -2858,16 +2860,18 @@ function syncPlayStyleUI(){
     const pnames = getPNAMES();
     const initPerP = ITMulti.calcPoolPerPlayer(SETTINGS.initEnergy, cnt);
     const clrPerP = ITMulti.calcPoolPerPlayer(SETTINGS.clearEnergy, cnt);
+    const initCorePerP = ITMulti.calcPoolPerPlayer(SETTINGS.initCore || 0, cnt);
     const coreMul = (5 / cnt).toFixed(cnt === 3 ? 2 : 1).replace(/\.0$/, '');
+    const coreHint = (SETTINGS.coreSystem && initCorePerP > 0) ? ` / 初期コア 各<strong>💎${initCorePerP}</strong>` : '';
     if(cnt === 1){
       const u = currentSelectedUnits[0];
       const sp = SPEC_INFO[u];
-      infoEl.innerHTML = `👤 1機シングル: <strong style="color:${PC[u]}">${pnames[u]}</strong> — 初期EN <strong>${initPerP}pt</strong> / クリア<strong>+${clrPerP}pt</strong> / コア<strong>${coreMul}倍</strong> (SPEC: ${sp.name})`;
+      infoEl.innerHTML = `👤 1機シングル: <strong style="color:${PC[u]}">${pnames[u]}</strong> — 初期EN <strong>${initPerP}pt</strong> / クリア<strong>+${clrPerP}pt</strong>${coreHint} / コア<strong>${coreMul}倍</strong> (SPEC: ${sp.name})`;
     } else if(cnt === 5){
-      infoEl.innerHTML = `👥 5機フル編成 — 初期EN 各<strong>${initPerP}pt</strong> / クリア各<strong>+${clrPerP}pt</strong>（機体クリックで1〜5機の自由編成も可能）`;
+      infoEl.innerHTML = `👥 5機フル編成 — 初期EN 各<strong>${initPerP}pt</strong> / クリア各<strong>+${clrPerP}pt</strong>${coreHint}（機体クリックで1〜5機の自由編成も可能）`;
     } else {
       const namesHtml = currentSelectedUnits.map(u => `<strong style="color:${PC[u]}">${pnames[u].split('.')[1] || pnames[u]}</strong>`).join('・');
-      infoEl.innerHTML = `🛸 自由編成 (${cnt}機: ${namesHtml}) — 初期EN 各<strong>${initPerP}pt</strong> / クリア各<strong>+${clrPerP}pt</strong> / コア<strong>${coreMul}倍</strong>`;
+      infoEl.innerHTML = `🛸 自由編成 (${cnt}機: ${namesHtml}) — 初期EN 各<strong>${initPerP}pt</strong> / クリア各<strong>+${clrPerP}pt</strong>${coreHint} / コア<strong>${coreMul}倍</strong>`;
     }
   }
   if(typeof scheduleViewportFit === 'function') scheduleViewportFit();
@@ -3352,8 +3356,10 @@ function renderOnlineRoomLobby(st){
   const initPerP = ITMulti.calcPoolPerPlayer(s.initEnergy, numP);
   const clrPerP = ITMulti.calcPoolPerPlayer(s.clearEnergy, numP);
   const bonusVals = ITMulti.calcBonusPerPlayer(s.bonusEnergy, numP);
+  const initCorePerP = ITMulti.calcPoolPerPlayer(s.initCore || 0, numP);
   if(ruleHint){
-    ruleHint.innerHTML = `${numP}人出撃時: 初期EN <strong>${initPerP}pt</strong> / クリア<strong>+${clrPerP}pt</strong> / 突破ボーナス <strong>+${bonusVals.en}pt or 💎${bonusVals.core}</strong>`;
+    const coreHint = (s.coreSystem && initCorePerP > 0) ? ` / 初期コア <strong>💎${initCorePerP}</strong>` : '';
+    ruleHint.innerHTML = `${numP}人出撃時: 初期EN <strong>${initPerP}pt</strong> / クリア<strong>+${clrPerP}pt</strong>${coreHint} / 突破ボーナス <strong>+${bonusVals.en}pt or 💎${bonusVals.core}</strong>`;
   }
 
   const unassBar = document.getElementById('ol-unassigned-bar');
@@ -3636,7 +3642,10 @@ function hostStartOnlineMatch(){
   document.documentElement.style.setProperty('--cyan', initAccent);
 
   const allPNames = getPNAMES();
-  const startCore = (!SETTINGS.coreSystem || G.mode === 'endless') ? 0 : (SETTINGS.initCore || 0);
+  const numP = NET.hostRoom.members.length;
+  const startCore = (!SETTINGS.coreSystem || G.mode === 'endless')
+    ? 0
+    : ITMulti.calcPoolPerPlayer(SETTINGS.initCore || 0, numP);
   G.players = NET.hostRoom.buildOrderedPlayers(allPNames, startCore);
   G.selPlayer = getMyDefaultPlayerIdx();
 
@@ -5691,10 +5700,11 @@ function startGame(mode='normal'){
   G.playStyle=currentPlayStyle;
   G.soloUnit=currentSoloUnit;
   const allPNames=getPNAMES();
-  const startCore=(!SETTINGS.coreSystem||G.mode==='endless')?0:(SETTINGS.initCore||0);
   const unitsToDeploy = (G.playStyle==='solo')
     ? [G.soloUnit||0]
     : (G.playStyle==='team' ? [0,1,2,3,4] : ITMulti.sanitizeUnitsList(currentSelectedUnits));
+  const numP = unitsToDeploy.length;
+  const startCore=(!SETTINGS.coreSystem||G.mode==='endless')?0:ITMulti.calcPoolPerPlayer(SETTINGS.initCore||0, numP);
   G.players=unitsToDeploy.map(u=>({name:allPNames[u],playerName:'',unitIdx:u,energy:0,core:startCore,specUsed:false}));
   G.selPlayer=0;
   preloadQuestionPool(G.order.slice(0,15));
@@ -8891,7 +8901,7 @@ function syncSettingsUI(){
 }
 function setSettingDirect(key,val){
   const mins={initEnergy:1,clearEnergy:0,bonusEnergy:0,initCore:0};
-  const maxs={initEnergy:1000,clearEnergy:1000,bonusEnergy:1000,initCore:1000};
+  const maxs={initEnergy:5000,clearEnergy:5000,bonusEnergy:5000,initCore:5000};
   const num=parseInt(val);
   SETTINGS[key]=Math.max(mins[key],Math.min(maxs[key],isNaN(num)?mins[key]:num));
   saveSettingsToStorage();
@@ -8899,7 +8909,7 @@ function setSettingDirect(key,val){
 }
 function adjSetting(key,delta){
   const mins={initEnergy:1,clearEnergy:0,bonusEnergy:0,initCore:0};
-  const maxs={initEnergy:1000,clearEnergy:1000,bonusEnergy:1000,initCore:1000};
+  const maxs={initEnergy:5000,clearEnergy:5000,bonusEnergy:5000,initCore:5000};
   SETTINGS[key]=Math.max(mins[key],Math.min(maxs[key],(SETTINGS[key]||0)+delta));
   saveSettingsToStorage();
   syncSettingsUI();
@@ -9135,36 +9145,36 @@ window.addEventListener('DOMContentLoaded',()=>{
     <div class="sp-body">
       <div class="sp-row">
         <div class="sp-label">
-          <div class="sp-label-main">スタート時エネルギー (1〜1000)</div>
+          <div class="sp-label-main">スタート時エネルギー (1〜5000)</div>
           <div class="sp-label-sub">ゲーム開始時(Q1)の総エネルギー（プレイ人数で分配 / 初期値50pt）</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('initEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('initEnergy',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-init" min="1" max="1000" value="50" style="width:68px;color:#88aaff" onchange="setSettingDirect('initEnergy',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-init" min="1" max="5000" value="50" style="width:72px;color:#88aaff" onchange="setSettingDirect('initEnergy',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('initEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('initEnergy',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
 
       <div class="sp-row">
         <div class="sp-label">
-          <div class="sp-label-main">問題クリア時エネルギー (0〜1000)</div>
+          <div class="sp-label-main">問題クリア時エネルギー (0〜5000)</div>
           <div class="sp-label-sub">各問クリア時の補充総エネルギー（プレイ人数で分配 / 初期値25pt）</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('clearEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('clearEnergy',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-clear" min="0" max="1000" value="25" style="width:68px;color:#88aaff" onchange="setSettingDirect('clearEnergy',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-clear" min="0" max="5000" value="25" style="width:72px;color:#88aaff" onchange="setSettingDirect('clearEnergy',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('clearEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('clearEnergy',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
 
       <div class="sp-row">
         <div class="sp-label">
-          <div class="sp-label-main">レベル突破ボーナス (0〜1000)</div>
+          <div class="sp-label-main">レベル突破ボーナス (0〜5000)</div>
           <div class="sp-label-sub">プレイ人数で分配し各機が【⚡EN】か【1/3相当の💎コア】を個別選択 (初期値50：5人時+10pt or 💎4)</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('bonusEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('bonusEnergy',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-bonus" min="0" max="1000" value="50" style="width:68px;color:#88aaff" onchange="setSettingDirect('bonusEnergy',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-bonus" min="0" max="5000" value="50" style="width:72px;color:#88aaff" onchange="setSettingDirect('bonusEnergy',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('bonusEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('bonusEnergy',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
@@ -9191,12 +9201,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 
       <div class="sp-row">
         <div class="sp-label">
-          <div class="sp-label-main">初期タイルコア 💎 (0〜1000)</div>
-          <div class="sp-label-sub">ゲーム開始時の所持コア数 (デフォルト0・テスト用にも調整可)</div>
+          <div class="sp-label-main">初期タイルコア 💎 (0〜5000)</div>
+          <div class="sp-label-sub">ゲーム開始時の総コア数（プレイ人数で分配 / デフォルト0）</div>
         </div>
         <div class="sp-control">
           <button class="sp-btn" onmousedown="spHoldStart('initCore',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('initCore',-1)" ontouchend="spHoldEnd()">−</button>
-          <input type="number" class="cm-num-inp" id="sv-core" min="0" max="1000" value="0" style="width:68px;color:#88aaff" onchange="setSettingDirect('initCore',this.value)">
+          <input type="number" class="cm-num-inp" id="sv-core" min="0" max="5000" value="0" style="width:72px;color:#88aaff" onchange="setSettingDirect('initCore',this.value)">
           <button class="sp-btn" onmousedown="spHoldStart('initCore',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()" ontouchstart="spHoldStart('initCore',1)" ontouchend="spHoldEnd()">+</button>
         </div>
       </div>
@@ -9235,7 +9245,7 @@ window.addEventListener('DOMContentLoaded',()=>{
           <span style="font-size:8.5px;color:#b0b0e0;letter-spacing:0.5px">スタート時EN (÷人数)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('initEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-init-en" min="1" max="1000" value="50" style="width:54px;color:var(--cyan)" onchange="setSettingDirect('initEnergy',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-init-en" min="1" max="5000" value="50" style="width:72px;color:var(--cyan)" onchange="setSettingDirect('initEnergy',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('initEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
@@ -9243,15 +9253,15 @@ window.addEventListener('DOMContentLoaded',()=>{
           <span style="font-size:8.5px;color:#88d8ff;letter-spacing:0.5px">クリア時EN (÷人数)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('clearEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-clear-en" min="0" max="1000" value="25" style="width:54px;color:#88d8ff" onchange="setSettingDirect('clearEnergy',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-clear-en" min="0" max="5000" value="25" style="width:72px;color:#88d8ff" onchange="setSettingDirect('clearEnergy',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('clearEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:8.5px;color:#ffe88a;letter-spacing:0.5px">初期コア 💎</span>
+          <span style="font-size:8.5px;color:#ffe88a;letter-spacing:0.5px">初期コア 💎 (÷人数)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('initCore',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-init-core" min="0" max="1000" value="0" style="width:54px;color:#ffcc00" onchange="setSettingDirect('initCore',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-init-core" min="0" max="5000" value="0" style="width:72px;color:#ffcc00" onchange="setSettingDirect('initCore',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('initCore',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
@@ -9259,7 +9269,7 @@ window.addEventListener('DOMContentLoaded',()=>{
           <span style="font-size:8.5px;color:#ff9e75;letter-spacing:0.5px">突破ボーナス (÷人数)</span>
           <div class="cm-field">
             <button class="cm-step-btn" onmousedown="spHoldStart('bonusEnergy',-1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">−</button>
-            <input type="number" class="cm-num-inp" id="cm-bonus-en" min="0" max="1000" value="50" style="width:54px;color:var(--orange)" onchange="setSettingDirect('bonusEnergy',this.value)">
+            <input type="number" class="cm-num-inp" id="cm-bonus-en" min="0" max="5000" value="50" style="width:72px;color:var(--orange)" onchange="setSettingDirect('bonusEnergy',this.value)">
             <button class="cm-step-btn" onmousedown="spHoldStart('bonusEnergy',1)" onmouseup="spHoldEnd()" onmouseleave="spHoldEnd()">+</button>
           </div>
         </div>
