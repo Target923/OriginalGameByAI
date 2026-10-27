@@ -28,7 +28,8 @@
   const SHAPES_BY_SIZE = { 1: ['A1'], 2: ['D2'], 3: ['I3', 'L3'], 4: ['I4', 'O4', 'L4', 'T4'], 5: ['I5', 'L5', 'V5', 'T5', 'Y5'] };
 
   // 状態の形が変わったら上げる（公開ページの更新時に、古い対戦を新しいルールで再開しないため）
-  const VERSION = 19;
+  // 20：v12.16 スピードペナルティ自滅点化＆アンサー失敗で手番即終了
+  const VERSION = 20;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -183,7 +184,7 @@
     this.treasurePts = opts.treasurePts | 0;
     this.treasureSteal = !!opts.treasureSteal;   // 大会：トレジャー＝相手の宝石（見つけたら奪う）
     this.victoryPts = opts.victoryPts | 0;       // 大会：この試合の勝利点（表示用）
-    this.speedBonus = !!opts.speedBonus;         // 大会の予選：スピードボーナスあり（v12.14）
+    this.speedBonus = !!opts.speedBonus;         // 大会の予選：スピードペナルティあり（v12.14。v12.15まではスピードボーナス。項目の名前は互換のためそのまま）
     this.clock = 0;
     this.turn = 1;
     this.first = opts.first != null ? opts.first : (this.rng() < 0.5 ? 0 : 1);
@@ -535,8 +536,12 @@
     this._destroy(p, 'answerFail');
     this._log(pi, `${this.players[pi].name}：ペナルティで${pieceName(p)}を公開・撃破（${coordList(p.cells, this.N)}）`, null, 'penalty');
     this.pending = null;
-    this.sub = 'answer';
     const ended = this._checkEnd();
+    if (!ended) {
+      // アンサー失敗時はペナルティ後にその手番を即終了（v12.16）
+      // 連続アンサーによる捨て身の総当たりを防ぐため、以降のアンサーやトレジャーコールはスキップし直ちに相手の手番へ移る
+      this._advance();
+    }
     return { ok: true, ended };
   };
 
@@ -1006,11 +1011,12 @@
   // 勝者が負けた側から奪う勝利点：予選1試合目5・2試合目10・3試合目15・決勝20（v12.10。3試合目＝1・2試合目の合計で、最後まで逆転しやすい。宝石1つ＝1試合目の勝ち）
   const TOUR_VICTORY_BY = [5, 10, 15, 20];
   const TOUR_VICTORY = TOUR_VICTORY_BY[0];
-  // スピードボーナス（予選だけ）：早いターンで勝った側は、負けた側からさらに点を奪う。index＝決着したターン（1ターン＝両者の手番）。
-  // v12.15：1ターン目52・2ターン目42・33・25・18・12・7・8ターン目3、9ターン目から0（トレジャーチャンス4回を使い切る前に勝てばもらえる）。
-  // 速い勝ちへのご褒美で、大差でリードしているときに2マス1個だけ置いて即負けし、キューブを温存する動きも防ぐ（アンサー失敗で負けても同じ）。
-  // v12.14は 15・14・12・9・5（6ターン目から0）で、即負けの防止だけだった
-  const TOUR_SPEED = [0, 52, 42, 33, 25, 18, 12, 7, 3];
+  // スピードペナルティ（予選だけ。v12.15まではスピードボーナス）：早いターンで負けた側の持ち点を減らす。index＝決着したターン（1ターン＝両者の手番）。
+  // v12.16：1ターン目24・2ターン目21・18・15・12・9・6・8ターン目3、9ターン目から0（3点ずつ下がる）。アンサー失敗で負けても同じ。
+  // 減らした点は勝った側に渡さない（自滅点）。渡すと、わざと早く負けて特定の相手に点を与える動き（利敵行為）ができてしまうため。
+  // ねらいは、大差でリードしているときに2マス1個だけ置いて即負けし、キューブを温存する動きを防ぐこと。
+  // v12.15は 52・42・33・25・18・12・7・3 を、v12.14は 15・14・12・9・5 を、勝った側が負けた側から奪っていた
+  const TOUR_SPEED = [0, 24, 21, 18, 15, 12, 9, 6, 3];
   function speedFor(turn) { return TOUR_SPEED[turn | 0] || 0; }
   function victoryFor(kind, round) { return kind === 'final' ? TOUR_VICTORY_BY[3] : TOUR_VICTORY_BY[Math.max(0, Math.min(2, round | 0))]; }
   function victorySteal() { return TOUR_VICTORY; }
@@ -1110,9 +1116,9 @@
         const victory = win ? vp : lose ? -vp : 0;
         const gems = (s.treasureFound ? 1 : 0) - (o.treasureFound ? 1 : 0);
         const treasure = gems * TOUR_GEM_PTS;
-        // スピードボーナス（予選だけ）：決着したターンで決まる点を、負けた側から勝った側へ
+        // スピードペナルティ（予選だけ）：決着したターンで決まる点を、負けた側から減らすだけ（勝った側は増えない。v12.16）
         const sp = game.speedBonus && !r.draw ? speedFor(game.turn) : 0;
-        const speed = win ? sp : lose ? -sp : 0;
+        const speed = lose ? -sp : 0;
         return { take: s.attack, taken: o.attack, victory, speed, gems, treasure, total: s.attack - o.attack + victory + speed + treasure, placed: s.placed.length };
       });
     },
@@ -1128,6 +1134,7 @@
         if (sum[k].treasureFound) p.gemsWon = (p.gemsWon | 0) + 1;
         if (sum[1 - k].treasureFound) p.gemsLost = (p.gemsLost | 0) + 1;
         if (d.victory > 0) p.pts.vicWon += d.victory; else p.pts.vicLost -= d.victory;
+        // spdWon は v12.15 までの「奪った」分（v12.16 からはいつも0。項目は持ち点の式とそろえて残す）
         if (d.speed > 0) p.pts.spdWon = (p.pts.spdWon | 0) + d.speed; else if (d.speed < 0) p.pts.spdLost = (p.pts.spdLost | 0) - d.speed;
         for (const size of s.lost) p.stock[size] = Math.max(0, (p.stock[size] || 0) - 1);
         p.inv = Object.assign({}, s.items);

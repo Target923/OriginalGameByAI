@@ -99,9 +99,10 @@ for (let k = 0; k < n; k++) {
     for (let id = 0; id < 4; id++) { plans[id] = AI.tourSetupPlan(T, id, 'prelim'); keeps[id] = AI.tourItemKeep(T, id, 'prelim'); }
     for (const [a, b] of T.rounds[r]) play(a, b, 'prelim', { setupPlan: [plans[a], plans[b]], itemKeep: [keeps[a], keeps[b]] });
   }
-  // 持ち点の合計は（50点＋宝石4つ×5点）×4人＝280のまま（奪い合いなので増えも減りもしない）
+  // 持ち点の合計：はじめの合計（100点×4人＝400点）から、スピードペナルティで失った分だけ減る（v12.16で相手に渡さない自滅点になったため）
   { const tsum = T.players.reduce((a, p) => a + Tour.total(p), 0), gsum = T.players.reduce((a, p) => a + p.gems, 0);
-    if (tsum !== 4 * (Tour.START + Tour.GEMS * Tour.GEM_PTS)) err('points not conserved', tsum);
+    const spdLostSum = T.players.reduce((a, p) => a + (p.pts.spdLost || 0), 0);
+    if (tsum !== 4 * (Tour.START + Tour.GEMS * Tour.GEM_PTS) - spdLostSum) err('points not conserved', tsum, spdLostSum);
     if (gsum !== 4 * Tour.GEMS) err('gems not conserved', gsum); }
   for (const p of T.players) if (Tour.total(p) < 0) st.negative = (st.negative || 0) + 1;
   const [f1, f2] = Tour.finalists(T);

@@ -75,14 +75,14 @@
     r.vic = (r.vic || DEFAULT_RULES.vic).slice(0, 4).map((x) => +x || 0);
     while (r.vic.length < 4) r.vic.push(r.vic[r.vic.length - 1] || 0);
     r.start = +r.start || 0; r.gems = Math.max(0, r.gems | 0); r.gemPts = +r.gemPts || 0;
-    // スピードボーナス（予選だけ）：index＝決着したターン（0は使わない）
+    // スピードペナルティ（予選だけ。負けた側の減点）：index＝決着したターン（0は使わない）
     const SPN = DEFAULT_RULES.speed.length;
     r.speed = [0].concat((r.speed || DEFAULT_RULES.speed).slice(1, SPN).map((x) => Math.max(0, +x || 0)));
     while (r.speed.length < SPN) r.speed.push(0);
     return r;
   }
   const startTotal = (rules) => rules.start + rules.gems * rules.gemPts;
-  // スピードボーナスの表記（後ろの0は省く。例：52/42/33/25/18/12/7/3）
+  // スピードペナルティの表記（後ろの0は省く。例：24/21/18/15/12/9/6/3）
   const speedLabel = (rules) => { const a = (rules.speed || []).slice(1); while (a.length && !a[a.length - 1]) a.pop(); return a.length ? a.join('/') : 'なし'; };
   // 1試合の持ち点の増減（m の a・b の順）。宝石は持っていなければ奪えない
   function applyMatch(st, m, rules) {
@@ -92,7 +92,8 @@
     A.take += m.at[0]; B.take += m.at[1];
     if (m.w === m.a) { A.total += v; B.total -= v; A.wins++; B.losses++; }
     else if (m.w === m.b) { B.total += v; A.total -= v; B.wins++; A.losses++; }
-    if (m.k === 'P' && m.w >= 0) { const sp = rules.speed[m.t] || 0; if (sp) { const W = m.w === m.a ? A : B, L = m.w === m.a ? B : A; W.total += sp; L.total -= sp; } }
+    // スピードペナルティ（予選だけ。v12.16）：負けた側だけ減らす（勝った側には渡さない自滅点）
+    if (m.k === 'P' && m.w >= 0) { const sp = rules.speed[m.t] || 0; if (sp) { const L = m.w === m.a ? B : A; L.total -= sp; } }
     if (m.tf[0] && B.gems > 0) { B.gems--; A.gems++; A.total += rules.gemPts; B.total -= rules.gemPts; }
     if (m.tf[1] && A.gems > 0) { A.gems--; B.gems++; B.total += rules.gemPts; A.total -= rules.gemPts; }
   }

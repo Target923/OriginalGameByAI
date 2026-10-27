@@ -3,8 +3,9 @@
 新しいチャットで続きをするための資料。最初にこれを読み、ルールの細部が要るときだけ「確定ルール」「総括」の該当箇所を読む（全部は読まない）。
 
 ## いまの状態
-- ルール v12.15（スピードボーナスの点数）、エンジンのバージョン19（src/engine.js の `VERSION`）、通信の版1（src/net.js の `NET_VERSION`）。
+- ルール v12.16（スピードペナルティの自滅点化＆アンサー失敗で手番終了）、エンジンのバージョン20（src/engine.js の `VERSION`）、通信の版1（src/net.js の `NET_VERSION`）。
 - 直近の変更
+  - v12.16（2026-10-28）：スピードボーナスを「スピードペナルティ（自滅点化・24〜3点・勝者に渡さない）」に改定し利敵行為を防止。また、アンサー失敗時のペナルティとして「その手番を即終了（相手の手番へ移る）」を追加。残存キューブ数に余裕がある側の「当てずっぽう総当たりアンサー」を封じ、推理の緊張感を高めた。エンジンのバージョンを20に上げた。
   - オンライン対戦 v1（2026-10-25。ルールの変更なし）：タイトルのモードに「オンライン対戦」。部屋を作った人（ホスト）の端末が審判で、PeerJS の無料クラウドでつなぎ、データは WebRTC で端末どうし直接（サーバー代0円）。1vs1 の単発試合（4×4／5×5、アイテムの設定もホストのもの）と「もう一度」（ホストが始める）。ゲストには伏せたスナップショットだけを送る。しくみ・メッセージ・伏せるもの・テストは docs/online.md。新しいファイル src/net.js、test/net_sim.js、test/online_e2e.py。ui.js は、人の操作で盤面を変えるところをすべて操作の窓口 `act()` 経由にした（ふつうの試合の動きは同じ）。本物の回線での確認はユーザーに頼んだ（この環境から外の PeerJS に出られない）。
   - v12.15：スピードボーナスを速い勝ちへのご褒美に広げた。1ターン目52・42・33・25・18・12・7・8ターン目3、9ターン目から0（engine の TOUR_SPEED）。8ターン目まで＝予選のトレジャーチャンス4回を使い切る前。見本では予選の19.2%で出て、出たときの平均6.8点。予選の持ち点の最低が1点まで下がる（理論上はマイナスもありうる）。シミュレーターの入力欄は TOUR_SPEED の長さに合わせて出す（今は8つ）。
   - v12.14：スピードボーナス（予選だけ）。早いターンで負けた側は勝った側にさらに点を奪われる（1ターン目15・14・12・9・5、6ターン目から0。アンサー失敗で負けても同じ）。2マス1個で即負けしてキューブを温存する動きを防ぐ。engine の TOUR_SPEED・speedFor・matchPoints（speed）・pts.spdWon/spdLost、sim.js の rules.speed、結果の表の「スピード」列、シミュレーターの入力欄。
@@ -28,6 +29,14 @@
 1. add_repo（access: "push"）でリポジトリを追加し、/home/claude/originalgamebyai に clone する。開発はその中の searchbattle-dev/（build.js がある階層）で直接行う。
 2. `node build.js` → dist/searchbattle.html（artifact に publish する本文。head がないので、そのままでは開かない）、dist/search_battle.html（GitHub のランチャー用。そのまま開ける完全な HTML）、dist/test.html（テスト用。中身は search_battle.html と同じ。window.__sb・SBEngine・SBAI が使える）。
 3. Node と Python の Playwright（Chromium 入り）を使う。画面テストのスクリーンショットは環境変数 SB_SHOTS（なければ /tmp/sb_shots）。
+
+### ユーザーの PC（Windows・Antigravity CLI）で開発するとき（2026-10-28 から）
+- clone は不要。ユーザーの作業フォルダ `C:\Users\TG\OneDrive\Desktop\OriginalGameByAI`（リポジトリそのもの）の searchbattle-dev/ で直接作業する。シェルは PowerShell。
+- 入っているもの：Node v22、Git（core.autocrlf=true）、Python 3.12（Anaconda。`python` で呼ぶ。`python3` はない）、Playwright 1.64 と Chromium。
+- build.js は改行を LF で書き出すので、ビルドすると git が「LF will be replaced by CRLF」と警告し、dist が変更ありに見えることがある。中身が同じなら気にしなくてよい（git は中身の差なしと扱う）。
+- 既存の画面テスト（test/*.py）は Linux の前提（/tmp・python3）で書かれている。Windows で初めて回すときに直す。
+- この環境からは claude.ai の artifact（公開ページ・ルールブックの Docs）を更新できない。公開は GitHub への push まで（ルートの search_battle.html の上書きを忘れない）。claude.ai 側は、次に claude.ai で作業するときに追いつかせる。
+- 2026-10-28 に、Windows のシステム環境変数 Path から標準の場所（C:\WINDOWS\system32 など）が消えていて、CLI がコマンドを実行できなかった。ユーザーが直した。環境変数を変えたら、ターミナルのウィンドウごと開き直さないと反映されない（agy だけを起動し直しても、親のウィンドウの古い値を受け継ぐ）。
 
 ## ファイル
 - src/engine.js ルール（Game・Tour・リプレイ）／src/ai.js CPU／src/net.js オンライン対戦（伏せる・ホストとゲストの役・PeerJS）／src/ui.js 画面（シミュレーター・ロビーの画面も）／src/audio.js 音／src/sim.js シミュレーターの計算（画面とコマンドで共通）／src/template.html HTML と CSS／src/sim-sample.json シミュレーターの見本
@@ -56,7 +65,10 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 ## ユーザーとの決まりごと
 - 返事は日本語。
 - 公開の手順：ビルド → dist/searchbattle.html を artifact に publish → dist/search_battle.html をリポジトリのルートの search_battle.html に上書き → searchbattle-dev/ の変更と一緒に1コミットで main に push。ルートだけ・フォルダだけの片方を更新しない（次のセッションは searchbattle-dev/ のソースから作り直すため）。
-- コミットメッセージ：英語で Conventional Commits の形にする（ユーザーの希望）。1行目は `type(searchbattle): summary`（type は feat・fix・docs・refactor・test・chore。作業途中を残すときだけ WIP）。本文に要点を英語で書く。署名行（Co-Authored-By など）は付けない（ユーザーの希望。コミットの author 名を git -c user.name="Claude" -c user.email="noreply@anthropic.com" で「Claude」にして見分ける）。ルール変更は summary に v 番号を入れる（例：`feat(searchbattle): v12.13 ...`）。
+- コミットメッセージ：英語で Conventional Commits の形にする（ユーザーの希望）。1行目は `type(searchbattle): summary`（type は feat・fix・docs・refactor・test・chore。作業途中を残すときだけ WIP）。本文に要点を英語で書く。署名行（Co-Authored-By など）は付けない（ユーザーの希望）。ルール変更は summary に v 番号を入れる（例：`feat(searchbattle): v12.13 ...`）。
+- コミットの作者の見分け方（2026-10-28 から）：
+  - ユーザーの PC（Windows・Antigravity CLI）から、ユーザーの GitHub アカウントでコミットするとき：author はユーザーの設定のまま（Target）にし、1行目の頭に `[Claude] ` を付ける（例：`[Claude] feat(searchbattle): ...`）。ほかの AI も同じ形（イマジンタイルの `[Gemini] ...`）。
+  - claude.ai（Claude Pro）から、渡された書き込み権限でコミットするとき：これまでどおり git -c user.name="Claude" -c user.email="noreply@anthropic.com" で author を「Claude」にする（頭の `[Claude]` は付けない）。
 - push したら、何を変えたかと公開ページに反映されることを一言伝える。ファイルの送付・zip は不要になった（ユーザーが求めたときだけ）。
 - セッションが約40万トークンを超えたら新しいチャットに移る（ユーザーの運用）。
 - ルールを変えたら、docs/rules.md（変更履歴に v 番号）・docs/summary.md・プロジェクトのドキュメント・ルールブック（Docs）を更新する。ルールの形が変わったら engine.js の VERSION を上げる（途中の対戦・大会は引き継がない）。
