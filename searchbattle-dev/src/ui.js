@@ -507,8 +507,9 @@
   function cubeMenuHTML() {
     const cats = [['キューブ', 'O4'], ['L字', 'L4'], ['T字', 'T4'], ['Z字', 'Z4']];
     return `<div class="cube-menu" role="group" aria-label="サーチキューブの対象">
+      <button type="button" class="cm-close" data-act="cancel" aria-label="閉じる" title="キャンセル">✕</button>
       <p>SEARCH CUBE ─ 形状</p>
-      <div class="cm-grid">${cats.map(([c, k]) => `<button type="button" class="cm-btn" data-act="cube" data-kind="cat" data-value="${esc(c)}">${shapeMini(k, 0)}<span>${esc(c)}</span></button>`).join('')}</div>
+      <div class="cm-grid shapes">${cats.map(([c, k]) => `<button type="button" class="cm-btn" data-act="cube" data-kind="cat" data-value="${esc(c)}">${shapeMini(k, 0)}<span>${esc(c)}</span></button>`).join('')}</div>
       <p>マス数</p>
       <div class="cm-grid sizes">${[1, 2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}マス${s === 1 ? '（バズーカの破片）' : ''}"${s === 1 ? ' title="1マスキューブ（バズーカで分解された破片）"' : ''}><b>${s}</b></button>`).join('')}</div>
     </div>`;
@@ -3000,7 +3001,16 @@ self.onmessage = function (e) {
     'show-result'() { app.ui.showResult = true; render(); },
     reveal() { app.ui.reveal = true; app.ui.showResult = false; render(); },
 
-    shape(el) { const S = app.setup; if (S.key !== el.dataset.key) S.t = 0; S.key = el.dataset.key; S.treasureMode = false; render(); },
+    shape(el) {
+      const S = app.setup;
+      if (S.key === el.dataset.key) {
+        S.key = null; S.t = 0;
+      } else {
+        S.t = 0; S.key = el.dataset.key;
+      }
+      S.treasureMode = false;
+      render();
+    },
     rotate() { const S = app.setup; if (S.key) { S.t = rotT(S.t); render(); } },
     flip() { const S = app.setup; if (S.key) { S.t = flipT(S.t); render(); } },
     'treasure-mode'() { const S = app.setup; S.treasureMode = !S.treasureMode; render(); },
@@ -3361,19 +3371,32 @@ self.onmessage = function (e) {
   //  1マスだけ（ふつうのクリック）は、これまでどおり選んだ形をそのマスに置く（setupCell）。
   //  なぞったマスがどの形にも当たらない・その大きさのキューブが残っていない・ほかと重なるときは置かない
   let setupSkipClick = false;
+  let setupPointerStart = null;
   function setupDragStart(ev, el) {
     const S = app.setup, g = G();
     if (!S || netSetupLocked() || S.treasureMode) return;
     if (ev.button != null && ev.button !== 0) return;
     const c = +el.dataset.cell;
     if (g.pieceAt(S.pi, c)) return;   // 置いたキューブの上からは始めない（タップで外す）
-    S.drag = { cells: [c] };
-    applyPreview();
+    // pointerdown 時点ではドラッグ開始と確定せず座標とセルを記録するだけ
+    // （クリック配置時にDOMが再描画されてclickイベントが消えるのを防止）
+    setupPointerStart = { x: ev.clientX, y: ev.clientY, cell: c };
   }
   function setupDragMove(ev) {
     const S = app.setup;
-    if (!S || !S.drag || app.screen !== 'setup') return;
+    if (!S || app.screen !== 'setup') return;
     if (ev.pointerType === 'mouse' && (ev.buttons & 1) === 0) { setupDragEnd(); return; }
+
+    // まだドラッグが始まっていない場合、移動距離を判定（8px以上でドラッグ開始）
+    if (!S.drag) {
+      if (!setupPointerStart) return;
+      const dx = ev.clientX - setupPointerStart.x;
+      const dy = ev.clientY - setupPointerStart.y;
+      if (dx * dx + dy * dy < 64) return;
+      S.drag = { cells: [setupPointerStart.cell] };
+      applyPreview();
+    }
+
     const t = document.elementFromPoint(ev.clientX, ev.clientY);
     const el = t && t.closest('.cell[data-board="own"]');
     if (!el) return;
@@ -3391,11 +3414,16 @@ self.onmessage = function (e) {
     render();
   }
   function setupDragEnd() {
+    setupPointerStart = null;
     const S = app.setup;
     if (!S || !S.drag) return;
     const cells = S.drag.cells;
     S.drag = null;
-    if (cells.length < 2) { render(); return; }   // 1マスはふつうのクリックに任せる
+    if (cells.length < 2) {
+      // 1マスだけの場合はクリック処理（setupCell）に任せる。render() は絶対に呼ばない（clickイベント消失防止）
+      applyPreview();
+      return;
+    }
     setupSkipClick = true;
     setTimeout(() => { setupSkipClick = false; }, 350);
     const g = G(), pi = S.pi;
@@ -3420,7 +3448,7 @@ self.onmessage = function (e) {
   });
   window.addEventListener('pointermove', setupDragMove, { passive: true });
   window.addEventListener('pointerup', setupDragEnd);
-  window.addEventListener('pointercancel', () => { if (app.setup && app.setup.drag) { app.setup.drag = null; render(); } });
+  window.addEventListener('pointercancel', () => { setupPointerStart = null; if (app.setup && app.setup.drag) { app.setup.drag = null; render(); } });
   window.addEventListener('pointermove', handleAnswerPointerMove, { passive: true });
   window.addEventListener('pointerup', handleAnswerPointerUp);
   window.addEventListener('pointercancel', handleAnswerPointerUp);

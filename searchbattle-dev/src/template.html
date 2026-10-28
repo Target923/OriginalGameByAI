@@ -296,8 +296,10 @@ h1, h2, h3 { text-wrap: balance; }
   border: 1px solid var(--cyan); border-radius: 4px; box-shadow: 0 0 26px rgba(79, 227, 255, .4), inset 0 0 18px rgba(79, 227, 255, .2); animation: menuIn .25s ease-out; }
 @keyframes menuIn { from { opacity: 0; transform: scale(.94); } }
 .cube-menu p { margin: 0; font: 600 .6rem/1.2 var(--f-tech); letter-spacing: .12em; color: var(--cyan); text-align: center; }
-.cm-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.cm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
 .cm-grid.sizes { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.cm-close { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; display: grid; place-items: center; padding: 0; background: rgba(14, 28, 48, .85); border: 1px solid rgba(79, 227, 255, .4); border-radius: 4px; color: var(--cyan); font: 700 .85rem/1 var(--f-tech); cursor: pointer; transition: all .15s; z-index: 8; }
+.cm-close:hover, .cm-close:focus-visible { background: rgba(79, 227, 255, .25); border-color: var(--cyan); color: #fff; box-shadow: 0 0 8px rgba(79, 227, 255, .6); outline: none; }
 .cm-btn { appearance: none; display: grid; place-items: center; gap: 3px; min-width: 0; padding: 6px 2px; cursor: pointer; color: var(--text); font: 700 clamp(.56rem, 1.6vw, .74rem)/1.1 var(--f-body);
   background: rgba(79, 227, 255, .08); border: 1px solid var(--edge-2); border-radius: 3px; }
 .cm-btn b { font: 700 clamp(.8rem, 2.4vw, 1.1rem)/1 var(--f-tech); color: var(--cyan); }
