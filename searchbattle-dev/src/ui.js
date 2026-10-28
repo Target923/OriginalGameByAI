@@ -197,7 +197,7 @@
   const nodeMark = (k) => `<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5.5 34.5 20 20 34.5 5.5 20z"/><text x="20" y="21.3" class="ordn">${k}</text></svg>`;
   const LOCK_SVG = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 6v16M50 78v16M6 50h16M78 50h16"/><path d="M22 22l8 8M78 22l-8 8M22 78l8-8M78 78l-8-8" opacity=".6"/></svg>';
   const RETICLE_SVG = '<svg viewBox="0 0 100 100"><path d="M14 34V14h20M66 14h20v20M86 66v20H66M34 86H14V66"/><circle cx="50" cy="50" r="5"/></svg>';
-  const TL = { H: 'H', N: 'N', X: '×' };
+  const TL = { H: 'H', N: 'N', X: 'X' };
   const SHAPE_ABBR = { 'キューブ': 'C', 'L字': 'L', 'T字': 'T', 'Z字': 'Z' };
 
   // ---------------- メモ（スクラッチ） ----------------
@@ -381,7 +381,7 @@
     if (!info) return markHTML(m);
     if (m && m.r === 'x' && (!m.callable || m.t > info.t)) return markHTML(m);
     if (info.nd) return m ? markHTML(m) : NODATA_HTML(info.stale);
-    if (m && m.r !== 'x') return markHTML(m) + `<span class="nbadge${info.stale ? ' stale' : ''}" aria-hidden="true">${info.v}</span>`;
+    if (m && m.r !== 'x') return markHTML(m) + `<span class="nbadge${info.stale ? ' stale' : ''}" aria-hidden="true">${nodeMark(info.v)}</span>`;
     return `<span class="mkw ink-n${info.stale ? ' stale' : ''}">${nodeMark(info.v)}</span>`;
   }
   function probeLabel(intel, c, m) {
@@ -758,7 +758,7 @@
         acts = cancel;
         break;
       case 'treasure':
-        main = `<p class="dock-msg">トレジャーコール（残り${g.treasureLeft(v)}回／全${g.rules.treasureMax}回）：相手フィールドのマスを1つ。H＝的中、N＝上下左右か同じ個体、×＝外れ。</p>`;
+        main = `<p class="dock-msg">トレジャーコール（残り${g.treasureLeft(v)}回／全${g.rules.treasureMax}回）：相手フィールドのマスを1つ。H＝的中、N＝上下左右か同じ個体、X＝外れ。</p>`;
         break;
       case 'sacrifice':
         main = `<p class="dock-msg warn">${esc(phaseText(mode))}</p>`;

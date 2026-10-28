@@ -280,8 +280,8 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pv-bad { background: color-mix(in srgb, var(--bad) 26%, transparent) !important; box-shadow: inset 0 0 0 2px var(--bad) !important; }
 
 /* 調査の記録（セル） */
-.ctag { --tc: var(--cyan); position: absolute; left: 5%; top: 5%; z-index: 3; font: 700 clamp(.46rem, 21cqw, .68rem)/1 var(--f-tech); color: var(--tc);
-  background: rgba(3, 5, 11, .78); border: 1px solid color-mix(in srgb, var(--tc) 55%, transparent); padding: 2px 3px; border-radius: 3px; white-space: nowrap; max-width: 90%; overflow: hidden; }
+.ctag { --tc: var(--cyan); position: absolute; left: 4%; top: 4%; z-index: 3; height: clamp(16px, 30cqw, 24px); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 clamp(3px, 6cqw, 5px); font: 700 clamp(.44rem, 19cqw, .66rem)/1 var(--f-tech); letter-spacing: -0.01em; color: var(--tc);
+  background: rgba(3, 5, 11, .82); border: 1px solid color-mix(in srgb, var(--tc) 55%, transparent); border-radius: 3px; white-space: nowrap; max-width: 90%; pointer-events: none; }
 .board[data-board="own"] .ctag { --tc: var(--magenta); }
 .ctag.stale { opacity: .45; }
 .pairs { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; overflow: visible; }
@@ -327,10 +327,13 @@ h1, h2, h3 { text-wrap: balance; }
 .ink-n { color: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan)); }
 .board[data-board="own"] .ink-n { color: var(--magenta); filter: drop-shadow(0 0 4px var(--magenta)); }
 .ink-n .mk path { stroke-width: 2.2; }
-.nbadge { --tc: var(--cyan); position: absolute; left: 5%; bottom: 5%; z-index: 3; min-width: 1.3em; padding: 0 .25em; text-align: center; font: 700 clamp(.46rem, 20cqw, .66rem)/1.35 var(--f-tech);
-  color: var(--tc); border: 1px solid color-mix(in srgb, var(--tc) 60%, transparent); border-radius: 3px; transform: rotate(0deg); background: rgba(4, 7, 15, .75); }
+.nbadge { --tc: var(--cyan); position: absolute; left: 4%; bottom: 4%; z-index: 3; width: clamp(16px, 30cqw, 24px); height: clamp(16px, 30cqw, 24px); aspect-ratio: 1; display: grid; place-items: center;
+  color: var(--tc); pointer-events: none; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--tc) 60%, transparent)); }
 .board[data-board="own"] .nbadge { --tc: var(--magenta); }
 .nbadge.stale { opacity: .45; }
+.nbadge .mk { width: 100%; height: 100%; overflow: visible; }
+.nbadge .mk path { fill: rgba(3, 5, 11, .85); stroke: var(--tc); stroke-width: 2.4; }
+.nbadge .mk .ordn { fill: var(--tc); stroke: none; font: 700 17px var(--f-tech); text-anchor: middle; dominant-baseline: central; }
 .nodata { color: var(--steel-2); }
 .nodata b { font: 700 clamp(.4rem, 17cqw, .66rem)/1 var(--f-tech); letter-spacing: .02em; white-space: nowrap; }
 .mkw.ink-n.stale, .mkw.nodata.stale { opacity: .45; }
@@ -347,10 +350,10 @@ h1, h2, h3 { text-wrap: balance; }
 .gem .facet { fill: none; stroke: rgba(120, 70, 0, .55); stroke-width: 1.2; }
 @keyframes gem { 50% { filter: drop-shadow(0 0 10px var(--amber)); transform: translateY(-1px); } }
 .num { position: absolute; left: 6%; bottom: 3%; z-index: 2; font: 700 clamp(.55rem, 24cqw, .8rem)/1 var(--f-mono); color: var(--magenta); text-shadow: 0 0 6px rgba(255, 63, 143, .8); }
-.tl { position: absolute; top: 3%; right: 4%; z-index: 2; padding: 1px 3px; border-radius: 3px; background: rgba(4, 8, 18, .55); font: 700 clamp(.66rem, 34cqw, 1.05rem)/1 var(--f-tech); }
-.tl-H { color: var(--amber); text-shadow: 0 0 6px var(--amber); }
-.tl-N { color: var(--cyan); text-shadow: 0 0 6px var(--cyan); }
-.tl-X { color: #C6CFDC; }
+.tl { position: absolute; top: 4%; right: 4%; z-index: 3; width: clamp(16px, 30cqw, 24px); height: clamp(16px, 30cqw, 24px); aspect-ratio: 1; display: grid; place-items: center; padding: 0; box-sizing: border-box; font: 700 clamp(.54rem, 23cqw, .82rem)/1 var(--f-tech); border-radius: 3px; background: rgba(3, 5, 11, .82); border: 1px solid rgba(255, 255, 255, .15); pointer-events: none; }
+.tl-H { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 60%, transparent); text-shadow: 0 0 6px var(--amber); }
+.tl-N { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 60%, transparent); text-shadow: 0 0 6px var(--cyan); }
+.tl-X { color: #C6CFDC; border-color: rgba(198, 207, 220, .35); }
 .tl.gray { opacity: .3; text-decoration: line-through; text-shadow: none; }
 .cell.last::after { content: ""; position: absolute; inset: 3px; z-index: 2; pointer-events: none;
   background:
