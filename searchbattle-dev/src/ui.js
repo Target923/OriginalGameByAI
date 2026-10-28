@@ -198,7 +198,7 @@
   const LOCK_SVG = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 6v16M50 78v16M6 50h16M78 50h16"/><path d="M22 22l8 8M78 22l-8 8M22 78l8-8M78 78l-8-8" opacity=".6"/></svg>';
   const RETICLE_SVG = '<svg viewBox="0 0 100 100"><path d="M14 34V14h20M66 14h20v20M86 66v20H66M34 86H14V66"/><circle cx="50" cy="50" r="5"/></svg>';
   const TL = { H: 'H', N: 'N', X: '×' };
-  const SHAPE_ABBR = { 'キューブ': 'C', 'L字': 'L', 'T字': 'T' };
+  const SHAPE_ABBR = { 'キューブ': 'C', 'L字': 'L', 'T字': 'T', 'Z字': 'Z' };
 
   // ---------------- メモ（スクラッチ） ----------------
   // 相手フィールドの空いているマスに付ける自分用のしるし。ゲームには影響しない
@@ -306,7 +306,8 @@
       // 調べた後にバズーカで分解された個体があると、その個体が数に入っていたかは分からない（分解された個体の形・マス数は伏せられる）ので、目安として薄く出す
       const split = (kb.splits || []).some((sp) => sp.t > q.t);
       let n = q.n;
-      for (const d of kb.deads) if (d.t > q.t && !d.frag && !d.isAdd && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
+      // 1マス（バズーカの破片）を調べたときは、破片の撃破で減らす
+      for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && !d.isAdd && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
       n = Math.max(0, n);
       const label = q.kind === 'size' ? q.value + 'マス' : q.value;
       tags.push({ key: 'cube', label, pre: '残り', n, unit: '体', turn: q.turn, stale: split,
@@ -494,6 +495,7 @@
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}">${TL[tl.r]}</span>`;
       inner += cellTagHTML(intel, c);
       if (!inSetup && fv.lastCall === c && opts.flash) cls += ' last';
+      if (opts.sel && opts.sel.indexOf(c) >= 0) cls += ' sel';
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const label = coord(c) + (p ? (p.alive ? ` ${p.size}マスのキューブ${p.stealth ? '（ステルス）' : ''}` : ' 撃破済み') : '') + probeLabel(intel, c, m);
       html += `<div class="${cls}" style="${style}" data-act="cell" data-board="${kind}" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${inner}</div>`;
@@ -503,12 +505,12 @@
 
   // サーチキューブの選択メニュー（相手フィールド上に出す）
   function cubeMenuHTML() {
-    const cats = [['キューブ', 'O4'], ['L字', 'L4'], ['T字', 'T4']];
+    const cats = [['キューブ', 'O4'], ['L字', 'L4'], ['T字', 'T4'], ['Z字', 'Z4']];
     return `<div class="cube-menu" role="group" aria-label="サーチキューブの対象">
       <p>SEARCH CUBE ─ 形状</p>
       <div class="cm-grid">${cats.map(([c, k]) => `<button type="button" class="cm-btn" data-act="cube" data-kind="cat" data-value="${esc(c)}">${shapeMini(k, 0)}<span>${esc(c)}</span></button>`).join('')}</div>
       <p>マス数</p>
-      <div class="cm-grid sizes">${[2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}マス"><b>${s}</b></button>`).join('')}</div>
+      <div class="cm-grid sizes">${[1, 2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}マス${s === 1 ? '（バズーカの破片）' : ''}"${s === 1 ? ' title="1マスキューブ（バズーカで分解された破片）"' : ''}><b>${s}</b></button>`).join('')}</div>
     </div>`;
   }
 
@@ -1007,7 +1009,7 @@
       ? '配置を送りました。相手の配置が終わると対戦が始まります。'
       : S.treasureMode
       ? 'トレジャーを置くキューブのマスをタップしてください。'
-      : (S.key ? 'フィールドをタップして配置。置いたキューブをタップすると外せます。R：回転 / F：反転' : 'キューブの一覧から形を選んでください。');
+      : (S.key ? 'フィールドをタップして配置。空きマスをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きマスをなぞって形を描くか、キューブの一覧から形を選んでください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
     const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.map((k) => {
       const n = P2 ? (P2.items[k] || 0) : null;
@@ -1024,9 +1026,9 @@
         <p class="phase">${esc(who)}のキューブを配置してください</p>
         <div class="setup3">
           <section class="panel su-items">${itemsHTML}</section>
-          <section class="panel su-board">
+          <section class="panel su-board${locked ? '' : ' su-draw'}">
             <div class="fhead"><b>${oneSide() ? '自分フィールド' : esc(who) + 'のフィールド'}</b><small>${P.pieces.length} UNITS / ${totalCells} CELLS</small></div>
-            ${ownBoard(pi, { cls: 'large' })}
+            ${ownBoard(pi, { cls: 'large', sel: S.drag ? S.drag.cells : null })}
             <p class="hint">${esc(hint)}</p>
             <div class="su-ctrl">
               <div class="su-ctrl-main">
@@ -1250,7 +1252,7 @@
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは、全マスに当たっても撃破されず、アンサーでしか撃破できません（どのキューブかは相手に伝わりません）。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは、全マスに当たっても撃破されず、アンサーでしか撃破できません（どのキューブかは相手に伝わりません）。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -2845,7 +2847,7 @@ self.onmessage = function (e) {
       return g.validateItem(v, args[1], args[2]);
     }
     if (name === 'answer' && !E.identifyShape(Array.from(new Set(args[1])).sort((a, b) => a - b), g.N)) {
-      return { ok: false, reason: 'キューブ・L字・T字のいずれかの形で宣言してください' };
+      return { ok: false, reason: 'キューブ・L字・T字・Z字のいずれかの形で宣言してください' };
     }
     return { ok: true };
   }
@@ -3095,6 +3097,8 @@ self.onmessage = function (e) {
   function setupCell(c) {
     const g = G(), S = app.setup, pi = S.pi;
     if (netSetupLocked()) return;   // 配置を送ったあとは動かせない
+    // なぞり配置で2マス以上を選んで置いた直後のクリックは無視する（なぞった最後のマスで二重に動かないように）
+    if (setupSkipClick) { setupSkipClick = false; return; }
     const p = g.pieceAt(pi, c);
     if (S.treasureMode) {
       const r = act('setTreasure', pi, c);
@@ -3353,10 +3357,72 @@ self.onmessage = function (e) {
     answerDrag = null;
   }
 
+  // 配置画面：空きマスをなぞって形を描くと、その形（向き・位置）を読み取って置く。
+  //  1マスだけ（ふつうのクリック）は、これまでどおり選んだ形をそのマスに置く（setupCell）。
+  //  なぞったマスがどの形にも当たらない・その大きさのキューブが残っていない・ほかと重なるときは置かない
+  let setupSkipClick = false;
+  function setupDragStart(ev, el) {
+    const S = app.setup, g = G();
+    if (!S || netSetupLocked() || S.treasureMode) return;
+    if (ev.button != null && ev.button !== 0) return;
+    const c = +el.dataset.cell;
+    if (g.pieceAt(S.pi, c)) return;   // 置いたキューブの上からは始めない（タップで外す）
+    S.drag = { cells: [c] };
+  }
+  function setupDragMove(ev) {
+    const S = app.setup;
+    if (!S || !S.drag || app.screen !== 'setup') return;
+    if (ev.pointerType === 'mouse' && (ev.buttons & 1) === 0) { setupDragEnd(); return; }
+    const t = document.elementFromPoint(ev.clientX, ev.clientY);
+    const el = t && t.closest('.cell[data-board="own"]');
+    if (!el) return;
+    const c = +el.dataset.cell, g = G();
+    const cells = S.drag.cells;
+    if (cells[cells.length - 1] === c) return;
+    // 1つ前のマスに戻ったら、最後のマスを取り消す（なぞり直し）
+    if (cells.length >= 2 && cells[cells.length - 2] === c) { cells.pop(); render(); return; }
+    if (cells.indexOf(c) >= 0 || g.pieceAt(S.pi, c)) return;
+    if (cells.length >= 5) { toast('5マスまでです'); return; }
+    cells.push(c);
+    SND.sfx('sel', 0, { n: cells.length, pan: -0.35 });
+    render();
+  }
+  function setupDragEnd() {
+    const S = app.setup;
+    if (!S || !S.drag) return;
+    const cells = S.drag.cells;
+    S.drag = null;
+    if (cells.length < 2) { render(); return; }   // 1マスはふつうのクリックに任せる
+    setupSkipClick = true;
+    setTimeout(() => { setupSkipClick = false; }, 350);
+    const g = G(), pi = S.pi;
+    const m = E.matchPlacement(cells, g.N);
+    if (!m) { toast('置けない形です（キューブ・L字・T字・Z字のどれかを描いてください）', 'warn'); render(); return; }
+    const size = SHAPES[m.key].size;
+    if (g.stockLeft(pi, size) <= 0) { toast(size + 'マスのキューブはもう残っていません（上限）', 'warn'); render(); return; }
+    const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);
+    if (!r.ok) { toast(r.reason, 'warn'); render(); return; }
+    // 描いた形を、パレットの選択にも反映する（続けてタップで同じ形を置けるように）
+    S.key = m.key; S.t = m.t; S.treasureMode = false;
+    if (g.stockLeft(pi, size) <= 0) {
+      const next = [2, 3, 4, 5].find((s) => g.stockLeft(pi, s) > 0);
+      S.key = next ? SHAPES_BY_SIZE[next][0] : null;
+      S.t = 0;
+    }
+    SND.sfx('place');
+    if (!g.players[pi].treasure) toast('◆トレジャーのセットも忘れずに', 'note');
+    render();
+  }
+
   root.addEventListener('pointerdown', (ev) => {
     const el = ev.target.closest && ev.target.closest('.cell[data-board="pred"]');
     if (el && effMode() === 'answer') handleAnswerPointerDown(ev, el);
+    const own = ev.target.closest && ev.target.closest('.cell[data-board="own"]');
+    if (own && app.screen === 'setup') setupDragStart(ev, own);
   });
+  window.addEventListener('pointermove', setupDragMove, { passive: true });
+  window.addEventListener('pointerup', setupDragEnd);
+  window.addEventListener('pointercancel', () => { if (app.setup && app.setup.drag) { app.setup.drag = null; render(); } });
   window.addEventListener('pointermove', handleAnswerPointerMove, { passive: true });
   window.addEventListener('pointerup', handleAnswerPointerUp);
   window.addEventListener('pointercancel', handleAnswerPointerUp);

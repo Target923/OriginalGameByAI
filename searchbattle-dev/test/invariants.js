@@ -77,7 +77,7 @@ function randomItem(G, pi, rng) {
   const hit = (c) => v.marks[c] && v.marks[c].r !== 'x' && !v.dead[c];
   let params = null;
   switch (k) {
-    case 'cube': params = rng() < 0.5 ? { kind: 'cat', value: E.CATS[Math.floor(rng() * 3)] } : { kind: 'size', value: 1 + Math.floor(rng() * 5) }; break;
+    case 'cube': params = rng() < 0.5 ? { kind: 'cat', value: E.CATS[Math.floor(rng() * E.CATS.length)] } : { kind: 'size', value: 1 + Math.floor(rng() * 5) }; break;
     case 'number': case 'line': params = { line: rng() < 0.5 ? 'row' : 'col', index: Math.floor(rng() * N), cell: pickCell((c) => !v.dead[c]) }; break;
     case 'shape': case 'node': params = { cell: pickCell((c) => !v.dead[c]) }; break;
     case 'bazooka': params = { cell: rng() < 0.6 ? (pickCell(hit) ?? pickCell((c) => !v.dead[c])) : pickCell((c) => !v.dead[c]) }; break;

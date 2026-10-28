@@ -7,7 +7,8 @@
 
   const COLS = 'ABCDE';
   const STOCK = { 2: 5, 3: 4, 4: 3, 5: 2 };
-  const CATS = ['キューブ', 'L字', 'T字'];
+  // Z字（v12.17）：段違いの形。4マス・5マスに入れて、2×2キューブやL字・T字に化けられるようにした（5マスが弱かったため）
+  const CATS = ['キューブ', 'L字', 'T字', 'Z字'];
 
   // base はインデックス順を保ったまま回転・反転する（トレジャー位置の追従に使う）
   const SHAPES = {
@@ -24,12 +25,17 @@
     V5: { size: 5, cat: 'L字', name: 'L字(3+3)', base: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]] },
     T5: { size: 5, cat: 'T字', name: 'T字(3+2)', base: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]] },
     Y5: { size: 5, cat: 'T字', name: 'T字(4+1)', base: [[0, 0], [0, 1], [0, 2], [0, 3], [1, 1]] },
+    // Z字（v12.17）。■■ / _■■ ・ ■■ / _■■■ ・ ■■ / _■ / _■■
+    Z4: { size: 4, cat: 'Z字', name: 'Z字', base: [[0, 0], [0, 1], [1, 1], [1, 2]] },
+    Z5: { size: 5, cat: 'Z字', name: 'Z字(2+3)', base: [[0, 0], [0, 1], [1, 1], [1, 2], [1, 3]] },
+    S5: { size: 5, cat: 'Z字', name: 'Z字(2+1+2)', base: [[0, 0], [0, 1], [1, 1], [2, 1], [2, 2]] },
   };
-  const SHAPES_BY_SIZE = { 1: ['A1'], 2: ['D2'], 3: ['I3', 'L3'], 4: ['I4', 'O4', 'L4', 'T4'], 5: ['I5', 'L5', 'V5', 'T5', 'Y5'] };
+  const SHAPES_BY_SIZE = { 1: ['A1'], 2: ['D2'], 3: ['I3', 'L3'], 4: ['I4', 'O4', 'L4', 'T4', 'Z4'], 5: ['I5', 'L5', 'V5', 'T5', 'Y5', 'Z5', 'S5'] };
 
   // 状態の形が変わったら上げる（公開ページの更新時に、古い対戦を新しいルールで再開しないため）
   // 20：v12.16 スピードペナルティ自滅点化＆アンサー失敗で手番即終了
-  const VERSION = 20;
+  // 21：v12.17 Z字（Z4・Z5・S5）を追加
+  const VERSION = 21;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -122,6 +128,20 @@
   }
 
   function coord(c, N) { return COLS[c % N] + '-' + (Math.floor(c / N) + 1); }
+  // 配置画面でなぞって選んだマスの組から、形・向き・置く位置を逆算する（配置できる形でなければ null）。
+  // 1マス（アッド）は配置で使わないので除く
+  function matchPlacement(cells, N) {
+    if (!cells || cells.length < 2) return null;
+    const rc = cells.map((c) => [Math.floor(c / N), c % N]);
+    let r0 = Infinity, c0 = Infinity;
+    for (const [r, c] of rc) { if (r < r0) r0 = r; if (c < c0) c0 = c; }
+    const sig = sigOf(normalize(rc));
+    for (const key of SHAPES_BY_SIZE[cells.length] || []) {
+      if (key === 'A1') continue;
+      for (let t = 0; t < 8; t++) if (ORIENT[key][t].sig === sig) return { key, t, r0, c0 };
+    }
+    return null;
+  }
   // ログ用の個体の呼び名（バズーカで分解されたものは「1マスキューブ」）
   function pieceName(p) { return p.frag ? '1マスキューブ' : p.isAdd ? 'アッド' : p.size + 'マスの個体'; }
   // ログ用：マスを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
@@ -1155,7 +1175,7 @@
 
   const api = {
     VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS,
-    bit, popcount, bitsOf, maskOf, cellsFor, placements, identifyShape, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
+    bit, popcount, bitsOf, maskOf, cellsFor, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBEngine = api;
