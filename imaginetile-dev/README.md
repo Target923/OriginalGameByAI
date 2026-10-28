@@ -13,6 +13,7 @@ GitHubリポジトリにソースコードと一緒にコミットし、次の�
 | `03_SHIFT_AND_SHAFT_SPEC_AND_SIM.md` | **第1作『シフト＆シャフト (Shift & Shaft)』** 公式ルール・重み付けAI評価関数・1,000戦シミュレーション結果 |
 | `04_SEARCH_BATTLE_AND_COLOR_TERRITORY_SPEC.md` | **第3作『サーチバトル』＆第4作『色彩陣取り』** ルール・アイテム仕様・AI推論エンジン仕様 |
 | `05_LAUNCHER_ARCHITECTURE.md` | **全6作総合ランチャー (`index.html`)** モンハン風3D循環カルーセル構造＆スロット拡張ガイド |
+| `06_QUESTION_BUILDER_AND_DEV_ENVIRONMENT_GUIDE.md` | **問題追加・検品スタジオ＆開発環境引き継ぎガイド**（Unsplash 50回/h監視、1問1秒目視検品、自宅↔会社Antigravity引き継ぎ運用、Claudeとの違い） |
 
 ## 🗂️ リポジトリ内メインファイル構成
 
@@ -22,6 +23,7 @@ GitHubリポジトリにソースコードと一緒にコミットし、次の�
 | `shift_and_shaft_game.html` | **Slot 01**：『シフト＆シャフト』デジタル対戦＆戦術シミュレーター v2.0（完成・収録済） |
 | `shift_and_shaft_rulebook.pdf` | **Slot 01**：『シフト＆シャフト』公式ルールブック PDF（全2ページ・収録済） |
 | `imagine_tile.html` (`game_02.html`) | **Slot 02**：『IMAGINE TILE（イマジンタイル）』1機シングル＆5機チーム対応・3ワールド妨害・Unsplash 102問クレジット完全埋め込み版（完成・収録済） |
+| `imaginetile-dev/question_builder.html` | **開発者ツール**：『IMAGINE TILE』問題追加・検品スタジオ（Unsplash API 50回/hリアルタイム残数表示、画像＆答え1秒目視検品、クレジット自動取得、YOMI_TABLE表記揺れ自動生成、DEFAULT_Qワンクリック出力） |
 | `サーチバトル.html` | **Slot 03**：『サーチバトル (Search Battle)』位置あて推理バトル（完成・収録済） |
 | `色彩陣取り.html` | **Slot 04**：『色彩陣取り (Color Territory)』混色・明暗合成＆戦術アイテム陣取りパズル（完成・収録済） |
 | `game_05.html` / `game_06.html` | **Slot 05 / 06**：第5作・第6作用拡張スロット（ランチャー側で枠確保済） |
@@ -30,12 +32,14 @@ GitHubリポジトリにソースコードと一緒にコミットし、次の�
 
 | キー名 | 対象ファイル | 保存データ内容 |
 | :--- | :--- | :--- |
-| `imagine_tile_settings_v2` | `imagine_tile.html` | 設定値（`initEnergy:50`, `clearEnergy:25`, `bonusEnergy:15`, `initCore:0`, `stageHazard:true`, `coreSystem:true`）、選択ワールド（`world`）、編成スタイル（`playStyle`: `'team'`/`'solo'`）、ソロ選択機体（`soloUnit`: `0..4`） |
+| `imagine_tile_settings_v2` | `imagine_tile.html` | 設定値（`initEnergy:50`, `clearEnergy:25`, `bonusEnergy:50`, `initCore:0`, `stageHazard:true`, `coreSystem:true`）、選択ワールド（`world`）、編成スタイル（`playStyle`: `'team'`/`'solo'`/`'custom_units'`）、ソロ選択機体（`soloUnit`）、自由編成配列（`selectedUnits`） |
+| `imagine_tile_player_name_v1` | `imagine_tile.html` | オンライン協力マルチプレイのプレイヤー表示名 |
 | `imagine_tile_custom_v2` | `imagine_tile.html` | CUSTOMモードのステージ構成配列（問題数・盤面サイズ・ギミック指定）および `scaleEnergy` フラグ |
 | `imagine_tile_questions_v1` | `imagine_tile.html` | 問題エディタで編集・追加された問題リスト（`QS`） |
-| `imagine_tile_unsplash_key_v1` | `imagine_tile.html` | エディタ用 Unsplash Access Key（一般公開時は空欄でOK） |
+| `imagine_tile_unsplash_key_v1` | `imagine_tile.html` / `question_builder.html` | エディタ用 Unsplash Access Key（一般公開時は空欄でOK・ブラウザローカル保存） |
 | `imagine_tile_unsplash_credits_v2` | `imagine_tile.html` | 画像スラッグ（`photo-xxx`）完全一致検証済みの撮影者クレジットキャッシュ |
 | `imagine_tile_unsplash_dl_v1` | `imagine_tile.html` | Unsplash API Download Trigger 送信済み履歴 |
+| `imagine_tile_question_builder_stock_v1` | `question_builder.html` | 問題追加スタジオの承認済み問題ストック |
 | `boardgame_archive_catalog_v4` | `index.html` | 総合ランチャーの6スロット情報カスタマイズデータ |
 
 ## 💬 次のチャット開始時の共有テンプレート
@@ -43,4 +47,4 @@ GitHubリポジトリにソースコードと一緒にコミットし、次の�
 次のチャットを始める際は、ソースコード（`imagine_tile.html` 等）と本フォルダ（または `HANDOVER_MASTER.md`）を添付し、以下のように話しかけるとスムーズです：
 
 > 『IMAGINE TILE』およびボードゲームアーカイブの引き継ぎです。
-> 添付の引き継ぎドキュメントと `imagine_tile.html` を読み込み、現在の仕様（1機シングル＆5機チーム、新エネルギールール：初期50pt/クリア25pt/エンドレス7×5÷人数、回答コスト `ceil(sz/人数)` 固定、突破ボーナス15pt or 💎5選択式）を把握したうえで、次フェーズの【マルチプレイ実装 / 新機能追加】を進めてください。
+> 添付の引き継ぎドキュメントと `imagine_tile.html` を読み込み、現在の仕様（1機シングル＆5機チーム、新エネルギールール：初期50pt/クリア25pt/エンドレス7×5÷人数、回答コスト `ceil(sz/人数)` 固定、突破ボーナス50pt[÷人数 or 1/3コア個別選択]、初期コア人数割り・上限5000）を把握したうえで、次フェーズの開発を進めてください。
