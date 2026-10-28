@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛸 IMAGINE TILE — QUESTION BUILDER & VERIFIER STUDIO</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050614;
+  --card-bg: #0a0d24;
+  --panel-bg: #0e1233;
+  --border: #1c245c;
+  --cyan: #00ffcc;
+  --cyan-dim: rgba(0, 255, 204, 0.15);
+  --orange: #ff6b35;
+  --gold: #ffcc00;
+  --gold-dim: rgba(255, 204, 0, 0.15);
+  --text: #e2e8f0;
+  --dim: #94a3b8;
+  --danger: #ff4444;
+  --success: #10b981;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  padding: 16px 24px 60px;
+  background-image: 
+    radial-gradient(ellipse at 15% 10%, rgba(0, 255, 204, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(255, 107, 53, 0.06) 0%, transparent 50%);
+}
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  background: var(--cyan-dim);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── RATE LIMIT BAR & KEY ── */
+.top-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.rate-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(14, 18, 51, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 14px;
+}
+.rate-pill {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rate-pill.warning { color: var(--gold); }
+.rate-pill.danger { color: var(--danger); animation: pulseWarn 1.2s infinite; }
+@keyframes pulseWarn { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.rate-meter {
+  width: 90px;
+  height: 8px;
+  background: #1e2640;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rate-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--cyan);
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+.rate-bar.warning { background: var(--gold); }
+.rate-bar.danger { background: var(--danger); }
+
+.rate-reset-time {
+  font-size: 10.5px;
+  color: var(--dim);
+}
+
+.key-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.key-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 11px;
+  width: 160px;
+  font-family: monospace;
+}
+.btn-sm {
+  background: #1a2254;
+  border: 1px solid #334488;
+  color: #c0d0ff;
+  border-radius: 4px;
+  padding: 4px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.btn-sm:hover {
+  background: #253377;
+  color: #fff;
+  border-color: var(--cyan);
+}
+
+/* ── LAYOUT GRID ── */
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+}
+@media (max-width: 980px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* ── PANELS ── */
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ── KEYWORD INPUT & PRESETS ── */
+.inp-label {
+  font-size: 11px;
+  color: var(--dim);
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+textarea.kw-input {
+  width: 100%;
+  height: 90px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+textarea.kw-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.2);
+}
+
+.preset-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.preset-btn {
+  background: #141a3d;
+  border: 1px solid #232c66;
+  color: #a4b3d6;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.preset-btn:hover {
+  background: #202a63;
+  color: #fff;
+  border-color: var(--gold);
+}
+
+.fetch-btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #00b48f 0%, #00ffcc 100%);
+  color: #050614;
+  font-weight: 800;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 12.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 0 16px rgba(0, 255, 204, 0.3);
+  transition: 0.18s;
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 0 22px rgba(0, 255, 204, 0.5);
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.btn-secondary {
+  background: #121738;
+  border: 1px solid var(--border);
+  color: #c5d4f5;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: 0.15s;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #1d255c;
+  color: #fff;
+  border-color: var(--cyan);
+}
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── QUEUE LIST ── */
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.queue-item:hover {
+  border-color: var(--cyan);
+}
+.queue-item.active {
+  border-color: var(--cyan);
+  background: rgba(0, 255, 204, 0.08);
+}
+.queue-item.done {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.q-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #1f2854;
+  color: var(--dim);
+}
+.q-tag.dup {
+  background: #4a1f1f;
+  color: #ff8888;
+}
+
+/* ── REVIEW CARD (CENTERPIECE) ── */
+.review-card {
+  background: var(--panel-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+.review-card.has-data {
+  border-color: rgba(0, 255, 204, 0.4);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--dim);
+  text-align: center;
+  gap: 12px;
+}
+.empty-state-icon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.card-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 800px) {
+  .card-content-grid { grid-template-columns: 1fr; }
+}
+
+/* ── PHOTO COLUMN ── */
+.photo-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.main-photo-wrap {
+  position: relative;
+  width: 100%;
+  height: 290px;
+  background: #020308;
+  border: 1.5px solid #232c66;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.main-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+.main-photo-meta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(2, 4, 16, 0.95));
+  padding: 18px 10px 8px;
+  font-size: 10.5px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.main-photo-meta a {
+  color: var(--cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.photo-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.photo-counter {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11.5px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.thumb-ribbon {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 6px;
+}
+.thumb-item {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  background: #000;
+  opacity: 0.65;
+  transition: 0.15s;
+}
+.thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumb-item:hover { opacity: 0.95; }
+.thumb-item.active {
+  border-color: var(--cyan);
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+/* ── FORM COLUMN ── */
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.input-text {
+  background: #07091e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  outline: none;
+}
+.input-text:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
+}
+
+.dup-warning {
+  display: none;
+  font-size: 11px;
+  color: #ff7777;
+  background: rgba(255, 68, 68, 0.12);
+  border: 1px solid rgba(255, 68, 68, 0.35);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+/* ── YOMI TAGS ── */
+.yomi-box {
+  background: #07091e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.yomi-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.yomi-tag {
+  background: #161e47;
+  border: 1px solid #2b397c;
+  color: #c9d7ff;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.yomi-tag .rm {
+  color: #ff8888;
+  cursor: pointer;
+  font-weight: bold;
+}
+.yomi-add-row {
+  display: flex;
+  gap: 6px;
+}
+.yomi-add-inp {
+  flex: 1;
+  background: #0f1438;
+  border: 1px solid #28336d;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* ── ACTION BUTTONS IN CARD ── */
+.decision-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.btn-approve {
+  flex: 2;
+  background: linear-gradient(135deg, #00c99a 0%, #00ffcc 100%);
+  color: #030814;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 0 18px rgba(0, 255, 204, 0.35);
+  transition: 0.15s;
+}
+.btn-approve:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 28px rgba(0, 255, 204, 0.6);
+  transform: translateY(-1px);
+}
+.btn-skip {
+  flex: 1;
+  background: #161a38;
+  border: 1px solid #2c356b;
+  color: var(--dim);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.btn-skip:hover {
+  background: #232a59;
+  color: #fff;
+}
+
+.hotkey-hint {
+  font-size: 10px;
+  color: var(--dim);
+  text-align: center;
+  margin-top: 4px;
+}
+.key-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #1e2652;
+  border: 1px solid #3d4c94;
+  border-radius: 3px;
+  font-size: 9.5px;
+  color: #fff;
+  font-family: monospace;
+}
+
+/* ── STOCK & EXPORT SECTION ── */
+.stock-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.stock-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stock-count-badge {
+  background: var(--gold-dim);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.stock-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.stock-thumb {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  background: #000;
+}
+.stock-body {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stock-ans {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+}
+.stock-credit {
+  font-size: 9.5px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stock-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 68, 68, 0.6);
+  color: #ff6666;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1;
+}
+.stock-del:hover { background: #ff4444; color: #fff; }
+
+/* ── EXPORT MODAL / DRAWER ── */
+.export-panel {
+  background: #080b22;
+  border: 1.5px solid #253377;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.export-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.export-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--dim);
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.export-tab.active {
+  background: #172152;
+  border-color: var(--cyan);
+  color: #fff;
+  font-weight: 700;
+}
+textarea.export-code {
+  width: 100%;
+  height: 130px;
+  background: #040612;
+  border: 1px solid #1c2654;
+  border-radius: 6px;
+  color: #a5f3fc;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 8px;
+  line-height: 1.4;
+  outline: none;
+}
+.export-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── TOAST NOTIFICATION ── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(10, 15, 40, 0.95);
+  border: 1.5px solid var(--cyan);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0, 255, 204, 0.35);
+  display: none;
+  z-index: 9999;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-badge">STUDIO</span>
+    <h1>🛸 QUESTION BUILDER & VERIFIER</h1>
+  </div>
+
+  <div class="top-controls">
+    <!-- Unsplash Rate Limit Real-time Meter -->
+    <div class="rate-box" title="Unsplash Free API は 1時間あたり最大50回までリクエスト可能">
+      <div class="rate-pill" id="rate-pill">
+        ⚡ 残り <span id="rate-rem" style="font-size:15px">--</span> / <span id="rate-lim">50</span> 回
+      </div>
+      <div class="rate-meter">
+        <div class="rate-bar" id="rate-bar" style="width:100%"></div>
+      </div>
+      <span class="rate-reset-time" id="rate-reset">⏳ リセットまで: --分</span>
+      <button class="btn-sm" onclick="pingRateLimit()" title="最新の残り回数をヘッダーから取得">🔄 残数確認</button>
+    </div>
+
+    <!-- Access Key Input (Stored in localStorage, NEVER hardcoded in git) -->
+    <div class="key-input-wrap">
+      <span style="font-size:11px;color:var(--dim)">🔑 Key:</span>
+      <input type="password" class="key-input" id="key-input" placeholder="Unsplash Access Key" title="ブラウザの localStorage に安全に保存されます">
+      <button class="btn-sm" onclick="toggleKeyMask()" title="キー表示切り替え">👁</button>
+      <button class="btn-sm" onclick="saveKeyFromInput()" style="background:#0f3f38;border-color:var(--cyan);color:var(--cyan)">保存</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- LEFT PANEL: INPUT & QUEUE -->
+  <aside class="panel">
+    <div class="panel-title">📝 1. 追加キーワード＆ジャンル</div>
+
+    <div class="field-group">
+      <label class="inp-label">追加したい単語（カンマまたは改行区切り）</label>
+      <textarea class="kw-input" id="kw-input" placeholder="オムライス, ラーメン, カレーライス, 寿司, ハンバーガー"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="inp-label">ジャンル / ヒント表記</label>
+      <input type="text" class="input-text" id="genre-input" value="食べ物" placeholder="例: 食べ物, 生き物, 乗り物...">
+    </div>
+
+    <div>
+      <label class="inp-label">⚡ クイックプリセット（クリックで入力）</label>
+      <div class="preset-group">
+        <button class="preset-btn" onclick="applyPreset('gourmet')">🍱 定番料理 10選</button>
+        <button class="preset-btn" onclick="applyPreset('dessert')">🍰 カフェ・デザート 10選</button>
+        <button class="preset-btn" onclick="applyPreset('animal')">🦁 動物・生き物 10選</button>
+        <button class="preset-btn" onclick="applyPreset('vehicle')">🚗 乗り物 10選</button>
+        <button class="preset-btn" onclick="applyPreset('spot')">🗼 世界の名所 10選</button>
+      </div>
+    </div>
+
+    <div class="fetch-btn-row">
+      <button class="btn-primary" id="btn-fetch-current" onclick="fetchCurrentCandidate()">
+        🔍 この単語を検索（API 1回消費・安全モード）
+      </button>
+      <button class="btn-secondary" id="btn-fetch-batch" onclick="fetchBatchCandidates()">
+        🚀 入力中の全単語を一括検索（最大5件）
+      </button>
+    </div>
+
+    <div class="panel-title" style="margin-top:8px">
+      📋 検索キュー一覧 <span id="queue-count" style="font-size:11px;color:var(--dim)"></span>
+    </div>
+    <div class="queue-list" id="queue-list">
+      <div style="font-size:11px;color:var(--dim);text-align:center;padding:16px 0">
+        キーワードを入力して検索ボタンを押してください
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT PANEL: INTERACTIVE REVIEW CARD -->
+  <main class="panel" style="background:#070a20">
+    <div class="panel-title">
+      <span>👁️ 2. 画像＆答え 目視検品スタジオ</span>
+      <span style="font-size:11px;color:var(--dim);font-weight:normal">不一致事故ゼロ＆クレジット完全取得を1問1秒で判定</span>
+    </div>
+
+    <!-- Active Review Card -->
+    <div class="review-card" id="review-card">
+      <div class="empty-state" id="card-empty">
+        <div class="empty-state-icon">🛸</div>
+        <div style="font-size:14px;font-weight:700;color:#fff">検品中の問題はありません</div>
+        <div style="font-size:12px;max-width:380px">
+          左側の入力欄に単語を入力して「この単語を検索」ボタンを押すと、Unsplashから取得した写真とクレジットがここに表示されます。
+        </div>
+      </div>
+
+      <div class="card-content-grid" id="card-content" style="display:none">
+        <!-- Photo Column -->
+        <div class="photo-col">
+          <div class="main-photo-wrap">
+            <img class="main-photo" id="main-photo" src="" alt="Question candidate photo">
+            <div class="main-photo-meta" id="photo-meta">
+              <span>📷 Photo by <a id="meta-author" href="#" target="_blank" rel="noopener">Author</a></span>
+              <a id="meta-link" href="#" target="_blank" rel="noopener">Unsplash で確認 ↗</a>
+            </div>
+          </div>
+
+          <div class="photo-nav-row">
+            <button class="btn-sm" onclick="prevCandidatePhoto()">◀ 前の写真 (←)</button>
+            <span class="photo-counter" id="photo-counter">写真 1 / 1</span>
+            <button class="btn-sm" onclick="nextCandidatePhoto()">次の写真 (→) ▶</button>
+          </div>
+
+          <div class="thumb-ribbon" id="thumb-ribbon"></div>
+        </div>
+
+        <!-- Form Column -->
+        <div class="form-col">
+          <div class="field-group">
+            <label class="inp-label">答え (Answer)</label>
+            <input type="text" class="input-text" id="card-ans" oninput="onAnswerInputChange()">
+            <div class="dup-warning" id="dup-warning">⚠️ 既に imagine_tile.html 本番問題に登録済みです</div>
+          </div>
+
+          <div class="field-group">
+            <label class="inp-label">ジャンル / ヒント (Hint)</label>
+            <input type="text" class="input-text" id="card-hint">
+          </div>
+
+          <div class="field-group">
+            <label class="inp-label">正規化候補 (YOMI_TABLE 用の表記揺れ)</label>
+            <div class="yomi-box">
+              <div class="yomi-tags" id="yomi-tags"></div>
+              <div class="yomi-add-row">
+                <input type="text" class="yomi-add-inp" id="yomi-add-inp" placeholder="表記揺れを追加 (例: おむらいす, omurice)" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomYomiTag();}">
+                <button class="btn-sm" onclick="addCustomYomiTag()">+ 追加</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="decision-bar">
+            <button class="btn-approve" onclick="approveCurrentCandidate()">
+              ✔ 承認してストックに追加 [Enter]
+            </button>
+            <button class="btn-skip" onclick="skipCurrentCandidate()">
+              ⏭ スキップ [Space]
+            </button>
+          </div>
+
+          <div class="hotkey-hint">
+            ショートカット: <span class="key-badge">Enter</span> 承認 / <span class="key-badge">Space</span> スキップ / <span class="key-badge">←</span> <span class="key-badge">→</span> 写真切替
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK & EXPORT SECTION -->
+    <div class="stock-section">
+      <div class="stock-header">
+        <div class="stock-title">
+          <span>📦 3. 承認済み問題ストック</span>
+          <span class="stock-count-badge" id="stock-count">0 問</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm" onclick="clearAllStock()" style="color:#ff8888;border-color:#5a2525">全クリア</button>
+          <button class="btn-sm" onclick="downloadStockJson()" style="color:var(--cyan);border-color:var(--cyan)">💾 JSON 保存</button>
+        </div>
+      </div>
+
+      <div class="stock-grid" id="stock-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--dim);font-size:12px">
+          承認した問題がここにたまります（いつでも削除・コピー可能）
+        </div>
+      </div>
+
+      <!-- EXPORT DRAWER -->
+      <div class="export-panel">
+        <div class="export-tabs">
+          <button class="export-tab active" onclick="switchExportTab('default_q')">① DEFAULT_Q コード (JS)</button>
+          <button class="export-tab" onclick="switchExportTab('yomi')">② YOMI_TABLE コード (JS)</button>
+          <button class="export-tab" onclick="switchExportTab('ai_prompt')">③ Gemini 取り込み依頼文</button>
+        </div>
+
+        <textarea class="export-code" id="export-code" readonly onclick="this.select()"></textarea>
+
+        <div class="export-actions">
+          <button class="btn-sm" onclick="copyExportCode()" style="background:#0c4a40;color:var(--cyan);border-color:var(--cyan);font-weight:bold;padding:6px 14px">
+            📋 このコードをクリップボードにコピー
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+const UNSPLASH_KEY_STORAGE = 'imagine_tile_unsplash_key_v1';
+const STOCK_STORAGE = 'imagine_tile_question_builder_stock_v1';
+
+// 既存の DEFAULT_Q (102問) の答え一覧（重複登録防止用）
+const EXISTING_ANSWERS = new Set([
+  "ピザ","パスタ","ハンバーガー","ホットドッグ","タコス","サンドイッチ","クロワッサン","パン","バゲット","ステーキ",
+  "フライドチキン","フライドポテト","クラムチャウダー","シーザーサラダ","パンケーキ","オムレツ","パフェ","クレープ","プリン","ドーナツ",
+  "ティラミス","ショートケーキ","チーズケーキ","アイスクリーム","コーヒー","カフェラテ","紅茶","ワイン","ビール","カクテル",
+  "オレンジジュース","リンゴジュース","緑茶","烏龍茶","抹茶","チョコレート","クッキー","ポップコーン","りんご","バナナ",
+  "いちご","ぶどう","みかん","すいか","メロン","パイナップル","もも","キウイ","レモン","ブルーベリー",
+  "マンゴー","さくらんぼ","トマト","きゅうり","にんじん","たまねぎ","じゃがいも","とうもろこし","かぼちゃ","ブロッコリー",
+  "レタス","きのこ","アボカド","なす","ピーマン","ねこ","いぬ","うさぎ","ハムスター","ライオン",
+  "トラ","キリン","ゾウ","シマウマ","パンダ","コアラ","カンガルー","サル","ペンギン","フラミンゴ",
+  "ワシ","フクロウ","インコ","イルカ","クジラ","サメ","ウミガメ","タコ","クラゲ","チョウ",
+  "カブトムシ","クワガタ","ハチ","飛行機","ヘリコプター","新幹線","電車","バス","トラック","パトカー",
+  "消防車","救急車"
+]);
+
+// プリセット集
+const PRESETS = {
+  gourmet: {
+    genre: '食べ物',
+    words: ['オムライス', '餃子', '天ぷら', 'うどん', 'そば', 'カレーライス', '焼肉', '豚カツ', 'たこ焼き', 'お好み焼き']
+  },
+  dessert: {
+    genre: 'デザート',
+    words: ['ワッフル', 'マカロン', 'かき氷', '大福', 'カヌレ', 'エクレア', 'アップルパイ', '団子', 'シュークリーム', 'チュロス']
+  },
+  animal: {
+    genre: '生き物',
+    words: ['ラッコ', 'カピバラ', 'アルパカ', 'ミーアキャット', 'ナマケモノ', 'ハリネズミ', 'オオカミ', 'チーター', 'アザラシ', 'シロクマ']
+  },
+  vehicle: {
+    genre: '乗り物',
+    words: ['ロケット', '気球', '潜水艦', 'ヨット', 'バイク', 'モノレール', 'ブルドーザー', 'ショベルカー', 'タンカー', '人力車']
+  },
+  spot: {
+    genre: '名所・観光',
+    words: ['富士山', '東京タワー', 'エッフェル塔', 'ピラミッド', '自由の女神', '凱旋門', '万里の長城', 'コロッセオ', 'タージマハル', 'サグラダファミリア']
+  }
+};
+
+// 英語・表記揺れ軽量辞書 (自動YOMIサジェスト用)
+const COMMON_EN_DICT = {
+  'オムライス': ['omurice', 'omelet rice', 'おむらいす'],
+  '餃子': ['gyoza', 'dumpling', 'ぎょうざ', 'ギョーザ'],
+  '天ぷら': ['tempura', 'てんぷら'],
+  'うどん': ['udon', 'うどん'],
+  'そば': ['soba', 'そば'],
+  'カレーライス': ['curry', 'curry rice', 'かれーらいす', 'カレー'],
+  '焼肉': ['yakiniku', 'bbq', 'やきにく'],
+  '豚カツ': ['tonkatsu', 'とんかつ', 'トンカツ'],
+  'たこ焼き': ['takoyaki', 'たこやき'],
+  'お好み焼き': ['okonomiyaki', 'おこのみやき'],
+  'ワッフル': ['waffle', 'わっふる'],
+  'マカロン': ['macaron', 'まかろん'],
+  'かき氷': ['shaved ice', 'かきごおり'],
+  '大福': ['daifuku', 'だいふく'],
+  'カヌレ': ['canele', 'かぬれ'],
+  'エクレア': ['eclair', 'えくれあ'],
+  'アップルパイ': ['apple pie', 'あっぷるぱい'],
+  '団子': ['dango', 'だんご'],
+  'シュークリーム': ['cream puff', 'しゅーくりーむ'],
+  'チュロス': ['churros', 'ちゅろす'],
+  'ラッコ': ['sea otter', 'らっこ'],
+  'カピバラ': ['capybara', 'かぴばら'],
+  'アルパカ': ['alpaca', 'あるぱか'],
+  'ミーアキャット': ['meerkat', 'みーあきゃっと'],
+  'ナマケモノ': ['sloth', 'なまけもの'],
+  'ハリネズミ': ['hedgehog', 'はりねずみ'],
+  'オオカミ': ['wolf', 'おおかみ'],
+  'チーター': ['cheetah', 'ちーたー'],
+  'アザラシ': ['seal', 'あざらし'],
+  'シロクマ': ['polar bear', 'しろくま', 'ホッキョクグマ'],
+  'ロケット': ['rocket', 'ろけっと'],
+  '気球': ['hot air balloon', 'balloon', 'ききゅう'],
+  '潜水艦': ['submarine', 'せんすいかん'],
+  'ヨット': ['yacht', 'sailboat', 'よっと'],
+  'バイク': ['motorcycle', 'bike', 'ばいく'],
+  '富士山': ['mt fuji', 'fujisan', 'ふじさん'],
+  '東京タワー': ['tokyo tower', 'とうきょうたわー'],
+  'エッフェル塔': ['eiffel tower', 'えっふぇるとう'],
+  'ピラミッド': ['pyramid', 'ぴらみっど'],
+  '自由の女神': ['statue of liberty', 'じゆうのめがみ'],
+  '凱旋門': ['arc de triomphe', 'がいせんもん']
+};
+
+// ── STATE ──
+let _queue = [];          // { word: string, genre: string, results: Array, activeIdx: number, done: boolean }
+let _currentQueueIdx = -1;
+let _currentPhotoIdx = 0;
+let _approvedStock = [];  // Array of question objects
+let _activeExportTab = 'default_q';
+let _rateLimitRemaining = null;
+let _rateLimitResetEpoch = null;
+let _resetCountdownTimer = null;
+
+// ── INITIALIZATION ──
+window.addEventListener('DOMContentLoaded', () => {
+  loadKeyFromStorage();
+  loadStockFromStorage();
+  renderStockGrid();
+  updateExportCode();
+
+  // If key exists, ping once to get fresh rate limit status
+  const key = getKey();
+  if (key) {
+    pingRateLimit();
+  } else {
+    updateRateDisplay(50, 50, null);
+  }
+
+  // Keyboard shortcut listener
+  window.addEventListener('keydown', handleGlobalKeydown);
+
+  // Timer for rate reset countdown
+  _resetCountdownTimer = setInterval(updateResetCountdown, 1000);
+});
+
+// ── KEY MANAGEMENT ──
+function getKey() {
+  try {
+    return (localStorage.getItem(UNSPLASH_KEY_STORAGE) || '').trim();
+  } catch(e) { return ''; }
+}
+
+function loadKeyFromStorage() {
+  const k = getKey();
+  const inp = document.getElementById('key-input');
+  if (inp && k) inp.value = k;
+}
+
+function saveKeyFromInput() {
+  const inp = document.getElementById('key-input');
+  if (!inp) return;
+  const val = inp.value.trim();
+  try {
+    localStorage.setItem(UNSPLASH_KEY_STORAGE, val);
+    toast('Unsplash Access Key をブラウザに保存しました');
+    pingRateLimit();
+  } catch(e) {
+    toast('保存に失敗しました: ' + e.message, true);
+  }
+}
+
+function toggleKeyMask() {
+  const inp = document.getElementById('key-input');
+  if (!inp) return;
+  inp.type = (inp.type === 'password') ? 'text' : 'password';
+}
+
+// ── RATE LIMIT LOGIC ──
+function applyRateHeaders(res) {
+  if (!res || !res.headers) return;
+  const rem = res.headers.get('x-ratelimit-remaining');
+  const lim = res.headers.get('x-ratelimit-limit');
+  const rst = res.headers.get('x-ratelimit-reset');
+
+  const remNum = (rem !== null) ? parseInt(rem, 10) : _rateLimitRemaining;
+  const limNum = (lim !== null) ? parseInt(lim, 10) : 50;
+  const rstNum = (rst !== null) ? parseInt(rst, 10) : _rateLimitResetEpoch;
+
+  _rateLimitRemaining = remNum;
+  _rateLimitResetEpoch = rstNum;
+  updateRateDisplay(remNum, limNum, rstNum);
+}
+
+function updateRateDisplay(rem, lim, resetEpoch) {
+  const remEl = document.getElementById('rate-rem');
+  const limEl = document.getElementById('rate-lim');
+  const pillEl = document.getElementById('rate-pill');
+  const barEl = document.getElementById('rate-bar');
+
+  if (remEl) remEl.textContent = (rem !== null && !isNaN(rem)) ? rem : '--';
+  if (limEl) limEl.textContent = lim || 50;
+
+  const total = lim || 50;
+  const current = (rem !== null && !isNaN(rem)) ? rem : total;
+  const pct = Math.max(0, Math.min(100, (current / total) * 100));
+
+  if (barEl) {
+    barEl.style.width = pct + '%';
+    barEl.className = 'rate-bar' + (current <= 10 ? ' danger' : current <= 25 ? ' warning' : '');
+  }
+  if (pillEl) {
+    pillEl.className = 'rate-pill' + (current <= 10 ? ' danger' : current <= 25 ? ' warning' : '');
+  }
+
+  updateResetCountdown();
+}
+
+function updateResetCountdown() {
+  const rstEl = document.getElementById('rate-reset');
+  if (!rstEl) return;
+  if (!_rateLimitResetEpoch) {
+    rstEl.textContent = '⏳ リセット: --分';
+    return;
+  }
+  const now = Date.now();
+  const diffMs = (_rateLimitResetEpoch * 1000) - now;
+  if (diffMs <= 0) {
+    rstEl.textContent = '⏳ まもなくリセット';
+  } else {
+    const mins = Math.ceil(diffMs / 60000);
+    rstEl.textContent = `⏳ リセットまで: 約 ${mins} 分`;
+  }
+}
+
+async function pingRateLimit() {
+  const key = getKey();
+  if (!key) {
+    toast('Access Key を入力して保存してください', true);
+    return;
+  }
+  toast('Unsplash API 接続確認中...');
+  try {
+    // 1件だけ取得してヘッダーを取得（消費1回）
+    const res = await fetch(`https://api.unsplash.com/search/photos?query=nature&per_page=1&client_id=${encodeURIComponent(key)}`);
+    applyRateHeaders(res);
+    if (res.ok) {
+      toast(`疎通成功！ 残り ${_rateLimitRemaining}/50 回`);
+    } else {
+      toast(`APIエラー (${res.status}): キーを確認してください`, true);
+    }
+  } catch(e) {
+    toast('ネットワークエラー: ' + e.message, true);
+  }
+}
+
+// ── PRESETS & INPUT ──
+function applyPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+  document.getElementById('genre-input').value = p.genre;
+  document.getElementById('kw-input').value = p.words.join(', ');
+  toast(`プリセット「${name}」をセットしました`);
+}
+
+function parseKeywordsInput() {
+  const raw = document.getElementById('kw-input').value || '';
+  const genre = (document.getElementById('genre-input').value || '食べ物').trim();
+  const tokens = raw
+    .split(/[\n,、\t]+/)
+    .map(w => w.trim())
+    .filter(Boolean);
+  return { tokens, genre };
+}
+
+// ── FETCH CANDIDATES (UNSPLASH API) ──
+async function fetchCurrentCandidate() {
+  const key = getKey();
+  if (!key) {
+    toast('Unsplash Access Key を入力して「保存」してください', true);
+    return;
+  }
+  if (_rateLimitRemaining !== null && _rateLimitRemaining <= 1) {
+    toast('⚠️ レートリミット上限（残り1回以下）のため停止しました', true);
+    return;
+  }
+
+  const { tokens, genre } = parseKeywordsInput();
+  if (tokens.length === 0) {
+    toast('キーワードを入力してください', true);
+    return;
+  }
+
+  const targetWord = tokens[0];
+  await searchWordAndLoad(targetWord, genre);
+}
+
+async function fetchBatchCandidates() {
+  const key = getKey();
+  if (!key) {
+    toast('Unsplash Access Key を入力して「保存」してください', true);
+    return;
+  }
+  const { tokens, genre } = parseKeywordsInput();
+  if (tokens.length === 0) {
+    toast('キーワードを入力してください', true);
+    return;
+  }
+
+  // 最大5件に制限（レートリミット保護）
+  const batch = tokens.slice(0, 5);
+  if (_rateLimitRemaining !== null && _rateLimitRemaining < batch.length) {
+    toast(`⚠️ 残り回数(${_rateLimitRemaining}回)がバッチ件数(${batch.length}件)より少ないです`, true);
+    return;
+  }
+
+  toast(`${batch.length}単語の一括検索を開始します...`);
+  for (let i = 0; i < batch.length; i++) {
+    await searchWordAndLoad(batch[i], genre);
+  }
+}
+
+async function searchWordAndLoad(word, genre) {
+  const key = getKey();
+  const btnCurrent = document.getElementById('btn-fetch-current');
+  const btnBatch = document.getElementById('btn-fetch-batch');
+  if (btnCurrent) btnCurrent.disabled = true;
+  if (btnBatch) btnBatch.disabled = true;
+
+  try {
+    toast(`「${word}」をUnsplashで検索中...`);
+    // 日本語/英語両対応
+    const isAscii = /^[\x00-\x7F]+$/.test(word);
+    const langParam = isAscii ? '' : '&lang=ja';
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(word)}&per_page=18${langParam}&client_id=${encodeURIComponent(key)}`;
+    
+    const res = await fetch(url);
+    applyRateHeaders(res);
+
+    if (!res.ok) {
+      toast(`検索エラー (${res.status}): ${res.statusText}`, true);
+      return;
+    }
+
+    const data = await res.json();
+    const results = data.results || [];
+    if (results.length === 0) {
+      toast(`「${word}」に一致する写真が見つかりませんでした`, true);
+      return;
+    }
+
+    // キューに追加（または既存更新）
+    const item = {
+      word,
+      genre: genre || '一般',
+      results,
+      activePhotoIdx: 0,
+      done: false
+    };
+
+    const existIdx = _queue.findIndex(q => q.word === word);
+    if (existIdx >= 0) {
+      _queue[existIdx] = item;
+      _currentQueueIdx = existIdx;
+    } else {
+      _queue.push(item);
+      _currentQueueIdx = _queue.length - 1;
+    }
+
+    renderQueueList();
+    loadCandidateIntoCard(_currentQueueIdx);
+    toast(`「${word}」の写真 ${results.length}枚 を取得しました！`);
+  } catch(e) {
+    toast('通信エラー: ' + e.message, true);
+  } finally {
+    if (btnCurrent) btnCurrent.disabled = false;
+    if (btnBatch) btnBatch.disabled = false;
+  }
+}
+
+// ── RENDER QUEUE ──
+function renderQueueList() {
+  const el = document.getElementById('queue-list');
+  const cntEl = document.getElementById('queue-count');
+  if (!el) return;
+  if (cntEl) cntEl.textContent = `(${_queue.length} 件)`;
+
+  if (_queue.length === 0) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--dim);text-align:center;padding:16px 0">キューは空です</div>';
+    return;
+  }
+
+  el.innerHTML = _queue.map((q, idx) => {
+    const isAct = idx === _currentQueueIdx;
+    const isDup = EXISTING_ANSWERS.has(q.word);
+    return `
+      <div class="queue-item ${isAct ? 'active' : ''} ${q.done ? 'done' : ''}" onclick="selectQueueItem(${idx})">
+        <div>
+          <strong style="color:${isAct ? 'var(--cyan)' : '#fff'}">${q.word}</strong>
+          <span style="font-size:10px;color:var(--dim);margin-left:4px">${q.genre}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${isDup ? '<span class="q-tag dup">既出</span>' : ''}
+          <span class="q-tag">${q.results.length}枚</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectQueueItem(idx) {
+  if (idx < 0 || idx >= _queue.length) return;
+  _currentQueueIdx = idx;
+  renderQueueList();
+  loadCandidateIntoCard(idx);
+}
+
+// ── LOAD CARD ──
+let _currentYomiTags = [];
+
+function loadCandidateIntoCard(queueIdx) {
+  const q = _queue[queueIdx];
+  const emptyEl = document.getElementById('card-empty');
+  const contentEl = document.getElementById('card-content');
+  const cardEl = document.getElementById('review-card');
+
+  if (!q || !q.results || q.results.length === 0) {
+    emptyEl.style.display = 'flex';
+    contentEl.style.display = 'none';
+    cardEl.classList.remove('has-data');
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  contentEl.style.display = 'grid';
+  cardEl.classList.add('has-data');
+
+  _currentPhotoIdx = q.activePhotoIdx || 0;
+  document.getElementById('card-ans').value = q.word;
+  document.getElementById('card-hint').value = q.genre;
+
+  checkDuplicateWarning(q.word);
+  initYomiTags(q.word);
+  renderActivePhoto();
+}
+
+function checkDuplicateWarning(ans) {
+  const el = document.getElementById('dup-warning');
+  if (!el) return;
+  if (EXISTING_ANSWERS.has(ans.trim())) {
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function onAnswerInputChange() {
+  const val = document.getElementById('card-ans').value.trim();
+  checkDuplicateWarning(val);
+  initYomiTags(val);
+}
+
+// ── YOMI TAG GENERATION ──
+function initYomiTags(word) {
+  const tags = new Set();
+  const trimmed = word.trim();
+  if (!trimmed) {
+    _currentYomiTags = [];
+    renderYomiTags();
+    return;
+  }
+
+  // 1. ひらがな化
+  const hira = kataToHira(trimmed);
+  if (hira !== trimmed) tags.add(hira);
+
+  // 2. カタカナ化
+  const kata = hiraToKata(trimmed);
+  if (kata !== trimmed) tags.add(kata);
+
+  // 3. 辞書引き
+  if (COMMON_EN_DICT[trimmed]) {
+    COMMON_EN_DICT[trimmed].forEach(t => tags.add(t));
+  }
+  if (COMMON_EN_DICT[kata]) {
+    COMMON_EN_DICT[kata].forEach(t => tags.add(t));
+  }
+
+  _currentYomiTags = Array.from(tags);
+  renderYomiTags();
+}
+
+function renderYomiTags() {
+  const el = document.getElementById('yomi-tags');
+  if (!el) return;
+  if (_currentYomiTags.length === 0) {
+    el.innerHTML = '<span style="font-size:10.5px;color:var(--dim)">候補なし（必要なら下で追加）</span>';
+    return;
+  }
+  el.innerHTML = _currentYomiTags.map((t, idx) => `
+    <span class="yomi-tag">
+      ${t}
+      <span class="rm" onclick="removeYomiTag(${idx})" title="削除">×</span>
+    </span>
+  `).join('');
+}
+
+function addCustomYomiTag() {
+  const inp = document.getElementById('yomi-add-inp');
+  if (!inp) return;
+  const val = inp.value.trim().toLowerCase();
+  if (val && !_currentYomiTags.includes(val)) {
+    _currentYomiTags.push(val);
+    renderYomiTags();
+  }
+  inp.value = '';
+}
+
+function removeYomiTag(idx) {
+  _currentYomiTags.splice(idx, 1);
+  renderYomiTags();
+}
+
+function kataToHira(s) {
+  return s.replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60));
+}
+function hiraToKata(s) {
+  return s.replace(/[\u3041-\u3096]/g, m => String.fromCharCode(m.charCodeAt(0) + 0x60));
+}
+
+// ── PHOTO SWITCHING ──
+function renderActivePhoto() {
+  const q = _queue[_currentQueueIdx];
+  if (!q || !q.results || q.results.length === 0) return;
+
+  const total = q.results.length;
+  _currentPhotoIdx = Math.max(0, Math.min(total - 1, _currentPhotoIdx));
+  q.activePhotoIdx = _currentPhotoIdx;
+
+  const photo = q.results[_currentPhotoIdx];
+  const imgUrl = (photo.urls && (photo.urls.regular || photo.urls.small || photo.urls.raw)) || '';
+  const authorName = (photo.user && (photo.user.name || photo.user.username)) || 'Unknown';
+  const authorProfile = (photo.user && photo.user.links && photo.user.links.html) || 'https://unsplash.com';
+  const photoPage = (photo.links && photo.links.html) || 'https://unsplash.com';
+
+  const imgEl = document.getElementById('main-photo');
+  imgEl.src = imgUrl;
+
+  const authorEl = document.getElementById('meta-author');
+  authorEl.textContent = authorName;
+  authorEl.href = authorProfile + '?utm_source=imagine_tile&utm_medium=referral';
+
+  const linkEl = document.getElementById('meta-link');
+  linkEl.href = photoPage + '?utm_source=imagine_tile&utm_medium=referral';
+
+  document.getElementById('photo-counter').textContent = `写真 ${_currentPhotoIdx + 1} / ${total}`;
+
+  // Thumbnails ribbon
+  const ribbonEl = document.getElementById('thumb-ribbon');
+  ribbonEl.innerHTML = q.results.map((p, idx) => {
+    const th = (p.urls && (p.urls.thumb || p.urls.small)) || '';
+    return `
+      <div class="thumb-item ${idx === _currentPhotoIdx ? 'active' : ''}" onclick="selectPhotoIndex(${idx})">
+        <img src="${th}" alt="">
+      </div>
+    `;
+  }).join('');
+}
+
+function selectPhotoIndex(idx) {
+  _currentPhotoIdx = idx;
+  renderActivePhoto();
+}
+function prevCandidatePhoto() {
+  const q = _queue[_currentQueueIdx];
+  if (!q || !q.results) return;
+  _currentPhotoIdx = (_currentPhotoIdx - 1 + q.results.length) % q.results.length;
+  renderActivePhoto();
+}
+function nextCandidatePhoto() {
+  const q = _queue[_currentQueueIdx];
+  if (!q || !q.results) return;
+  _currentPhotoIdx = (_currentPhotoIdx + 1) % q.results.length;
+  renderActivePhoto();
+}
+
+// ── APPROVE & SKIP ──
+function approveCurrentCandidate() {
+  const q = _queue[_currentQueueIdx];
+  if (!q || !q.results || q.results.length === 0) return;
+
+  const photo = q.results[_currentPhotoIdx];
+  const ans = document.getElementById('card-ans').value.trim() || q.word;
+  const hint = document.getElementById('card-hint').value.trim() || q.genre || '食べ物';
+
+  // Unsplash 最適URL（w=600&q=80）
+  const rawUrl = (photo.urls && photo.urls.raw) ? photo.urls.raw.split('?')[0] + '?w=600&q=80' : ((photo.urls && photo.urls.regular) || '');
+  const slug = extractSlug(rawUrl) || (photo.id ? `photo-${photo.id}` : '');
+  const authorName = (photo.user && (photo.user.name || photo.user.username)) || 'Unknown';
+  const authorUrl = (photo.user && photo.user.links && photo.user.links.html) ? photo.user.links.html.split('?')[0] : 'https://unsplash.com';
+  const photoLink = (photo.links && photo.links.html) ? photo.links.html.split('?')[0] : '';
+  const dlLoc = (photo.links && photo.links.download_location) || '';
+
+  const newQ = {
+    answer: ans,
+    img: rawUrl,
+    hint: hint,
+    author: authorName,
+    authorUrl: authorUrl,
+    photoLink: photoLink,
+    creditVerified: true,
+    verifiedSlug: slug,
+    yomiVariations: [..._currentYomiTags]
+  };
+
+  // Stock に追加
+  _approvedStock.push(newQ);
+  saveStockToStorage();
+  renderStockGrid();
+  updateExportCode();
+
+  toast(`🎉 「${ans}」を承認ストックに追加しました！`);
+
+  // Unsplash DL トラッキング（ガイドライン遵守）
+  triggerDownloadTracking(dlLoc);
+
+  // キューを進める
+  q.done = true;
+  advanceQueue();
+}
+
+function skipCurrentCandidate() {
+  const q = _queue[_currentQueueIdx];
+  if (q) q.done = true;
+  toast(`「${q ? q.word : ''}」をスキップしました`);
+  advanceQueue();
+}
+
+function advanceQueue() {
+  renderQueueList();
+  // 次の未完了キューを探す
+  let nextIdx = -1;
+  for (let i = _currentQueueIdx + 1; i < _queue.length; i++) {
+    if (!_queue[i].done) { nextIdx = i; break; }
+  }
+  if (nextIdx < 0) {
+    for (let i = 0; i < _currentQueueIdx; i++) {
+      if (!_queue[i].done) { nextIdx = i; break; }
+    }
+  }
+
+  if (nextIdx >= 0) {
+    selectQueueItem(nextIdx);
+  } else {
+    // キュー完了
+    _currentQueueIdx = -1;
+    loadCandidateIntoCard(-1);
+    toast('すべてのキューの検品が完了しました！');
+  }
+}
+
+function extractSlug(url) {
+  if (!url) return '';
+  const m = url.match(/((?:photo|premium_photo|vector|illustration)-[a-zA-Z0-9_\-]+)/);
+  return m ? m[1] : '';
+}
+
+async function triggerDownloadTracking(dlLoc) {
+  if (!dlLoc) return;
+  const key = getKey();
+  if (!key) return;
+  try {
+    const sep = dlLoc.includes('?') ? '&' : '?';
+    fetch(`${dlLoc}${sep}client_id=${encodeURIComponent(key)}`);
+  } catch(e) {}
+}
+
+// ── KEYBOARD SHORTCUTS ──
+function handleGlobalKeydown(e) {
+  // 入力フォーカス中は無視
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+  if (_currentQueueIdx < 0) return;
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    approveCurrentCandidate();
+  } else if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault();
+    skipCurrentCandidate();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    prevCandidatePhoto();
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    nextCandidatePhoto();
+  }
+}
+
+// ── STOCK MANAGEMENT & STORAGE ──
+function loadStockFromStorage() {
+  try {
+    const s = localStorage.getItem(STOCK_STORAGE);
+    if (s) _approvedStock = JSON.parse(s) || [];
+  } catch(e) { _approvedStock = []; }
+}
+
+function saveStockToStorage() {
+  try {
+    localStorage.setItem(STOCK_STORAGE, JSON.stringify(_approvedStock));
+  } catch(e) {}
+}
+
+function clearAllStock() {
+  if (!confirm('承認済みストックをすべてクリアしますか？')) return;
+  _approvedStock = [];
+  saveStockToStorage();
+  renderStockGrid();
+  updateExportCode();
+  toast('ストックをクリアしました');
+}
+
+function removeStockItem(idx) {
+  _approvedStock.splice(idx, 1);
+  saveStockToStorage();
+  renderStockGrid();
+  updateExportCode();
+}
+
+function renderStockGrid() {
+  const el = document.getElementById('stock-grid');
+  const cntEl = document.getElementById('stock-count');
+  if (!el) return;
+  if (cntEl) cntEl.textContent = `${_approvedStock.length} 問`;
+
+  if (_approvedStock.length === 0) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--dim);font-size:12px">承認した問題がここにたまります</div>';
+    return;
+  }
+
+  el.innerHTML = _approvedStock.map((q, idx) => `
+    <div class="stock-card">
+      <button class="stock-del" onclick="removeStockItem(${idx})" title="削除">×</button>
+      <img class="stock-thumb" src="${q.img}" alt="" loading="lazy">
+      <div class="stock-body">
+        <div class="stock-ans">${q.answer} <span style="font-size:10px;color:var(--dim)">(${q.hint})</span></div>
+        <div class="stock-credit">📷 ${q.author}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── EXPORT CODE GENERATOR ──
+function switchExportTab(tabName) {
+  _activeExportTab = tabName;
+  document.querySelectorAll('.export-tab').forEach((b, i) => {
+    b.classList.toggle('active', 
+      (tabName === 'default_q' && i === 0) ||
+      (tabName === 'yomi' && i === 1) ||
+      (tabName === 'ai_prompt' && i === 2)
+    );
+  });
+  updateExportCode();
+}
+
+function updateExportCode() {
+  const ta = document.getElementById('export-code');
+  if (!ta) return;
+
+  if (_approvedStock.length === 0) {
+    ta.value = '// 問題を承認すると、ここに貼り付け用コードが生成されます';
+    return;
+  }
+
+  if (_activeExportTab === 'default_q') {
+    const lines = _approvedStock.map(q => {
+      const cleanObj = {
+        answer: q.answer,
+        img: q.img,
+        hint: q.hint,
+        author: q.author,
+        authorUrl: q.authorUrl,
+        photoLink: q.photoLink,
+        creditVerified: true,
+        verifiedSlug: q.verifiedSlug
+      };
+      return '  ' + JSON.stringify(cleanObj) + ',';
+    });
+    ta.value = `// 🛸 DEFAULT_Q に追加用コード (${_approvedStock.length}問)\n[\n${lines.join('\n')}\n]`;
+  } else if (_activeExportTab === 'yomi') {
+    const lines = [];
+    _approvedStock.forEach(q => {
+      const canonical = kataToHira(q.answer.trim());
+      // 本人
+      lines.push(`  '${q.answer}': '${canonical}',`);
+      if (q.yomiVariations && q.yomiVariations.length > 0) {
+        q.yomiVariations.forEach(v => {
+          if (v && v !== q.answer) {
+            lines.push(`  '${v}': '${canonical}',`);
+          }
+        });
+      }
+    });
+    ta.value = `// 📖 YOMI_TABLE に追加用表記揺れ辞書\n{\n${lines.join('\n')}\n}`;
+  } else if (_activeExportTab === 'ai_prompt') {
+    const jsonStr = JSON.stringify(_approvedStock, null, 2);
+    ta.value = `以下の承認済み問題を imagine_tile.html の DEFAULT_Q と YOMI_TABLE に追加して、テスト（net_multi_sim.js, e2e_runtime_test.js）を実行しコミット＆プッシュしてください：\n\n${jsonStr}`;
+  }
+}
+
+function copyExportCode() {
+  const ta = document.getElementById('export-code');
+  if (!ta) return;
+  ta.select();
+  try {
+    navigator.clipboard.writeText(ta.value).then(() => {
+      toast('クリップボードにコピーしました！');
+    }).catch(() => {
+      document.execCommand('copy');
+      toast('クリップボードにコピーしました！');
+    });
+  } catch(e) {
+    document.execCommand('copy');
+    toast('クリップボードにコピーしました！');
+  }
+}
+
+function downloadStockJson() {
+  if (_approvedStock.length === 0) {
+    toast('保存する承認済み問題がありません', true);
+    return;
+  }
+  const blob = new Blob([JSON.stringify(_approvedStock, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `approved_questions_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+  toast('approved_questions.json をダウンロードしました');
+}
+
+// ── TOAST HELPER ──
+let _toastTimer = null;
+function toast(msg, isErr) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  clearTimeout(_toastTimer);
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.borderColor = isErr ? 'var(--danger)' : 'var(--cyan)';
+  el.style.color = isErr ? '#ff8888' : '#fff';
+  _toastTimer = setTimeout(() => {
+    el.style.display = 'none';
+  }, 2600);
+}
+</script>
+</body>
+</html>

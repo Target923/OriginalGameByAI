@@ -22,6 +22,7 @@ GitHubリポジトリにソースコードと一緒にコミットし、次の�
 | `shift_and_shaft_game.html` | **Slot 01**：『シフト＆シャフト』デジタル対戦＆戦術シミュレーター v2.0（完成・収録済） |
 | `shift_and_shaft_rulebook.pdf` | **Slot 01**：『シフト＆シャフト』公式ルールブック PDF（全2ページ・収録済） |
 | `imagine_tile.html` (`game_02.html`) | **Slot 02**：『IMAGINE TILE（イマジンタイル）』1機シングル＆5機チーム対応・3ワールド妨害・Unsplash 102問クレジット完全埋め込み版（完成・収録済） |
+| `imaginetile-dev/question_builder.html` | **開発者ツール**：『IMAGINE TILE』問題追加・検品スタジオ（Unsplash API 50回/hリアルタイム残数表示、画像＆答え1秒目視検品、クレジット自動取得、YOMI_TABLE表記揺れ自動生成、DEFAULT_Qワンクリック出力） |
 | `サーチバトル.html` | **Slot 03**：『サーチバトル (Search Battle)』位置あて推理バトル（完成・収録済） |
 | `色彩陣取り.html` | **Slot 04**：『色彩陣取り (Color Territory)』混色・明暗合成＆戦術アイテム陣取りパズル（完成・収録済） |
 | `game_05.html` / `game_06.html` | **Slot 05 / 06**：第5作・第6作用拡張スロット（ランチャー側で枠確保済） |
@@ -37,6 +38,7 @@ GitHubリポジトリにソースコードと一緒にコミットし、次の�
 | `imagine_tile_unsplash_key_v1` | `imagine_tile.html` | エディタ用 Unsplash Access Key（一般公開時は空欄でOK） |
 | `imagine_tile_unsplash_credits_v2` | `imagine_tile.html` | 画像スラッグ（`photo-xxx`）完全一致検証済みの撮影者クレジットキャッシュ |
 | `imagine_tile_unsplash_dl_v1` | `imagine_tile.html` | Unsplash API Download Trigger 送信済み履歴 |
+| `imagine_tile_question_builder_stock_v1` | `imaginetile-dev/question_builder.html` | 問題追加スタジオの承認済み問題ストック |
 | `boardgame_archive_catalog_v4` | `index.html` | 総合ランチャーの6スロット情報カスタマイズデータ |
 
 ## 💬 次のチャット開始時の共有テンプレート
