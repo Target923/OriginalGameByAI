@@ -4218,13 +4218,14 @@ body.replaying #app { display: none; }
     5: [[[3, 3, 3, 3, 4, 4, 4], 50], [[2, 3, 3, 3, 4, 4, 4], 30], [[2, 2, 3, 3, 4, 4, 4], 10], [[3, 3, 3, 4, 4, 4], 10]],
   };
   const SINGLE_FIVE = { 4: [[[3, 3, 4, 5], 1], [[2, 2, 3, 4, 5], 1]], 5: [[[2, 3, 3, 3, 4, 4, 5], 1], [[2, 2, 3, 3, 4, 4, 5], 1]] };
-  const SINGLE_FIVE_P = 0.05;
+  const SINGLE_FIVE_P = { 4: 0.20, 5: 0.50 };
   function setupSizes(game, pi) {
     const N = game.N, rng = game.rng;
     const left = {}; for (const s of [2, 3, 4, 5]) left[s] = Math.max(0, game.stockLeft(pi, s));
     const fits = (list) => { const need = {}; for (const s of list) need[s] = (need[s] || 0) + 1; return Object.keys(need).every((s) => need[s] <= left[s]); };
     const five = (SINGLE_FIVE[N] || []).filter((t) => fits(t[0]));
-    let templates = rng() < SINGLE_FIVE_P && five.length ? five : (SINGLE_TEMPLATES[N] || []).filter((t) => fits(t[0]));
+    const fiveP = (typeof SINGLE_FIVE_P === 'object' ? SINGLE_FIVE_P[N] : SINGLE_FIVE_P) || 0.05;
+    let templates = rng() < fiveP && five.length ? five : (SINGLE_TEMPLATES[N] || []).filter((t) => fits(t[0]));
     if (templates.length) {
       let tot = 0; for (const t of templates) tot += t[1];
       let r = rng() * tot;
@@ -4374,32 +4375,40 @@ body.replaying #app { display: none; }
     { w: 15, seq: [4, 3, 4, 3, 4, 2, 2, 3, 3, 2, 2, 2, 5, 5], K: 7 },   // 2・2・3・3・4・4・4（22マス）
   ];
   const TOUR_SETUP = {
-    prelim: PLAN_STD_PRELIM, final: PLAN_STD_FINAL, prelimByRound: null, prelimCap: 16, finalCap: 24, five: 0.05,
+    prelim: PLAN_STD_PRELIM, final: PLAN_STD_FINAL, prelimByRound: null, prelimCap: 16, finalCap: 24,
+    prelimFive: 0.20, finalFive: 0.50, five: 0.20,
     // 実験用：prelimSeq（と prelimK）／finalSeq（と finalK）を渡すと、型を抽選せずにその順で選ぶ。byRound＝試合ごとの個数
     prelimSeq: null, prelimK: 5, finalSeq: null, finalK: 7, byRound: null,
     finalHide: false, finalHideMin: 4, adapt: false, pushWhen: 'behind', swing: 17, pushK: 6, pushCap: 16, layout: 'auto', denseAt: 0.8,
   };
   // CPUの性格ごとの置き方（標準の TOUR_SETUP に重ねる）
-  //  mass（物量型）：盤面を埋める（2・3・3・4・4 か、2・2・2・3・3・4 など6個体。16マスまで）。5マスも少し多めに置く
-  //  save（温存型）：1・2試合目は2マスだけで3個体（3マスを1つ混ぜることも）。3・4マスを3試合目と決勝に残す
-  //  steady（堅実型）：3・4マスで4個体（3・3・4・4 など）を毎試合
-  //  items（アイテム浪費型）：置き方は標準。アイテムを惜しまず使う（下の PERSONA_ITEMS）
+  //  mass（物量型）：盤面を埋める（2・3・3・4・4 か、2・2・2・3・3・4 など6個体。16マスまで）。Z型導入で5マスも積極的に投入（予選30%・決勝70%）
+  //  save（温存型）：1・2試合目は2マス中心で温存（5%）。3試合目は解禁（30%）、決勝は温存した5マスをフル投入（80%）
+  //  steady（堅実型）：3・4マス中心だがZ5ブラフを適度に活用（予選15%・決勝40%）
+  //  items（アイテム浪費型）：置き方は標準（予選20%・決勝50%）。アイテムを惜しまず使う（下の PERSONA_ITEMS）
   const PLAN_SAVE_EARLY = [
     { w: 50, seq: [2, 2, 2, 2, 2, 3, 4, 3, 4, 3, 3, 4, 5, 5], K: 3 },   // 2・2・2（6マス）
     { w: 50, seq: [2, 2, 3, 2, 2, 2, 4, 3, 4, 3, 3, 4, 5, 5], K: 3 },   // 2・2・3（7マス）
   ];
   const PERSONA_SETUP = {
-    mass: { five: 0.08, prelim: [
+    mass: { prelimFive: 0.30, finalFive: 0.70, five: 0.30, prelim: [
       { w: 50, seq: [3, 4, 3, 4, 2, 2, 3, 4, 3, 2, 2, 2, 5, 5], K: 6 },   // 2・3・3・4・4（16マス）
       { w: 35, seq: [2, 3, 2, 3, 2, 4, 3, 4, 2, 3, 4, 2, 5, 5], K: 6 },   // 2・2・2・3・3・4（16マス）
       { w: 15, seq: [2, 2, 2, 2, 3, 3, 4, 3, 4, 3, 4, 2, 5, 5], K: 6 },   // 2・2・2・2・3・3（14マス）
     ] },
-    save: { five: 0.03, prelimByRound: { 0: PLAN_SAVE_EARLY, 1: PLAN_SAVE_EARLY } },
-    steady: { prelim: [
-      { w: 60, seq: [3, 4, 3, 4, 3, 4, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・4・4（14マス）
-      { w: 25, seq: [3, 3, 3, 4, 4, 3, 4, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・3・4（13マス）
-      { w: 15, seq: [4, 4, 3, 4, 3, 3, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・4・4・4（15マス）
-    ] },
+    save: {
+      prelimFive: 0.30, finalFive: 0.80, five: 0.30,
+      prelimByRound: { 0: PLAN_SAVE_EARLY, 1: PLAN_SAVE_EARLY },
+      fiveByRound: { 0: 0.05, 1: 0.05, 2: 0.30 },
+    },
+    steady: {
+      prelimFive: 0.15, finalFive: 0.40, five: 0.15,
+      prelim: [
+        { w: 60, seq: [3, 4, 3, 4, 3, 4, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・4・4（14マス）
+        { w: 25, seq: [3, 3, 3, 4, 4, 3, 4, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・3・4（13マス）
+        { w: 15, seq: [4, 4, 3, 4, 3, 3, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・4・4・4（15マス）
+      ],
+    },
     items: {},
   };
   // 3試合目の前に、1個増やして勝ちにいくか。when：
@@ -4433,8 +4442,12 @@ body.replaying #app { display: none; }
     }
     const plan = pickPlan(list, rng);
     let seq = plan.seq, K = plan.K;
-    // 5マスを数%だけ置く（好みの順の先頭に足す）
-    if (o.five > 0 && rng() < o.five && (stock[5] | 0) > 0) { seq = [5].concat(seq); why += '-five'; }
+    // 5マスを置く（Z5/S5導入による5マス救済とブラフ活用：予選20%・決勝50%、性格別に設定）
+    let fiveP = kind === 'final' ? (o.finalFive != null ? o.finalFive : o.five) : (o.prelimFive != null ? o.prelimFive : o.five);
+    if (kind !== 'final' && o.fiveByRound && o.fiveByRound[T.round] != null) {
+      fiveP = o.fiveByRound[T.round];
+    }
+    if (fiveP > 0 && rng() < fiveP && (stock[5] | 0) > 0) { seq = [5].concat(seq); why += '-five'; }
     if (kind !== 'final') {
       if (o.adapt && T.round === 2 && needPush(T, id, o.swing, o.pushWhen)) { K = o.pushK; cap = o.pushCap; why = 'push'; }
       if (o.byRound && o.byRound[T.round] != null) { K = o.byRound[T.round]; why = 'fixed'; }
