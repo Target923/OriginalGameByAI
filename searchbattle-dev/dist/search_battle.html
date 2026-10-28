@@ -7216,7 +7216,7 @@ window.SBAudio = (function () {
     const N = g.N;
     if (app.screen === 'setup') {
       const S = app.setup;
-      if (!S.key || S.treasureMode) return null;
+      if (!S.key || S.treasureMode || S.drag) return null;
       if (g.pieceAt(S.pi, app.hover)) return null;
       const a = anchorFor(S.key, S.t, app.hover, N);
       if (!a) return null;
@@ -8838,6 +8838,7 @@ self.onmessage = function (e) {
     const c = +el.dataset.cell;
     if (g.pieceAt(S.pi, c)) return;   // 置いたキューブの上からは始めない（タップで外す）
     S.drag = { cells: [c] };
+    applyPreview();
   }
   function setupDragMove(ev) {
     const S = app.setup;
@@ -8853,6 +8854,8 @@ self.onmessage = function (e) {
     if (cells.length >= 2 && cells[cells.length - 2] === c) { cells.pop(); render(); return; }
     if (cells.indexOf(c) >= 0 || g.pieceAt(S.pi, c)) return;
     if (cells.length >= 5) { toast('5マスまでです'); return; }
+    // ドラッグ（2マス目以降）が開始されたら、キューブ選択を解除してドラッグのみを表示
+    if (S.key) S.key = null;
     cells.push(c);
     SND.sfx('sel', 0, { n: cells.length, pan: -0.35 });
     render();
@@ -8872,13 +8875,8 @@ self.onmessage = function (e) {
     if (g.stockLeft(pi, size) <= 0) { toast(size + 'マスのキューブはもう残っていません（上限）', 'warn'); render(); return; }
     const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);
     if (!r.ok) { toast(r.reason, 'warn'); render(); return; }
-    // 描いた形を、パレットの選択にも反映する（続けてタップで同じ形を置けるように）
-    S.key = m.key; S.t = m.t; S.treasureMode = false;
-    if (g.stockLeft(pi, size) <= 0) {
-      const next = [2, 3, 4, 5].find((s) => g.stockLeft(pi, s) > 0);
-      S.key = next ? SHAPES_BY_SIZE[next][0] : null;
-      S.t = 0;
-    }
+    // ドラッグ配置後はキューブ選択を解除したままにし、ドラッグのみの表示・操作感を維持
+    S.key = null; S.t = 0; S.treasureMode = false;
     SND.sfx('place');
     if (!g.players[pi].treasure) toast('◆トレジャーのセットも忘れずに', 'note');
     render();
