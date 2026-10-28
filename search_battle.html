@@ -79,6 +79,8 @@ h1, h2, h3 { text-wrap: balance; }
 .panel.enemy { --pcorner: var(--magenta); }
 .panel.own.active { border-color: rgba(79, 227, 255, .7); box-shadow: 0 0 0 1px rgba(79, 227, 255, .3), 0 0 32px -6px rgba(79, 227, 255, .5); }
 .panel.enemy.active { border-color: rgba(255, 63, 143, .7); box-shadow: 0 0 0 1px rgba(255, 63, 143, .3), 0 0 32px -6px rgba(255, 63, 143, .5); }
+.panel.enemy.active.treasure-active { --pcorner: #D4AF37; border-color: rgba(212, 175, 55, .85); box-shadow: 0 0 0 1px rgba(212, 175, 55, .4), 0 0 36px -6px rgba(212, 175, 55, .6); }
+.panel.enemy.treasure-active .fhead b { color: #D4AF37; text-shadow: 0 0 10px rgba(212, 175, 55, .5); }
 .ptitle { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; font-size: .86rem; font-weight: 700; }
 .ptitle small { font-family: var(--f-tech); font-size: .64rem; letter-spacing: .24em; color: var(--muted); font-weight: 500; }
 .logcol .ptitle { flex-direction: column; align-items: flex-start; gap: 2px; }
@@ -231,6 +233,9 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.click { cursor: pointer; }
 .cell.click:hover { background-color: color-mix(in srgb, var(--fc) 22%, transparent); box-shadow: inset 0 0 0 1px var(--fc), inset 0 0 14px color-mix(in srgb, var(--fc) 40%, transparent); }
 .cell.sel { background-color: color-mix(in srgb, var(--amber) 30%, transparent); box-shadow: inset 0 0 0 2px var(--amber); }
+.panel.enemy.treasure-active .cell.click { box-shadow: inset 0 0 0 1.5px rgba(212, 175, 55, .7), 0 0 8px rgba(212, 175, 55, .3); }
+.panel.enemy.treasure-active .cell.click:hover { background-color: rgba(212, 175, 55, .28); box-shadow: inset 0 0 0 2px #D4AF37, 0 0 18px rgba(212, 175, 55, .8); }
+.panel.enemy.answer-mode .cells { touch-action: none; }
 
 /* メタリックなキューブ */
 .cell.pc { background:
@@ -710,6 +715,8 @@ body.replaying #app { display: none; }
 .rp-pct.wait { opacity: .55; }
 .rp-warp { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
 .rp-warp rect { fill: rgba(180, 156, 255, .12); stroke: var(--violet); stroke-width: .05; stroke-dasharray: .14 .1; }
+.rp-cubes { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--edge); }
+.rp-cubes .hr-cap { margin-right: 0; }
 @media (max-width: 1100px) {
   .rp-main { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "stage stage" "l1 l0"; }
   .rp-field .board { max-width: clamp(220px, calc(100vh - 560px), 420px); }
@@ -6574,7 +6581,7 @@ window.SBAudio = (function () {
                 ${intelTagsHTML(myIntel, false)}
                 ${ownBoard(v, { clickable: ownClick, pick: ownPick, selectedPiece: ui.warp ? ui.warp.pieceId : null, flash: true, intel: myIntel })}
               </section>
-              <section class="panel enemy${predActive ? ' active' : ''}">
+              <section class="panel enemy${predActive ? ' active' : ''}${mode === 'treasure' ? ' treasure-active' : ''}${mode === 'answer' ? ' answer-mode' : ''}">
                 <div class="fhead"><b>${reveal ? '相手フィールド（答え合わせ）' : '相手フィールド'}</b><small>ENEMY FIELD</small></div>
                 ${fieldChips(1 - v, v)}
                 ${intelTagsHTML(foeIntel, true)}
@@ -7969,7 +7976,8 @@ self.onmessage = function (e) {
       const atk = g.players[1 - k].name, def = g.players[k].name;
       const tone = (pi) => (pi === 0 ? 'mine' : 'enemy');
       const chips = `<div class="chiprow">${chipGroup(1 - k, ATK_ITEMS, false, 'atk', `${atk}の攻撃`, tone(1 - k))}${chipGroup(k, DEF_ITEMS, false, 'def', `${def}の防御`, tone(k))}</div>`;
-      return `<section class="panel ${k === 0 ? 'own' : 'enemy'} rp-field"><div class="fhead"><b>${esc(def)}のフィールド</b><span class="rp-left">残り${g.living(k).length}体</span></div>${chips}${intelTagsHTML(intel, k === 1)}${board}</section>`;
+      const cubes = `<div class="rp-cubes"><span class="hr-cap">所持キューブ</span>${heldCubes(g.players[k], false)}</div>`;
+      return `<section class="panel ${k === 0 ? 'own' : 'enemy'} rp-field"><div class="fhead"><b>${esc(def)}のフィールド</b><span class="rp-left">残り${g.living(k).length}体</span></div>${chips}${intelTagsHTML(intel, k === 1)}${board}${cubes}</section>`;
     };
     document.getElementById('rp-stage').innerHTML = field(0) + field(1);
     document.getElementById('rp-note').textContent = '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。';
@@ -8583,6 +8591,8 @@ self.onmessage = function (e) {
         return;
       }
       case 'answer': {
+        // 直前のポインター操作（pointerdown/ドラッグ）ですでに処理されている場合は重複発火を防止
+        if (skipNextAnswerClick) { skipNextAnswerClick = false; return; }
         if (P.view.dead[c]) return;
         const i = ui.sel.indexOf(c);
         if (i >= 0) { ui.sel.splice(i, 1); SND.sfx('desel', 0, { n: ui.sel.length, pan: 0.35 }); }
@@ -8718,6 +8728,85 @@ self.onmessage = function (e) {
     if (tipT && !(ev.relatedTarget && tipT.contains(ev.relatedTarget)) && ev.pointerType !== 'touch') hideTip();
   });
   root.addEventListener('pointerleave', () => { app.hover = -1; applyPreview(); hideTip(); }, true);
+
+  // アンサー時のマス選択：クリックに加え、ドラッグ（なぞり操作）でも選択・解除できるようにする
+  let answerDrag = null;
+  let skipNextAnswerClick = false;
+
+  function handleAnswerPointerDown(ev, el) {
+    if (effMode() !== 'answer') return;
+    if (ev.button != null && ev.button !== 0) return;
+    const c = +el.dataset.cell;
+    const g = G(), v = viewer(), P = g.players[v], ui = app.ui;
+    if (P.view.dead[c]) return;
+
+    const idx = ui.sel.indexOf(c);
+    const adding = idx < 0;
+    if (adding) {
+      if (ui.sel.length < 5) {
+        ui.sel.push(c);
+        SND.sfx('sel', 0, { n: ui.sel.length, pan: 0.35 });
+        render();
+      } else {
+        toast('選べるのは5マスまでです');
+      }
+    } else {
+      ui.sel.splice(idx, 1);
+      SND.sfx('desel', 0, { n: ui.sel.length, pan: 0.35 });
+      render();
+    }
+    skipNextAnswerClick = true;
+    setTimeout(() => { skipNextAnswerClick = false; }, 350);
+    answerDrag = { adding, visited: new Set([c]) };
+  }
+
+  function handleAnswerPointerMove(ev) {
+    if (!answerDrag || effMode() !== 'answer') return;
+    if (ev.pointerType === 'mouse' && (ev.buttons & 1) === 0) {
+      answerDrag = null;
+      return;
+    }
+    const target = document.elementFromPoint(ev.clientX, ev.clientY);
+    const cellEl = target && target.closest('.cell[data-board="pred"]');
+    if (!cellEl) return;
+    const c = +cellEl.dataset.cell;
+    if (answerDrag.visited.has(c)) return;
+    answerDrag.visited.add(c);
+
+    const g = G(), v = viewer(), P = g.players[v], ui = app.ui;
+    if (P.view.dead[c]) return;
+
+    const idx = ui.sel.indexOf(c);
+    if (answerDrag.adding) {
+      if (idx < 0) {
+        if (ui.sel.length < 5) {
+          ui.sel.push(c);
+          SND.sfx('sel', 0, { n: ui.sel.length, pan: 0.35 });
+          render();
+        } else {
+          toast('選べるのは5マスまでです');
+        }
+      }
+    } else {
+      if (idx >= 0) {
+        ui.sel.splice(idx, 1);
+        SND.sfx('desel', 0, { n: ui.sel.length, pan: 0.35 });
+        render();
+      }
+    }
+  }
+
+  function handleAnswerPointerUp() {
+    answerDrag = null;
+  }
+
+  root.addEventListener('pointerdown', (ev) => {
+    const el = ev.target.closest && ev.target.closest('.cell[data-board="pred"]');
+    if (el && effMode() === 'answer') handleAnswerPointerDown(ev, el);
+  });
+  window.addEventListener('pointermove', handleAnswerPointerMove, { passive: true });
+  window.addEventListener('pointerup', handleAnswerPointerUp);
+  window.addEventListener('pointercancel', handleAnswerPointerUp);
   window.addEventListener('scroll', hideTip, { passive: true });
   document.addEventListener('keydown', (ev) => {
     if (app.replay) {
