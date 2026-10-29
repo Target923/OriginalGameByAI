@@ -273,6 +273,28 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.ghost::before { content: ""; position: absolute; inset: 0; border: 0 dashed var(--pcc); }
 .cell.ghost.et::before { border-top-width: 2px; } .cell.ghost.eb::before { border-bottom-width: 2px; }
 .cell.ghost.el::before { border-left-width: 2px; } .cell.ghost.er::before { border-right-width: 2px; }
+
+/* ===== 個体の模様（ui.js の patHTML） =====
+   色の見え方に特性があっても個体を見分けられるよう、色ごとに違う幾何学模様をマスの内側に薄く刻む。
+   ・模様は SVG の形を「マスク」にして、その形のところだけ下の色（background）を見せるしくみ。形を自由に描け、色は CSS で決められる
+   ・模様を刻む枠（.pm）はマスの内側15%から。模様の1つ分は枠の 1/4（小さいマスは 1/3）で、枠にちょうど収まる（端で形が欠けない）
+   ・割り当て：1 縦線／2 点／3 十字／4 互い違いの四角／5 斜め格子／6 山形／7 横線／8 四角い枠。
+     色覚の特性で近く見える色の組（1と4・1と5・1と2・2と5・2と6・3と7・3と8・3と6・6と8）は、違う系統（線・点・交差・波）にした */
+.cell .pm { --pmn: 4; position: absolute; inset: 15%; z-index: 0; pointer-events: none; background: rgba(2, 8, 22, .3);
+  -webkit-mask: var(--pm) 0 0 / calc(100% / var(--pmn)) calc(100% / var(--pmn)) repeat; mask: var(--pm) 0 0 / calc(100% / var(--pmn)) calc(100% / var(--pmn)) repeat; }
+/* 小さいマス（スマホの対戦画面など）は、模様を粗くして潰れないようにする（マスは container-type: size なので、マスの幅で切り替えられる） */
+@container (max-width: 56px) { .cell .pm { --pmn: 3; } }
+.cell.pc.dead .pm { opacity: .75; }
+/* 答え合わせの相手の個体（半透明）：模様も、その個体の色の光る線で描く */
+.cell.ghost .pm { background: color-mix(in srgb, var(--pcc) 45%, transparent); }
+.pm1 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Crect x='5.2' width='1.6' height='12'/%3E%3C/svg%3E"); }
+.pm2 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='2.2'/%3E%3C/svg%3E"); }
+.pm3 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M5 2h2v3h3v2H7v3H5V7H2V5h3z'/%3E%3C/svg%3E"); }
+.pm4 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1 1h4v4H1zM7 7h4v4H7z'/%3E%3C/svg%3E"); }
+.pm5 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M0 0L12 12M12 0L0 12' stroke='black' stroke-width='1.2'/%3E%3C/svg%3E"); }
+.pm6 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M-6 3L0 9L6 3L12 9L18 3' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E"); }
+.pm7 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Crect y='5.2' width='12' height='1.6'/%3E%3C/svg%3E"); }
+.pm8 { --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Crect x='2.6' y='2.6' width='6.8' height='6.8' fill='none' stroke='black' stroke-width='1.3'/%3E%3C/svg%3E"); }
 .cell.pickable { cursor: pointer; }
 .cell.pickable:hover { filter: brightness(1.2); box-shadow: inset 0 0 0 3px var(--amber), 0 0 14px var(--amber); z-index: 2; }
 .cell.picked { box-shadow: inset 0 0 0 3px var(--amber); }
