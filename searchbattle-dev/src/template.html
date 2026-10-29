@@ -309,10 +309,15 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pv-bad { background: color-mix(in srgb, var(--bad) 26%, transparent) !important; box-shadow: inset 0 0 0 2px var(--bad) !important; }
 
 /* 調査の記録（セル） */
-.ctag { --tc: var(--cyan); position: absolute; left: 4%; top: 4%; z-index: 3; height: clamp(16px, 30cqw, 24px); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 clamp(3px, 6cqw, 5px); font: 700 clamp(.44rem, 19cqw, .66rem)/1 var(--f-tech); letter-spacing: -0.01em; color: var(--tc);
-  background: rgba(3, 5, 11, .82); border: 1px solid color-mix(in srgb, var(--tc) 55%, transparent); border-radius: 3px; white-space: nowrap; max-width: 90%; pointer-events: none; }
+/* マスのタグ（L3・#3・C2 など）：ノードショットのひし形と同じ大きさ・同じ考え方でそろえる。
+   枠線は付けず、背景は半透明（下のキューブの質感が透けて見えるように）。文字の光で色を示す。
+   1文字は正方形、2文字は高さだけ正方形と同じにして、横幅は文字に合わせて伸ばす */
+.ctag { --tc: var(--cyan); position: absolute; left: 4%; top: 4%; z-index: 3; height: var(--tag-sz); min-width: var(--tag-sz); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 clamp(2px, 5cqw, 4px); font: 700 clamp(.44rem, 19cqw, .66rem)/1 var(--f-tech); letter-spacing: -0.01em; color: var(--tc);
+  background: rgba(3, 5, 11, .55); border: 0; border-radius: 3px; text-shadow: 0 0 5px color-mix(in srgb, var(--tc) 70%, transparent); white-space: nowrap; max-width: 90%; pointer-events: none; }
 .board[data-board="own"] .ctag { --tc: var(--magenta); }
 .ctag.stale { opacity: .45; }
+/* マスに付く記号（タグ・H/N/X・ひし形）の共通サイズ。マスの幅に合わせて 16〜24px */
+.cell { --tag-sz: clamp(16px, 30cqw, 24px); }
 .pairs { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; overflow: visible; }
 .pairs g { --pl: var(--cyan); }
 .board[data-board="own"] .pairs g { --pl: var(--magenta); }
@@ -335,6 +340,10 @@ h1, h2, h3 { text-wrap: balance; }
 .cm-btn span { white-space: nowrap; }
 .cm-btn:hover, .cm-btn:focus-visible { background: rgba(79, 227, 255, .24); box-shadow: 0 0 12px rgba(79, 227, 255, .5); outline: none; }
 .cm-btn .mini { max-width: 30px; height: auto; }
+/* 形のボタンは、図の高さが形ごとに違う（L字は3段、キューブは2段）ため、段ごとに高さがずれていた。
+   行の高さをそろえ、図を置く場所も3段分の高さ（30px）に固定して、文字の位置も横一列にそろえる */
+.cm-grid.shapes { grid-auto-rows: 1fr; }
+.cm-grid.shapes .cm-btn { grid-template-rows: 30px auto; }
 .cm-btn .mini rect { fill: url(#g-metal); stroke: rgba(0, 0, 0, .5); stroke-width: .6; }
 
 /* 記号 */
@@ -356,7 +365,7 @@ h1, h2, h3 { text-wrap: balance; }
 .ink-n { color: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan)); }
 .board[data-board="own"] .ink-n { color: var(--magenta); filter: drop-shadow(0 0 4px var(--magenta)); }
 .ink-n .mk path { stroke-width: 2.2; }
-.nbadge { --tc: var(--cyan); position: absolute; left: 4%; bottom: 4%; z-index: 3; width: clamp(16px, 30cqw, 24px); height: clamp(16px, 30cqw, 24px); aspect-ratio: 1; display: grid; place-items: center;
+.nbadge { --tc: var(--cyan); position: absolute; left: 4%; bottom: 4%; z-index: 3; width: var(--tag-sz); height: var(--tag-sz); display: grid; place-items: center;
   color: var(--tc); pointer-events: none; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--tc) 60%, transparent)); }
 .board[data-board="own"] .nbadge { --tc: var(--magenta); }
 .nbadge.stale { opacity: .45; }
@@ -379,10 +388,11 @@ h1, h2, h3 { text-wrap: balance; }
 .gem .facet { fill: none; stroke: rgba(120, 70, 0, .55); stroke-width: 1.2; }
 @keyframes gem { 50% { filter: drop-shadow(0 0 10px var(--amber)); transform: translateY(-1px); } }
 .num { position: absolute; left: 6%; bottom: 3%; z-index: 2; font: 700 clamp(.55rem, 24cqw, .8rem)/1 var(--f-mono); color: var(--magenta); text-shadow: 0 0 6px rgba(255, 63, 143, .8); }
-.tl { position: absolute; top: 4%; right: 4%; z-index: 3; width: clamp(16px, 30cqw, 24px); height: clamp(16px, 30cqw, 24px); aspect-ratio: 1; display: grid; place-items: center; padding: 0; box-sizing: border-box; font: 700 clamp(.54rem, 23cqw, .82rem)/1 var(--f-tech); border-radius: 3px; background: rgba(3, 5, 11, .82); border: 1px solid rgba(255, 255, 255, .15); pointer-events: none; }
-.tl-H { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 60%, transparent); text-shadow: 0 0 6px var(--amber); }
-.tl-N { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 60%, transparent); text-shadow: 0 0 6px var(--cyan); }
-.tl-X { color: #C6CFDC; border-color: rgba(198, 207, 220, .35); }
+/* トレジャーの記録（H・N・X）：上のタグと同じ正方形。枠線なし・半透明の背景・文字の光で色を示す */
+.tl { position: absolute; top: 4%; right: 4%; z-index: 3; width: var(--tag-sz); height: var(--tag-sz); display: grid; place-items: center; padding: 0; box-sizing: border-box; font: 700 clamp(.54rem, 23cqw, .82rem)/1 var(--f-tech); border-radius: 3px; background: rgba(3, 5, 11, .55); border: 0; pointer-events: none; }
+.tl-H { color: var(--amber); text-shadow: 0 0 6px var(--amber); }
+.tl-N { color: var(--cyan); text-shadow: 0 0 6px var(--cyan); }
+.tl-X { color: #C6CFDC; }
 .tl.gray { opacity: .3; text-decoration: line-through; text-shadow: none; }
 .cell.last::after { content: ""; position: absolute; inset: 3px; z-index: 2; pointer-events: none;
   background:
