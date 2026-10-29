@@ -21,6 +21,11 @@ function sound(G, pi, tag) {
   A.ctx.groups.forEach((g, i) => {
     const p = G.pieceAt(foe.idx, g.c);
     if (!p) { fail('group-no-piece', { tag, g }); return; }
+    // Stealth hit（v13）のグループ：その個体にそれより前のヒットがあれば、本当は○（merge）。merge の候補があればよい
+    if (g.q && A.ctx.U.some((u) => u.t < g.t && (p.mask & (1 << u.c)))) {
+      if (!g.cands.some((cd) => cd.merge)) fail('truth-missing-merge', { tag, turn: G.turn, cells: p.cells });
+      return;
+    }
     const k = g.cands.findIndex((cd) => cd.mask === p.mask);
     if (k < 0) { fail('truth-missing', { tag, turn: G.turn, shape: p.shape, cells: p.cells, logs: me.kb.logs, occs: me.kb.occs }); return; }
     if (A.joint.exact && !A.joint.inconsistent && A.joint.candW[i][k] <= 0) fail('truth-pruned', { tag, turn: G.turn, shape: p.shape, logs: me.kb.logs, pairs: me.kb.pairs });
