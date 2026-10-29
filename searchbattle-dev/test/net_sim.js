@@ -23,7 +23,7 @@ const PLAYER_KEYS = ['idx', 'name', 'isCPU', 'stock', 'pieces', 'nextId', 'treas
 // ホストにかかわる（ホストが操作した・ホストの盤で起きた）演出の記録で、送ってよい項目
 const EV_BASE = ['type', 'id', 'turn', 'actor', 'owner'];
 const EV_KEYS = {
-  start: ['first'], turn: ['cur'], call: ['c', 'r', 'num'], shield: [], destroy: ['cells', 'size', 'isAdd', 'key', 'cause'],
+  start: ['first'], turn: ['cur'], call: ['c', 'r', 'num'], destroy: ['cells', 'size', 'isAdd', 'key', 'cause'],
   answer: ['cells', 'success'], tchance: ['left', 'max'], treasure: ['c', 'r'], tfail: [], over: ['result'],
   item: ['key', 'rebuy', 'n', 'kind', 'value', 'line', 'index', 'k', 'cell', 'size', 'cat', 'a', 'b', 'same', 'oldCells', 'treasureMoved', 'hit', 'killed'],
 };

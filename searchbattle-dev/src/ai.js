@@ -84,6 +84,10 @@
     const groups = U.filter((k) => k.r === 'oo').map((k) => ({ num: k.num, c: k.c, t: k.t }));
     const oList = U.filter((k) => k.r === 'o').map((k) => ({ c: k.c, t: k.t }));
     let ooMask = 0; for (const g of groups) ooMask |= bit(g.c);
+    // Stealth hit（v13）：◎か○か分からないヒット。「新しい個体の最初の1発（番号のない◎）」か「前に見つかった個体の○」のどちらか。
+    // ◎と同じようにグループを作り、候補に「○だった（merge）」を足す（jointEnumerate で、前のグループの置き方に入っているかを確かめる）。
+    // ooMask には入れない（○だったなら、ほかの個体のマスでもありうるため）
+    for (const k of U) if (k.r === 'q') groups.push({ num: null, c: k.c, t: k.t, q: true });
     let hitMask = 0; for (const u of U) hitMask |= bit(u.c);
     const Ucell = new Map(U.map((u) => [u.c, u]));
 
@@ -142,7 +146,7 @@
     const sizeAllowed = (s) => stockBound[s] > 0 && (counts.size[s] == null || counts.size[s] > 0);
     const catAllowed = (cat) => counts.cat[cat] == null || counts.cat[cat] > 0;
 
-    const groupIndexByNum = new Map(groups.map((g, i) => [g.num, i]));
+    const groupIndexByNum = new Map(groups.filter((g) => !g.q).map((g, i) => [g.num, i]));
 
     // ワープ・アッドで動いた個体の追跡（索敵用の近似）
     const wEnt = [];
@@ -222,17 +226,14 @@
     const add = (P, branch) => {
       const ex = out.get(P.mask);
       if (ex) { if (ex.branches.indexOf(branch) < 0) ex.branches.push(branch); return; }
-      // 全マスに当たっているのに生きている＝ステルス。その最後のヒットより前にステルスが使われていなければありえない
-      let full = (P.mask & ~ctx.hitMask) === 0, lastHit = -1;
-      if (full) {
-        for (const c of P.cells) { const u = ctx.Ucell.get(c); lastHit = Math.max(lastHit, u ? u.t : Infinity); }
-        if (!ctx.stealthTimes.length || ctx.stealthTimes[0] >= lastHit) return;
-      }
+      // 全マスに当たっているのに生きている個体はいない（全マス当たれば撃破される。v13 でステルスの「撃破されない」効果は廃止）
+      const full = false, lastHit = -1;
+      if ((P.mask & ~ctx.hitMask) === 0) return;
       const pr = priorByKey[P.key] || 0.05;
       out.set(P.mask, { mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, branches: [branch], w: pr / ctx.PL[P.key].length, full, lastHit });
     };
     const fa = base | ctx.xMaskAll | ctx.oldMaskAll;
-    // 1マスキューブ（バズーカの破片）は、ステルスで当たっても残っているときだけ◎になりうる
+    // 1マスキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎の個体にはならない（候補は上の「全マス命中」で落ちる）
     const sizes = ctx.fragPossible ? [1, 2, 3, 4, 5] : [2, 3, 4, 5];
     for (const s of sizes) {
       if (s === 1) {
@@ -262,7 +263,14 @@
         add(P, 'w');
       }
     }
-    return Array.from(out.values());
+    const list = Array.from(out.values());
+    // Stealth hit のグループ：「前に見つかった個体の○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
+    // 重みは、新しい個体だった場合の重みの合計と同じ（どちらとも決めない）
+    if (g.q && ctx.groups.some((h) => h !== g && h.t < g.t)) {
+      const wsum = list.reduce((a, cd) => a + cd.w, 0) || 1e-6;
+      list.push({ mask: 0, key: null, size: 0, cat: null, cells: [], branches: ['m'], w: wsum, full: false, lastHit: -1, merge: true });
+    }
+    return list;
   }
 
   // ------------------------------------------------------------------
@@ -290,7 +298,24 @@
     });
 
     function setOwner(mask, v) { let m = mask; while (m) { const lb = m & -m; owner[31 - Math.clz32(lb)] = v; m ^= lb; } }
+    // Stealth hit のグループ（gi）と、そのマス・時刻。merge（○だった）なら、そのマスは前のグループの個体に入っていなければならない
+    const qList = [];
+    G.forEach((g, i) => { if (g.q) qList.push({ gi: i, c: g.c, t: g.t }); });
+    const isMerge = (i) => assign[i] >= 0 && G[i].cands[assign[i]].merge;
     function partialOK(depth, used) {
+      for (const q of qList) {
+        const ow = owner[q.c];
+        if (ow === q.gi) continue;                       // 新しい個体の最初の1発だった
+        if (ow >= 0) { if (tOf[ow] >= q.t) return false; continue; }   // ほかの個体の○：その個体は前に見つかっている
+        if (!isMerge(q.gi)) continue;                    // まだ決めていない
+        let ok = false;
+        for (let d = depth + 1; d < nG && !ok; d++) {
+          const gj = order[d];
+          if (tOf[gj] >= q.t) continue;
+          for (const cd of G[gj].cands) if ((cd.mask & bit(q.c)) && !(cd.mask & used)) { ok = true; break; }
+        }
+        if (!ok) return false;
+      }
       for (const o of oList) {
         const ow = owner[o.c];
         if (ow >= 0) { if (tOf[ow] >= o.t) return false; continue; }
@@ -323,10 +348,13 @@
       return true;
     }
     function finalOK() {
-      if (counts.all != null && nG > counts.all) return false;
+      let nReal = 0;
+      for (let i = 0; i < nG; i++) if (!G[i].cands[assign[i]].merge) nReal++;
+      if (counts.all != null && nReal > counts.all) return false;
       const bySize = {}, byCat = {};
       for (let i = 0; i < nG; i++) {
         const cd = G[i].cands[assign[i]];
+        if (cd.merge) continue;
         bySize[cd.size] = (bySize[cd.size] || 0) + 1;
         byCat[cd.cat] = (byCat[cd.cat] || 0) + 1;
       }
@@ -352,16 +380,6 @@
         if (p.same) { if (oa !== ob) return false; }
         else if (oa >= 0 && oa === ob) return false;
       }
-      // 全マス命中で生きている個体には、それぞれ別の（より前の）ステルスが要る
-      let fulls = null;
-      for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.full) (fulls || (fulls = [])).push(cd.lastHit); }
-      if (fulls) {
-        if (fulls.length > ctx.stealthTimes.length) return false;
-        fulls.sort((a, b) => a - b);
-        // 締め切り（最後のヒット）の早い順に、いちばん早いステルスを割り当てる
-        let j = 0;
-        for (const dl of fulls) { if (j >= ctx.stealthTimes.length || ctx.stealthTimes[j] >= dl) return false; j++; }
-      }
       return true;
     }
     // ノードショットを撃ったときの結果の分布（0＝◎個体のマスではない、1〜4＝つながり0〜3）。撃破済み以外のマス
@@ -384,7 +402,7 @@
         for (const c of probe) { const gi = owner[c]; res.nodeW.get(c)[gi >= 0 ? 1 + nodeDegree(G[gi].cands[assign[gi]].mask, c, ctx.N) : 0] += w; }
         // サーチキューブを使ったときの結果の分布用：◎個体のうち、各マス数・各形状に当てはまる数
         szCnt.fill(0); ctCnt.fill(0);
-        for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; szCnt[cd.size]++; ctCnt[CAT_INDEX[cd.cat]]++; }
+        for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.merge) continue; szCnt[cd.size]++; ctCnt[CAT_INDEX[cd.cat]]++; }
         for (let sz = 2; sz <= 5; sz++) res.qSize[sz][szCnt[sz]] += w;
         for (let ci = 0; ci < CATS.length; ci++) res.qCat[ci][ctCnt[ci]] += w;
         return;
@@ -436,7 +454,6 @@
   function fragCertainCells(ctx, sp) {
     const kb = ctx.kb;
     if (kb.warps.some((w) => w.t > sp.t)) return [];
-    if ((kb.stealths || []).some((x) => x.t > sp.t)) return [];
     // 前にも分解していて、今回撃破したマスがないときは、撃ち込んだのが前の分解の破片（1マス）かもしれない（マス数は伏せられる）。
     // そのときは隣に破片がいるとは限らないので、確定させない（ヒット済みのマスがあれば、破片ではなく2マス以上の個体）
     if (!sp.killedMask && ctx.splits.some((s0) => s0.t < sp.t)) return [];
@@ -482,11 +499,18 @@
     // 確定個体
     const certain = [];
     ctx.groups.forEach((g, i) => {
-      if (g.cands.length === 1) { certain.push({ gi: i, cand: g.cands[0] }); return; }
+      // Stealth hit が新しい個体である見込み（索敵で「見つかった個体の数」に使う）
+      if (g.q) {
+        let wr = 0, wt = 0;
+        g.cands.forEach((cd, k) => { const w = joint.total > 0 ? joint.candW[i][k] : cd.w; wt += w; if (!cd.merge) wr += w; });
+        g.pReal = wt > 0 ? wr / wt : 0.5;
+      }
+      // merge（○だった）は個体ではないので、確定の対象にしない
+      if (g.cands.length === 1) { if (!g.cands[0].merge) certain.push({ gi: i, cand: g.cands[0] }); return; }
       if (joint.exact && !joint.inconsistent) {
         const live = [];
         for (let k = 0; k < g.cands.length; k++) if (joint.candW[i][k] > 0) live.push(k);
-        if (live.length === 1) certain.push({ gi: i, cand: g.cands[live[0]] });
+        if (live.length === 1 && !g.cands[live[0]].merge) certain.push({ gi: i, cand: g.cands[live[0]] });
       }
     });
     // バズーカで分解した個体の、撃ち込んだマスに残った1マスキューブ（撃破もワープもされていなければ確定）
@@ -566,7 +590,7 @@
     const EgSize = { 2: 0, 3: 0, 4: 0, 5: 0 };
     if (joint.total > 0) {
       ctx.groups.forEach((g, i) => {
-        for (let k = 0; k < g.cands.length; k++) EgSize[g.cands[k].size] += joint.candW[i][k] / joint.total;
+        for (let k = 0; k < g.cands.length; k++) if (!g.cands[k].merge) EgSize[g.cands[k].size] += joint.candW[i][k] / joint.total;
       });
     }
     // 位置の分かっている未ヒット個体（サーチシェイプ・トレジャー的中）
@@ -578,7 +602,8 @@
       occPseudo.push({ c: o.c, t: o.t, cat: o.cat || null, size: o.size || 0, deg: o.deg != null ? o.deg : null });
     }
     const relocAlive = ctx.wEnt.length + ctx.addEnt.length;
-    const nG = ctx.groups.length;
+    // 見つかった個体の数（Stealth hit は新しい個体である見込みの分だけ数える）
+    const nG = ctx.groups.reduce((a, g) => a + (g.q ? (g.pReal != null ? g.pReal : 0.5) : 1), 0);
 
     let Etotal;
     let kDist = [1];   // 未発見の個体数の分布（索敵とサーチキューブの見積もり用）
@@ -754,7 +779,7 @@
       const closed = lines.filter((L) => {
         if (L.k == null) return false;
         let m = 0;
-        for (const g of ctx.groups) if (L.mask & bit(g.c)) m++;
+        for (const g of ctx.groups) if ((L.mask & bit(g.c)) && (!g.q || g.pReal >= 0.9999)) m++;
         return m + popcount(ctx.fragMask & L.mask) >= L.k;
       });
       for (const L of closed) for (let c = 0; c < NN; c++) if (L.mask & bit(c)) P[c] = 0;
@@ -947,6 +972,7 @@
       if (game.hasCallable(pi) || !A.ctx.groups.length) return null;
       let best = null, bw = -1;
       A.ctx.groups.forEach((g, i) => g.cands.forEach((cd, k) => {
+        if (cd.merge) return;
         const w = A.joint.total > 0 ? A.joint.candW[i][k] : cd.w;
         if (w > bw) { bw = w; best = cd; }
       }));
@@ -1106,46 +1132,47 @@
     return null;
   }
 
-  // ステルス：使った時機から「どの個体か」を読まれないようにする。
-  //  ・◎を受けた直後の個体には使わない（ステルスはアンサーを防げないので、小さい個体だと読まれてすぐ撃破される）
-  //  ・序盤（1〜3ターン目）に、まだ当たっていない2〜3マスの個体へ先に付けておく（どれにするかは毎回ばらつかせる）
-  //  ・最後の1個体だけは例外（どの個体かは相手も分かっているので、時機から読まれる情報がない）
-  //  when: 'first'＝攻撃アイテムより先に判断、'spare'＝その手番に攻撃アイテムを使わなかったとき
-  //  mode: 'early1'（既定：1〜3ターン目の手番のはじめ）／'early'（攻撃アイテムを使わなかった手番だけ）
-  //        'reactive'（v10までの「あと1マスで撃破」の個体に使う方針。比較用）／'none'
-  //  測定（各600局）：early1 は early より勝率 +5.5（予選）／+9.8（決勝）
+  // ステルス（v13）：付けたキューブに相手のコールが当たると「Stealth hit」になり、◎か○かを伏せる（1回で解除）。
+  //  盤に◎がまだないときに当たると「新しい個体の最初の1発」としか読めないので、相手が自分のキューブを見つけてから付ける。
+  //  mode（policy.stealth）：
+  //   'found'（既定）：相手の◎（または Stealth hit）が自分のフィールドに1つ以上あるとき、まだ当たっていないキューブに付ける
+  //   'hit'：すでに当たっているキューブ（まだ撃破されていない）に付ける（次のヒットは本当は○だが、新しい個体かもしれないと思わせる）
+  //   'early1'：v12までと同じ「1〜3ターン目に、まだ当たっていない2・3マスのキューブ」（比較用）／'none'：使わない
+  //  stealthPick：'rand'（既定）／'big'（いちばん大きい）／'near'（当たっているキューブの隣。○と見分けにくい）
+  //  最後の1個体には、どの方針でも先に付ける
   function chooseStealth(game, pi, when) {
     const pol = policy[pi] || {};
-    const mode = pol.stealth || 'early1';
+    const mode = pol.stealth || 'found';
     const living = game.living(pi);
     const open = living.filter((p) => !p.stealth);
     if (!open.length || mode === 'none') return null;
-    if (mode === 'reactive') {
-      // v10までの方針（比較用）：あと1マスで撃破される個体か、最後の1個体
-      if (when !== 'first') return null;
-      const livingReal = living.filter((p) => !p.isAdd);
-      let best = null, bestV = 0;
-      for (const p of open) {
-        const hitsLeft = p.size - popcount(p.hitMask);
-        const v = (hitsLeft <= 1 ? 2 : 0) + (livingReal.length === 1 ? 1.5 : 0) + p.size * 0.1;
-        if (v >= 1.5 && v > bestV) { bestV = v; best = p; }
-      }
-      return best;
+    if (when !== 'first') return null;
+    if (living.length === 1 && !living[0].stealth) return living[0];
+    let cand;
+    if (mode === 'early1') {
+      if (game.turn < 1 || game.turn > 3) return null;
+      cand = open.filter((p) => !p.hitMask && p.size >= 2 && p.size <= 3);
+    } else {
+      // 相手がもう自分のキューブを見つけているか（生きているキューブにヒットがある）
+      const found = living.some((p) => p.hitMask);
+      if (!found) return null;
+      cand = mode === 'hit' ? open.filter((p) => p.hitMask && p.hitMask !== p.mask) : open.filter((p) => !p.hitMask && p.size >= 2);
     }
-    if (when === 'first' && living.length === 1 && !living[0].stealth) return living[0];
-    const from = pol.stealthFrom || 1, until = pol.stealthTurn || 3;
-    if (game.turn < from || game.turn > until) return null;
-    let cand = open.filter((p) => !p.hitMask && p.size >= 2 && p.size <= 3);
     if (!cand.length) return null;
-    // stealthPick：'rand'（既定）／'big'（いちばん大きい個体）／'small'（いちばん小さい個体）
-    if (pol.stealthPick === 'big' || pol.stealthPick === 'small') {
-      const target = pol.stealthPick === 'big' ? Math.max(...cand.map((p) => p.size)) : Math.min(...cand.map((p) => p.size));
+    if (pol.stealthPick === 'big') {
+      const target = Math.max(...cand.map((p) => p.size));
       cand = cand.filter((p) => p.size === target);
+    } else if (pol.stealthPick === 'near') {
+      const N = game.N;
+      let hitCells = 0;
+      for (const p of living) hitCells |= p.hitMask;
+      const near = cand.filter((p) => p.cells.some((c) => {
+        const r = Math.floor(c / N), cc = c % N;
+        return [[r - 1, cc], [r + 1, cc], [r, cc - 1], [r, cc + 1]].some(([y, x]) => y >= 0 && y < N && x >= 0 && x < N && (hitCells & bit(y * N + x)));
+      }));
+      if (near.length) cand = near;
     }
-    const pick = cand[Math.floor(game.rng() * cand.length)];
-    if (mode === 'early' && when === 'spare') return pick;
-    if (mode === 'early1' && when === 'first') return pick;
-    return null;
+    return cand[Math.floor(game.rng() * cand.length)];
   }
 
   // 攻撃用アイテム（相手フィールドに使うもの）

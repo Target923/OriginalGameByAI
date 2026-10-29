@@ -35,7 +35,8 @@
   // 状態の形が変わったら上げる（公開ページの更新時に、古い対戦を新しいルールで再開しないため）
   // 20：v12.16 スピードペナルティ自滅点化＆アンサー失敗で手番即終了
   // 21：v12.17 Z字（Z4・Z5・S5）を追加
-  const VERSION = 21;
+  // 22：v13 ステルスを作り直し（当たると「Stealth hit」。◎か○かを伏せる）
+  const VERSION = 22;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -46,7 +47,7 @@
     node: { name: 'ノードショット', desc: '指定した1マスで、同じ個体のマスが上下左右にいくつつながっているか（0〜3）を調べる（空きマスならNoData）' },
     bazooka: { name: 'バズーカ', desc: '指定した1マスの個体を1マスキューブに分解する（ステルスでも分解し、ステルスは解除）。ヒット済みのマスはその場で撃破。空きマスならNoData' },
     warp: { name: 'ワープ', desc: '自分の個体1つを空きマスへ移動する' },
-    stealth: { name: 'ステルス', desc: '自分のキューブを1つ選ぶ。全マスに当たっても自動では撃破されず、アンサーでしか撃破できない' },
+    stealth: { name: 'ステルス', desc: '自分のキューブを1つ選ぶ。そのキューブに相手のコールが当たると、◎か○かを伏せた「Stealth hit」になる（1回で解除）' },
   };
 
   function bit(c) { return 1 << c; }
@@ -491,7 +492,19 @@
       const first = p.hitMask === 0;
       p.hitMask |= bit(c);
       (p.hitOrder || (p.hitOrder = [])).push(c);
-      if (first) {
+      if (p.stealth) {
+        // ステルス（v13）：このキューブへの通常コールのヒットは「Stealth hit」になり、◎か○かを伏せる。1回で解除。
+        //  ・最初のヒットでも◎の番号を使わない（使うと、ほかの個体の◎の番号が飛んで正体がばれる）
+        //  ・最初のヒットがステルスなら、このキューブのその後のヒットは○（最後まで◎が出ない）。
+        //    hitMask が 0 でなくなるので、次からは自然に○になる
+        //  相手から見ると「新しい個体の最初の1発」か「すでに見つかった個体の○」か区別できない
+        p.stealth = false;
+        p.stealthHit = { c, t, first };
+        v.marks[c] = { r: 'q', t };
+        me.kb.calls.push({ c, t, r: 'q' });
+        res = { r: 'q' };
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → Stealth hit`, null, 'hit');
+      } else if (first) {
         v.oo += 1;
         p.oonums.push(v.oo);
         v.marks[c] = { r: 'oo', num: v.oo, t };
@@ -505,10 +518,8 @@
         this._log(pi, `${me.name}：${this.coord(c)}をコール → ○`, null, 'hit');
       }
       this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num });
-      if (p.hitMask === p.mask && p.stealth) {
-        // ステルス：全マスに当たっても撃破されない（相手には何も伝わらない）
-        this._emit({ type: 'shield', owner: foe.idx, cells: p.cells.slice() });
-      } else if (p.hitMask === p.mask) {
+      // 全マスに当たったら撃破（v13 でステルスの「全マス当たっても撃破されない」効果は廃止）
+      if (p.hitMask === p.mask) {
         this._destroy(p, 'destroy');
         res.destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
         this._log(pi, `${me.name}：${pieceName(p)}を撃破（${coordList(p.cells, this.N)}）`, null, 'kill');

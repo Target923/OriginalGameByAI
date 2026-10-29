@@ -169,6 +169,8 @@
     oo: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7.6"/><path d="M20 2.6v5M20 32.4v5M2.6 20h5M32.4 20h5"/></svg>',
     o: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12.6"/><circle cx="20" cy="20" r="2.3" class="dot"/></svg>',
     x: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><path d="M13 13 27 27M27 13 13 27"/></svg>',
+    // Stealth hit（v13。ユーザーのデザイン）：◎の二重丸に○の中心の点を重ね、飛び出した線は真上から120度おきに3本。色はミディアムターコイズ
+    q: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7.6"/><circle cx="20" cy="20" r="2.3" class="dot"/><path d="M20 2.6v5M35.07 28.7 30.74 26.2M4.93 28.7 9.26 26.2"/></svg>',
     gem: '<svg class="gem" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 33 15 20 36 7 15z"/><path class="facet" d="M7 15h26M14 15l6 21 6-21M14 15l6-11 6 11"/></svg>',
     add: '<svg class="mk mk-add" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 13v14M13 20h14"/></svg>',
   };
@@ -563,7 +565,7 @@
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ' Stealth hit' : ' ○';
       label += probeLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
@@ -682,7 +684,7 @@
       case 'answer-phase': return who + (g.itemUsed ? 'アンサーするか、ターンエンドしてください' : 'アンサー・アイテム・ターンエンドから選んでください');
       case 'answer': return who + '相手フィールドで、個体の全マスを選んでください';
       case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのマスを1つ選んでください`;
-      case 'stealth-pick': return who + 'ステルス：守る自分のキューブを選んでください';
+      case 'stealth-pick': return who + 'ステルス：付ける自分のキューブを選んでください';
       case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選んでください';
       case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
       case 'number': return who + 'サーチサイズ：相手フィールドで調べるマスを選んでください';
@@ -769,7 +771,7 @@
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', '守る自分のキューブを選んでください。全マスに当たっても撃破されず、アンサーでしか倒せません。どれにしたかは相手に伝わりません。');
+        main = itemHead('stealth', 'ステルスを付ける自分のキューブを選んでください。そのキューブに相手のコールが当たると、◎か○かを伏せた「Stealth hit」になります（1回で解除）。どれにしたかは相手に伝わりません。');
         acts = cancel;
         break;
       case 'treasure':
@@ -944,6 +946,7 @@
               <li><span class="lg ink-oo">${MARK.oo}</span>ファーストヒット</li>
               <li><span class="lg ink-o">${MARK.o}</span>ヒット</li>
               <li><span class="lg ink-x">${MARK.x}</span>ノットヒット</li>
+              <li><span class="lg ink-q">${MARK.q}</span>ステルスヒット</li>
               <li><span class="tlg">N</span>トレジャーのニア</li>
             </ul>
           </div>
@@ -1263,14 +1266,14 @@
         </ol>
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
         <p><b>キューブの質感</b>：キューブには、色ごとに違う素材の質感（御影石・コンクリート・トラバーチン・ヘアライン・大理石・木目・スレート・テラゾー）を薄く重ねています。色が見分けにくくても、質感でどの個体かが分かります。</p>
-        <p><b>回答</b>：◎＝その個体への最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない。全マスをコールされた個体は撃破されます。</p>
+        <p><b>回答</b>：◎＝その個体への最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝Stealth hit（ステルスを付けたキューブへのヒット。◎か○かは伏せられ、番号も付きません）。全マスをコールされた個体は撃破されます。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
         <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2マス×5・3マス×4・4マス×3・5マス×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破した個体のマス数を相手から奪います（アンサー失敗で差し出した個体も）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2マス1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
         <h3 class="legend-h">攻撃アイテム（相手フィールドに作用）</h3>
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは、全マスに当たっても撃破されず、アンサーでしか撃破できません（どのキューブかは相手に伝わりません）。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスを付けたキューブに相手のコールが当たると、結果は◎でも○でもなく「Stealth hit」になります（1回で解除。どのキューブに付けたかは相手に伝わりません）。それがそのキューブへの最初のヒットだったときは、その後のヒットは○になり、◎は最後まで出ません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -1808,6 +1811,7 @@
   const FX = (function () {
     const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF';
+    const QT = '#48D1CC';   // Stealth hit（ミディアムターコイズ）
     const METAL = ['#F3F7FC', '#B8C3D4', '#6E7A8F', '#D3DCE8'];
     let cv = null, cx = null, dpr = 1, raf = 0;
     const parts = [];
@@ -2201,20 +2205,8 @@
           text(bc.x, bc.y, mine ? 'TREASURE 失敗' : `${g.players[ev.actor].name}：TREASURE 失敗`, 'miss', 1500);
           return 700 * k;
         }
-        case 'shield': {
-          // ステルスが自動撃破を防いだ。持ち主にだけ見せる（攻めた側には何も伝えない）
-          if (ev.owner !== v) return 0;
-          SND.sfx('shield', 0, { pan: panOf(ev.owner, v) });
-          const els = ev.cells.map((c) => cellOf(ev.owner, c)).filter(Boolean);
-          if (!els.length) return 0;
-          let sx = 0, sy = 0;
-          for (const el of els) { const p = ctr(el); sx += p.x; sy += p.y; over(el, 'cloak', '', 1100); }
-          ring(sx / els.length, sy / els.length, CY, 8, 70 + els.length * 18, 900, 3);
-          text(sx / els.length, sy / els.length, 'STEALTH GUARD', 'count', 1500);
-          return 1000 * k;
-        }
         case 'call': {
-          SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' ? 'hit' : 'first', 0, { pan: panOf(ev.owner, v) });
+          SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' ? 'hit' : ev.r === 'q' ? 'shield' : 'first', 0, { pan: panOf(ev.owner, v) });
           const el = cellOf(ev.owner, ev.c);
           if (!el) return 0;
           const p = ctr(el);
@@ -2223,6 +2215,15 @@
             sparks(p.x, p.y, ST, 5, 0.5);
             text(p.x, p.y - p.h * 0.55, 'NO HIT', 'miss', 1200);
             return 650 * k;
+          }
+          if (ev.r === 'q') {
+            // Stealth hit：◎か○かを伏せたヒット。ターコイズの輪と文字だけで見せる（番号は出さない）
+            over(el, 'impact', '', 520);
+            sparks(p.x, p.y, QT, 16, 1.1, 0.5);
+            ring(p.x, p.y, QT, p.w * 0.12, p.w * 1.2, 700, 2.5);
+            text(p.x, p.y - p.h * 0.6, 'Stealth hit', 'stealth', 1400);
+            shake(1);
+            return 880 * k;
           }
           if (ev.r === 'o') {
             over(el, 'impact', '', 520);

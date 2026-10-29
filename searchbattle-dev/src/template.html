@@ -366,10 +366,14 @@ h1, h2, h3 { text-wrap: balance; }
 .mk { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; overflow: visible; }
 /* マークの影：自分フィールドのキューブ（とくにミント・シアンなど明るい色）の上でもマークが溶けないように、
    少し下へ落とす薄い影を付ける。そのあとに各マークの色の光を重ねる（暗い相手フィールドでは影は見えず、見た目は変わらない） */
-.mkw { --mk-shadow: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .9)); }
+/* 変数は :root に置く（マスの外の凡例 .lg でも使うため。未定義だと filter ごと無効になり、光も消える） */
+:root { --mk-shadow: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .9)); }
 .ink-oo { color: var(--magenta); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--magenta)); }
 .ink-o { color: var(--hit); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--hit)); }
 .ink-o .dot { fill: currentColor; stroke: none; }
+/* Stealth hit（v13）：◎か○かを伏せたヒット。ミディアムターコイズ */
+.ink-q { color: #48D1CC; filter: var(--mk-shadow) drop-shadow(0 0 4px #48D1CC); }
+.ink-q .dot { fill: currentColor; stroke: none; }
 .ink-x { color: var(--steel-2); opacity: .82; filter: var(--mk-shadow); }
 .ink-x .mk { stroke-width: 2.4; }
 /* 再コールできる×は、線はそのままで薄く */
@@ -803,6 +807,7 @@ body.replaying #app { display: none; }
   animation: fxrise 1.25s cubic-bezier(.2, .8, .2, 1) forwards; text-shadow: 0 0 10px currentColor; }
 .fx-text.first { color: var(--magenta); font-size: clamp(1rem, 2.8vw, 1.5rem); }
 .fx-text.hit { color: var(--hit); }
+.fx-text.stealth { color: #48D1CC; }
 .fx-text.miss { color: var(--steel-2); font-size: .82rem; text-shadow: none; }
 .fx-text.kill { color: #fff; font-size: clamp(1.4rem, 4.4vw, 2.3rem); text-shadow: 0 0 14px var(--magenta), 0 0 30px var(--magenta); animation-duration: 1.5s; }
 .fx-text.gold { color: var(--amber); font-size: clamp(1.1rem, 3vw, 1.6rem); }

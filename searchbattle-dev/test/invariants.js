@@ -54,7 +54,7 @@ function check(G, tag) {
         if (m && m.r === 'x' && !m.callable) fail('unhittable', { tag, c: G.coord(c), piece: p.cells.map((x) => G.coord(x)), mark: m });
         if (fv.dead[c]) fail('dead-on-live', { tag, c });
         const hit = !!(p.hitMask & (1 << c));
-        const hm = m && (m.r === 'o' || m.r === 'oo');
+        const hm = m && (m.r === 'o' || m.r === 'oo' || m.r === 'q');   // q＝Stealth hit（v13）
         if (hit !== !!hm) fail('hit-mark', { tag, c: G.coord(c), hit, m });
       }
     }
