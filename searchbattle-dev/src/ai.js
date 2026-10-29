@@ -1350,39 +1350,76 @@
     return living[0].id;
   }
 
-  // 配置：置けるキューブ（大会では試合ごとに減る）の中から、置くマス数の組み合わせを選ぶ
-  // 1試合（大会でない）の型：3・4マス中心の強い組み合わせから抽選する（v12.13。それまでは2・3・4、2・3・5 など
-  // 3個前後・9マスくらいの型で、測ると弱かった）。SINGLE_FIVE_P の確率で、5マス入りの型から選ぶ
-  const SINGLE_TEMPLATES = {
-    4: [[[2, 3, 3, 4, 4], 40], [[3, 3, 4, 4], 30], [[2, 2, 3, 3, 4], 15], [[3, 3, 3, 4], 15]],
-    5: [[[3, 3, 3, 3, 4, 4, 4], 50], [[2, 3, 3, 3, 4, 4, 4], 30], [[2, 2, 3, 3, 4, 4, 4], 10], [[3, 3, 3, 4, 4, 4], 10]],
+  // ------------------------------------------------------------------
+  // 置くキューブの決め方（v12.17の後。それまでは「型」を重みつきで抽選していた）
+  //  性格ごと・試合ごとに、2つの確率を持つ（表 SETUP_PROB。数は割合（%）で、合計が100でなくても比で使う）：
+  //   count：何個置くか（例：{ 4: 50, 5: 50 } ＝ 4個が50%・5個が50%）
+  //   size ：1個ごとに、何マスのキューブにするか（例：{ 2: 15, 3: 45, 4: 35, 5: 5 }）
+  //  決め方：まず個数を抽選し、1個ずつマス数を抽選する。手持ちにないマス数・盤（cap マス）に入らないマス数は除いて抽選し直す。
+  //   残りの個数ぶん（2マスずつ）の場所を残して選ぶので、決めた個数をできるだけそのまま置ける（大きいキューブばかりで止まらない）。
+  //   割合のあるマス数がどれも置けないときは、2マス → 5マスの順で埋める（3・4マスを使い切った堅実型が5マスばかり置かないように）。
+  //   何も置けなくなったら、その数で止める
+  //  決まった組み合わせだと読まれるので、抽選で幅を持たせる（ユーザーの希望）。
+  //  強さの目安（v12.13、Z字の前）：3・4マスが強く、2・5マスは弱い。Z字（v12.17）で5マスは4マスに化けられるようになった
+  //  1試合モード（大会でない）のCPUは、標準の性格の表を使う（4×4＝予選、5×5＝決勝）
+  // ------------------------------------------------------------------
+  const SETUP_PROB = {
+    // 標準（あなたの席の自動配置・性格なし）と、アイテム浪費型（置き方は標準と同じ）
+    std: {
+      prelim: { count: { 4: 50, 5: 50 }, size: { 2: 15, 3: 45, 4: 34, 5: 6 } },
+      final: { count: { 6: 50, 7: 50 }, size: { 2: 5, 3: 40, 4: 45, 5: 10 } },
+    },
+    // 物量型：個数を多く、2マスも使って盤面を埋める。5マスも多め
+    mass: {
+      prelim: { count: { 4: 15, 5: 45, 6: 40 }, size: { 2: 35, 3: 34, 4: 21, 5: 10 } },
+      final: { count: { 6: 70, 7: 30 }, size: { 2: 3, 3: 37, 4: 44, 5: 16 } },
+    },
+    // キューブ温存型：1・2試合目は2マスを3個だけ（3・4マスを残す）。3試合目から使い、決勝は5マスを多く出す
+    save: {
+      prelim: { count: { 4: 50, 5: 50 }, size: { 2: 15, 3: 44, 4: 31, 5: 10 } },
+      prelimByRound: { 0: { count: { 3: 100 }, size: { 2: 85, 3: 14, 4: 0, 5: 1 } }, 1: { count: { 3: 100 }, size: { 2: 85, 3: 14, 4: 0, 5: 1 } } },
+      final: { count: { 6: 80, 7: 20 }, size: { 2: 2, 3: 34, 4: 43, 5: 21 } },
+    },
+    // 堅実型：3・4マスで4個（2マスは使わない）
+    steady: {
+      prelim: { count: { 4: 100 }, size: { 2: 0, 3: 52, 4: 44, 5: 4 } },
+      final: { count: { 6: 40, 7: 60 }, size: { 2: 5, 3: 43, 4: 44, 5: 8 } },
+    },
   };
-  const SINGLE_FIVE = { 4: [[[3, 3, 4, 5], 1], [[2, 2, 3, 4, 5], 1]], 5: [[[2, 3, 3, 3, 4, 4, 5], 1], [[2, 2, 3, 3, 4, 4, 5], 1]] };
-  const SINGLE_FIVE_P = { 4: 0.20, 5: 0.50 };
-  function setupSizes(game, pi) {
-    const N = game.N, rng = game.rng;
-    const left = {}; for (const s of [2, 3, 4, 5]) left[s] = Math.max(0, game.stockLeft(pi, s));
-    const fits = (list) => { const need = {}; for (const s of list) need[s] = (need[s] || 0) + 1; return Object.keys(need).every((s) => need[s] <= left[s]); };
-    const five = (SINGLE_FIVE[N] || []).filter((t) => fits(t[0]));
-    const fiveP = (typeof SINGLE_FIVE_P === 'object' ? SINGLE_FIVE_P[N] : SINGLE_FIVE_P) || 0.05;
-    let templates = rng() < fiveP && five.length ? five : (SINGLE_TEMPLATES[N] || []).filter((t) => fits(t[0]));
-    if (templates.length) {
-      let tot = 0; for (const t of templates) tot += t[1];
-      let r = rng() * tot;
-      for (const t of templates) { r -= t[1]; if (r <= 0) return t[0].slice(); }
-      return templates[0][0].slice();
-    }
-    // 手持ちが偏っているとき：好みの順にマス数を足していく（4×4は15マス、5×5は23マスくらいまで）
-    const target = N === 4 ? 15 : 23;
-    const pref = N === 4 ? [3, 4, 2, 5] : [4, 3, 2, 5];
+  SETUP_PROB.items = SETUP_PROB.std;
+  const SETUP_CAP = { prelim: 16, final: 24 };   // 置くマスの上限（4×4は16マス、5×5は24マス＝1マスは空ける）
+
+  // 割合の表から1つ選ぶ（keys に入っているものだけ。割合が0のものは選ばない）
+  function pickWeighted(table, keys, rng) {
+    let tot = 0; for (const k of keys) tot += Math.max(0, table[k] || 0);
+    if (tot <= 0) return null;
+    let r = rng() * tot;
+    for (const k of keys) { r -= Math.max(0, table[k] || 0); if (r < 0) return +k; }
+    return +keys[keys.length - 1];
+  }
+  // spec（count・size）から、置くマス数の並びを決める。stock：置けるキューブの数、cap：マスの上限
+  function drawSizes(spec, stock, cap, rng) {
+    const left = {}; for (const s of [2, 3, 4, 5]) left[s] = Math.max(0, stock[s] | 0);
+    const K = pickWeighted(spec.count, Object.keys(spec.count), rng) || 0;
     const list = []; let cells = 0;
-    for (let guard = 0; guard < 12; guard++) {
-      const s = pref.find((x) => left[x] > 0 && cells + x <= target + 1);
-      if (!s) break;
+    for (let i = 0; i < K; i++) {
+      // 残りの個数ぶん（少なくとも2マスずつ）の場所を残す（「何個置くか」をできるだけ守るため。大きいキューブばかりで止まらない）
+      const rest = 2 * (K - i - 1);
+      let can = [2, 3, 4, 5].filter((s) => left[s] > 0 && cells + s + rest <= cap);
+      if (!can.length) can = [2, 3, 4, 5].filter((s) => left[s] > 0 && cells + s <= cap);
+      if (!can.length) break;
+      let s = pickWeighted(spec.size, can.filter((x) => (spec.size[x] || 0) > 0), rng);
+      if (s == null) s = can.indexOf(2) >= 0 ? 2 : can.indexOf(5) >= 0 ? 5 : can[0];
       list.push(s); left[s]--; cells += s;
     }
-    if (!list.length) { const s = [2, 3, 4, 5].find((x) => left[x] > 0); if (s) list.push(s); }
+    if (!list.length) { const s = [2, 3, 4, 5].find((x) => left[x] > 0 && x <= cap); if (s) list.push(s); }
     return list.sort((a, b) => a - b);
+  }
+  // 1試合モード：標準の表で、手持ち（1試合でも数に限りがある）から選ぶ
+  function setupSizes(game, pi) {
+    const kind = game.N === 4 ? 'prelim' : 'final';
+    const stock = {}; for (const s of [2, 3, 4, 5]) stock[s] = game.stockLeft(pi, s);
+    return drawSizes(SETUP_PROB.std[kind], stock, SETUP_CAP[kind], game.rng);
   }
 
   // 置き方の評価（小さいほどよい）。layout：
@@ -1462,145 +1499,37 @@
   }
 
   // ------------------------------------------------------------------
-  // 大会の配置の方針：どのキューブを何個・どう置くか（残りのキューブ・試合の残りから決める）
-  //  ・強さを決めるのはキューブのマス数の内訳（v12.13で測り直し。CPUどうし、tools/comp_duel.js）。
-  //    3・4マスが強く、2・5マスが弱い。2マスは当たるとすぐ形が決まり、5マスは置き方が少なく大きな的になる。
-  //    予選4×4の総当たり（11通り）の平均勝率：2・3・3・4・4 67%・3・3・4・4 64%・3・3・3・4 56%・2・2・3・3・4 54%・
-  //    2・2・2・3・3・4 53% … 2・2・2・3・3 39%（v12.12までの標準）。決勝5×5でも 3・3・4・4・4 が 2・3・4・4・5 に69%勝ち、
-  //    5マスを足すと下がる（3・4・4・5・5 は39%）。以前の「個体の数がいちばん効く」は、3個前後の置き方と比べたときの話だった
-  //  ・3・4マスは合わせて7個しかない。予選で使うか決勝に残すかが性格の違いになる
-  //  ・型（好みの順 seq・個数 K）を重み w で抽選する。決まった組み合わせだと読まれるため（v12.13）。
-  //    five の確率で5マスを先頭に足す（5マスを数%だけ置く）
+  // 大会の配置の方針：どのキューブを何個・どう置くか（性格・試合・残りのキューブから決める）
+  //  ・何個・何マスを置くかは、性格ごとの確率の表 SETUP_PROB で抽選する（上の「置くキューブの決め方」）
+  //  ・3・4マスは大会で合わせて7個しかない。予選で使うか決勝に残すかが性格の違いになる
   //  ・置き方：盤の80%以上を埋めるときは個体をくっつけ、それより少ないときは離して外周に寄せる（layout 'auto'）。
   //    3・3・4・4 は、くっつけて72%・離して64%（2・2・2・3・3 に対して）。2・2・3 をくっつけると28%（離せば55%）
-  //  ・試した上で使わないもの：予選3試合目に下位なら個体を増やす（adapt）、ワープの逃げ場を残す置き方（layout 'room'。差なし）、
-  //    決勝で1個を手元に残して組み合わせを隠す（finalHide。個体が減る分の方が大きい）
   //  ・決勝の盤面が厚いと考える時間が延びる（7個体どうしで1試合平均3.5秒・1手番最大2.8秒、6個体どうしなら1.5秒・0.8秒）
   // ------------------------------------------------------------------
-  // 好みの順（seq）に、置けるキューブを count 個まで・cap マスまで選ぶ（足りなければ seq の先へ進む）
-  function pickSeq(stock, seq, count, cap) {
-    const left = Object.assign({}, stock);
-    const list = []; let cells = 0;
-    for (const s of seq) {
-      if (list.length >= count) break;
-      if ((left[s] | 0) <= 0 || cells + s > cap) continue;
-      list.push(s); left[s]--; cells += s;
-    }
-    return list.sort((a, b) => a - b);
-  }
-  function pickPlan(list, rng) {
-    let tot = 0; for (const p of list) tot += p.w;
-    let r = rng() * tot;
-    for (const p of list) { r -= p.w; if (r < 0) return p; }
-    return list[list.length - 1];
-  }
   // 置き方の抽選に使う乱数。rng を渡さなければ、その大会・その人・その試合で決まる（シミュレーター・見本・テストで再現できる）
   function planRng(T, id, kind) {
     const P = T.players[id] || {};
     let h = (Math.floor((P.lotto || 0) * 4294967296) >>> 0) ^ Math.imul((T.round | 0) + 7, 0x9E3779B1) ^ Math.imul(id + 3, 0x85EBCA77) ^ (kind === 'final' ? 0x27D4EB2F : 0x165667B1);
     return function () { h |= 0; h = h + 0x6D2B79F5 | 0; let t = Math.imul(h ^ h >>> 15, 1 | h); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   }
-  // 型：w＝選ぶ重み、seq＝好みの順（3・4マスが足りなければ先へ進み、2マス・5マスで埋める）、K＝個数の上限
-  const PLAN_STD_PRELIM = [
-    { w: 40, seq: [3, 4, 3, 4, 2, 3, 4, 3, 2, 2, 2, 2, 5, 5], K: 5 },   // 2・3・3・4・4（16マス）
-    { w: 25, seq: [3, 4, 3, 4, 3, 4, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・4・4（14マス）
-    { w: 20, seq: [2, 3, 4, 3, 2, 4, 3, 4, 3, 2, 2, 2, 5, 5], K: 5 },   // 2・2・3・3・4（14マス）
-    { w: 15, seq: [3, 3, 3, 4, 4, 3, 4, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・3・4（13マス）
-  ];
-  // 決勝5×5の総当たり（5通り）の平均勝率：3・3・3・3・4・4・4 62%・2・3・3・3・4・4・4 58%・2・2・3・3・4・4・5 48%（v12.12までの選び方）・
-  // 3・3・3・4・4・4 42%・3・3・4・4・4 40%。5×5では3・4マスどうしなら個数も効く
-  const PLAN_STD_FINAL = [
-    { w: 55, seq: [4, 3, 4, 3, 4, 3, 3, 2, 2, 2, 2, 2, 5, 5], K: 7 },   // 3・3・3・3・4・4・4（24マス）
-    { w: 30, seq: [4, 3, 4, 3, 4, 3, 2, 3, 2, 2, 2, 2, 5, 5], K: 7 },   // 2・3・3・3・4・4・4（23マス）
-    { w: 15, seq: [4, 3, 4, 3, 4, 2, 2, 3, 3, 2, 2, 2, 5, 5], K: 7 },   // 2・2・3・3・4・4・4（22マス）
-  ];
-  const TOUR_SETUP = {
-    prelim: PLAN_STD_PRELIM, final: PLAN_STD_FINAL, prelimByRound: null, prelimCap: 16, finalCap: 24,
-    prelimFive: 0.20, finalFive: 0.50, five: 0.20,
-    // 実験用：prelimSeq（と prelimK）／finalSeq（と finalK）を渡すと、型を抽選せずにその順で選ぶ。byRound＝試合ごとの個数
-    prelimSeq: null, prelimK: 5, finalSeq: null, finalK: 7, byRound: null,
-    finalHide: false, finalHideMin: 4, adapt: false, pushWhen: 'behind', swing: 17, pushK: 6, pushCap: 16, layout: 'auto', denseAt: 0.8,
-  };
-  // CPUの性格ごとの置き方（標準の TOUR_SETUP に重ねる）
-  //  mass（物量型）：盤面を埋める（2・3・3・4・4 か、2・2・2・3・3・4 など6個体。16マスまで）。Z型導入で5マスも積極的に投入（予選30%・決勝70%）
-  //  save（温存型）：1・2試合目は2マス中心で温存（5%）。3試合目は解禁（30%）、決勝は温存した5マスをフル投入（80%）
-  //  steady（堅実型）：3・4マス中心だがZ5ブラフを適度に活用（予選15%・決勝40%）
-  //  items（アイテム浪費型）：置き方は標準（予選20%・決勝50%）。アイテムを惜しまず使う（下の PERSONA_ITEMS）
-  const PLAN_SAVE_EARLY = [
-    { w: 50, seq: [2, 2, 2, 2, 2, 3, 4, 3, 4, 3, 3, 4, 5, 5], K: 3 },   // 2・2・2（6マス）
-    { w: 50, seq: [2, 2, 3, 2, 2, 2, 4, 3, 4, 3, 3, 4, 5, 5], K: 3 },   // 2・2・3（7マス）
-  ];
-  const PERSONA_SETUP = {
-    mass: { prelimFive: 0.30, finalFive: 0.70, five: 0.30, prelim: [
-      { w: 50, seq: [3, 4, 3, 4, 2, 2, 3, 4, 3, 2, 2, 2, 5, 5], K: 6 },   // 2・3・3・4・4（16マス）
-      { w: 35, seq: [2, 3, 2, 3, 2, 4, 3, 4, 2, 3, 4, 2, 5, 5], K: 6 },   // 2・2・2・3・3・4（16マス）
-      { w: 15, seq: [2, 2, 2, 2, 3, 3, 4, 3, 4, 3, 4, 2, 5, 5], K: 6 },   // 2・2・2・2・3・3（14マス）
-    ] },
-    save: {
-      prelimFive: 0.30, finalFive: 0.80, five: 0.30,
-      prelimByRound: { 0: PLAN_SAVE_EARLY, 1: PLAN_SAVE_EARLY },
-      fiveByRound: { 0: 0.05, 1: 0.05, 2: 0.30 },
-    },
-    steady: {
-      prelimFive: 0.15, finalFive: 0.40, five: 0.15,
-      prelim: [
-        { w: 60, seq: [3, 4, 3, 4, 3, 4, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・4・4（14マス）
-        { w: 25, seq: [3, 3, 3, 4, 4, 3, 4, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・3・3・4（13マス）
-        { w: 15, seq: [4, 4, 3, 4, 3, 3, 3, 2, 2, 2, 2, 2, 5, 5], K: 4 },   // 3・4・4・4（15マス）
-      ],
-    },
-    items: {},
-  };
-  // 3試合目の前に、1個増やして勝ちにいくか。when：
-  //  'behind'＝3位以下（予選通過圏の外）／'edge'＝3位以下か、2位で3位との差が swing 未満／'notSafeTop'＝首位で2位に swing 以上の差があるとき以外
-  function needPush(T, id, swing, when) {
-    const st = E.Tour.standings(T);
-    const rank = st.findIndex((x) => x.id === id);
-    const tot = (k) => E.Tour.total(T.players[st[k].id]);
-    if (when === 'behind') return rank >= 2;
-    if (when === 'edge') return rank >= 2 || (rank === 1 && tot(1) - tot(2) < swing);
-    return !(rank === 0 && tot(0) - tot(1) >= swing);
+  // その人・その試合の確率の表（性格の表に、実験用の上書き policy.tourSetup[id]・opt を重ねる）
+  function setupSpec(T, id, kind, opt) {
+    const persona = (E.Tour.persona ? E.Tour.persona(T, id) : null) || 'std';
+    const base = SETUP_PROB[persona] || SETUP_PROB.std;
+    const o = Object.assign({}, base, (policy.tourSetup && policy.tourSetup[id]) || {}, opt || {});
+    if (kind === 'final') return o.final;
+    return (o.prelimByRound && o.prelimByRound[T.round]) || o.prelim;
   }
   // rngArg：抽選に使う乱数（あなたの「自動配置」は押すたびに変えたいので Math.random を渡す）
   function tourSetupPlan(T, id, kind, opt, rngArg) {
-    const persona = E.Tour.persona ? E.Tour.persona(T, id) : null;
-    const o = Object.assign({}, TOUR_SETUP, (persona && PERSONA_SETUP[persona]) || {}, (policy.tourSetup && policy.tourSetup[id]) || {}, opt || {});
-    if (o.mode === 'old') return null;
     const rng = rngArg || planRng(T, id, kind);
     const P = T.players[id];
     const stock = Object.assign({}, P.stock);
+    if (kind === 'final' && E.Tour.cubes(P) === 0) stock[2] = 1;   // 決勝で置けるキューブがなければ、2マスを1つ支給
     const N = kind === 'final' ? 5 : 4;
-    let list, cap, why;
-    if (kind === 'final') {
-      if (E.Tour.cubes(P) === 0) stock[2] = 1;
-      list = o.finalSeq ? [{ w: 1, seq: o.finalSeq, K: o.finalK }] : o.final;
-      cap = o.finalCap; why = 'final';
-    } else {
-      const byR = o.prelimByRound && o.prelimByRound[T.round];
-      list = o.prelimSeq ? [{ w: 1, seq: o.prelimSeq, K: o.prelimK }] : (byR || o.prelim);
-      cap = o.prelimCap; why = 'base';
-    }
-    const plan = pickPlan(list, rng);
-    let seq = plan.seq, K = plan.K;
-    // 5マスを置く（Z5/S5導入による5マス救済とブラフ活用：予選20%・決勝50%、性格別に設定）
-    let fiveP = kind === 'final' ? (o.finalFive != null ? o.finalFive : o.five) : (o.prelimFive != null ? o.prelimFive : o.five);
-    if (kind !== 'final' && o.fiveByRound && o.fiveByRound[T.round] != null) {
-      fiveP = o.fiveByRound[T.round];
-    }
-    if (fiveP > 0 && rng() < fiveP && (stock[5] | 0) > 0) { seq = [5].concat(seq); why += '-five'; }
-    if (kind !== 'final') {
-      if (o.adapt && T.round === 2 && needPush(T, id, o.swing, o.pushWhen)) { K = o.pushK; cap = o.pushCap; why = 'push'; }
-      if (o.byRound && o.byRound[T.round] != null) { K = o.byRound[T.round]; why = 'fixed'; }
-    }
-    let sizes = pickSeq(stock, seq, K, cap);
-    if (kind === 'final') {
-      // 残りのキューブは公開されているので、全部置くと組み合わせが相手に分かる。いちばん小さい1個を手元に残す（実験用）
-      const all = [2, 3, 4, 5].reduce((a, k) => a + (stock[k] | 0), 0);
-      if (o.finalHide && sizes.length >= o.finalHideMin && sizes.length === all) { sizes = sizes.slice(1); why = 'final-hide'; }
-    }
-    let layout = o.layout;
-    if (layout === 'auto') layout = sizes.reduce((a, b) => a + b, 0) >= o.denseAt * N * N ? 'cluster' : 'edge';
-    return { sizes, layout, why };
+    const sizes = drawSizes(setupSpec(T, id, kind, opt), stock, SETUP_CAP[kind], rng);
+    const layout = sizes.reduce((a, b) => a + b, 0) >= 0.8 * N * N ? 'cluster' : 'edge';
+    return { sizes, layout, why: kind };
   }
 
   // トレジャーを置くマス。nearOf(個体, マス)＝そのマスにトレジャーがあるとき「ニア」と答えるマスの数（同じ個体＋上下左右）
@@ -1750,7 +1679,7 @@
   // 画面用：自分が知り得た相手の現在の個体数（サーチオール未使用なら null）
   function knownCounts(kb, N) { return currentCounts(kb, N); }
 
-  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, pickSeq, TOUR_SETUP, exposure, bestWarpTarget, bestAddCell, policy, _cubeOptions: cubeOptions };
+  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpTarget, bestAddCell, policy, _cubeOptions: cubeOptions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBAI = api;
 })(typeof window !== 'undefined' ? window : globalThis);

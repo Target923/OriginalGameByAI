@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // サーチバトル — キューブの使い方の測定（CPUだけの大会）
-//  性格ごと・試合ごとに、置いたマス数の内訳・失ったマス数・大会の最後まで使わなかったキューブ・予選通過率・優勝率・持ち点を出す。
+//  性格ごと・試合ごとに、置いたマス数の内訳・失ったマス数・大会の最後まで使わなかったキューブ・予選通過率・優勝率・持ち点、
+//  5マスを置いた割合と、置いたとき・置かなかったときの勝率を出す。
 //  使い方: node tools/cube_usage.js [--tours 200] [--seed 1] [--workers 4] [--setup '{"mass":{...},"save":{...}}'] [--json out.json]
-//   --setup：性格ごとの置き方の上書き（PERSONA_SETUP に重ねる。キーは mass・save・steady・items・std）。比べるときに使う
+//   --setup：性格ごとの置き方の確率の上書き（ai.js の SETUP_PROB に重ねる。キーは mass・save・steady・items・std、中身は prelim・final・prelimByRound）。比べるときに使う
 const path = require('path');
 const os = require('os');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
@@ -74,7 +75,8 @@ for (let w = 0; w < workers; w++) {
 
 function report() {
   const P = {};
-  const get = (k) => P[k] || (P[k] = { n: 0, qual: 0, champ: 0, fin: 0, pts: 0, rounds: [0, 1, 2, 3].map(() => ({ n: 0, cubes: 0, cells: 0, sz: { 2: 0, 3: 0, 4: 0, 5: 0 }, lostCells: 0, win: 0 })), unused: { 2: 0, 3: 0, 4: 0, 5: 0 }, unusedN: 0 });
+  const get = (k) => P[k] || (P[k] = { n: 0, qual: 0, champ: 0, fin: 0, pts: 0, rounds: [0, 1, 2, 3].map(() => ({ n: 0, cubes: 0, cells: 0, sz: { 2: 0, 3: 0, 4: 0, 5: 0 }, lostCells: 0, win: 0, f5: 0, f5win: 0, n5win: 0 })), unused: { 2: 0, 3: 0, 4: 0, 5: 0 }, unusedN: 0 });
+  // 5マスの効き目：その試合で5マスを置いたか・置いたときと置かなかったときの勝率（性格・予選／決勝ごと）
   for (const rec of recs) {
     rec.p.forEach((k, id) => {
       const x = get(k); x.n++;
@@ -88,6 +90,7 @@ function report() {
       for (const s of m.placed[j]) R.sz[s]++;
       R.lostCells += m.lost[j].reduce((a, b) => a + b, 0);
       if (m.w === id) R.win++;
+      if (m.placed[j].includes(5)) { R.f5++; if (m.w === id) R.f5win++; } else if (m.w === id) R.n5win++;
       if (m.k === 'F') x.fin++;
     });
     // 大会の最後まで使わなかったキューブ：決勝に出た2人は決勝で置かなかった分、出なかった2人は予選の後に残った分（決勝がなかったので、その時点）
@@ -109,9 +112,14 @@ function report() {
     x.rounds.forEach((R, r) => {
       if (!R.n) return;
       const sz = [2, 3, 4, 5].map((s) => `${s}:${f1(R.sz[s] / R.n)}`).join(' ');
-      console.log(`  ${r < 3 ? '予選' + (r + 1) : '決勝 '}  個体 ${f1(R.cubes / R.n)}（${sz}）・${f1(R.cells / R.n)}マス・失ったマス ${f1(R.lostCells / R.n)}・勝率 ${pc(R.win, R.n)}`);
+      console.log(`  ${r < 3 ? '予選' + (r + 1) : '決勝 '}  個体 ${f1(R.cubes / R.n)}（${sz}）・${f1(R.cells / R.n)}マス・失ったマス ${f1(R.lostCells / R.n)}・勝率 ${pc(R.win, R.n)}・5マスを置いた ${pc(R.f5, R.n)}（勝率 あり ${pc(R.f5win, R.f5)}／なし ${pc(R.n5win, R.n - R.f5)}）`);
     });
     console.log(`  最後まで使わなかった：` + [2, 3, 4, 5].map((s) => `${s}マス ${(x.unused[s] / x.unusedN).toFixed(2)}個`).join('・'));
+  }
+  for (const [label, rs] of [['予選', [0, 1, 2]], ['決勝', [3]]]) {
+    let n = 0, f5 = 0, f5w = 0, n5w = 0;
+    for (const k of Object.keys(P)) for (const r of rs) { const R = P[k].rounds[r]; n += R.n; f5 += R.f5; f5w += R.f5win; n5w += R.n5win; }
+    console.log(`\n${label}（全員）：5マスを置いた ${pc(f5, n)}・勝率 あり ${pc(f5w, f5)}／なし ${pc(n5w, n - f5)}`);
   }
   const out = opt('json');
   if (out) require('fs').writeFileSync(out, JSON.stringify({ setup, summary: P }, null, 1));
