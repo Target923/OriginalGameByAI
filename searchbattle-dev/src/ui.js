@@ -366,7 +366,7 @@
     if (a.size) s += (a.shape ? '' : '#') + a.size.v;
     const stale = (a.shape && a.shape.stale) || (a.size && a.size.stale);
     const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチサイズ：${a.size.v}マス` : ''].filter(Boolean).join(' / ');
-    return `<span class="ctag${stale ? ' stale' : ''}" title="${esc(title)}">${esc(s)}</span>`;
+    return `<span class="ctag${stale ? ' stale' : ''}" title="${esc(title)}"><i>${esc(s)}</i></span>`;
   }
   // ノードショット・NoData の表示。NoData（サーチサイズ・サーチシェイプ・ノードショット・バズーカで空きマスだった）は
   // マスの中央に出す。ノードショットの数字は、まだ印のないマスなら中央のひし形、ヒットしたマスなら左下の小さな札
@@ -507,7 +507,7 @@
       inner += cellMarkHTML(m, intel, c);
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
       const tl = inSetup ? null : fv.tlog[c];
-      if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}">${TL[tl.r]}</span>`;
+      if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
       inner += cellTagHTML(intel, c);
       if (!inSetup && fv.lastCall === c && opts.flash) cls += ' last';
       if (opts.sel && opts.sel.indexOf(c) >= 0) cls += ' sel';
@@ -554,7 +554,7 @@
       inner += cellMarkHTML(v.marks[c], intel, c);
       if (opts.reveal && foe.treasure && foe.treasure.cell === c) inner += MARK.gem;
       const tl = v.tlog[c];
-      if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}">${TL[tl.r]}</span>`;
+      if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
       inner += cellTagHTML(intel, c);
       const mo = memo[c];
       if (mo && !v.marks[c] && !d && !opts.reveal) { inner += MEMO[mo]; cls += ' memo'; }
@@ -876,7 +876,7 @@
       const m = marks[c];
       if (m) inner += markHTML({ r: m[0], num: m[1] });
       if (c === 13) inner += MARK.gem;
-      if (c === 14) inner += '<span class="tl tl-N">N</span>';
+      if (c === 14) inner += '<span class="tl tl-N"><i>N</i></span>';
       html += `<div class="${cls}" style="${style}">${inner}</div>`;
     }
     let cols = '', rows = '';
