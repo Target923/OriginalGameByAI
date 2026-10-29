@@ -314,7 +314,7 @@ h1, h2, h3 { text-wrap: balance; }
    大きさは、ひし形の見えている大きさに合わせて一回り小さく（下の --tag-box）、文字の左右の余白も細くする。
    枠の太さはひし形の線と同じ割合（大きさの6%：24pxで約1.4px）。
    1文字は正方形、2文字は高さだけ正方形と同じにして、横幅は文字に合わせて伸ばす */
-.ctag { --tc: var(--cyan); position: absolute; left: calc(4% + var(--tag-in)); top: calc(4% + var(--tag-in)); z-index: 3; height: var(--tag-box); min-width: var(--tag-box); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 clamp(1px, 3cqw, 2px); font: 700 clamp(.4rem, 16cqw, .6rem)/1 var(--f-tech); letter-spacing: -0.01em; color: var(--tc);
+.ctag { --tc: var(--cyan); position: absolute; left: var(--tag-msq); top: var(--tag-msq); z-index: 3; height: var(--tag-box); min-width: var(--tag-box); box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 0 clamp(1px, 3cqw, 2px); font: 700 clamp(.4rem, 16cqw, .6rem)/1 var(--f-tech); letter-spacing: -0.01em; color: var(--tc);
   background: rgba(3, 5, 11, .55); border: calc(var(--tag-sz) * .06) solid var(--tc); border-radius: 3px; box-shadow: 0 0 3px color-mix(in srgb, var(--tc) 60%, transparent); text-shadow: 0 0 5px color-mix(in srgb, var(--tc) 70%, transparent); white-space: nowrap; max-width: 90%; pointer-events: none; }
 /* 文字を上下のまん中に置く。ふつうは行の高さ（文字の上の余白・下の余白を含む）でまん中に置くため、
    小さい枠では、フォントの余白の偏りで文字が少し上に寄って見える。
@@ -328,7 +328,11 @@ h1, h2, h3 { text-wrap: balance; }
   /* 四角い記号の大きさ：ひし形の見えている大きさ（枠の約73%）にそろえて、枠の78%にする（24pxの枠で約19px） */
   --tag-box: calc(var(--tag-sz) * .78);
   /* 四角い記号を、ひし形と同じ枠の中央に置くためのずらし幅（左右・上下とも、ひし形と中心の列・行がそろう） */
-  --tag-in: calc((var(--tag-sz) - var(--tag-box)) / 2); }
+  --tag-in: calc((var(--tag-sz) - var(--tag-box)) / 2);
+  /* マスの縁から四角い記号までのすき間：前（4%＋ずらし幅）の半分にして、記号をマスの角へ寄せる（真ん中のマークの周りを広く）。
+     ひし形の枠は、四角い記号と中心の列・行がそろうよう、ずらし幅の分だけ外側に置く */
+  --tag-msq: calc(2% + var(--tag-in) / 2);
+  --tag-mbx: calc(2% - var(--tag-in) / 2); }
 .pairs { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; overflow: visible; }
 .pairs g { --pl: var(--cyan); }
 .board[data-board="own"] .pairs g { --pl: var(--magenta); }
@@ -379,7 +383,7 @@ h1, h2, h3 { text-wrap: balance; }
 .ink-n { color: var(--cyan); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--cyan)); }
 .board[data-board="own"] .ink-n { color: var(--magenta); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--magenta)); }
 .ink-n .mk path { stroke-width: 2.2; }
-.nbadge { --tc: var(--cyan); position: absolute; left: 4%; bottom: 4%; z-index: 3; width: var(--tag-sz); height: var(--tag-sz); display: grid; place-items: center;
+.nbadge { --tc: var(--cyan); position: absolute; left: var(--tag-mbx); bottom: var(--tag-mbx); z-index: 3; width: var(--tag-sz); height: var(--tag-sz); display: grid; place-items: center;
   color: var(--tc); pointer-events: none; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--tc) 60%, transparent)); }
 .board[data-board="own"] .nbadge { --tc: var(--magenta); }
 .nbadge.stale { opacity: .45; }
@@ -403,7 +407,7 @@ h1, h2, h3 { text-wrap: balance; }
 @keyframes gem { 50% { filter: drop-shadow(0 0 10px var(--amber)); transform: translateY(-1px); } }
 .num { position: absolute; left: 6%; bottom: 3%; z-index: 2; font: 700 clamp(.55rem, 24cqw, .8rem)/1 var(--f-mono); color: var(--magenta); text-shadow: 0 1px 1.5px rgba(0, 0, 0, .9), 0 0 6px rgba(255, 63, 143, .8); }
 /* トレジャーの記録（H・N・X）：上のタグと同じ正方形・同じ枠線。--tc に記号の色を入れて、枠・光・文字をその色にする */
-.tl { --tc: #C6CFDC; position: absolute; top: calc(4% + var(--tag-in)); right: calc(4% + var(--tag-in)); z-index: 3; width: var(--tag-box); height: var(--tag-box); display: grid; place-items: center; padding: 0; box-sizing: border-box; font: 700 clamp(.46rem, 19cqw, .7rem)/1 var(--f-tech); color: var(--tc); border-radius: 3px;
+.tl { --tc: #C6CFDC; position: absolute; top: var(--tag-msq); right: var(--tag-msq); z-index: 3; width: var(--tag-box); height: var(--tag-box); display: grid; place-items: center; padding: 0; box-sizing: border-box; font: 700 clamp(.46rem, 19cqw, .7rem)/1 var(--f-tech); color: var(--tc); border-radius: 3px;
   background: rgba(3, 5, 11, .55); border: calc(var(--tag-sz) * .06) solid var(--tc); box-shadow: 0 0 3px color-mix(in srgb, var(--tc) 60%, transparent); pointer-events: none; }
 .tl-H { --tc: var(--amber); text-shadow: 0 0 6px var(--amber); }
 .tl-N { --tc: var(--cyan); text-shadow: 0 0 6px var(--cyan); }
