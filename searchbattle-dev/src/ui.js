@@ -413,11 +413,17 @@
     const ids = P.pieces.filter((p) => !p.isAdd && !p.frag).map((p) => p.id).concat((P.splitPieces || []).map((p) => p.id)).sort((a, b) => a - b);
     return (Math.max(0, ids.indexOf(id)) % 8) + 1;
   }
-  // 個体の模様：色と同じ番号（置いた順）で、色ごとに違う幾何学模様をマスの内側に薄く刻む。
-  //  色の見え方に特性がある人でも、模様でどの個体かを見分けられるようにするため（色だけに頼らない）。
-  //  模様の形は template.html の .pm1〜.pm8。見分けにくい色どうし（青と紫など）が、違う系統の模様になるように選んである。
-  //  アッド（0番）は1マスなので模様を付けない
-  function patHTML(ci) { return ci ? `<i class="pm pm${ci}" aria-hidden="true"></i>` : ''; }
+  // 個体の柄：色と同じ番号（置いた順）で、色ごとに違う素材の質感（御影石・大理石・木目など）をマスに薄く重ねる。
+  //  色の見え方に特性がある人でも、質感でどの個体かを見分けられるようにするため（色だけに頼らない）。
+  //  絵は template.html の .pm1〜.pm8（tools/tile_patterns.py で作る）。見分けにくい色どうし（青と紫など）が、違う系統の質感になるように選んである。
+  //  c（マスの番号）から、マスごとの向き（v0〜v3）と見える位置（--ox・--oy）を決める。本物のタイルのように1枚ずつ表情を変えるため
+  //  （マスの番号だけで決めるので、描き直しても変わらない）。アッド（0番）は1マスなので柄を付けない
+  function patHTML(ci, c) {
+    if (!ci) return '';
+    const h = Math.imul((c | 0) + 1, 0x9E3779B1) >>> 0;   // マスの番号を、ばらけた数に変える
+    const v = h >>> 30, ox = ((h >>> 8) & 255) / 256, oy = (h & 255) / 256;
+    return `<i class="pm pm${ci} v${v}" style="--ox:${ox.toFixed(3)};--oy:${oy.toFixed(3)}" aria-hidden="true"></i>`;
+  }
   function edgeClasses(mask, c, N) {
     const r = Math.floor(c / N), col = c % N;
     let s = '';
@@ -487,7 +493,7 @@
         else if (m && m.r !== 'x') cls += ' hitc';
         const ci = colorIndex(P, p);
         style += `--pcc:var(--pc${ci});`;
-        inner += patHTML(ci);   // 模様はいちばん下に置く（印やタグがその上に重なる）
+        inner += patHTML(ci, c);   // 柄はいちばん下に置く（印やタグがその上に重なる）
         if (opts.pick && p.alive) cls += ' pickable';
         if (opts.selectedPiece === p.id) cls += ' picked';
         if (p.stealth && p.alive) {
@@ -541,7 +547,7 @@
         if (d.cause === 'bazooka') cls += ' bz';
       } else if (opts.reveal) {
         const tp = g.pieceAt(foe.idx, c);
-        if (tp) { const ci = colorIndex(foe, tp); cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${ci});`; inner += patHTML(ci); }
+        if (tp) { const ci = colorIndex(foe, tp); cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${ci});`; inner += patHTML(ci, c); }
       }
       inner += cellMarkHTML(v.marks[c], intel, c);
       if (opts.reveal && foe.treasure && foe.treasure.cell === c) inner += MARK.gem;
@@ -863,7 +869,7 @@
         const mask = p.cells.reduce((m, x) => m | bit(x), 0);
         cls += ' pc' + edgeClasses(mask, c, 4) + (marks[c] && marks[c][0] !== 'x' ? ' hitc' : '');
         style = `--pcc:var(--pc${p.col});`;
-        inner += patHTML(p.col);
+        inner += patHTML(p.col, c);
       }
       const m = marks[c];
       if (m) inner += markHTML({ r: m[0], num: m[1] });
@@ -1254,7 +1260,7 @@
           <li><b>トレジャーコール</b>（偶数ターンのみ）：H＝的中（大会では相手の宝石を1つ奪う）、N＝上下左右か同じ個体、X＝外れ</li>
         </ol>
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
-        <p><b>キューブの模様</b>：キューブには、色ごとに違う模様（縦線・点・十字・互い違いの四角・斜め格子・山形・横線・四角い枠）を薄く刻んでいます。色が見分けにくくても、模様でどの個体かが分かります。</p>
+        <p><b>キューブの質感</b>：キューブには、色ごとに違う素材の質感（御影石・コンクリート・トラバーチン・ヘアライン・大理石・木目・スレート・テラゾー）を薄く重ねています。色が見分けにくくても、質感でどの個体かが分かります。</p>
         <p><b>回答</b>：◎＝その個体への最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない。全マスをコールされた個体は撃破されます。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
         <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2マス×5・3マス×4・4マス×3・5マス×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破した個体のマス数を相手から奪います（アンサー失敗で差し出した個体も）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2マス1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
