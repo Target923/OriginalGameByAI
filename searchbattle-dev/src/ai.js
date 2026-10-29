@@ -133,6 +133,9 @@
     fragMask &= ~hitMask;
     // ステルス：使われた時刻だけが分かる。全マスに当たっても生きている個体は、それより前にステルスになっていたはず
     const stealthTimes = (kb.stealths || []).map((x) => x.t).sort((a, b) => a - b);
+    // ステルス（v14）：見破られていない数（使った数−見破った数）。見破られていないステルスのキューブは、
+    // コールが×・アイテムが NoData・数に入らないので、見えている世界では「いない」のと同じに見える
+    const unrevealed = Math.max(0, stealthTimes.length - (kb.reveals || []).reduce((a, r) => a + r.n, 0));
     const occs = kb.occs.filter((o) => !explained(o.c, o.t))
       .map((o) => ((o.cat || o.size || o.deg != null) && splitTouches(o.c, o.t) ? { c: o.c, t: o.t, cat: null, src: o.src } : o))
       .concat(derivedOccs);
@@ -185,7 +188,7 @@
     return {
       N, NN, kb, PL, explained, deadMask, oldMaskAll, xs, xMaskAll, xMaskAfter, xMaskBetween, oldMaskAfter, oldMaskBefore,
       counts, lineZeroMask, lineMax, U, Ucell, groups, oList, ooMask, hitMask, occs, occMaskBefore,
-      deadSetup, stockBound, sizeAllowed, catAllowed, groupIndexByNum, pairs, splits, fragPossible: splits.length > 0, fragMask, stealthTimes,
+      deadSetup, stockBound, sizeAllowed, catAllowed, groupIndexByNum, pairs, splits, fragPossible: splits.length > 0, fragMask, stealthTimes, unrevealed,
       wEnt: wEnt.filter((e) => e.alive), addEnt: addEnt.filter((a) => a.alive),
     };
   }
@@ -223,14 +226,14 @@
     let early = 0;
     for (const u of ctx.U) if (u.t < g.t) early |= bit(u.c);
     const base = others | early | ctx.deadMask | ctx.lineZeroMask;
-    const add = (P, branch) => {
+    const add = (P, branch, wf) => {
       const ex = out.get(P.mask);
       if (ex) { if (ex.branches.indexOf(branch) < 0) ex.branches.push(branch); return; }
       // 全マスに当たっているのに生きている個体はいない（全マス当たれば撃破される。v13 でステルスの「撃破されない」効果は廃止）
       const full = false, lastHit = -1;
       if ((P.mask & ~ctx.hitMask) === 0) return;
       const pr = priorByKey[P.key] || 0.05;
-      out.set(P.mask, { mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, branches: [branch], w: pr / ctx.PL[P.key].length, full, lastHit });
+      out.set(P.mask, { mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, branches: [branch], w: (pr / ctx.PL[P.key].length) * (wf || 1), full, lastHit });
     };
     const fa = base | ctx.xMaskAll | ctx.oldMaskAll;
     // 1マスキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎の個体にはならない（候補は上の「全マス命中」で落ちる）
@@ -263,7 +266,33 @@
         add(P, 'w');
       }
     }
+    // ステルス（v14）：◎のあとでステルスにされた個体かもしれない（見破られていないステルスがあるとき）。
+    //  ステルスの後は、そのキューブへのコールが×、アイテムが NoData になるので、ステルスの後の×・NoData のマスにも広がりうる。
+    //  ステルスの後のヒット・調べた結果（形やマス数など）のあるマスは、ほかの個体なので入らない。ステルスの前の×には入らない。
+    //  数（サーチキューブ・ライン）には入らないので、マス数・形の数の条件は在庫だけを見る。重みは小さめ（ステルスにされた見込み）
+    if (!g.q && ctx.unrevealed > 0) {
+      for (const ts of ctx.stealthTimes) {
+        if (ts <= g.t) continue;
+        let after = 0;
+        for (const u of ctx.U) if (u.t > ts) after |= bit(u.c);
+        // アイテムの結果（形・マス数・つながり）だけ。トレジャーの的中（src なし）はステルスでもふつうに出るので、ここでは除かない
+        for (const o of ctx.occs) if (o.t > ts && (o.src === 'number' || o.src === 'shape' || o.src === 'node')) after |= bit(o.c);
+        const fb = others | early | ctx.deadMask | after | ctx.xMaskBetween(-1, ts) | ctx.oldMaskAll;
+        const occBefore = ctx.occs.filter((o) => o.t < ts);
+        for (const sz of [2, 3, 4, 5]) {
+          if (!(ctx.stockBound[sz] > 0)) continue;
+          for (const key of SHAPES_BY_SIZE[sz]) {
+            for (const P of ctx.PL[key]) {
+              if (!(P.mask & bit(g.c)) || (P.mask & fb)) continue;
+              if (!factsOK(P, occBefore, 0, ctx.N)) continue;
+              add(P, 's', 0.3);
+            }
+          }
+        }
+      }
+    }
     const list = Array.from(out.values());
+    for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     // Stealth hit のグループ：「前に見つかった個体の○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
     // 重みは、新しい個体だった場合の重みの合計と同じ（どちらとも決めない）
     if (g.q && ctx.groups.some((h) => h !== g && h.t < g.t)) {
@@ -337,7 +366,7 @@
     function lineOK(depth) {
       for (const L of ctx.lineMax) {
         let cells = 0, pcs = 0;
-        for (let d = 0; d <= depth; d++) { const i = order[d]; const m = G[i].cands[assign[i]].mask & L.mask; if (m) { pcs++; cells += popcount(m); } }
+        for (let d = 0; d <= depth; d++) { const i = order[d]; const cd = G[i].cands[assign[i]]; if (cd.st) continue; const m = cd.mask & L.mask; if (m) { pcs++; cells += popcount(m); } }
         if (cells > L.n) return false;
         if (L.k != null) {
           const fr = popcount(ctx.fragMask & L.mask);
@@ -348,13 +377,14 @@
       return true;
     }
     function finalOK() {
-      let nReal = 0;
-      for (let i = 0; i < nG; i++) if (!G[i].cands[assign[i]].merge) nReal++;
+      let nReal = 0, nSt = 0;
+      for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.pureSt) nSt++; if (!cd.merge && !cd.st) nReal++; }
+      if (nSt > ctx.unrevealed) return false;
       if (counts.all != null && nReal > counts.all) return false;
       const bySize = {}, byCat = {};
       for (let i = 0; i < nG; i++) {
         const cd = G[i].cands[assign[i]];
-        if (cd.merge) continue;
+        if (cd.merge || cd.st) continue;
         bySize[cd.size] = (bySize[cd.size] || 0) + 1;
         byCat[cd.cat] = (byCat[cd.cat] || 0) + 1;
       }
@@ -367,7 +397,7 @@
         // マスの数：◎個体がその列・行で埋めるマス ≦ n。
         // 個体の数（分かっていれば）：かかっている◎個体＋生きている破片 ≦ k。ちょうど k なら、ほかの個体はかかっていないので、マスもちょうど n
         let cells = 0, pcs = 0;
-        for (let i = 0; i < nG; i++) { const m = G[i].cands[assign[i]].mask & L.mask; if (m) { pcs++; cells += popcount(m); } }
+        for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.st) continue; const m = cd.mask & L.mask; if (m) { pcs++; cells += popcount(m); } }
         if (cells > L.n) return false;
         if (L.k != null) {
           const fr = popcount(ctx.fragMask & L.mask);
@@ -377,6 +407,7 @@
       }
       for (const p of ctx.pairs) {
         const oa = owner[p.a], ob = owner[p.b];
+        if ((oa >= 0 && G[oa].cands[assign[oa]].st) || (ob >= 0 && G[ob].cands[assign[ob]].st)) continue;
         if (p.same) { if (oa !== ob) return false; }
         else if (oa >= 0 && oa === ob) return false;
       }
@@ -402,7 +433,7 @@
         for (const c of probe) { const gi = owner[c]; res.nodeW.get(c)[gi >= 0 ? 1 + nodeDegree(G[gi].cands[assign[gi]].mask, c, ctx.N) : 0] += w; }
         // サーチキューブを使ったときの結果の分布用：◎個体のうち、各マス数・各形状に当てはまる数
         szCnt.fill(0); ctCnt.fill(0);
-        for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.merge) continue; szCnt[cd.size]++; ctCnt[CAT_INDEX[cd.cat]]++; }
+        for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.merge || cd.pureSt) continue; szCnt[cd.size]++; ctCnt[CAT_INDEX[cd.cat]]++; }
         for (let sz = 2; sz <= 5; sz++) res.qSize[sz][szCnt[sz]] += w;
         for (let ci = 0; ci < CATS.length; ci++) res.qCat[ci][ctCnt[ci]] += w;
         return;
@@ -969,6 +1000,8 @@
     const me = game.players[pi];
     const A = analyze(me.kb, game.N, game.rng, policy[pi]);
     if (!A.certain.length) {
+      const sa = stealthAnswer(game, pi, A);
+      if (sa) return sa;
       if (game.hasCallable(pi) || !A.ctx.groups.length) return null;
       let best = null, bw = -1;
       A.ctx.groups.forEach((g, i) => g.cands.forEach((cd, k) => {
@@ -980,6 +1013,69 @@
     }
     A.certain.sort((a, b) => b.cand.size - a.cand.size);
     return A.certain[0].cand.cells.slice();
+  }
+
+  // ステルスアンサー（v14）：宣言したマスが全部、隠れているステルスのキューブのマスならセーフで、ステルスが見破られる。
+  //  ①見えている◎の個体で、ふつうの置き方が残っていない（ステルスにされたとしか考えられない）→ その◎のマス1つ（必ずセーフ）
+  //  ②見えるヒットのない隠れたキューブ：ステルスの後に×・NoData になったマスのうち、隠れている見込みがいちばん高いマス1つ。
+  //    外れると失敗（自分のキューブを1つ差し出して手番が終わる）ので、見込みが高いか、コールできるマスが残っていないときだけ
+  //  policy.stealthHunt：見込みのしきい値（既定 0.8。0.5・0.95・コールできないときだけ、より強い。予選各800局）
+  function stealthAnswer(game, pi, A) {
+    const ctx = A.ctx, J = A.joint;
+    if (!(ctx.unrevealed > 0)) return null;
+    let pSt = 0;
+    for (let i = 0; i < ctx.groups.length; i++) {
+      const g = ctx.groups[i];
+      if (g.q || !(J.total > 0)) continue;
+      let wN = 0, wS = 0;
+      g.cands.forEach((cd, k) => { const w = J.candW[i][k]; if (cd.pureSt) wS += w; else wN += w; });
+      if (wS > 0 && wN <= 0) return [g.c];
+      pSt += wS / (wS + wN || 1);
+    }
+    const N = ctx.N, NN = ctx.NN;
+    // ×のマスでトレジャーが的中していたら、そこは隠れたステルスのキューブ（トレジャーのコールはステルスでもふつうに出る）→ 必ずセーフ
+    for (const o of ctx.occs) {
+      if (o.src) continue;
+      const m = ctx.kb.calls.filter((k) => k.c === o.c).pop();
+      // （その×の後にワープがあれば、ほかの個体が動いてきたかもしれないので除く）
+      if (m && m.r === 'x' && ctx.stealthTimes.some((ts) => ts < m.t) && !ctx.kb.warps.some((w) => w.t > m.t)) return [o.c];
+    }
+    const pHidden = Math.min(1, ctx.unrevealed - pSt);
+    if (pHidden < 0.05) return null;
+    // 隠れたキューブが入りうるマス：撃破済み・見えているヒット・調べた結果のあるマス・確かに見えている個体のマス・ステルスの前の×・ワープ前の位置は除く
+    const lastReveal = (ctx.kb.reveals || []).reduce((a, r) => Math.max(a, r.t), -1);
+    const tsList = ctx.stealthTimes.filter((t) => t > lastReveal);
+    const ts0 = tsList.length ? tsList[0] : ctx.stealthTimes[0];
+    let occM = 0;
+    for (const o of ctx.occs) occM |= bit(o.c);
+    const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll;
+    // 答えるマスの候補：ステルスの後に×（コール）か NoData（アイテム）になったマス
+    let xAfter = 0;
+    for (const x of ctx.xs) if (x.t > ts0) xAfter |= bit(x.c);
+    xAfter &= ~block;
+    if (!xAfter) return null;
+    const cellW = new Float64Array(NN);
+    let tot = 0;
+    for (const sz of [2, 3, 4, 5]) {
+      if (!(ctx.stockBound[sz] > 0)) continue;
+      for (const key of SHAPES_BY_SIZE[sz]) {
+        for (const P of ctx.PL[key]) {
+          if (P.mask & block) continue;
+          // まだコールしていないマスだけの置き方も数える（隠れたキューブがそこにいる見込みもあるため）
+          const w = 1 / ctx.PL[key].length;
+          tot += w;
+          for (const c of P.cells) cellW[c] += w;
+        }
+      }
+    }
+    if (!(tot > 0)) return null;
+    let best = -1, bp = 0;
+    for (let c = 0; c < NN; c++) if ((xAfter & bit(c)) && cellW[c] / tot > bp) { bp = cellW[c] / tot; best = c; }
+    if (best < 0) return null;
+    const p = bp * pHidden;
+    const th = (policy[pi] && policy[pi].stealthHunt != null) ? policy[pi].stealthHunt : 0.8;
+    if (p >= th || !game.hasCallable(pi)) return [best];
+    return null;
   }
 
   function chooseTreasure(game, pi, A) {
@@ -1115,7 +1211,7 @@
     const ex = exposure(game, pi);
     let best = null, bestV = 0;
     for (const p of living) {
-      if (p.isAdd) continue;
+      if (p.isAdd || p.stealth) continue;   // ステルス中のキューブはワープできない（v14）
       const e = ex.get(p.id);
       if (!e) continue;
       const hits = popcount(p.hitMask);
@@ -1132,45 +1228,36 @@
     return null;
   }
 
-  // ステルス（v13）：付けたキューブに相手のコールが当たると「Stealth hit」になり、◎か○かを伏せる（1回で解除）。
-  //  盤に◎がまだないときに当たると「新しい個体の最初の1発」としか読めないので、相手が自分のキューブを見つけてから付ける。
+  // ステルス（v14）：選んだキューブを隠す（コールは×・アイテムは NoData・数に入らない）。ステルスのマスだけでアンサーされると見破られる。
   //  mode（policy.stealth）：
-  //   'found'（既定）：相手の◎（または Stealth hit）が自分のフィールドに1つ以上あるとき、まだ当たっていないキューブに付ける
-  //   'hit'：すでに当たっているキューブ（まだ撃破されていない）に付ける（次のヒットは本当は○だが、新しい個体かもしれないと思わせる）
-  //   'early1'：v12までと同じ「1〜3ターン目に、まだ当たっていない2・3マスのキューブ」（比較用）／'none'：使わない
-  //  stealthPick：'rand'（既定）／'big'（いちばん大きい）／'near'（当たっているキューブの隣。○と見分けにくい）
-  //  最後の1個体には、どの方針でも先に付ける
+  //   'early'（既定）：1〜3ターン目に、まだ当たっていないキューブに付ける
+  //   'hit'：当たっているキューブ（まだマスが残っているもの）に付ける（「1マス開けさせてから」）
+  //   'late'：相手に自分のキューブが1つ見つかってから、まだ当たっていないキューブに付ける
+  //   'none'：使わない
+  //  stealthPick：'rand'（既定）／'big'（いちばん大きい）／'small'（いちばん小さい）
+  //  最後の1個体には、どの方針でも先に付ける（見つからない限り全滅しない）
   function chooseStealth(game, pi, when) {
     const pol = policy[pi] || {};
-    const mode = pol.stealth || 'found';
+    const mode = pol.stealth || 'early';
     const living = game.living(pi);
-    const open = living.filter((p) => !p.stealth);
+    const open = living.filter((p) => !p.stealth && !p.stealthRevealed);
     if (!open.length || mode === 'none') return null;
     if (when !== 'first') return null;
-    if (living.length === 1 && !living[0].stealth) return living[0];
+    if (living.length === 1 && open.length === 1) return open[0];
     let cand;
-    if (mode === 'early1') {
-      if (game.turn < 1 || game.turn > 3) return null;
-      cand = open.filter((p) => !p.hitMask && p.size >= 2 && p.size <= 3);
+    if (mode === 'early') {
+      if (game.turn > (pol.stealthTurn || 3)) return null;
+      cand = open.filter((p) => !p.hitMask && p.size >= 2);
+    } else if (mode === 'hit') {
+      cand = open.filter((p) => p.hitMask && p.hitMask !== p.mask && p.size >= 2);
     } else {
-      // 相手がもう自分のキューブを見つけているか（生きているキューブにヒットがある）
-      const found = living.some((p) => p.hitMask);
-      if (!found) return null;
-      cand = mode === 'hit' ? open.filter((p) => p.hitMask && p.hitMask !== p.mask) : open.filter((p) => !p.hitMask && p.size >= 2);
+      if (!living.some((p) => p.hitMask)) return null;
+      cand = open.filter((p) => !p.hitMask && p.size >= 2);
     }
     if (!cand.length) return null;
-    if (pol.stealthPick === 'big') {
-      const target = Math.max(...cand.map((p) => p.size));
+    if (pol.stealthPick === 'big' || pol.stealthPick === 'small') {
+      const target = pol.stealthPick === 'big' ? Math.max(...cand.map((p) => p.size)) : Math.min(...cand.map((p) => p.size));
       cand = cand.filter((p) => p.size === target);
-    } else if (pol.stealthPick === 'near') {
-      const N = game.N;
-      let hitCells = 0;
-      for (const p of living) hitCells |= p.hitMask;
-      const near = cand.filter((p) => p.cells.some((c) => {
-        const r = Math.floor(c / N), cc = c % N;
-        return [[r - 1, cc], [r + 1, cc], [r, cc - 1], [r, cc + 1]].some(([y, x]) => y >= 0 && y < N && x >= 0 && x < N && (hitCells & bit(y * N + x)));
-      }));
-      if (near.length) cand = near;
     }
     return cand[Math.floor(game.rng() * cand.length)];
   }
@@ -1369,6 +1456,8 @@
     let ex = null;
     try { ex = exposure(game, pi); } catch (e) { ex = null; }
     living.sort((a, b) => {
+      // 隠れているステルスのキューブは、差し出すと公開されるので後回し（v14）
+      if (!!a.stealth !== !!b.stealth) return a.stealth ? 1 : -1;
       if (a.size !== b.size) return a.size - b.size;
       const da = ex && ex.get(a.id) ? ex.get(a.id).danger : 0;
       const db = ex && ex.get(b.id) ? ex.get(b.id).danger : 0;

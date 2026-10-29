@@ -32,7 +32,14 @@ for (let k = 0; k < n; k++) {
     // 試合ごとの攻撃アイテムの数の上限（ワープ・ステルスは数えない）
     if (kind !== 'final' && g.itemKeep) for (let i = 0; i < 2; i++) { const b = g.itemKeep[i] && g.itemKeep[i]._budget; if (b == null) continue; let n = 0; for (const key in usedCount[i]) if (key !== 'warp' && key !== 'stealth') n += usedCount[i][key]; if (n > b) { st.keepViolations++; err('over item budget', n, b); } }
     // CPUのアンサーは確信があるときだけ（大会でキューブの数が減っても外さない）
-    for (const e of g.events) if (e.type === 'answer' && !e.success) err('CPU answer failed', kind);
+    //  例外（v14）：相手がステルスを使ったあと、×のマス1つに賭けるステルスアンサーは外れることがある（ステルスの探り）
+    for (const e of g.events) {
+      if (e.type !== 'answer' || e.success) continue;
+      const kb = g.players[e.actor].kb;
+      const m = g.players[e.actor].view.marks[e.cells[0]];
+      const hunt = e.cells.length === 1 && (kb.stealths || []).length > 0 && m && m.r === 'x';
+      if (hunt) st.stealthHuntMiss = (st.stealthHuntMiss || 0) + 1; else err('CPU answer failed', kind);
+    }
     st.msPerMatch += Date.now() - tm;
     if (g.phase !== 'over') { err('not over', kind, g.turn, g.sub); return null; }
     // 予選は1試合で同じ種類を1回まで

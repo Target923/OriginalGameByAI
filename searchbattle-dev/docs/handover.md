@@ -119,13 +119,12 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 - トークンの節約：長いコードや出力を表示しない。様子見の回数を減らす。
 
 ## 次にやること
-- **ステルス v13（2026-10-29 実装。ユーザーが触って様子を見る）**：当たると「Stealth hit」（◎か○かを伏せる・番号なし・1回で解除）。仕様は docs/rules.md の「ステルス」と「v13」。
-  - engine：call() で p.stealth なら r:'q'（v.oo を増やさない）、p.stealthHit に記録。前の「全マス当たっても撃破されない」（shield イベント）は削除。VERSION 22。
-  - ai：buildContext で 'q' のヒットを q:true のグループにする（ooMask には入れない）。groupCands で、前にグループがあれば merge（○だった）候補（mask 0）を足す。jointEnumerate の partialOK で、merge なら前のグループの置き方に入っているかを確かめる。finalOK・数え上げ・確定（certain）・アンサーの賭けで merge を飛ばす。索敵の「見つかった個体の数」は q を新しい個体である見込み（g.pReal）で数える。全マス命中で生きている候補は出さない（ステルスの古い推理は削除）。
-  - CPUの使い方：chooseStealth の mode 'found'（既定）。最後の1個体には先に付ける。比較用に 'hit'・'early1'・'none'、stealthPick 'big'・'near'。tools/stealth_duel.js で方針どうしを比べる。
-  - 画面：MARK.q（ターコイズ。ui.js）、.ink-q、演出の文字「Stealth hit」（.fx-text.stealth）、効果音は shield を流用、タイトルの凡例「ステルスヒット」、ルール説明・アイテム欄の説明を更新。
-  - 測定：ステルスあり対なし 予選56.6%・決勝51.0%（決勝ではほぼ効かない。ユーザーは触ってから考える）。詳しくは rules.md の v13。
-  - テスト：soundness・invariants の「本当の置き方が候補にある」確認は、Stealth hit が本当は○のときは merge の候補があればよいことにした。
+- **ステルス v14（2026-10-29 実装。ユーザーが触って様子を見る）**：キューブを隠す（コール×・アイテム NoData・数に入らない）。ステルスのマスだけのアンサー（ステルスアンサー）で見破られる。仕様は docs/rules.md の「ステルス」と「v14」（v13 の Stealth hit は1時間ほどで置き換え）。
+  - engine：call() で p.stealth なら×に見せて hitMask には数える（全マス当たっても撃破しない）。p.stealthRevealed のキューブへのヒットは r:'q'（STEALTH HIT）。アイテムは _seenAt（隠れたキューブは null）と livingFoe の除外。answer() でステルスアンサー（宣言したマスが全部隠れたキューブのマス）→ _revealAll。_revealStealth が相手の kb を直す（×→q、empties→occs、counts に足す、pairs の same）。位置そのものは明かさない（宣言したマスは occs に src:'stealth' で残す）。ぴったり当てたときは _revealAll(…, target) で二重撃破しないようにした。差し出しで隠れたキューブを出すと、そのキューブだけ公開。ステルス中はワープ不可、見破られたキューブには再使用不可。kb.reveals（見破った時刻と数）。VERSION 23。
+  - ai：ctx.unrevealed（使った数−見破った数）。groupCands に 's' 枝（◎のあとでステルスにされた個体：ステルスの後の×・NoData にも広がる。アイテムの結果のあるマス・ステルスの後のヒットは除く。トレジャーの的中は除かない）。finalOK・lineOK・ペア・数え上げで st の候補を外し、純粋な st は unrevealed まで。stealthAnswer（chooseAnswer の先頭）：ふつうの置き方が残っていない◎・×でトレジャー的中のマス → 必ずセーフ。見えない隠れたキューブは見込み 0.8（policy.stealthHunt）以上で賭ける。chooseStealth の mode 'early'（既定）・'hit'・'late'・'none'。defensiveWarp・chooseSacrifice はステルス中のキューブを避ける。
+  - 画面：見破りの演出（STEALTH REVEALED、×から変わったマスだけ）、ステルスアンサーの演出（STEALTH ANSWER）、STEALTH HIT は大文字（ユーザーの希望でファーストヒットなどとそろえた）。
+  - 測定：ステルスあり対なし 予選67.9%・決勝61.5%。9種の中で一番強い。強すぎるかはユーザーが触って判断する。決勝のドラフトの CPU の優先順位（DRAFT_PRIORITY）はまだ7番目のまま（上げるかは相談）。
+  - テスト：invariants は隠れたキューブの×を許す。tour_sim は×のマス1つに賭けるステルスアンサーの外れを許す（stealthHuntMiss として数える）。invariants に INV_ONLY=<gi>:<rules>（1試合だけ）と INV_DEBUG=1（最初の不整合の中身を出す）を足した。
 - 5マスの確率のテストは済んだ（2026-10-29。今の確率のままでよい。結果は「直近の変更」と docs/rules.md）。性格の強さの差をさらに詰めたいときは、ai.js の SETUP_PROB の数字を変えて tools/cube_usage.js（--setup で上書きして比べられる）で測る。
 - オンライン対戦 v1 を、ユーザーが知り合いと本物の回線で試す（GitHub Pages 版で。遊び方は docs/online.md の 8）。つながらない・動きがおかしいときは、どの端末・回線か、画面の知らせを聞いて直す。
 - v2 の候補（ユーザーと相談）：再接続、ホストものぞけない形（B'）、観戦、大会のオンライン、差分だけ送る通信。docs/online.md の 9。

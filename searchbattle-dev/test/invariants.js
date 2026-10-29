@@ -10,7 +10,8 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 const N_GAMES = +(process.argv[2] || 400);
 const stats = { games: 0, actions: 0, warps: 0, roundtrips: 0, fail: 0 };
 const fails = [];
-function fail(tag, info) { stats.fail++; if (fails.length < 8) fails.push({ tag, info }); }
+let CUR = '';
+function fail(tag, info) { stats.fail++; if (fails.length < 8) fails.push({ tag, game: CUR, info }); }
 
 // 推論の健全性：その人の知識（kb）から作った候補に、本当の配置が必ず含まれる
 function sound(G, pi, tag) {
@@ -27,7 +28,9 @@ function sound(G, pi, tag) {
       return;
     }
     const k = g.cands.findIndex((cd) => cd.mask === p.mask);
+    if (k < 0 && process.env.INV_DEBUG && !stats.dbg) { stats.dbg = 1; console.log(JSON.stringify({ g: { c: g.c, t: g.t, q: g.q, num: g.num }, truth: { cells: p.cells, stealth: p.stealth, stealthAt: p.stealthAt, rev: p.stealthRevealed, hit: p.hitMask }, calls: me.kb.calls, empties: me.kb.empties, stealths: me.kb.stealths, reveals: me.kb.reveals, warps: me.kb.warps.map((w) => ({ t: w.t, old: w.oldCells })), deads: me.kb.deads.map((d) => ({ t: d.t, cells: d.cells })), counts: me.kb.counts, cands: g.cands.map((cd) => cd.cells.join(',') + (cd.st ? 's' : '')) })); }
     if (k < 0) { fail('truth-missing', { tag, turn: G.turn, shape: p.shape, cells: p.cells, logs: me.kb.logs, occs: me.kb.occs }); return; }
+    if (A.joint.exact && !A.joint.inconsistent && A.joint.candW[i][k] <= 0 && process.env.INV_DEBUG && !stats.dbg2) { stats.dbg2 = 1; console.log(JSON.stringify({ pruned: true, gi: i, g: { c: g.c, t: g.t, q: g.q, num: g.num }, truthCand: g.cands[k].cells.join(',') + (g.cands[k].st ? 's' : ''), truth: { stealth: p.stealth, stealthAt: p.stealthAt, rev: p.stealthRevealed, hit: p.hitMask }, groups: A.ctx.groups.map((h) => ({ c: h.c, t: h.t, q: h.q, n: h.cands.length })), truthAll: A.ctx.groups.map((h) => { const pp = G.pieceAt(foe.idx, h.c); return pp ? pp.cells.join(',') + (pp.stealth ? 'S' : '') : null; }), calls: me.kb.calls, empties: me.kb.empties, occs: me.kb.occs, stealths: me.kb.stealths, reveals: me.kb.reveals, counts: me.kb.counts, pairs: me.kb.pairs, deads: me.kb.deads.map((d) => ({ t: d.t, cells: d.cells })), warps: me.kb.warps.map((w) => ({ t: w.t, old: w.oldCells })) })); }
     if (A.joint.exact && !A.joint.inconsistent && A.joint.candW[i][k] <= 0) fail('truth-pruned', { tag, turn: G.turn, shape: p.shape, logs: me.kb.logs, pairs: me.kb.pairs });
   });
   for (const ce of A.certain) { if (!G.living(foe.idx).some((p) => p.mask === ce.cand.mask)) fail('certain-wrong', { tag, turn: G.turn, cells: ce.cand.cells }); }
@@ -56,11 +59,12 @@ function check(G, tag) {
       if ((p.hitMask & ~p.mask) !== 0) fail('hitmask', { tag, p });
       for (const c of p.cells) {
         const m = fv.marks[c];
-        if (m && m.r === 'x' && !m.callable) fail('unhittable', { tag, c: G.coord(c), piece: p.cells.map((x) => G.coord(x)), mark: m });
+        // 隠れているステルスのキューブ（v14）は、当たっても×に見える（見破られると STEALTH HIT に変わる）
+        if (m && m.r === 'x' && !m.callable && !p.stealth) fail('unhittable', { tag, c: G.coord(c), piece: p.cells.map((x) => G.coord(x)), mark: m });
         if (fv.dead[c]) fail('dead-on-live', { tag, c });
         const hit = !!(p.hitMask & (1 << c));
         const hm = m && (m.r === 'o' || m.r === 'oo' || m.r === 'q');   // q＝Stealth hit（v13）
-        if (hit !== !!hm) fail('hit-mark', { tag, c: G.coord(c), hit, m });
+        if (hit !== !!hm && !(p.stealth && hit && m && m.r === 'x')) fail('hit-mark', { tag, c: G.coord(c), hit, m });
       }
     }
     for (let c = 0; c < G.NN; c++) {
@@ -131,6 +135,9 @@ E.Game.prototype.useItem = function (pi, key, params) {
 
 for (let gi = 0; gi < N_GAMES; gi++) {
   for (const rules of ['prelim', 'final']) {
+    // 調べたい1試合だけ回す：INV_ONLY=<gi>:<rules>
+    if (process.env.INV_ONLY && process.env.INV_ONLY !== gi + ':' + rules) continue;
+    CUR = gi + ':' + rules;
     const rng = mulberry32(9100 + gi * 7 + (rules === 'final' ? 3 : 0));
     let G = new E.Game({ rules, rng, cpu: [true, true], wallet: 15 });
     AI.setup(G, 0); AI.setup(G, 1); G.finishSetup(0); G.finishSetup(1);

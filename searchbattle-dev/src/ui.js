@@ -169,7 +169,8 @@
     oo: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7.6"/><path d="M20 2.6v5M20 32.4v5M2.6 20h5M32.4 20h5"/></svg>',
     o: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12.6"/><circle cx="20" cy="20" r="2.3" class="dot"/></svg>',
     x: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><path d="M13 13 27 27M27 13 13 27"/></svg>',
-    // Stealth hit（v13。ユーザーのデザイン）：◎の二重丸に○の中心の点を重ね、飛び出した線は真上から120度おきに3本。色はミディアムターコイズ
+    // STEALTH HIT（ユーザーのデザイン）：見破ったステルスのキューブへのヒット（v14）。◎の二重丸に○の中心の点を重ね、
+    // 飛び出した線は真上から120度おきに3本。色はミディアムターコイズ
     q: '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7.6"/><circle cx="20" cy="20" r="2.3" class="dot"/><path d="M20 2.6v5M35.07 28.7 30.74 26.2M4.93 28.7 9.26 26.2"/></svg>',
     gem: '<svg class="gem" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 33 15 20 36 7 15z"/><path class="facet" d="M7 15h26M14 15l6 21 6-21M14 15l6-11 6 11"/></svg>',
     add: '<svg class="mk mk-add" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 13v14M13 20h14"/></svg>',
@@ -565,7 +566,7 @@
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ' Stealth hit' : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ' STEALTH HIT' : ' ○';
       label += probeLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
@@ -684,7 +685,7 @@
       case 'answer-phase': return who + (g.itemUsed ? 'アンサーするか、ターンエンドしてください' : 'アンサー・アイテム・ターンエンドから選んでください');
       case 'answer': return who + '相手フィールドで、個体の全マスを選んでください';
       case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのマスを1つ選んでください`;
-      case 'stealth-pick': return who + 'ステルス：付ける自分のキューブを選んでください';
+      case 'stealth-pick': return who + 'ステルス：隠す自分のキューブを選んでください';
       case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選んでください';
       case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
       case 'number': return who + 'サーチサイズ：相手フィールドで調べるマスを選んでください';
@@ -771,7 +772,7 @@
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', 'ステルスを付ける自分のキューブを選んでください。そのキューブに相手のコールが当たると、◎か○かを伏せた「Stealth hit」になります（1回で解除）。どれにしたかは相手に伝わりません。');
+        main = itemHead('stealth', '隠す自分のキューブを選んでください。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。ステルスのマスだけでアンサーされると見破られます（全マス当たっていたら、そこで撃破）。ステルス中はワープできません。');
         acts = cancel;
         break;
       case 'treasure':
@@ -1127,8 +1128,9 @@
     else if (mode === 'treasure') predClick = (c) => g.isTreasureCallable(v, c);
     else if (mode === 'answer' || mode === 'shape' || mode === 'number' || mode === 'node' || mode === 'bazooka') predClick = (c) => !P.view.dead[c];
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
-    if (mode === 'warp-pick' || mode === 'sacrifice') { ownPick = true; ownClick = (c) => !!g.pieceAt(v, c); }
-    else if (mode === 'stealth-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth; }; }
+    if (mode === 'warp-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth; }; }   // ステルス中はワープできない（v14）
+    else if (mode === 'sacrifice') { ownPick = true; ownClick = (c) => !!g.pieceAt(v, c); }
+    else if (mode === 'stealth-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth && !p.stealthRevealed; }; }
     else if (mode === 'warp-place') ownClick = () => true;
     const predActive = !!predClick || mode === 'line' || mode === 'cube';
 
@@ -1266,14 +1268,14 @@
         </ol>
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
         <p><b>キューブの質感</b>：キューブには、色ごとに違う素材の質感（御影石・コンクリート・トラバーチン・ヘアライン・大理石・木目・スレート・テラゾー）を薄く重ねています。色が見分けにくくても、質感でどの個体かが分かります。</p>
-        <p><b>回答</b>：◎＝その個体への最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝Stealth hit（ステルスを付けたキューブへのヒット。◎か○かは伏せられ、番号も付きません）。全マスをコールされた個体は撃破されます。</p>
+        <p><b>回答</b>：◎＝その個体への最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。番号は付きません）。全マスをコールされた個体は撃破されます。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
         <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2マス×5・3マス×4・4マス×3・5マス×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破した個体のマス数を相手から奪います（アンサー失敗で差し出した個体も）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2マス1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
         <h3 class="legend-h">攻撃アイテム（相手フィールドに作用）</h3>
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスを付けたキューブに相手のコールが当たると、結果は◎でも○でもなく「Stealth hit」になります（1回で解除。どのキューブに付けたかは相手に伝わりません）。それがそのキューブへの最初のヒットだったときは、その後のヒットは○になり、◎は最後まで出ません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。ステルスと関係ないマスが入ったアンサーは、ふつうのアンサーとして失敗です。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -2205,6 +2207,21 @@
           text(bc.x, bc.y, mine ? 'TREASURE 失敗' : `${g.players[ev.actor].name}：TREASURE 失敗`, 'miss', 1500);
           return 700 * k;
         }
+        case 'reveal': {
+          // ステルスを見破った（v14）：×から STEALTH HIT に変わったマスにターコイズの走査線を走らせる（キューブの位置そのものは見せない）
+          SND.sfx('shield', 0, { pan: panOf(ev.owner, v) });
+          const els = ev.cells.map((c) => cellOf(ev.owner, c)).filter(Boolean);
+          if (!els.length) {
+            const b = boardOf(ev.owner);
+            if (b) { const bc = ctr(b); text(bc.x, bc.y, 'STEALTH REVEALED', 'stealth', 1500); }
+            return 700 * k;
+          }
+          let sx = 0, sy = 0;
+          for (const el of els) { const p = ctr(el); sx += p.x; sy += p.y; over(el, 'cloak', '', 1100); }
+          ring(sx / els.length, sy / els.length, QT, 8, 70 + els.length * 18, 900, 3);
+          text(sx / els.length, sy / els.length, 'STEALTH REVEALED', 'stealth', 1500);
+          return 1000 * k;
+        }
         case 'call': {
           SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' ? 'hit' : ev.r === 'q' ? 'shield' : 'first', 0, { pan: panOf(ev.owner, v) });
           const el = cellOf(ev.owner, ev.c);
@@ -2217,11 +2234,11 @@
             return 650 * k;
           }
           if (ev.r === 'q') {
-            // Stealth hit：◎か○かを伏せたヒット。ターコイズの輪と文字だけで見せる（番号は出さない）
+            // STEALTH HIT：見破ったステルスのキューブへのヒット。ターコイズの輪と文字だけで見せる（番号は出さない）
             over(el, 'impact', '', 520);
             sparks(p.x, p.y, QT, 16, 1.1, 0.5);
             ring(p.x, p.y, QT, p.w * 0.12, p.w * 1.2, 700, 2.5);
-            text(p.x, p.y - p.h * 0.6, 'Stealth hit', 'stealth', 1400);
+            text(p.x, p.y - p.h * 0.6, 'STEALTH HIT', 'stealth', 1400);
             shake(1);
             return 880 * k;
           }
@@ -2277,7 +2294,7 @@
               if (bc) beam(bc.r.left + bc.w / 2, bc.r.top - 24, p.x, p.y, col(ev.actor), 560, false, i * 50);
               over(el, 'reticle' + (mine ? '' : ' enemy'), RETICLE_SVG, 750);
             });
-            if (bc) text(bc.x, bc.r.top + 22, 'ANSWER!', 'count' + (mine ? '' : ' enemy'), 1200);
+            if (bc) text(bc.x, bc.r.top + 22, ev.stealth ? 'STEALTH ANSWER' : 'ANSWER!', ev.stealth ? 'stealth' : 'count' + (mine ? '' : ' enemy'), 1200);
             return 650 * k;
           }
           els.forEach((el) => over(el, 'glitch', '', 950));
@@ -3095,6 +3112,7 @@ self.onmessage = function (e) {
       resetMode();
       // ゲストは結果がまだ分からない（失敗のときは、届いた state を見て知らせる）
       if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
+      if (!r.sent && r.stealth) toast('ステルスアンサー成功！隠れていたキューブを見破りました');
       afterHuman();
     },
     'skip-call'() {
@@ -3224,6 +3242,7 @@ self.onmessage = function (e) {
       case 'warp-pick': {
         const p = g.pieceAt(v, c);
         if (!p) { toast('移動する自分のキューブを選んでください'); return; }
+        if (p.stealth) { toast('ステルス中のキューブはワープできません'); return; }
         ui.warp = { pieceId: p.id, t: p.t };
         ui.mode = 'warp-place';
         render();
@@ -3241,6 +3260,7 @@ self.onmessage = function (e) {
         const p = g.pieceAt(v, c);
         if (!p) { toast('ステルスにする自分のキューブを選んでください'); return; }
         if (p.stealth) { toast('そのキューブはすでにステルス中です'); return; }
+        if (p.stealthRevealed) { toast('見破られたキューブには使えません'); return; }
         useItem('stealth', { pieceId: p.id });
         return;
       }
