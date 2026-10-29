@@ -58,7 +58,7 @@
 | --- | --- | --- | --- |
 | `hello` | ゲスト→ホスト | `app: 'searchbattle'`、`net`（通信の版 `NET_VERSION`）、`v`（エンジンの版 `VERSION`）、`name` | つながった直後。版が違えば `bye`（version）で断る |
 | `welcome` | ホスト→ゲスト | `seat`（ゲストの席＝1）、`snap`（伏せたスナップショット。配置の前の状態）、`ack` | hello を受けたとき・「もう一度」のとき |
-| `setup` | ゲスト→ホスト | `pieces: [{ key, t, r0, c0 }]`（置いた順）、`treasure`（マス） | ゲストが配置完了を押したとき |
+| `setup` | ゲスト→ホスト | `pieces: [{ key, t, r0, c0, col }]`（置いた順。col＝色・柄の番号。ホストもこの番号を使う）、`treasure`（マス） | ゲストが配置完了を押したとき |
 | `act` | ゲスト→ホスト | `name`（`draftPick`・`call`・`useItem`・`answer`・`skipCall`・`endTurn`・`treasureCall`・`sacrifice`）、`args`（席の番号は入れない）、`seq`（通し番号） | ゲストが操作したとき |
 | `state` | ホスト→ゲスト | `snap`（伏せたスナップショット）、`ack`（最後に処理したゲストの操作の番号） | ホストが何か判定するたび（配置完了・ゲストの操作・ホストの対戦の操作） |
 | `reject` | ホスト→ゲスト | `what`（`setup`／`act`）、`seq`、`reason` | ゲストの配置・操作がルール上できなかったとき（ふつうは画面側で防ぐので、まれ） |

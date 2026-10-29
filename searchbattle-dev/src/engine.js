@@ -317,8 +317,19 @@
     const chk = this.checkPlacement(pi, key, t, r0, c0);
     if (!chk.ok) return chk;
     const piece = this._makePiece(P, key, t, r0, c0, chk.cells);
+    piece.col = this._freeCol(P);
     P.pieces.push(piece);
     return { ok: true, piece };
+  };
+  // 個体の色・柄の番号（col）：置いたときに、そのとき空いている中でいちばん小さい番号を付け、あとは変えない。
+  //  途中の個体を外しても、ほかの個体の色・柄が変わらないようにするため（外した番号は、次に置く個体が使う）。
+  //  画面は col を 1〜8 の色・柄に当てはめる（ui.js の colorIndex）。バズーカの破片は元の個体の番号を受け継ぐ
+  Game.prototype._freeCol = function (P) {
+    const used = new Set(P.pieces.filter((p) => !p.isAdd && !p.frag && p.col).map((p) => p.col));
+    for (const sp of P.splitPieces || []) if (sp.col) used.add(sp.col);
+    let k = 1;
+    while (used.has(k)) k++;
+    return k;
   };
   Game.prototype._makePiece = function (P, key, t, r0, c0, cells) {
     const sh = SHAPES[key];
@@ -889,13 +900,14 @@
     const P = this.players[piece.owner];
     const N = this.N;
     P.pieces.splice(P.pieces.indexOf(piece), 1);
-    P.splitPieces.push({ id: piece.id, shape: piece.shape, size: piece.size, cells: piece.cells.slice(), turn: this.turn, t: this.clock });
+    P.splitPieces.push({ id: piece.id, shape: piece.shape, size: piece.size, cells: piece.cells.slice(), turn: this.turn, t: this.clock, col: piece.col });
     const frags = [];
     for (const c of piece.cells) {
       const f = this._makePiece(P, 'A1', 0, Math.floor(c / N), c % N, [c]);
       f.isAdd = false;
       f.frag = true;
       f.fromId = piece.id;
+      f.col = piece.col;   // 破片は元の個体の色・柄のまま
       if (piece.hitMask & bit(c)) { f.hitMask = f.mask; f.hitOrder = [c]; }
       P.pieces.push(f);
       frags.push(f);

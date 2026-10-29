@@ -200,7 +200,7 @@
     for (const p of list) {
       if (!p || typeof p.key !== 'string' || p.key === 'A1' || !Object.prototype.hasOwnProperty.call(E.SHAPES, p.key)) return null;
       if (!isInt(p.t, 0, 7) || !isInt(p.r0, 0, g.N - 1) || !isInt(p.c0, 0, g.N - 1)) return null;
-      pieces.push({ key: p.key, t: p.t, r0: p.r0, c0: p.c0 });
+      pieces.push({ key: p.key, t: p.t, r0: p.r0, c0: p.c0, col: isInt(p.col, 1, 99) ? p.col : 0 });
     }
     if (!isInt(msg.treasure, 0, g.NN - 1)) return null;
     return { pieces, treasure: msg.treasure };
@@ -262,6 +262,8 @@
     for (const p of s.pieces) {
       const r = g.placePiece(pi, p.key, p.t, p.r0, p.c0);
       if (!r.ok) return fail(r.reason);
+      // 色・柄の番号は、ゲストの画面で付いたものを使う（外した番号が空いたままになるので、置き直すと詰まってしまう）
+      if (p.col && !g.players[pi].pieces.some((q) => q !== r.piece && q.col === p.col)) r.piece.col = p.col;
     }
     const tr = g.setTreasure(pi, s.treasure);
     if (!tr.ok) return fail(tr.reason);
@@ -368,13 +370,13 @@
     this.send({ t: 'act', name, args: args || [], seq: this.seq });
     return { ok: true, sent: true };
   };
-  // 配置をまとめてホストに送る（形・向き・位置と、トレジャーのマス）。置いた順に並べる（個体の色が変わらないように）
+  // 配置をまとめてホストに送る（形・向き・位置・色と柄の番号と、トレジャーのマス）。置いた順に並べる（個体の色が変わらないように）
   Guest.prototype.sendSetup = function () {
     const g = this.game, P = g && g.players[this.seat];
     if (!P || g.phase !== 'setup' || P.setupDone || this.setupSent) return { ok: false, reason: '配置の時間ではありません' };
     if (!P.pieces.length) return { ok: false, reason: '最低1個体を置いてください' };
     if (!P.treasure) return { ok: false, reason: 'トレジャーをセットしてください' };
-    const pieces = P.pieces.slice().sort((a, b) => a.id - b.id).map((p) => ({ key: p.shape, t: p.t, r0: p.r0, c0: p.c0 }));
+    const pieces = P.pieces.slice().sort((a, b) => a.id - b.id).map((p) => ({ key: p.shape, t: p.t, r0: p.r0, c0: p.c0, col: p.col }));
     this.setupSent = true;
     this.send({ t: 'setup', pieces, treasure: P.treasure.cell });
     return { ok: true, sent: true };
@@ -486,7 +488,11 @@
       p.on('connection', (conn) => {
         // 1つの部屋に入れるのは1人だけ。2人目には「満員」と伝えて閉じる
         if (taken) {
-          conn.on('open', () => { try { conn.send({ t: 'bye', reason: 'full' }); } catch (e) { /* 無視 */ } setTimeout(() => conn.close(), 500); });
+          // 相手が受け取る準備（つながった直後の処理）を終えるまで少し待ってから「満員」を送り、さらに待って閉じる
+          conn.on('open', () => {
+            setTimeout(() => { try { conn.send({ t: 'bye', reason: 'full' }); } catch (e) { /* 無視 */ } }, 400);
+            setTimeout(() => conn.close(), 1500);
+          });
           return;
         }
         taken = true;

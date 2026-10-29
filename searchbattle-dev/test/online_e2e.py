@@ -233,7 +233,7 @@ async def main():
             await third.fill('#net-code', code)
             await third.click('[data-act=net-join]')
             s3 = await wait_for(third, lambda s: s.get('lobby') == 'idle' and s.get('err'), 20, '3人目が断られる')
-            if '対戦中' not in (s3.get('err') or ''): fail('3人目の知らせ: ' + str(s3.get('err')))
+            if '対戦中' not in (s3.get('err') or ''): fail('3人目の知らせ: ' + str(s3.get('err')))   # 「満員」か「入れませんでした（もう対戦中か…）」のどちらでも「対戦中」を含む
             await third.close()
             # 配置：ゲストが先に送り、ホストの画面に「配置完了」が出るのを確かめる
             await guest.click('[data-act=random]'); await guest.click('[data-act=setup-done]')

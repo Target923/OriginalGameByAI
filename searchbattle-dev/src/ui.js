@@ -406,9 +406,11 @@
   }
 
   // ---------------- 盤面 ----------------
-  // 個体の色：配置した個体の並び（id順）で決める。バズーカの破片は元の個体の色のまま
+  // 個体の色：置いたときに付いた番号（col。engine の _freeCol）で決める。途中の個体を外しても、ほかの個体の色は変わらない。
+  //  バズーカの破片は元の個体の色のまま。col のない古い対戦（ページの更新で引き継いだもの）は、置いた並び（id順）で決める
   function colorIndex(P, piece) {
     if (piece.isAdd) return 0;
+    if (piece.col) return ((piece.col - 1) % 8) + 1;
     const id = piece.frag ? piece.fromId : piece.id;
     const ids = P.pieces.filter((p) => !p.isAdd && !p.frag).map((p) => p.id).concat((P.splitPieces || []).map((p) => p.id)).sort((a, b) => a - b);
     return (Math.max(0, ids.indexOf(id)) % 8) + 1;
@@ -3318,6 +3320,9 @@ self.onmessage = function (e) {
   function handleAnswerPointerDown(ev, el) {
     if (effMode() !== 'answer') return;
     if (ev.button != null && ev.button !== 0) return;
+    // ブラウザの標準の動き（文字選択のドラッグ）を止める。押した瞬間に画面を描き直すので、
+    //  止めないと押している間だけ文字選択のカーソル（白い縦線）が出ていた。クリック（click）はこのあとも届く
+    ev.preventDefault();
     const c = +el.dataset.cell;
     const g = G(), v = viewer(), P = g.players[v], ui = app.ui;
     if (P.view.dead[c]) return;
@@ -3393,6 +3398,7 @@ self.onmessage = function (e) {
     if (ev.button != null && ev.button !== 0) return;
     const c = +el.dataset.cell;
     if (g.pieceAt(S.pi, c)) return;   // 置いたキューブの上からは始めない（タップで外す）
+    ev.preventDefault();   // 文字選択のドラッグを始めない（なぞる間に文字選択のカーソルが出ないように）
     // pointerdown 時点ではドラッグ開始と確定せず座標とセルを記録するだけ
     // （クリック配置時にDOMが再描画されてclickイベントが消えるのを防止）
     setupPointerStart = { x: ev.clientX, y: ev.clientY, cell: c };
@@ -4004,8 +4010,10 @@ self.onmessage = function (e) {
     if (!N || N.gone) return;
     N.gone = true;
     N.link.close();
-    const text = BYE_TEXT[reason] || '相手との接続が切れました';
     const g = app.game;
+    // 試合が届く前に切れた（ゲスト）：満員の部屋か、部屋が閉じられた。「満員」の知らせより先に切れることがあるので、まとめて伝える
+    const early = !g && N.role === 'guest' && !BYE_TEXT[reason];
+    const text = BYE_TEXT[reason] || (early ? '部屋に入れませんでした（もう対戦中か、部屋が閉じられました）' : '相手との接続が切れました');
     // 決着のあとなら、結果・リプレイ・答え合わせはそのまま見られるようにする
     if (g && g.phase === 'over' && app.screen === 'battle') { toast(text, 'warn', true); render(); return; }
     netLeave(text, !g);   // 試合が始まる前なら、ロビーに戻る

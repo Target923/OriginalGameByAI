@@ -1064,6 +1064,8 @@ body.replaying #app { display: none; }
 
 /* ===== メモ（スクラッチ）：薄い水色のしるし ===== */
 .cells .cell { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+/* 盤の上では文字を選ばせない（列・行のラベルから文字選択のドラッグが始まらないように） */
+.board { -webkit-user-select: none; user-select: none; }
 .mm { position: absolute; inset: 14%; display: grid; place-items: center; pointer-events: none; z-index: 2; color: #8EDCFF; opacity: .9; }
 .mm svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px rgba(142, 220, 255, .55)); }
 .mm-x svg { stroke-dasharray: 3.2 2.4; }
