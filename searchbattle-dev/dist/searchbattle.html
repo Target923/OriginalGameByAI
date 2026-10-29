@@ -360,10 +360,13 @@ h1, h2, h3 { text-wrap: balance; }
 /* 記号 */
 .mkw { position: absolute; inset: 9%; display: grid; place-items: center; pointer-events: none; z-index: 2; }
 .mk { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; overflow: visible; }
-.ink-oo { color: var(--magenta); filter: drop-shadow(0 0 4px var(--magenta)); }
-.ink-o { color: var(--hit); filter: drop-shadow(0 0 4px var(--hit)); }
+/* マークの影：自分フィールドのキューブ（とくにミント・シアンなど明るい色）の上でもマークが溶けないように、
+   少し下へ落とす薄い影を付ける。そのあとに各マークの色の光を重ねる（暗い相手フィールドでは影は見えず、見た目は変わらない） */
+.mkw { --mk-shadow: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .9)); }
+.ink-oo { color: var(--magenta); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--magenta)); }
+.ink-o { color: var(--hit); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--hit)); }
 .ink-o .dot { fill: currentColor; stroke: none; }
-.ink-x { color: var(--steel-2); opacity: .82; }
+.ink-x { color: var(--steel-2); opacity: .82; filter: var(--mk-shadow); }
 .ink-x .mk { stroke-width: 2.4; }
 /* 再コールできる×は、線はそのままで薄く */
 .ink-x.stale { opacity: .3; }
@@ -373,8 +376,8 @@ h1, h2, h3 { text-wrap: balance; }
 /* ディスタンスショットの結果：○の上は丸、まだヒットしていないマスは角丸の枠、NoData は文字 */
 .mk .ordn { fill: currentColor; stroke: none; font: 700 17px var(--f-tech); text-anchor: middle; dominant-baseline: central; }
 /* ノードショットの答え：ひし形の数字。ヒットしたマスでは左下の小さな札 */
-.ink-n { color: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan)); }
-.board[data-board="own"] .ink-n { color: var(--magenta); filter: drop-shadow(0 0 4px var(--magenta)); }
+.ink-n { color: var(--cyan); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--cyan)); }
+.board[data-board="own"] .ink-n { color: var(--magenta); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--magenta)); }
 .ink-n .mk path { stroke-width: 2.2; }
 .nbadge { --tc: var(--cyan); position: absolute; left: 4%; bottom: 4%; z-index: 3; width: var(--tag-sz); height: var(--tag-sz); display: grid; place-items: center;
   color: var(--tc); pointer-events: none; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--tc) 60%, transparent)); }
@@ -398,7 +401,7 @@ h1, h2, h3 { text-wrap: balance; }
 .gem { position: absolute; left: 5%; bottom: 6%; width: 34%; height: 34%; z-index: 2; fill: var(--amber); stroke: #FFF1CF; stroke-width: 1.4; filter: drop-shadow(0 0 5px var(--amber)); animation: gem 2.6s ease-in-out infinite; }
 .gem .facet { fill: none; stroke: rgba(120, 70, 0, .55); stroke-width: 1.2; }
 @keyframes gem { 50% { filter: drop-shadow(0 0 10px var(--amber)); transform: translateY(-1px); } }
-.num { position: absolute; left: 6%; bottom: 3%; z-index: 2; font: 700 clamp(.55rem, 24cqw, .8rem)/1 var(--f-mono); color: var(--magenta); text-shadow: 0 0 6px rgba(255, 63, 143, .8); }
+.num { position: absolute; left: 6%; bottom: 3%; z-index: 2; font: 700 clamp(.55rem, 24cqw, .8rem)/1 var(--f-mono); color: var(--magenta); text-shadow: 0 1px 1.5px rgba(0, 0, 0, .9), 0 0 6px rgba(255, 63, 143, .8); }
 /* トレジャーの記録（H・N・X）：上のタグと同じ正方形・同じ枠線。--tc に記号の色を入れて、枠・光・文字をその色にする */
 .tl { --tc: #C6CFDC; position: absolute; top: calc(4% + var(--tag-in)); right: calc(4% + var(--tag-in)); z-index: 3; width: var(--tag-box); height: var(--tag-box); display: grid; place-items: center; padding: 0; box-sizing: border-box; font: 700 clamp(.46rem, 19cqw, .7rem)/1 var(--f-tech); color: var(--tc); border-radius: 3px;
   background: rgba(3, 5, 11, .55); border: calc(var(--tag-sz) * .06) solid var(--tc); box-shadow: 0 0 3px color-mix(in srgb, var(--tc) 60%, transparent); pointer-events: none; }

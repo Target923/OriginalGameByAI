@@ -23,3 +23,4 @@
   - S1（少し下へ落とす影）：`filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.9)) drop-shadow(0 0 4px #48D1CC)`
   - S2（周りを囲む濃い影）：`filter: drop-shadow(0 0 1.2px rgba(0,0,0,.95)) drop-shadow(0 1px 2.5px rgba(0,0,0,.8)) drop-shadow(0 0 4px #48D1CC)`
   - 暗い相手フィールドでは影は見えず、見た目は変わらない。
+- 決定：S1（少しの影）を、この記号だけでなく全部のマーク（◎・○・×・ノード・◎の番号）に付けた（template.html の `--mk-shadow`）。
