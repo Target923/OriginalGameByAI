@@ -1229,7 +1229,8 @@ body.replaying #app { display: none; }
   // 21：v12.17 Z字（Z4・Z5・S5）を追加
   // 22：v13 ステルスを作り直し（当たると「Stealth hit」。◎か○かを伏せる）
   // 23：v14 ステルスを作り直し（キューブを隠す。ステルスアンサーで見破る）
-  const VERSION = 23;
+  // 24：v14.1 ×に撃ったステルスアンサーの外れは手番終了だけ（kb.probes）
+  const VERSION = 24;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -1451,6 +1452,7 @@ body.replaying #app { display: none; }
         calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
+        probes: [],    // ×のマスに撃ったステルスアンサーが外れたマス（本物の空きマス。v14.1）
       },
     };
   };
@@ -1774,6 +1776,17 @@ body.replaying #app { display: none; }
       this.lastAction = { kind: 'answer', pi, ok: true, stealth: true, cells };
       const ended = this._checkEnd();
       return { ok: true, success: true, stealth: true, ended };
+    }
+    // ×のマスだけに撃ったステルスアンサーの外れ（v14.1）：キューブは差し出さず、手番が終わるだけ。
+    //  その×は本物の空きマスだったと分かる（kb.probes。次からは探さなくてよい）
+    if (cells.every((c) => me.view.marks[c] && me.view.marks[c].r === 'x')) {
+      me.kb.failedAnswers.push({ mask, t: this.clock, probe: true });
+      for (const c of cells) me.kb.probes.push({ c, t: this.clock });
+      this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: false, probe: true });
+      this._log(pi, `${me.name}：ステルスアンサー失敗（${where}）→ 手番終了`, null, 'miss', null, { cells: cells.slice() });
+      this.lastAction = { kind: 'answer', pi, ok: false, probe: true, cells };
+      this._advance();
+      return { ok: true, success: false, probe: true };
     }
     me.kb.failedAnswers.push({ mask, t: this.clock });
     this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: false });
@@ -3327,7 +3340,7 @@ body.replaying #app { display: none; }
         for (const u of ctx.U) if (u.t > ts) after |= bit(u.c);
         // アイテムの結果（形・マス数・つながり）だけ。トレジャーの的中（src なし）はステルスでもふつうに出るので、ここでは除かない
         for (const o of ctx.occs) if (o.t > ts && (o.src === 'number' || o.src === 'shape' || o.src === 'node')) after |= bit(o.c);
-        const fb = others | early | ctx.deadMask | after | ctx.xMaskBetween(-1, ts) | ctx.oldMaskAll;
+        const fb = others | early | ctx.deadMask | after | ctx.xMaskBetween(-1, ts) | ctx.oldMaskAll | probeMaskOf(ctx.kb);
         const occBefore = ctx.occs.filter((o) => o.t < ts);
         for (const sz of [2, 3, 4, 5]) {
           if (!(ctx.stockBound[sz] > 0)) continue;
@@ -4069,7 +4082,9 @@ body.replaying #app { display: none; }
   //  ①見えている◎の個体で、ふつうの置き方が残っていない（ステルスにされたとしか考えられない）→ その◎のマス1つ（必ずセーフ）
   //  ②見えるヒットのない隠れたキューブ：ステルスの後に×・NoData になったマスのうち、隠れている見込みがいちばん高いマス1つ。
   //    外れると失敗（自分のキューブを1つ差し出して手番が終わる）ので、見込みが高いか、コールできるマスが残っていないときだけ
-  //  policy.stealthHunt：見込みのしきい値（既定 0.8。0.5・0.95・コールできないときだけ、より強い。予選各800局）
+  //  policy.stealthHunt：見込みのしきい値（既定 0.5。v14.1 で外れが手番終了だけになり、0.8 より強い（55.4%）。0.3・0.15 とは差なし。予選各800局）
+  // ステルスアンサーが外れた×のマス（本物の空きマス。ステルスのキューブは動かないので、ずっと空き）
+  function probeMaskOf(kb) { let m = 0; for (const p of kb.probes || []) m |= bit(p.c); return m; }
   function stealthAnswer(game, pi, A) {
     const ctx = A.ctx, J = A.joint;
     if (!(ctx.unrevealed > 0)) return null;
@@ -4098,10 +4113,12 @@ body.replaying #app { display: none; }
     const ts0 = tsList.length ? tsList[0] : ctx.stealthTimes[0];
     let occM = 0;
     for (const o of ctx.occs) occM |= bit(o.c);
-    const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll;
-    // 答えるマスの候補：ステルスの後に×（コール）か NoData（アイテム）になったマス
+    // ステルスアンサーが外れた×（本物の空きマス）も除く（v14.1）
+    const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll | probeMaskOf(ctx.kb);
+    // 答えるマスの候補：ステルスの後にコールして×になったマス（×のマスだけに撃てば、外れても手番が終わるだけ。v14.1。
+    // NoData（アイテム）のマスは×の印がないので、外れるとふつうのアンサーの失敗になる → 候補にしない）
     let xAfter = 0;
-    for (const x of ctx.xs) if (x.t > ts0) xAfter |= bit(x.c);
+    for (const k of ctx.kb.calls) if (k.r === 'x' && k.t > ts0) xAfter |= bit(k.c);
     xAfter &= ~block;
     if (!xAfter) return null;
     const cellW = new Float64Array(NN);
@@ -4123,7 +4140,7 @@ body.replaying #app { display: none; }
     for (let c = 0; c < NN; c++) if ((xAfter & bit(c)) && cellW[c] / tot > bp) { bp = cellW[c] / tot; best = c; }
     if (best < 0) return null;
     const p = bp * pHidden;
-    const th = (policy[pi] && policy[pi].stealthHunt != null) ? policy[pi].stealthHunt : 0.8;
+    const th = (policy[pi] && policy[pi].stealthHunt != null) ? policy[pi].stealthHunt : 0.5;
     if (p >= th || !game.hasCallable(pi)) return [best];
     return null;
   }
@@ -4808,6 +4825,7 @@ body.replaying #app { display: none; }
         const r = game.answer(pi, cells);
         step({ kind: 'answer', cells, r });
         if (game.phase !== 'play') return 'over';
+        if (game.cur !== pi) return 'ok';   // ×に撃ったステルスアンサーが外れて手番が終わった（v14.1）
         if (game.sub === 'sacrifice') {
           game.sacrifice(pi, chooseSacrifice(game, pi));
           if (game.phase !== 'play') return 'over';
@@ -6490,7 +6508,7 @@ window.SBAudio = (function () {
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', '隠す自分のキューブを選んでください。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。ステルスのマスだけでアンサーされると見破られます（全マス当たっていたら、そこで撃破）。ステルス中はワープできません。');
+        main = itemHead('stealth', '隠す自分のキューブを選んでください。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。ステルスのマスだけでアンサーされると見破られます（全マス当たっていたら、そこで撃破）。×に撃ったステルスアンサーが外れても、相手は手番が終わるだけです。ステルス中はワープできません。');
         acts = cancel;
         break;
       case 'treasure':
@@ -6993,7 +7011,7 @@ window.SBAudio = (function () {
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。ステルスと関係ないマスが入ったアンサーは、ふつうのアンサーとして失敗です。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。×のマスだけに撃ったステルスアンサーが外れたときは、キューブを差し出さず手番が終わるだけです（その×は本物の空きマスと分かります）。ステルスと関係ないマスが入ったアンサーは、ふつうのアンサーとして失敗です。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -8016,7 +8034,7 @@ window.SBAudio = (function () {
             return 650 * k;
           }
           els.forEach((el) => over(el, 'glitch', '', 950));
-          if (bc) text(bc.x, bc.y, 'ANSWER FAILED', 'bad', 1500);
+          if (bc) text(bc.x, bc.y, ev.probe ? 'NO STEALTH' : 'ANSWER FAILED', ev.probe ? 'miss' : 'bad', 1500);
           shake(1);
           return 1000 * k;
         }
@@ -8503,6 +8521,7 @@ self.onmessage = function (e) {
         g.answer(cpu, cells);
         await step(0.5);
         if (g.phase !== 'play') return;
+        if (g.cur !== cpu) return;   // ×に撃ったステルスアンサーが外れて手番が終わった（v14.1）
         if (g.sub === 'sacrifice') { g.sacrifice(cpu, AI.chooseSacrifice(g, cpu)); await step(0.5); return; }
       }
     };
@@ -8829,7 +8848,8 @@ self.onmessage = function (e) {
       if (!r.ok) { toast(r.reason || 'アンサーできません', 'warn'); return; }
       resetMode();
       // ゲストは結果がまだ分からない（失敗のときは、届いた state を見て知らせる）
-      if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
+      if (!r.sent && !r.success && r.probe) toast('ステルスアンサー失敗：その×は本物の空きマスでした。手番が終了します', 'warn', true);
+      else if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
       if (!r.sent && r.stealth) toast('ステルスアンサー成功！隠れていたキューブを見破りました');
       afterHuman();
     },

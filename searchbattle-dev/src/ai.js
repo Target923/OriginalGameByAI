@@ -277,7 +277,7 @@
         for (const u of ctx.U) if (u.t > ts) after |= bit(u.c);
         // アイテムの結果（形・マス数・つながり）だけ。トレジャーの的中（src なし）はステルスでもふつうに出るので、ここでは除かない
         for (const o of ctx.occs) if (o.t > ts && (o.src === 'number' || o.src === 'shape' || o.src === 'node')) after |= bit(o.c);
-        const fb = others | early | ctx.deadMask | after | ctx.xMaskBetween(-1, ts) | ctx.oldMaskAll;
+        const fb = others | early | ctx.deadMask | after | ctx.xMaskBetween(-1, ts) | ctx.oldMaskAll | probeMaskOf(ctx.kb);
         const occBefore = ctx.occs.filter((o) => o.t < ts);
         for (const sz of [2, 3, 4, 5]) {
           if (!(ctx.stockBound[sz] > 0)) continue;
@@ -1019,7 +1019,9 @@
   //  ①見えている◎の個体で、ふつうの置き方が残っていない（ステルスにされたとしか考えられない）→ その◎のマス1つ（必ずセーフ）
   //  ②見えるヒットのない隠れたキューブ：ステルスの後に×・NoData になったマスのうち、隠れている見込みがいちばん高いマス1つ。
   //    外れると失敗（自分のキューブを1つ差し出して手番が終わる）ので、見込みが高いか、コールできるマスが残っていないときだけ
-  //  policy.stealthHunt：見込みのしきい値（既定 0.8。0.5・0.95・コールできないときだけ、より強い。予選各800局）
+  //  policy.stealthHunt：見込みのしきい値（既定 0.5。v14.1 で外れが手番終了だけになり、0.8 より強い（55.4%）。0.3・0.15 とは差なし。予選各800局）
+  // ステルスアンサーが外れた×のマス（本物の空きマス。ステルスのキューブは動かないので、ずっと空き）
+  function probeMaskOf(kb) { let m = 0; for (const p of kb.probes || []) m |= bit(p.c); return m; }
   function stealthAnswer(game, pi, A) {
     const ctx = A.ctx, J = A.joint;
     if (!(ctx.unrevealed > 0)) return null;
@@ -1048,10 +1050,12 @@
     const ts0 = tsList.length ? tsList[0] : ctx.stealthTimes[0];
     let occM = 0;
     for (const o of ctx.occs) occM |= bit(o.c);
-    const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll;
-    // 答えるマスの候補：ステルスの後に×（コール）か NoData（アイテム）になったマス
+    // ステルスアンサーが外れた×（本物の空きマス）も除く（v14.1）
+    const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll | probeMaskOf(ctx.kb);
+    // 答えるマスの候補：ステルスの後にコールして×になったマス（×のマスだけに撃てば、外れても手番が終わるだけ。v14.1。
+    // NoData（アイテム）のマスは×の印がないので、外れるとふつうのアンサーの失敗になる → 候補にしない）
     let xAfter = 0;
-    for (const x of ctx.xs) if (x.t > ts0) xAfter |= bit(x.c);
+    for (const k of ctx.kb.calls) if (k.r === 'x' && k.t > ts0) xAfter |= bit(k.c);
     xAfter &= ~block;
     if (!xAfter) return null;
     const cellW = new Float64Array(NN);
@@ -1073,7 +1077,7 @@
     for (let c = 0; c < NN; c++) if ((xAfter & bit(c)) && cellW[c] / tot > bp) { bp = cellW[c] / tot; best = c; }
     if (best < 0) return null;
     const p = bp * pHidden;
-    const th = (policy[pi] && policy[pi].stealthHunt != null) ? policy[pi].stealthHunt : 0.8;
+    const th = (policy[pi] && policy[pi].stealthHunt != null) ? policy[pi].stealthHunt : 0.5;
     if (p >= th || !game.hasCallable(pi)) return [best];
     return null;
   }
@@ -1758,6 +1762,7 @@
         const r = game.answer(pi, cells);
         step({ kind: 'answer', cells, r });
         if (game.phase !== 'play') return 'over';
+        if (game.cur !== pi) return 'ok';   // ×に撃ったステルスアンサーが外れて手番が終わった（v14.1）
         if (game.sub === 'sacrifice') {
           game.sacrifice(pi, chooseSacrifice(game, pi));
           if (game.phase !== 'play') return 'over';

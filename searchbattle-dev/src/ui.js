@@ -772,7 +772,7 @@
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', '隠す自分のキューブを選んでください。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。ステルスのマスだけでアンサーされると見破られます（全マス当たっていたら、そこで撃破）。ステルス中はワープできません。');
+        main = itemHead('stealth', '隠す自分のキューブを選んでください。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。ステルスのマスだけでアンサーされると見破られます（全マス当たっていたら、そこで撃破）。×に撃ったステルスアンサーが外れても、相手は手番が終わるだけです。ステルス中はワープできません。');
         acts = cancel;
         break;
       case 'treasure':
@@ -1275,7 +1275,7 @@
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。ステルスと関係ないマスが入ったアンサーは、ふつうのアンサーとして失敗です。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。×のマスだけに撃ったステルスアンサーが外れたときは、キューブを差し出さず手番が終わるだけです（その×は本物の空きマスと分かります）。ステルスと関係ないマスが入ったアンサーは、ふつうのアンサーとして失敗です。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -2298,7 +2298,7 @@
             return 650 * k;
           }
           els.forEach((el) => over(el, 'glitch', '', 950));
-          if (bc) text(bc.x, bc.y, 'ANSWER FAILED', 'bad', 1500);
+          if (bc) text(bc.x, bc.y, ev.probe ? 'NO STEALTH' : 'ANSWER FAILED', ev.probe ? 'miss' : 'bad', 1500);
           shake(1);
           return 1000 * k;
         }
@@ -2785,6 +2785,7 @@ self.onmessage = function (e) {
         g.answer(cpu, cells);
         await step(0.5);
         if (g.phase !== 'play') return;
+        if (g.cur !== cpu) return;   // ×に撃ったステルスアンサーが外れて手番が終わった（v14.1）
         if (g.sub === 'sacrifice') { g.sacrifice(cpu, AI.chooseSacrifice(g, cpu)); await step(0.5); return; }
       }
     };
@@ -3111,7 +3112,8 @@ self.onmessage = function (e) {
       if (!r.ok) { toast(r.reason || 'アンサーできません', 'warn'); return; }
       resetMode();
       // ゲストは結果がまだ分からない（失敗のときは、届いた state を見て知らせる）
-      if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
+      if (!r.sent && !r.success && r.probe) toast('ステルスアンサー失敗：その×は本物の空きマスでした。手番が終了します', 'warn', true);
+      else if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
       if (!r.sent && r.stealth) toast('ステルスアンサー成功！隠れていたキューブを見破りました');
       afterHuman();
     },

@@ -24,11 +24,11 @@ const PLAYER_KEYS = ['idx', 'name', 'isCPU', 'stock', 'pieces', 'nextId', 'treas
 const EV_BASE = ['type', 'id', 'turn', 'actor', 'owner'];
 const EV_KEYS = {
   start: ['first'], turn: ['cur'], call: ['c', 'r', 'num'], destroy: ['cells', 'size', 'isAdd', 'key', 'cause'],
-  answer: ['cells', 'success', 'stealth'], reveal: ['cells'], tchance: ['left', 'max'], treasure: ['c', 'r'], tfail: [], over: ['result'],
+  answer: ['cells', 'success', 'stealth', 'probe'], reveal: ['cells'], tchance: ['left', 'max'], treasure: ['c', 'r'], tfail: [], over: ['result'],
   item: ['key', 'rebuy', 'n', 'kind', 'value', 'line', 'index', 'k', 'cell', 'size', 'cat', 'a', 'b', 'same', 'oldCells', 'treasureMoved', 'hit', 'killed'],
 };
 const LOG_KEYS = ['id', 'turn', 'actor', 'text', 'priv', 'kind', 'key', 'cells'];
-const LA_KEYS = ['kind', 'pi', 'c', 'res', 'ok', 'cells', 'key', 'r', 'result', 'stealth'];
+const LA_KEYS = ['kind', 'pi', 'c', 'res', 'ok', 'cells', 'key', 'r', 'result', 'stealth', 'probe'];
 const LA_RESULT_KEYS = ['ok', 'key', 'n', 'k', 'size', 'cat', 'same', 'hit', 'killed', 'ended', 'oldCells', 'treasureMoved', 'r', 'num', 'destroyed'];
 const only = (obj, allowed, where) => { for (const k of Object.keys(obj || {})) if (allowed.indexOf(k) < 0) fail(`${where}: 送ってはいけない項目 ${k}`); };
 

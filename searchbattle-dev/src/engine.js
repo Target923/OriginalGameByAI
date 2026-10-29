@@ -37,7 +37,8 @@
   // 21：v12.17 Z字（Z4・Z5・S5）を追加
   // 22：v13 ステルスを作り直し（当たると「Stealth hit」。◎か○かを伏せる）
   // 23：v14 ステルスを作り直し（キューブを隠す。ステルスアンサーで見破る）
-  const VERSION = 23;
+  // 24：v14.1 ×に撃ったステルスアンサーの外れは手番終了だけ（kb.probes）
+  const VERSION = 24;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -259,6 +260,7 @@
         calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
+        probes: [],    // ×のマスに撃ったステルスアンサーが外れたマス（本物の空きマス。v14.1）
       },
     };
   };
@@ -582,6 +584,17 @@
       this.lastAction = { kind: 'answer', pi, ok: true, stealth: true, cells };
       const ended = this._checkEnd();
       return { ok: true, success: true, stealth: true, ended };
+    }
+    // ×のマスだけに撃ったステルスアンサーの外れ（v14.1）：キューブは差し出さず、手番が終わるだけ。
+    //  その×は本物の空きマスだったと分かる（kb.probes。次からは探さなくてよい）
+    if (cells.every((c) => me.view.marks[c] && me.view.marks[c].r === 'x')) {
+      me.kb.failedAnswers.push({ mask, t: this.clock, probe: true });
+      for (const c of cells) me.kb.probes.push({ c, t: this.clock });
+      this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: false, probe: true });
+      this._log(pi, `${me.name}：ステルスアンサー失敗（${where}）→ 手番終了`, null, 'miss', null, { cells: cells.slice() });
+      this.lastAction = { kind: 'answer', pi, ok: false, probe: true, cells };
+      this._advance();
+      return { ok: true, success: false, probe: true };
     }
     me.kb.failedAnswers.push({ mask, t: this.clock });
     this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: false });

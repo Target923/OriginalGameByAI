@@ -37,7 +37,7 @@ for (let k = 0; k < n; k++) {
       if (e.type !== 'answer' || e.success) continue;
       const kb = g.players[e.actor].kb;
       const m = g.players[e.actor].view.marks[e.cells[0]];
-      const hunt = e.cells.length === 1 && (kb.stealths || []).length > 0 && m && m.r === 'x';
+      const hunt = e.probe || (e.cells.length === 1 && (kb.stealths || []).length > 0 && m && m.r === 'x');
       if (hunt) st.stealthHuntMiss = (st.stealthHuntMiss || 0) + 1; else err('CPU answer failed', kind);
     }
     st.msPerMatch += Date.now() - tm;
