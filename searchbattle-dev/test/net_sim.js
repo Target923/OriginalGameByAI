@@ -29,7 +29,7 @@ const EV_KEYS = {
 };
 const LOG_KEYS = ['id', 'turn', 'actor', 'text', 'priv', 'kind', 'key', 'cells'];
 const LA_KEYS = ['kind', 'pi', 'c', 'res', 'ok', 'cells', 'key', 'r', 'result', 'stealth', 'probe'];
-const LA_RESULT_KEYS = ['ok', 'key', 'n', 'k', 'size', 'cat', 'same', 'hit', 'killed', 'ended', 'oldCells', 'treasureMoved', 'r', 'num', 'destroyed'];
+const LA_RESULT_KEYS = ['ok', 'key', 'n', 'k', 'size', 'cat', 'same', 'hit', 'killed', 'ended', 'oldCells', 'treasureMoved', 'r', 'num', 'destroyed', 'trigger'];
 const only = (obj, allowed, where) => { for (const k of Object.keys(obj || {})) if (allowed.indexOf(k) < 0) fail(`${where}: 送ってはいけない項目 ${k}`); };
 
 function checkSnap(snap, hostGame, where) {

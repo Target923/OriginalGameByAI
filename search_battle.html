@@ -1229,7 +1229,9 @@ body.replaying #app { display: none; }
   // 21：v12.17 Z字（Z4・Z5・S5）を追加
   // 22：v13 ステルスを作り直し（当たると「Stealth hit」。◎か○かを伏せる）
   // 23：v14 ステルスを作り直し（キューブを隠す。ステルスアンサーで見破る）
-  const VERSION = 23;
+  // 24：v14.1 ×に撃ったステルスアンサーの外れは手番終了だけ（kb.probes。v14.2 で元に戻した）
+  // 25：v14.2 ステルスのトリガーマス（コールされると STEALTH HIT。すべてのステルスが見破られる）
+  const VERSION = 25;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '指定した形状かマス数の、残っている個体の数を調べる' },
@@ -1240,7 +1242,7 @@ body.replaying #app { display: none; }
     node: { name: 'ノードショット', desc: '指定した1マスで、同じ個体のマスが上下左右にいくつつながっているか（0〜3）を調べる（空きマスならNoData）' },
     bazooka: { name: 'バズーカ', desc: '指定した1マスの個体を1マスキューブに分解する（ステルスでも分解し、ステルスは解除）。ヒット済みのマスはその場で撃破。空きマスならNoData' },
     warp: { name: 'ワープ', desc: '自分の個体1つを空きマスへ移動する' },
-    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す。コールは×、アイテムは NoData、数にも入らない。ステルスのマスだけでアンサーされると見破られる' },
+    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（選んだマスがトリガーマス）。コールは×、アイテムは NoData、数にも入らない。トリガーマスをコールされるか、ステルスのマスだけでアンサーされると見破られる' },
   };
 
   function bit(c) { return 1 << c; }
@@ -1688,7 +1690,14 @@ body.replaying #app { display: none; }
       const first = p.hitMask === 0;
       p.hitMask |= bit(c);
       (p.hitOrder || (p.hitOrder = [])).push(c);
-      if (p.stealth) {
+      if (p.stealth && c === p.stealthTrigger) {
+        // トリガーマス（v14.2）：隠れたキューブの弱点。ここをコールされると STEALTH HIT になり、
+        // ステルスアンサーと同じく、すべてのステルスのキューブが見破られる（このあと _revealAll）
+        v.marks[c] = { r: 'q', t };
+        me.kb.calls.push({ c, t, r: 'q' });
+        res = { r: 'q', trigger: true };
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT（トリガー）`, null, 'hit');
+      } else if (p.stealth) {
         // ステルス（v14）：見破られるまでは、当たっても×に見せる（コールした側には空きマスと同じに見える）。
         //  ヒットとしては数えておき、見破られたら STEALTH HIT に変わる。見破られるまでは全マス当たっても撃破されない（相手に見えないため）
         v.marks[c] = { r: 'x', callable: false, t };
@@ -1715,8 +1724,9 @@ body.replaying #app { display: none; }
         this._log(pi, `${me.name}：${this.coord(c)}をコール → ○`, null, 'hit');
       }
       this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num });
-      // 全マスに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない）
-      if (p.hitMask === p.mask && !p.stealth) {
+      if (res.trigger) this._revealAll(foe.idx, foe.pieces.filter((x) => x.alive && x.stealth), pi);
+      // 全マスに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない。見破りで撃破済みなら何もしない）
+      if (p.alive && p.hitMask === p.mask && !p.stealth) {
         this._destroy(p, 'destroy');
         res.destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
         this._log(pi, `${me.name}：${pieceName(p)}を撃破（${coordList(p.cells, this.N)}）`, null, 'kill');
@@ -2021,6 +2031,9 @@ body.replaying #app { display: none; }
         if (!p) return { ok: false, reason: 'ステルスにする自分のキューブを選んでください' };
         if (p.stealth) return { ok: false, reason: 'そのキューブはすでにステルス中です' };
         if (p.stealthRevealed) return { ok: false, reason: '見破られたキューブには使えません' };
+        // トリガーマス（v14.2）：隠すキューブのマスを1つ選ぶ。まだ当たっていないマスに限る（当たったマスは二度とコールされず、弱点にならないため）
+        if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーマスにする、そのキューブのマスを選んでください' };
+        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーマスは、まだ当たっていないマスから選んでください' };
         return { ok: true, piece: p };
       }
     }
@@ -2163,6 +2176,7 @@ body.replaying #app { display: none; }
         const p = val.piece;
         p.stealth = true;
         p.stealthAt = t;
+        p.stealthTrigger = params.cell;
         foe.kb.stealths.push({ t });
         result.cells = p.cells.slice();
         this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
@@ -2675,7 +2689,7 @@ body.replaying #app { display: none; }
             if (isInt(p.pieceId, 1, 9999) && isInt(p.t, 0, 7) && isInt(p.r0, 0, N - 1) && isInt(p.c0, 0, N - 1)) q = { pieceId: p.pieceId, t: p.t, r0: p.r0, c0: p.c0 };
             break;
           case 'stealth':
-            if (isInt(p.pieceId, 1, 9999)) q = { pieceId: p.pieceId };
+            if (isInt(p.pieceId, 1, 9999) && cell(p.cell)) q = { pieceId: p.pieceId, cell: p.cell };   // cell＝トリガーマス（v14.2）
             break;
         }
         return q ? [key, q] : null;
@@ -3321,6 +3335,7 @@ body.replaying #app { display: none; }
     //  ステルスの後のヒット・調べた結果（形やマス数など）のあるマスは、ほかの個体なので入らない。ステルスの前の×には入らない。
     //  数（サーチキューブ・ライン）には入らないので、マス数・形の数の条件は在庫だけを見る。重みは小さめ（ステルスにされた見込み）
     if (!g.q && ctx.unrevealed > 0) {
+      const unc = uncalledMask(ctx);
       for (const ts of ctx.stealthTimes) {
         if (ts <= g.t) continue;
         let after = 0;
@@ -3334,6 +3349,7 @@ body.replaying #app { display: none; }
           for (const key of SHAPES_BY_SIZE[sz]) {
             for (const P of ctx.PL[key]) {
               if (!(P.mask & bit(g.c)) || (P.mask & fb)) continue;
+              if (!(P.mask & unc)) continue;   // トリガーマス（まだコールされていない）を含む（v14.2）
               if (!factsOK(P, occBefore, 0, ctx.N)) continue;
               add(P, 's', 0.3);
             }
@@ -4069,7 +4085,19 @@ body.replaying #app { display: none; }
   //  ①見えている◎の個体で、ふつうの置き方が残っていない（ステルスにされたとしか考えられない）→ その◎のマス1つ（必ずセーフ）
   //  ②見えるヒットのない隠れたキューブ：ステルスの後に×・NoData になったマスのうち、隠れている見込みがいちばん高いマス1つ。
   //    外れると失敗（自分のキューブを1つ差し出して手番が終わる）ので、見込みが高いか、コールできるマスが残っていないときだけ
-  //  policy.stealthHunt：見込みのしきい値（既定 0.8。0.5・0.95・コールできないときだけ、より強い。予選各800局）
+  //  policy.stealthHunt：見込みのしきい値（既定 0.8。外れると差し出し。0.5・0.95・コールできないときだけ、より強い。予選各800局・v14）
+  // まだ一度もコールしていないマス（隠れたキューブのトリガーマスは、まだコールされていない。v14.2）
+  //  ワープのあとは×のマスがもう一度コールできるようになるので、最後のコールが×でその後にワープがあれば「まだ」に数える
+  function uncalledMask(ctx) {
+    const last = new Map();
+    for (const k of ctx.kb.calls) last.set(k.c, k);
+    let m = 0;
+    for (let c = 0; c < ctx.NN; c++) {
+      const k = last.get(c);
+      if (!k || (k.r === 'x' && ctx.kb.warps.some((w) => w.t > k.t))) m |= bit(c);
+    }
+    return m;
+  }
   function stealthAnswer(game, pi, A) {
     const ctx = A.ctx, J = A.joint;
     if (!(ctx.unrevealed > 0)) return null;
@@ -4099,18 +4127,22 @@ body.replaying #app { display: none; }
     let occM = 0;
     for (const o of ctx.occs) occM |= bit(o.c);
     const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll;
-    // 答えるマスの候補：ステルスの後に×（コール）か NoData（アイテム）になったマス
+    // 答えるマスの候補：ステルスの後にコールして×になったマス（×のマスだけに撃てば、外れても手番が終わるだけ。v14.1。
+    // NoData（アイテム）のマスは×の印がないので、外れるとふつうのアンサーの失敗になる → 候補にしない）
     let xAfter = 0;
-    for (const x of ctx.xs) if (x.t > ts0) xAfter |= bit(x.c);
+    for (const k of ctx.kb.calls) if (k.r === 'x' && k.t > ts0) xAfter |= bit(k.c);
     xAfter &= ~block;
     if (!xAfter) return null;
     const cellW = new Float64Array(NN);
+    const unc = uncalledMask(ctx);
     let tot = 0;
     for (const sz of [2, 3, 4, 5]) {
       if (!(ctx.stockBound[sz] > 0)) continue;
       for (const key of SHAPES_BY_SIZE[sz]) {
         for (const P of ctx.PL[key]) {
           if (P.mask & block) continue;
+          // トリガーマス（まだコールされていない）を1つは含む（v14.2）
+          if (!(P.mask & unc)) continue;
           // まだコールしていないマスだけの置き方も数える（隠れたキューブがそこにいる見込みもあるため）
           const w = 1 / ctx.PL[key].length;
           tot += w;
@@ -4286,11 +4318,22 @@ body.replaying #app { display: none; }
   //   'none'：使わない
   //  stealthPick：'rand'（既定）／'big'（いちばん大きい）／'small'（いちばん小さい）
   //  最後の1個体には、どの方針でも先に付ける（見つからない限り全滅しない）
+  // トリガーマス（v14.2）：隠すキューブの、まだ当たっていないマスのうち、相手に撃たれにくそうなマス
+  //  （相手の推理で、そこに個体がいると見込まれている度合いがいちばん低いマス）
+  function stealthTrigger(game, pi, p) {
+    const open = p.cells.filter((c) => !(p.hitMask & bit(c)));
+    if (open.length <= 1) return open[0];
+    let B = null;
+    try { B = analyze(game.players[1 - pi].kb, game.N, game.rng); } catch (e) { B = null; }
+    if (!B) return open[Math.floor(game.rng() * open.length)];
+    const score = (c) => B.hunt.P[c] + B.targetP[c] + game.rng() * 1e-6;
+    return open.reduce((a, c) => (score(c) < score(a) ? c : a), open[0]);
+  }
   function chooseStealth(game, pi, when) {
     const pol = policy[pi] || {};
     const mode = pol.stealth || 'early';
     const living = game.living(pi);
-    const open = living.filter((p) => !p.stealth && !p.stealthRevealed);
+    const open = living.filter((p) => !p.stealth && !p.stealthRevealed && p.hitMask !== p.mask);
     if (!open.length || mode === 'none') return null;
     if (when !== 'first') return null;
     if (living.length === 1 && open.length === 1) return open[0];
@@ -4485,7 +4528,7 @@ body.replaying #app { display: none; }
     // 2) ステルス（最後の1個体、または序盤に先に付ける方針のとき）
     if (free('stealth')) {
       const p = chooseStealth(game, pi, 'first');
-      if (p) return { key: 'stealth', params: { pieceId: p.id } };
+      if (p) return { key: 'stealth', params: { pieceId: p.id, cell: stealthTrigger(game, pi, p) } };
     }
     // 3) 攻撃用アイテム
     const A = analyze(me.kb, game.N, game.rng, pol);
@@ -4494,7 +4537,7 @@ body.replaying #app { display: none; }
     // 4) 序盤、攻撃用アイテムを使わなかった手番には、ステルスを先に付けておく
     if (stage === 'post' && free('stealth')) {
       const p = chooseStealth(game, pi, 'spare');
-      if (p) return { key: 'stealth', params: { pieceId: p.id } };
+      if (p) return { key: 'stealth', params: { pieceId: p.id, cell: stealthTrigger(game, pi, p) } };
     }
     return null;
   }
@@ -4808,6 +4851,7 @@ body.replaying #app { display: none; }
         const r = game.answer(pi, cells);
         step({ kind: 'answer', cells, r });
         if (game.phase !== 'play') return 'over';
+        if (game.cur !== pi) return 'ok';   // 念のため：手番が相手に移っていたら終わる
         if (game.sub === 'sacrifice') {
           game.sacrifice(pi, chooseSacrifice(game, pi));
           if (game.phase !== 'play') return 'over';
@@ -6221,8 +6265,9 @@ window.SBAudio = (function () {
         if (opts.selectedPiece === p.id) cls += ' picked';
         if (p.stealth && p.alive) {
           cls += ' stealth';
-          // 読み順で最初のマスにだけ印を付ける
-          if (c === Math.min.apply(null, p.cells)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
+          // トリガーマス（v14.2：ここをコールされると見破られる）に印を付ける。トリガーのない古い対戦は読み順で最初のマス
+          const tg = p.stealthTrigger != null ? p.stealthTrigger : Math.min.apply(null, p.cells);
+          if (c === tg) { inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`; cls += ' trigger'; }
         }
       }
       inner += cellMarkHTML(m, intel, c);
@@ -6403,7 +6448,7 @@ window.SBAudio = (function () {
       case 'answer-phase': return who + (g.itemUsed ? 'アンサーするか、ターンエンドしてください' : 'アンサー・アイテム・ターンエンドから選んでください');
       case 'answer': return who + '相手フィールドで、個体の全マスを選んでください';
       case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのマスを1つ選んでください`;
-      case 'stealth-pick': return who + 'ステルス：隠す自分のキューブを選んでください';
+      case 'stealth-pick': return who + 'ステルス：隠すキューブのマスを1つ選んでください（そのマスがトリガーマス）';
       case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選んでください';
       case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
       case 'number': return who + 'サーチサイズ：相手フィールドで調べるマスを選んでください';
@@ -6490,7 +6535,7 @@ window.SBAudio = (function () {
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', '隠す自分のキューブを選んでください。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。ステルスのマスだけでアンサーされると見破られます（全マス当たっていたら、そこで撃破）。ステルス中はワープできません。');
+        main = itemHead('stealth', '隠すキューブの、まだ当たっていないマスを1つ選んでください。そのマスがトリガーマスになり、そのキューブが隠れます。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。トリガーマスをコールされるか、ステルスのマスだけでアンサーされると、すべてのステルスが見破られます（全マス当たっていたキューブはそこで撃破）。ステルス中はワープできません。');
         acts = cancel;
         break;
       case 'treasure':
@@ -6848,7 +6893,7 @@ window.SBAudio = (function () {
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
     if (mode === 'warp-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth; }; }   // ステルス中はワープできない（v14）
     else if (mode === 'sacrifice') { ownPick = true; ownClick = (c) => !!g.pieceAt(v, c); }
-    else if (mode === 'stealth-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth && !p.stealthRevealed; }; }
+    else if (mode === 'stealth-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth && !p.stealthRevealed && !(p.hitMask & (1 << c)); }; }
     else if (mode === 'warp-place') ownClick = () => true;
     const predActive = !!predClick || mode === 'line' || mode === 'cube';
 
@@ -6993,7 +7038,7 @@ window.SBAudio = (function () {
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。ステルスと関係ないマスが入ったアンサーは、ふつうのアンサーとして失敗です。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
+        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスは、隠すキューブのマスを1つ選んで使います（そのマスがトリガーマス）。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのマスだけでアンサーすると（ステルスアンサー。1マスでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全マス当たっていたキューブはそこで撃破。トリガーマスをコールされたときも、ステルスアンサーと同じく、すべてのステルスが見破られます。ステルスアンサーが外れたら、ふつうのアンサーの失敗と同じく、キューブを1つ差し出します。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2マスにも使えます。マスの調査結果は C＝キューブ、L＝L字、T＝T字、Z＝Z字（段違い。4マスと5マス）、数字＝マス数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T字の分かれ目、0＝1マスキューブ）。空きマスだったときは NoData。バズーカで分解された個体は、その試合のあいだ1マスキューブ（1マス1pt）になり、1回のヒットで撃破されます。分解された個体にトレジャーがあれば、ニアの「同じ個体」はそのマスだけになります。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -8503,6 +8548,7 @@ self.onmessage = function (e) {
         g.answer(cpu, cells);
         await step(0.5);
         if (g.phase !== 'play') return;
+        if (g.cur !== cpu) return;   // 念のため：手番が相手に移っていたら終わる
         if (g.sub === 'sacrifice') { g.sacrifice(cpu, AI.chooseSacrifice(g, cpu)); await step(0.5); return; }
       }
     };
@@ -8979,7 +9025,8 @@ self.onmessage = function (e) {
         if (!p) { toast('ステルスにする自分のキューブを選んでください'); return; }
         if (p.stealth) { toast('そのキューブはすでにステルス中です'); return; }
         if (p.stealthRevealed) { toast('見破られたキューブには使えません'); return; }
-        useItem('stealth', { pieceId: p.id });
+        if (p.hitMask & (1 << c)) { toast('トリガーマスは、まだ当たっていないマスから選んでください'); return; }
+        useItem('stealth', { pieceId: p.id, cell: c });   // 押したマスがトリガーマス（v14.2）
         return;
       }
       case 'sacrifice': {

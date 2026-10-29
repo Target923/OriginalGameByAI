@@ -184,7 +184,7 @@
             if (isInt(p.pieceId, 1, 9999) && isInt(p.t, 0, 7) && isInt(p.r0, 0, N - 1) && isInt(p.c0, 0, N - 1)) q = { pieceId: p.pieceId, t: p.t, r0: p.r0, c0: p.c0 };
             break;
           case 'stealth':
-            if (isInt(p.pieceId, 1, 9999)) q = { pieceId: p.pieceId };
+            if (isInt(p.pieceId, 1, 9999) && cell(p.cell)) q = { pieceId: p.pieceId, cell: p.cell };   // cell＝トリガーマス（v14.2）
             break;
         }
         return q ? [key, q] : null;

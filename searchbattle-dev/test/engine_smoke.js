@@ -27,7 +27,7 @@ for (let g=0; g<400; g++) {
           if (k==='shape'||k==='number'||k==='node'||k==='bazooka') { const cs=[...Array(NN).keys()].filter(c=>!me.view.dead[c]); params={cell:cs[rnd(cs.length)]}; }
           if (k==='pair') { const cs=[...Array(NN).keys()].filter(c=>!me.view.dead[c]); if(cs.length<2) continue; const a=cs[rnd(cs.length)]; const rest=cs.filter(c=>c!==a); params={a, b:rest[rnd(rest.length)]}; }
           if (k==='warp') { const ps=G.living(pi); const p=ps[rnd(ps.length)]; let ok=false; for(let i=0;i<50&&!ok;i++){ params={pieceId:p.id,t:rnd(8),r0:rnd(N),c0:rnd(N)}; ok=G.validateItem(pi,'warp',params).ok;} if(!ok) continue; }
-          if (k==='stealth') { const ps=G.living(pi).filter(p=>!p.stealth); if(!ps.length) continue; params={pieceId:ps[rnd(ps.length)].id}; }
+          if (k==='stealth') { const ps=G.living(pi).filter(p=>!p.stealth&&!p.stealthRevealed&&p.hitMask!==p.mask); if(!ps.length) continue; const sp=ps[rnd(ps.length)]; const op=sp.cells.filter(c=>!(sp.hitMask&(1<<c))); params={pieceId:sp.id,cell:op[rnd(op.length)]}; }
           const r=G.useItem(pi,k,params); if(!r.ok){errors++; console.log('item err',k,r.reason); } if (k==='bazooka' && r.hit) bz++;
           continue;
         }

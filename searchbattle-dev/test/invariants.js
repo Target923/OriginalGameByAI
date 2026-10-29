@@ -107,7 +107,7 @@ function randomItem(G, pi, rng) {
       params = opts[Math.floor(rng() * opts.length)];
       break;
     }
-    case 'stealth': { const ps = G.living(pi).filter((p) => !p.stealth); if (!ps.length) return false; params = { pieceId: ps[Math.floor(rng() * ps.length)].id }; break; }
+    case 'stealth': { const ps = G.living(pi).filter((p) => !p.stealth && !p.stealthRevealed && p.hitMask !== p.mask); if (!ps.length) return false; const sp = ps[Math.floor(rng() * ps.length)]; const op = sp.cells.filter((c) => !(sp.hitMask & (1 << c))); params = { pieceId: sp.id, cell: op[Math.floor(rng() * op.length)] }; break; }
   }
   if (!params) return false;
   const r = G.useItem(pi, k, params);
