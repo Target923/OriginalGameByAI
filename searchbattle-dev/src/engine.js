@@ -700,8 +700,19 @@
     for (const p of pieces) {
       const ts = p.stealthAt;
       const inP = (c) => (p.mask & bit(c)) !== 0;
-      for (const k of kb.calls) if (k.r === 'x' && k.t > ts && inP(k.c)) { k.r = 'q'; k.num = p.stealthNo; }
-      for (const c of p.cells) { const m = v.marks[c]; if (m && m.r === 'x' && m.t > ts) { v.marks[c] = { r: 'q', num: p.stealthNo, t: m.t }; turned.push(c); } }
+      // ステルスの後の×と、ステルスの前に当たっていた◎・○（v14.4。ユーザーの希望：ステルスマークの間に◎が残らないように）を、
+      // どちらも番号つきの STEALTH HIT にそろえる（同じキューブのヒットが同じ印・同じ番号で並ぶ）
+      //  ◎・○は、いまそのマスに付いている印で、このキューブのヒット（hitMask）のものだけ（ワープ前の別の個体の記録は変えない）
+      const turnable = (c, m) => m && ((m.r === 'x' && m.t > ts) || ((m.r === 'oo' || m.r === 'o') && m.t <= ts && (p.hitMask & bit(c))));
+      // 記録（kb.calls）：ステルスの後の×はすべて（ワープの後にもう一度コールした×も）、◎・○はいま付いている印と同じ時刻のもの
+      for (const k of kb.calls) if (inP(k.c) && k.r === 'x' && k.t > ts) { k.r = 'q'; k.num = p.stealthNo; }
+      for (const c of p.cells) {
+        const m = v.marks[c];
+        if (!turnable(c, m)) continue;
+        if (m.r !== 'x') for (const k of kb.calls) if (k.c === c && k.t === m.t) { k.r = 'q'; k.num = p.stealthNo; }
+        v.marks[c] = { r: 'q', num: p.stealthNo, t: m.t };
+        turned.push(c);
+      }
       const keep = [];
       for (const e of kb.empties) {
         if (!(e.t > ts && inP(e.c))) { keep.push(e); continue; }
