@@ -718,13 +718,14 @@
       for (const e of kb.empties) {
         if (!(e.t > ts && inP(e.c))) { keep.push(e); continue; }
         fixed.push(e.c);
-        if (e.src === 'number') kb.occs.push({ c: e.c, t: e.t, cat: null, size: p.size, turn: e.turn, src: 'number' });
-        else if (e.src === 'shape') kb.occs.push({ c: e.c, t: e.t, cat: p.cat, turn: e.turn, src: 'shape' });
+        // rv：見破りで本当の値に直した記録（画面でゴールドにして、ステルスの影響があった情報だと分かるようにする。v14.5）
+        if (e.src === 'number') kb.occs.push({ c: e.c, t: e.t, cat: null, size: p.size, turn: e.turn, src: 'number', rv: true });
+        else if (e.src === 'shape') kb.occs.push({ c: e.c, t: e.t, cat: p.cat, turn: e.turn, src: 'shape', rv: true });
         else if (e.src === 'node') {
           const deg = nodeDegree(p.mask, e.c, N);
-          kb.occs.push({ c: e.c, t: e.t, cat: null, deg, turn: e.turn, src: 'node' });
+          kb.occs.push({ c: e.c, t: e.t, cat: null, deg, turn: e.turn, src: 'node', rv: true });
           const nd = kb.nodes.find((x) => x.t === e.t && x.c === e.c);
-          if (nd) nd.k = deg;
+          if (nd) { nd.k = deg; nd.rv = true; }
         }
       }
       kb.empties = keep;
@@ -733,10 +734,10 @@
         if (q.t <= ts) continue;
         if (q.kind === 'line') {
           const lm = lineMask(q.line, q.index, N);
-          if (p.mask & lm) { q.k += 1; q.n += popcount(p.mask & lm); countsChanged = true; }
-        } else if (q.kind === 'cat' ? p.cat === q.value : p.size === q.value) { q.n += 1; countsChanged = true; }
+          if (p.mask & lm) { q.k += 1; q.n += popcount(p.mask & lm); countsChanged = true; q.rv = true; }
+        } else if (q.kind === 'cat' ? p.cat === q.value : p.size === q.value) { q.n += 1; countsChanged = true; q.rv = true; }
       }
-      for (const pr of kb.pairs) if (pr.t > ts && inP(pr.a) && inP(pr.b)) { pr.same = true; fixed.push(pr.a, pr.b); }
+      for (const pr of kb.pairs) if (pr.t > ts && inP(pr.a) && inP(pr.b)) { pr.same = true; pr.rv = true; fixed.push(pr.a, pr.b); }
       p.stealth = false;
       p.stealthRevealed = true;
     }

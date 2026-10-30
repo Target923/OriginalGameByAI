@@ -301,7 +301,7 @@
         const label = E.lineLabel(q.line, q.index);
         const kApx = k != null && split && !stale;
         // サーチラインの札は場所をとるので短く（v14.5）：C＝キューブ、B＝ブロック。くわしくはチップで説明する
-        tags.push({ key: 'line', label, pre: '残り', n, unit: 'B', k, kApx, turn: q.turn, stale,
+        tags.push({ key: 'line', label, pre: '残り', n, unit: 'B', k, kApx, turn: q.turn, stale, rv: !!q.rv,
           tip: `サーチライン（T${pad2(q.turn)}）：${label}にかかっている（撃破されていない）キューブの数（C）/ そのブロックの数（B）。◎・○のブロックも数に入ります。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : kApx ? '撃破されると自動で減ります。その後バズーカで分解したキューブがあり、破片は1つずつ数えるため、キューブの数は目安です（ブロックの数は正しい）' : '撃破されると自動で減ります'}` });
         continue;
       }
@@ -315,7 +315,7 @@
       n = Math.max(0, n);
       // サーチキューブは言葉のまま（「3ブロック 残り 2キューブ」。v14.5 で「体」を「キューブ」に）。短い C・B はサーチラインだけ
       const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
-      tags.push({ key: 'cube', label, pre: '残り', n, unit: 'キューブ', turn: q.turn, stale: split,
+      tags.push({ key: 'cube', label, pre: '残り', n, unit: 'キューブ', turn: q.turn, stale: split, rv: !!q.rv,
         tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック' : q.value}のキューブが、いくつ残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
     }
     const cells = {};
@@ -323,7 +323,7 @@
     // ブロックの調査（サーチシェイプ・サーチサイズ）は時刻順に、新しい結果で上書きする。
     // 空きブロックだったとき（NoData）は、ディスタンスショットの NoData と同じ表示にする
     const facts = [];
-    for (const o of kb.occs) if (o.src === 'shape' || o.src === 'number') facts.push({ c: o.c, t: o.t, turn: o.turn, src: o.src, v: o.src === 'shape' ? o.cat : o.size, stale: warpedAfter(o.t) });
+    for (const o of kb.occs) if (o.src === 'shape' || o.src === 'number') facts.push({ c: o.c, t: o.t, turn: o.turn, src: o.src, v: o.src === 'shape' ? o.cat : o.size, stale: warpedAfter(o.t), rv: !!o.rv });
     for (const e of kb.empties) if (e.src === 'shape' || e.src === 'number' || e.src === 'node' || e.src === 'bazooka') facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src, nd: true, stale: relocatedAfter(e.t) });
     // バズーカで分解した：撃ち込んだブロックがヒット済みでなければ、そこには1ブロックのキューブ（C1）が残る
     for (const sp of (kb.splits || [])) {
@@ -335,7 +335,7 @@
     facts.sort((a, b) => a.t - b.t);
     for (const f of facts) {
       if (f.nd) { put(f.c, 'nd', { t: f.t, turn: f.turn, src: f.src, stale: f.stale }); put(f.c, 'shape', null); put(f.c, 'size', null); continue; }
-      put(f.c, f.src === 'shape' ? 'shape' : 'size', { v: f.v, stale: f.stale, turn: f.turn });
+      put(f.c, f.src === 'shape' ? 'shape' : 'size', { v: f.v, stale: f.stale, turn: f.turn, rv: f.rv });
       put(f.c, 'nd', null);
     }
     // ノードショット：そのブロックの最新の答え（つながりの数）。そのキューブがワープするか、バズーカで分解されると変わりうる（薄く表示）
@@ -343,7 +343,7 @@
     const splitAfter = (t) => (kb.splits || []).some((sp) => sp.t > t);
     for (const D of (kb.nodes || [])) {
       if (D.k == null) continue;
-      put(D.c, 'node', { v: D.k, t: D.t, turn: D.turn, left: leftAfter(D.c, D.t), stale: warpedAfter(D.t) || splitAfter(D.t) });
+      put(D.c, 'node', { v: D.k, t: D.t, turn: D.turn, left: leftAfter(D.c, D.t), stale: warpedAfter(D.t) || splitAfter(D.t), rv: !!D.rv });
     }
     const pairs = [];
     const pairLatest = new Map();
@@ -358,7 +358,7 @@
   function intelTagsHTML(intel, mine) {
     if (!intel || !intel.tags.length) return '';
     return `<div class="intel ${mine ? 'mine' : 'enemy'}" aria-label="調査の記録">` + intel.tags.map((t) =>
-      `<span class="itag${t.stale ? ' stale' : ''}" data-tip="${esc(t.tip)}">${ICON[t.key]}${esc(t.label)}${t.pre ? `<i>${esc(t.pre)}</i>` : ''}${t.k != null ? `<b class="${t.kApx ? 'apx' : ''}">${t.k}</b>C<em class="sl">/</em>` : ''}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
+      `<span class="itag${t.stale ? ' stale' : ''}${t.rv ? ' rv' : ''}" data-tip="${esc(t.tip + (t.rv ? '（ステルスを見破って直った数）' : ''))}">${ICON[t.key]}${esc(t.label)}${t.pre ? `<i>${esc(t.pre)}</i>` : ''}${t.k != null ? `<b class="${t.kApx ? 'apx' : ''}">${t.k}</b>C<em class="sl">/</em>` : ''}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
     ).join('') + '</div>';
   }
   // ブロックの左上に「形状＋ブロック数」（例：L4、R3、#2）。空きブロックだったときは、ブロックの中央に NoData を出す（cellMarkHTML）
@@ -370,8 +370,9 @@
     if (a.shape) s += SHAPE_ABBR[a.shape.v] || a.shape.v;
     if (a.size) s += (a.shape ? '' : '#') + a.size.v;
     const stale = (a.shape && a.shape.stale) || (a.size && a.size.stale);
-    const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチサイズ：${a.size.v}ブロック` : ''].filter(Boolean).join(' / ');
-    return `<span class="ctag${stale ? ' stale' : ''}" title="${esc(title)}"><i>${esc(s)}</i></span>`;
+    const rv = (a.shape && a.shape.rv) || (a.size && a.size.rv);   // ステルスを見破って直った結果はゴールド
+    const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチサイズ：${a.size.v}ブロック` : ''].filter(Boolean).join(' / ') + (rv ? '（ステルスを見破って直った結果）' : '');
+    return `<span class="ctag${stale ? ' stale' : ''}${rv ? ' rv' : ''}" title="${esc(title)}"><i>${esc(s)}</i></span>`;
   }
   // ノードショット・NoData の表示。NoData（サーチサイズ・サーチシェイプ・ノードショット・バズーカで空きブロックだった）は
   // ブロックの中央に出す。ノードショットの数字は、まだ印のないブロックなら中央のひし形、ヒットしたブロックなら左下の小さな札
@@ -382,12 +383,13 @@
   function cellMarkHTML(m, intel, c) {
     const nd = ndAt(intel, c), nn = nodeAt(intel, c);
     // 新しいほうの調査結果を使う
-    const info = nd && (!nn || nd.t > nn.t) ? { nd: true, t: nd.t, stale: nd.stale } : nn ? { v: nn.v, t: nn.t, stale: nn.stale } : null;
+    const info = nd && (!nn || nd.t > nn.t) ? { nd: true, t: nd.t, stale: nd.stale } : nn ? { v: nn.v, t: nn.t, stale: nn.stale, rv: nn.rv } : null;
     if (!info) return markHTML(m);
     if (m && m.r === 'x' && (!m.callable || m.t > info.t)) return markHTML(m);
     if (info.nd) return m ? markHTML(m) : NODATA_HTML(info.stale);
-    if (m && m.r !== 'x') return markHTML(m) + `<span class="nbadge${info.stale ? ' stale' : ''}" aria-hidden="true">${nodeMark(info.v)}</span>`;
-    return `<span class="mkw ink-n${info.stale ? ' stale' : ''}">${nodeMark(info.v)}</span>`;
+    const rv = info.rv ? ' rv' : '';   // ステルスを見破って直ったつながりの数はゴールド
+    if (m && m.r !== 'x') return markHTML(m) + `<span class="nbadge${info.stale ? ' stale' : ''}${rv}" aria-hidden="true">${nodeMark(info.v)}</span>`;
+    return `<span class="mkw ink-n${info.stale ? ' stale' : ''}${rv}">${nodeMark(info.v)}</span>`;
   }
   function probeLabel(intel, c, m) {
     const nd = ndAt(intel, c), nn = nodeAt(intel, c);
@@ -1975,31 +1977,6 @@
       return fxRoot().querySelector(`.board[data-board="${owner === v ? 'own' : 'pred'}"] .cell[data-cell="${c}"]`);
     }
     function ctr(el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, r }; }
-    // 見破りで変わった情報を弾ませる（v14.3）：×→STEALTH HIT のマーク、NoData から本当の値に変わった札・ひし形、
-    // 数が変わったサーチキューブ・サーチラインのタグ。拡大してから戻る動きで「ここが変わった」と分かるようにする
-    function factPops(ev, markEls) {
-      const pop = (el) => {
-        if (!el) return;
-        el.classList.remove('fact-pop');
-        void el.offsetWidth;   // アニメーションをはじめからやり直す
-        el.classList.add('fact-pop');
-        setTimeout(() => el.classList.remove('fact-pop'), 2000);
-      };
-      setTimeout(() => {
-        for (const el of markEls) el.querySelectorAll('.mkw').forEach(pop);
-        for (const c of ev.fixed || []) {
-          const el = cellOf(ev.owner, c);
-          if (!el) continue;
-          el.querySelectorAll('.ctag, .nbadge, .mkw.ink-n, .mkw.nodata').forEach(pop);
-          over(el, 'factflash', '', 1000);
-        }
-        if (ev.counts) {
-          const b = boardOf(ev.owner);
-          const panel = b && b.closest('.panel');
-          if (panel) panel.querySelectorAll('.itag').forEach(pop);
-        }
-      }, 350);
-    }
     function over(el, cls, html, ms) {
       if (!el) return null;
       const d = document.createElement('div');
@@ -2250,15 +2227,13 @@
           if (!els.length) {
             const b = boardOf(ev.owner);
             if (b) { const bc = ctr(b); text(bc.x, bc.y, 'STEALTH REVEALED', 'stealth', 1500); }
-            factPops(ev, []);
-            return 1100 * k;
+            return 700 * k;
           }
           let sx = 0, sy = 0;
           for (const el of els) { const p = ctr(el); sx += p.x; sy += p.y; over(el, 'cloak', '', 1100); }
           ring(sx / els.length, sy / els.length, QT, 8, 70 + els.length * 18, 900, 3);
           text(sx / els.length, sy / els.length, 'STEALTH REVEALED', 'stealth', 1500);
-          factPops(ev, els);
-          return 1300 * k;
+          return 1000 * k;
         }
         case 'call': {
           SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' ? 'hit' : ev.r === 'q' ? 'shield' : 'first', 0, { pan: panOf(ev.owner, v) });
