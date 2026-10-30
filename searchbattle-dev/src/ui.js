@@ -300,8 +300,9 @@
         if (k != null) k = Math.max(0, k);
         const label = E.lineLabel(q.line, q.index);
         const kApx = k != null && split && !stale;
-        tags.push({ key: 'line', label, pre: '残り', n, unit: 'ブロック', k, kApx, turn: q.turn, stale,
-          tip: `サーチライン（T${pad2(q.turn)}）：${label}にかかっている（撃破されていない）キューブの数 / そのブロックの数。◎・○のブロックも数に入ります。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : kApx ? '撃破されると自動で減ります。その後バズーカで分解したキューブがあり、破片は1つずつ数えるため、キューブの数は目安です（ブロックの数は正しい）' : '撃破されると自動で減ります'}` });
+        // 札は短く（v14.5）：C＝キューブ、B＝ブロック。くわしくはチップで説明する
+        tags.push({ key: 'line', label, pre: '残り', n, unit: 'B', k, kApx, turn: q.turn, stale,
+          tip: `サーチライン（T${pad2(q.turn)}）：${label}にかかっている（撃破されていない）キューブの数（C）/ そのブロックの数（B）。◎・○のブロックも数に入ります。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : kApx ? '撃破されると自動で減ります。その後バズーカで分解したキューブがあり、破片は1つずつ数えるため、キューブの数は目安です（ブロックの数は正しい）' : '撃破されると自動で減ります'}` });
         continue;
       }
       if (q.kind !== 'size' && q.kind !== 'cat') continue;
@@ -312,9 +313,9 @@
       // 1ブロック（バズーカの破片）を調べたときは、破片の撃破で減らす
       for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && !d.isAdd && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
       n = Math.max(0, n);
-      const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
-      tags.push({ key: 'cube', label, pre: '残り', n, unit: '体', turn: q.turn, stale: split,
-        tip: `サーチキューブ（T${pad2(q.turn)}）：残っている（撃破されていない）キューブの数。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
+      const label = q.kind === 'size' ? q.value + 'B' : q.value;
+      tags.push({ key: 'cube', label, pre: '残り', n, unit: 'C', turn: q.turn, stale: split,
+        tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック（B）' : q.value}のキューブが、いくつ（C＝キューブ）残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
     }
     const cells = {};
     const put = (c, k, val) => { if (!view.dead[c]) cells[c] = Object.assign(cells[c] || {}, { [k]: val }); };
@@ -356,10 +357,10 @@
   function intelTagsHTML(intel, mine) {
     if (!intel || !intel.tags.length) return '';
     return `<div class="intel ${mine ? 'mine' : 'enemy'}" aria-label="調査の記録">` + intel.tags.map((t) =>
-      `<span class="itag${t.stale ? ' stale' : ''}" data-tip="${esc(t.tip)}">${ICON[t.key]}${esc(t.label)}${t.pre ? `<i>${esc(t.pre)}</i>` : ''}${t.k != null ? `<b class="${t.kApx ? 'apx' : ''}">${t.k}</b>キューブ<em class="sl">/</em>` : ''}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
+      `<span class="itag${t.stale ? ' stale' : ''}" data-tip="${esc(t.tip)}">${ICON[t.key]}${esc(t.label)}${t.pre ? `<i>${esc(t.pre)}</i>` : ''}${t.k != null ? `<b class="${t.kApx ? 'apx' : ''}">${t.k}</b>C<em class="sl">/</em>` : ''}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
     ).join('') + '</div>';
   }
-  // ブロックの左上に「形状＋ブロック数」（例：L4、C3、#2）。空きブロックだったときは、ブロックの中央に NoData を出す（cellMarkHTML）
+  // ブロックの左上に「形状＋ブロック数」（例：L4、R3、#2）。空きブロックだったときは、ブロックの中央に NoData を出す（cellMarkHTML）
   function cellTagHTML(intel, c) {
     if (!intel || !intel.cells[c]) return '';
     const a = intel.cells[c];
