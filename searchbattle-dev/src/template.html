@@ -808,6 +808,10 @@ body.replaying #app { display: none; }
 .fx-text.first { color: var(--magenta); font-size: clamp(1rem, 2.8vw, 1.5rem); }
 .fx-text.hit { color: var(--hit); }
 .fx-text.stealth { color: #48D1CC; }
+/* 見破りで変わった情報：一度大きくなってから元に戻る（2回）。マス全体も淡く光らせる（v14.3） */
+@keyframes factPop { 0% { transform: scale(1); } 22% { transform: scale(1.75); filter: brightness(1.7) drop-shadow(0 0 6px #48D1CC); } 50% { transform: scale(.9); } 72% { transform: scale(1.08); } 100% { transform: scale(1); } }
+.fact-pop { animation: factPop .9s ease-out 2; transform-origin: center; }
+.fxo.factflash { position: absolute; inset: 0; z-index: 4; pointer-events: none; background: radial-gradient(circle, rgba(72, 209, 204, .38), transparent 70%); animation: flash 1s ease-out forwards; }
 /* STEALTH HIT の番号（ステルスを使った順）：◎の番号と同じ位置・大きさで、ターコイズ */
 .num.qn { color: #48D1CC; text-shadow: 0 1px 1.5px rgba(0, 0, 0, .9), 0 0 6px rgba(72, 209, 204, .8); }
 .fx-text.miss { color: var(--steel-2); font-size: .82rem; text-shadow: none; }

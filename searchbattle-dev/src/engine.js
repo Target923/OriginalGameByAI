@@ -689,11 +689,14 @@
   //  ③ステルスの後のサーチキューブ・サーチラインの数に、そのキューブを足す
   //  ④ステルスの後のペアショットで、2マスともそのキューブなら「同じ個体」に
   //  キューブの位置そのものは明かさない（分かるのは、×だったマスが STEALTH HIT に変わることと、アイテムの結果だけ）。
-  //  STEALTH HIT に変わったマスを返す
+  //  STEALTH HIT に変わったマス（turned）と、画面の演出用に結果が変わったマス（fixed）・数が変わったか（counts）を返す
   Game.prototype._revealStealth = function (owner, pieces) {
     const A = this.players[1 - owner];
     const v = A.view, kb = A.kb, N = this.N;
     const turned = [];
+    // 画面の演出用：結果が変わったマス（NoData→本当の値・ペアショット）と、数（サーチキューブ・ライン）が変わったか
+    const fixed = [];
+    let countsChanged = false;
     for (const p of pieces) {
       const ts = p.stealthAt;
       const inP = (c) => (p.mask & bit(c)) !== 0;
@@ -702,6 +705,7 @@
       const keep = [];
       for (const e of kb.empties) {
         if (!(e.t > ts && inP(e.c))) { keep.push(e); continue; }
+        fixed.push(e.c);
         if (e.src === 'number') kb.occs.push({ c: e.c, t: e.t, cat: null, size: p.size, turn: e.turn, src: 'number' });
         else if (e.src === 'shape') kb.occs.push({ c: e.c, t: e.t, cat: p.cat, turn: e.turn, src: 'shape' });
         else if (e.src === 'node') {
@@ -717,15 +721,15 @@
         if (q.t <= ts) continue;
         if (q.kind === 'line') {
           const lm = lineMask(q.line, q.index, N);
-          if (p.mask & lm) { q.k += 1; q.n += popcount(p.mask & lm); }
-        } else if (q.kind === 'cat' ? p.cat === q.value : p.size === q.value) q.n += 1;
+          if (p.mask & lm) { q.k += 1; q.n += popcount(p.mask & lm); countsChanged = true; }
+        } else if (q.kind === 'cat' ? p.cat === q.value : p.size === q.value) { q.n += 1; countsChanged = true; }
       }
-      for (const pr of kb.pairs) if (pr.t > ts && inP(pr.a) && inP(pr.b)) pr.same = true;
+      for (const pr of kb.pairs) if (pr.t > ts && inP(pr.a) && inP(pr.b)) { pr.same = true; fixed.push(pr.a, pr.b); }
       p.stealth = false;
       p.stealthRevealed = true;
     }
     kb.reveals.push({ t: this.clock, n: pieces.length });
-    return turned;
+    return { turned, fixed: Array.from(new Set(fixed)), counts: countsChanged };
   };
   // ステルスアンサー・ステルスのキューブの撃破：すべての隠れているステルスのキューブを見破る。全マス当たっていたキューブは撃破
   //  target：ぴったり当てて撃破するキューブ（このあと answer が撃破する）。×の付け替えとアイテムの結果の訂正だけして、ここでは撃破しない
@@ -733,11 +737,12 @@
     const all = target ? pieces.concat([target]) : pieces;
     if (!all.length) return;
     const me = this.players[actor];
-    const turned = this._revealStealth(owner, all).sort((a, b) => a - b);
+    const fx = this._revealStealth(owner, all);
+    const turned = fx.turned.sort((a, b) => a - b);
     // ステルスアンサーで宣言したマスは、ステルスのキューブのマスだと分かる（位置の事実として残す。ヒットではない）
     const t = this.clock;
     for (const c of answered || []) me.kb.occs.push({ c, t, cat: null, turn: this.turn, src: 'stealth' });
-    this._emit({ type: 'reveal', actor, owner, cells: turned.slice() });
+    this._emit({ type: 'reveal', actor, owner, cells: turned.slice(), fixed: fx.fixed, counts: fx.counts });
     this._log(actor, `${me.name}：ステルスを見破った（${turned.length ? `×→STEALTH HIT：${coordList(turned, this.N)}` : '隠れていたヒットはなし'}）`, null, 'kill');
     for (const p of pieces) {
       if (p.alive && p.hitMask === p.mask) {

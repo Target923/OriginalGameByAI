@@ -484,8 +484,12 @@
   // 分解した個体の破片が確実にいるマス（分解の後に相手がワープ・ステルスを使っていないときだけ。破片は動かず、当たれば撃破される）
   //  置き方の条件：撃ち込んだマスと、分解で撃破したマスを含む。×（分解の前の最後のワープより後）・ヒットして生きているマス（別の個体）・
   //  分解の前に撃破された個体のマス・2マス以上の撃破された個体のマスを含まない
-  function fragCertainCells(ctx, sp) {
+  function fragCertainCells(ctx, sp, opt) {
     const kb = ctx.kb;
+    // 分解の前に分かっていた事実（v14.3。ユーザーの指摘）：分解された個体の置き方なら、分解の前（最後のワープ・前の分解より後）に
+    // そのマスで調べた形・マス数・つながりと合い、ペアショットの「同じ／同じではない」とも合う。人は分解の前の情報で破片の位置を絞れる
+    const useFacts = !(opt && opt.bzFacts === false);
+    //  測定：分解の前の事実を使うと、使わない方針に対して予選52.1%（1000局）
     if (kb.warps.some((w) => w.t > sp.t)) return [];
     // 前にも分解していて、今回撃破したマスがないときは、撃ち込んだのが前の分解の破片（1マス）かもしれない（マス数は伏せられる）。
     // そのときは隣に破片がいるとは限らないので、確定させない（ヒット済みのマスがあれば、破片ではなく2マス以上の個体）
@@ -501,12 +505,31 @@
       else if (d.t > sp.t) fragDead |= d.mask;
     }
     forb &= ~fixed;
+    let since = lw;
+    for (const s0 of ctx.splits) if (s0.t < sp.t && s0.t > since) since = s0.t;
+    const facts = useFacts ? kb.occs.filter((o) => o.t > since && o.t < sp.t && (o.cat || o.size || o.deg != null)) : [];
+    const pairs = useFacts ? kb.pairs.filter((q) => q.t > since && q.t < sp.t) : [];
+    const factOK = (Pl) => {
+      for (const o of facts) {
+        if (!(Pl.mask & bit(o.c))) continue;
+        if (o.cat && o.cat !== SHAPES[Pl.key].cat) return false;
+        if (o.size && o.size !== Pl.size) return false;
+        if (o.deg != null && nodeDegree(Pl.mask, o.c, ctx.N) !== o.deg) return false;
+      }
+      for (const q of pairs) {
+        const ia = !!(Pl.mask & bit(q.a)), ib = !!(Pl.mask & bit(q.b));
+        if (q.same && ia !== ib) return false;
+        if (!q.same && ia && ib) return false;
+      }
+      return true;
+    };
     let common = 0, any = false;
     for (const key in SHAPES) {
       const sz = SHAPES[key].size;
       if (sz < 2 || sz < nFixed) continue;
       for (const Pl of ctx.PL[key]) {
         if ((Pl.mask & fixed) !== fixed || (Pl.mask & forb)) continue;
+        if (!factOK(Pl)) continue;
         common = any ? (common & Pl.mask) : Pl.mask;
         any = true;
         if (!(common & ~fixed)) return [];
@@ -554,7 +577,7 @@
     // ほかの破片：分解した個体の置き方（撃ち込んだマスと撃破したマスを含む）のどれにも入っているマスには、破片が確実に残っている（v12.6）。
     // 例：角に撃ち込んで分解し、角の隣の片方が×なら、もう片方の隣は破片。アンサー（1マス）で撃破できる
     for (const sp of ctx.splits) {
-      for (const c of fragCertainCells(ctx, sp)) {
+      for (const c of fragCertainCells(ctx, sp, opt)) {
         if (certain.some((x) => x.cand.mask & bit(c))) continue;
         certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'キューブ', cells: [c] } });
       }
@@ -1369,6 +1392,28 @@
           if (!bzH || eh > bzH.eh) bzH = { eh, pf, cell: g.c };
         }
         if (bzF && bzF.pf >= (pol.bzPf != null ? pol.bzPf : 0.8)) return { key: 'bazooka', params: { cell: bzF.cell } };
+        // 破片の位置が読めるとき（v14.3。ユーザーの提案）：候補の置き方が割れていても、まだ当たっていないマスのほとんどが
+        // どの候補にも入っているなら、分解すればヒット済みのマスは撃破され、残る破片の位置も分解の前の情報から分かる
+        // （そのまま1マスのアンサーで倒せる）。どの候補にも入るとは限らないマスの見込み数が bzFrag 以下で、ヒットが1マス以上
+        //  測定（CPUどうし）：この使い方を足すとバズーカは1試合0.45→0.8回に増えたが、勝率は予選48.5%（1000局）・決勝37.5%（200局）に下がった
+        //  （1マスの破片が増えて、倒す相手の数が増えるため）。既定では使わない（policy.bzFrag に数を入れると使う）
+        const bzFrag = pol.bzFrag != null ? pol.bzFrag : false;
+        if (bzFrag !== false) {
+          let bestFrag = null;
+          for (const i of uncertain) {
+            const g = ctx.groups[i];
+            if (g.q) continue;
+            let common = -1, tot = 0, nLive = 0;
+            g.cands.forEach((cd, k) => { const w = A.joint.candW[i][k]; if (!(w > 0) || cd.merge || cd.pureSt) return; common = common === -1 ? cd.mask : (common & cd.mask); tot += w; nLive++; });
+            if (nLive < 2 || !(tot > 0)) continue;
+            let rem = 0, eh = 0;
+            g.cands.forEach((cd, k) => { const w = A.joint.candW[i][k]; if (!(w > 0) || cd.merge || cd.pureSt) return; rem += w * popcount(cd.mask & ~ctx.hitMask & ~common); eh += w * popcount(cd.mask & ctx.hitMask); });
+            rem /= tot; eh /= tot;
+            const certainFrags = popcount(common & ~ctx.hitMask);
+            if (rem <= bzFrag && eh >= 1 && certainFrags >= 1 && (!bestFrag || certainFrags + eh > bestFrag.v)) bestFrag = { v: certainFrags + eh, cell: g.c };
+          }
+          if (bestFrag) return { key: 'bazooka', params: { cell: bestFrag.cell } };
+        }
         // 負けそうなとき（次の相手の手番で全個体をアンサーされる見込みが50%以上）は、ヒット済みのマスを撃破ポイントにしておく。
         // 勝率は変わらず（4回の測定で平均50.5%）、決勝の得点が+0.8〜1.1pt。見込み30%以上で使うと勝率が下がった（46〜47%）
         const bzLast = pol.bzLast != null ? pol.bzLast : 1.0;

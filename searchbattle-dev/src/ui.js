@@ -1969,6 +1969,31 @@
       return fxRoot().querySelector(`.board[data-board="${owner === v ? 'own' : 'pred'}"] .cell[data-cell="${c}"]`);
     }
     function ctr(el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, r }; }
+    // 見破りで変わった情報を弾ませる（v14.3）：×→STEALTH HIT のマーク、NoData から本当の値に変わった札・ひし形、
+    // 数が変わったサーチキューブ・サーチラインのタグ。拡大してから戻る動きで「ここが変わった」と分かるようにする
+    function factPops(ev, markEls) {
+      const pop = (el) => {
+        if (!el) return;
+        el.classList.remove('fact-pop');
+        void el.offsetWidth;   // アニメーションをはじめからやり直す
+        el.classList.add('fact-pop');
+        setTimeout(() => el.classList.remove('fact-pop'), 2000);
+      };
+      setTimeout(() => {
+        for (const el of markEls) el.querySelectorAll('.mkw').forEach(pop);
+        for (const c of ev.fixed || []) {
+          const el = cellOf(ev.owner, c);
+          if (!el) continue;
+          el.querySelectorAll('.ctag, .nbadge, .mkw.ink-n, .mkw.nodata').forEach(pop);
+          over(el, 'factflash', '', 1000);
+        }
+        if (ev.counts) {
+          const b = boardOf(ev.owner);
+          const panel = b && b.closest('.panel');
+          if (panel) panel.querySelectorAll('.itag').forEach(pop);
+        }
+      }, 350);
+    }
     function over(el, cls, html, ms) {
       if (!el) return null;
       const d = document.createElement('div');
@@ -2219,13 +2244,15 @@
           if (!els.length) {
             const b = boardOf(ev.owner);
             if (b) { const bc = ctr(b); text(bc.x, bc.y, 'STEALTH REVEALED', 'stealth', 1500); }
-            return 700 * k;
+            factPops(ev, []);
+            return 1100 * k;
           }
           let sx = 0, sy = 0;
           for (const el of els) { const p = ctr(el); sx += p.x; sy += p.y; over(el, 'cloak', '', 1100); }
           ring(sx / els.length, sy / els.length, QT, 8, 70 + els.length * 18, 900, 3);
           text(sx / els.length, sy / els.length, 'STEALTH REVEALED', 'stealth', 1500);
-          return 1000 * k;
+          factPops(ev, els);
+          return 1300 * k;
         }
         case 'call': {
           SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' ? 'hit' : ev.r === 'q' ? 'shield' : 'first', 0, { pan: panOf(ev.owner, v) });
@@ -4189,5 +4216,5 @@ self.onmessage = function (e) {
   if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start);
   else start((window.claude && window.claude.hot && window.claude.hot.data) || {});
 
-  window.__sb = { app, render, handlers };
+  window.__sb = { app, render, handlers, playFx };   // playFx：画面テストで演出を流すため
 })();
