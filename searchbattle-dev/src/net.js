@@ -23,7 +23,7 @@
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 1;
+  const NET_VERSION = 2;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';

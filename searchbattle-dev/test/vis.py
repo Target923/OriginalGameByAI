@@ -46,7 +46,7 @@ async def main():
                 if k=='all': await p.click('[data-act=item-use]')
                 if k=='cube':
                     await p.wait_for_timeout(250); await p.screenshot(path=f'{SHOTS}/v3_2_cube_menu.png')
-                    await p.click('.cm-btn[data-kind=cat][data-value="L字"]')
+                    await p.click('.cm-btn[data-kind=cat][data-value="L型"]')
                 plan.pop(0); used.append(k); await p.wait_for_timeout(300)
             await call_any(p, prefer_hit=True)
             await p.wait_for_timeout(300)

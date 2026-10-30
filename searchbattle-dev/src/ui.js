@@ -201,7 +201,7 @@
   const LOCK_SVG = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 6v16M50 78v16M6 50h16M78 50h16"/><path d="M22 22l8 8M78 22l-8 8M22 78l8-8M78 78l-8-8" opacity=".6"/></svg>';
   const RETICLE_SVG = '<svg viewBox="0 0 100 100"><path d="M14 34V14h20M66 14h20v20M86 66v20H66M34 86H14V66"/><circle cx="50" cy="50" r="5"/></svg>';
   const TL = { H: 'H', N: 'N', X: 'X' };
-  const SHAPE_ABBR = { 'パネル型': 'P', 'L型': 'L', 'T型': 'T', 'Z型': 'Z' };
+  const SHAPE_ABBR = { 'R型': 'R', 'L型': 'L', 'T型': 'T', 'Z型': 'Z' };
 
   // ---------------- メモ（スクラッチ） ----------------
   // 相手フィールドの空いているブロックに付ける自分用のしるし。ゲームには影響しない
@@ -323,11 +323,11 @@
     const facts = [];
     for (const o of kb.occs) if (o.src === 'shape' || o.src === 'number') facts.push({ c: o.c, t: o.t, turn: o.turn, src: o.src, v: o.src === 'shape' ? o.cat : o.size, stale: warpedAfter(o.t) });
     for (const e of kb.empties) if (e.src === 'shape' || e.src === 'number' || e.src === 'node' || e.src === 'bazooka') facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src, nd: true, stale: relocatedAfter(e.t) });
-    // バズーカで分解した：撃ち込んだブロックがヒット済みでなければ、そこには1ブロックキューブ（C1）が残る
+    // バズーカで分解した：撃ち込んだブロックがヒット済みでなければ、そこには1ブロックのキューブ（C1）が残る
     for (const sp of (kb.splits || [])) {
       if (sp.killed.indexOf(sp.c) >= 0) continue;
       const gone = kb.warps.some((w) => w.t > sp.t && (w.oldMask & bit(sp.c)));
-      facts.push({ c: sp.c, t: sp.t, turn: sp.turn, src: 'shape', v: 'パネル型', stale: gone });
+      facts.push({ c: sp.c, t: sp.t, turn: sp.turn, src: 'shape', v: 'R型', stale: gone });
       facts.push({ c: sp.c, t: sp.t, turn: sp.turn, src: 'number', v: 1, stale: gone });
     }
     facts.sort((a, b) => a.t - b.t);
@@ -525,13 +525,13 @@
 
   // サーチキューブの選択メニュー（相手フィールド上に出す）
   function cubeMenuHTML() {
-    const cats = [['パネル型', 'O4'], ['L型', 'L4'], ['T型', 'T4'], ['Z型', 'Z4']];
+    const cats = [['R型', 'O4'], ['L型', 'L4'], ['T型', 'T4'], ['Z型', 'Z4']];
     return `<div class="cube-menu" role="group" aria-label="サーチキューブの対象">
       <button type="button" class="cm-close" data-act="cancel" aria-label="閉じる" title="キャンセル">✕</button>
       <p>SEARCH CUBE ─ 形状</p>
       <div class="cm-grid shapes">${cats.map(([c, k]) => `<button type="button" class="cm-btn" data-act="cube" data-kind="cat" data-value="${esc(c)}">${shapeMini(k, 0)}<span>${esc(c)}</span></button>`).join('')}</div>
       <p>ブロック数</p>
-      <div class="cm-grid sizes">${[1, 2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}ブロック${s === 1 ? '（バズーカの破片）' : ''}"${s === 1 ? ' title="1ブロックキューブ（バズーカで分解された破片）"' : ''}><b>${s}</b></button>`).join('')}</div>
+      <div class="cm-grid sizes">${[1, 2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}ブロック${s === 1 ? '（バズーカの破片）' : ''}"${s === 1 ? ' title="1ブロックのキューブ（バズーカで分解された破片）"' : ''}><b>${s}</b></button>`).join('')}</div>
     </div>`;
   }
 
@@ -741,31 +741,31 @@
         break;
       }
       case 'cube':
-        main = itemHead('cube', '相手フィールドに出たメニューから、調べる形かブロック数を選んでください。');
+        main = itemHead('cube', '相手フィールドのメニューから、調べる形かブロック数を選んでください。');
         acts = cancel;
         break;
       case 'line':
-        main = itemHead('line', '相手フィールドの列（A〜）か行（1〜）のラベルをタップ。そこにかかっている（撃破されていない）キューブの数と、そのブロックの数（例：2キューブ / 3ブロック）が分かり、アイテム欄の下に記録されます。');
+        main = itemHead('line', '調べる列（A〜）か行（1〜）のラベルを選んでください。かかっているキューブの数とブロックの数が分かります。');
         acts = cancel;
         break;
       case 'number':
-        main = itemHead('number', '調べるブロックを選んでください。そこにあるキューブのブロック数が分かります（空きブロックなら NoData）。');
+        main = itemHead('number', '調べるブロックを選んでください。そのキューブが何ブロックか分かります。');
         acts = cancel;
         break;
       case 'shape':
-        main = itemHead('shape', '調べるブロックを選んでください。そこにあるキューブの形が分かります（空きブロックなら NoData）。');
+        main = itemHead('shape', '調べるブロックを選んでください。そのキューブの形が分かります。');
         acts = cancel;
         break;
       case 'pair':
-        main = itemHead('pair', `調べるブロックを2つ選んでください（${ui.sel.length}/2）。同じキューブかどうかが分かります。撃破済み以外ならどこでも選べます。`);
+        main = itemHead('pair', `調べるブロックを2つ選んでください（${ui.sel.length}/2）。同じキューブか分かります。`);
         acts = cancel;
         break;
       case 'node':
-        main = itemHead('node', '調べるブロックを選んでください。同じキューブのブロックが上下左右にいくつつながっているか（0〜3）が分かります。1＝端、2＝途中か角、3＝T型の分かれ目。空きブロックなら NoData。');
+        main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
         acts = cancel;
         break;
       case 'bazooka':
-        main = itemHead('bazooka', '撃ち込むブロックを選んでください。そこにあるキューブを1ブロックキューブに分解し、ヒット済みのブロックはその場で撃破します（ステルスも解除）。空きブロックなら NoData。');
+        main = itemHead('bazooka', '撃ち込むブロックを選んでください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。');
         acts = cancel;
         break;
       case 'warp-pick':
@@ -777,7 +777,7 @@
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選んでください。そのブロックがトリガーブロックになり、そのキューブが隠れます。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。トリガーブロックをコールされるか、ステルスのブロックだけでアンサーされると、すべてのステルスが見破られます（全ブロック当たっていたキューブはそこで撃破）。ステルス中はワープできません。');
+        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選んでください。そこが弱点（トリガー）になり、撃たれるとばれます。');
         acts = cancel;
         break;
       case 'treasure':
@@ -1000,7 +1000,7 @@
   }
   // 試合中の「所持キューブ」：大会の持ち数から、この試合で失った分（撃破・差し出し。分解は全部撃破されたとき）を引く
   //  hideSplit：相手の分。バズーカで分解されたキューブを失ったかどうかは、試合が終わるまで伏せる
-  //  （破片は1ブロックキューブとして撃破を知らせるだけ。元のキューブを倒しきったこと・そのブロック数は、試合の結果で分かる）
+  //  （破片は1ブロックのキューブとして撃破を知らせるだけ。元のキューブを倒しきったこと・そのブロック数は、試合の結果で分かる）
   function heldCubes(P, hideSplit) {
     const lostNow = { 2: 0, 3: 0, 4: 0, 5: 0 };
     for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lostNow[p.size]++;
@@ -1273,14 +1273,18 @@
         </ol>
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
         <p><b>キューブの質感</b>：キューブには、色ごとに違う素材の質感（御影石・コンクリート・トラバーチン・ヘアライン・大理石・木目・スレート・テラゾー）を薄く重ねています。色が見分けにくくても、質感でどのキューブかが分かります。</p>
-        <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。番号は付きません）。全ブロックをコールされたキューブは撃破されます。</p>
+        <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。ステルスの番号つき）。全ブロックをコールされたキューブは撃破されます。</p>
+        <p><b>キューブの形</b>：R型（長方形：まっすぐな形と2×2）・L型・T型・Z型（段違い）の4種類。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
         <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2ブロック×5・3ブロック×4・4ブロック×3・5ブロック×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破したキューブのブロック数を相手から奪います（アンサー失敗で差し出したキューブも）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2ブロック1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
+        <p class="note">空きブロックには、どのアイテムも NoData になります。</p>
         <h3 class="legend-h">攻撃アイテム（相手フィールドに作用）</h3>
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスは、隠すキューブのブロックを1つ選んで使います（そのブロックがトリガーブロック）。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのブロックだけでアンサーすると（ステルスアンサー。1ブロックでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全ブロック当たっていたキューブはそこで撃破。トリガーブロックをコールされたときも、ステルスアンサーと同じく、すべてのステルスが見破られます。ステルスアンサーが外れたら、ふつうのアンサーの失敗と同じく、キューブを1つ差し出します。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2ブロックにも使えます。ブロックの調査結果は P＝パネル型、L＝L型、T＝T型、Z＝Z型（段違い。4ブロックと5ブロック）、数字＝ブロック数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T型の分かれ目、0＝1ブロックキューブ）。空きブロックだったときは NoData。バズーカで分解されたキューブは、その試合のあいだ1ブロックキューブ（1ブロック1pt）になり、1回のヒットで撃破されます。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになります。</p>
+        <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選んだブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない。</p>
+        <p class="note"><b>ワープ</b>：移動前の位置は×（W付き）で公開され、それ以外の×は薄くなって、もう一度コールできる。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
+        <p class="note"><b>調べた結果の札</b>：ブロックの左上に R・L・T・Z（形）と数字（ブロック数）、左下のひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝分かれ目、0＝1ブロックのキューブ）。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -2310,7 +2314,7 @@
           ring(mx, my, WH, 4, 40 + els.length * 18, 600, 2, 120);
           const label = ev.cause === 'answerFail' ? 'PENALTY' : 'DESTROYED';
           text(mx, my, label, 'kill', 1600);
-          text(mx, my + 34, ev.size === 1 ? '1ブロックキューブ撃破' : `${ev.size}ブロック撃破`, 'sub', 1600);
+          text(mx, my + 34, ev.size === 1 ? '1ブロックのキューブ撃破' : `${ev.size}ブロック撃破`, 'sub', 1600);
           shake(ev.size >= 4 ? 2 : 1);
           return 1250 * k;
         }
@@ -2916,7 +2920,7 @@ self.onmessage = function (e) {
       return g.validateItem(v, args[1], args[2]);
     }
     if (name === 'answer' && !E.identifyShape(Array.from(new Set(args[1])).sort((a, b) => a - b), g.N)) {
-      return { ok: false, reason: 'パネル型・L型・T型・Z型のいずれかの形で宣言してください' };
+      return { ok: false, reason: 'R型・L型・T型・Z型のいずれかの形で宣言してください' };
     }
     return { ok: true };
   }
@@ -3504,7 +3508,7 @@ self.onmessage = function (e) {
     setTimeout(() => { setupSkipClick = false; }, 350);
     const g = G(), pi = S.pi;
     const m = E.matchPlacement(cells, g.N);
-    if (!m) { toast('置けない形です（パネル型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
+    if (!m) { toast('置けない形です（R型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
     const size = SHAPES[m.key].size;
     if (g.stockLeft(pi, size) <= 0) { toast(size + 'ブロックのキューブはもう残っていません（上限）', 'warn'); render(); return; }
     const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);

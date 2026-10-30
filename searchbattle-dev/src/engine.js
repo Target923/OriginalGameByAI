@@ -8,19 +8,19 @@
   const COLS = 'ABCDE';
   const STOCK = { 2: 5, 3: 4, 4: 3, 5: 2 };
   // Z型（v12.17）：段違いの形。4ブロック・5ブロックに入れて、2×2キューブやL型・T型に化けられるようにした（5ブロックが弱かったため）
-  const CATS = ['パネル型', 'L型', 'T型', 'Z型'];
+  const CATS = ['R型', 'L型', 'T型', 'Z型'];
 
   // base はインデックス順を保ったまま回転・反転する（トレジャー位置の追従に使う）
   const SHAPES = {
-    A1: { size: 1, cat: 'パネル型', name: 'アッド', base: [[0, 0]] },
-    D2: { size: 2, cat: 'パネル型', name: '1×2', base: [[0, 0], [0, 1]] },
-    I3: { size: 3, cat: 'パネル型', name: '1×3', base: [[0, 0], [0, 1], [0, 2]] },
+    A1: { size: 1, cat: 'R型', name: 'アッド', base: [[0, 0]] },
+    D2: { size: 2, cat: 'R型', name: '1×2', base: [[0, 0], [0, 1]] },
+    I3: { size: 3, cat: 'R型', name: '1×3', base: [[0, 0], [0, 1], [0, 2]] },
     L3: { size: 3, cat: 'L型', name: 'L型', base: [[0, 0], [1, 0], [1, 1]] },
-    I4: { size: 4, cat: 'パネル型', name: '1×4', base: [[0, 0], [0, 1], [0, 2], [0, 3]] },
-    O4: { size: 4, cat: 'パネル型', name: '2×2', base: [[0, 0], [0, 1], [1, 0], [1, 1]] },
+    I4: { size: 4, cat: 'R型', name: '1×4', base: [[0, 0], [0, 1], [0, 2], [0, 3]] },
+    O4: { size: 4, cat: 'R型', name: '2×2', base: [[0, 0], [0, 1], [1, 0], [1, 1]] },
     L4: { size: 4, cat: 'L型', name: 'L型', base: [[0, 0], [1, 0], [2, 0], [2, 1]] },
     T4: { size: 4, cat: 'T型', name: 'T型', base: [[0, 0], [0, 1], [0, 2], [1, 1]] },
-    I5: { size: 5, cat: 'パネル型', name: '1×5', base: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
+    I5: { size: 5, cat: 'R型', name: '1×5', base: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
     L5: { size: 5, cat: 'L型', name: 'L型(4+1)', base: [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1]] },
     V5: { size: 5, cat: 'L型', name: 'L型(3+3)', base: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]] },
     T5: { size: 5, cat: 'T型', name: 'T型(3+2)', base: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]] },
@@ -39,18 +39,19 @@
   // 23：v14 ステルスを作り直し（キューブを隠す。ステルスアンサーで見破る）
   // 24：v14.1 ×に撃ったステルスアンサーの外れは手番終了だけ（kb.probes。v14.2 で元に戻した）
   // 25：v14.2 ステルスのトリガーブロック（コールされると STEALTH HIT。すべてのステルスが見破られる）
-  const VERSION = 25;
+  const VERSION = 26;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
+  // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
-    cube: { name: 'サーチキューブ', desc: '指定した形状かブロック数の、残っているキューブの数を調べる' },
-    line: { name: 'サーチライン', desc: '指定した1列・1行に、撃破されていないキューブがいくつかかっていて、そのブロックがいくつあるかを調べる（例：2キューブ / 3ブロック）' },
-    number: { name: 'サーチサイズ', desc: '指定した1ブロックにあるキューブのブロック数を調べる（空きブロックならNoData）' },
-    shape: { name: 'サーチシェイプ', desc: '指定した1ブロックにあるキューブの形状を調べる（空きブロックならNoData）' },
-    pair: { name: 'ペアショット', desc: '指定した2ブロックが同じキューブか調べる' },
-    node: { name: 'ノードショット', desc: '指定した1ブロックで、同じキューブのブロックが上下左右にいくつつながっているか（0〜3）を調べる（空きブロックならNoData）' },
-    bazooka: { name: 'バズーカ', desc: '指定した1ブロックのキューブを1ブロックキューブに分解する（ステルスでも分解し、ステルスは解除）。ヒット済みのブロックはその場で撃破。空きブロックならNoData' },
+    cube: { name: 'サーチキューブ', desc: '選んだ形かブロック数のキューブが、いくつ残っているか分かる' },
+    line: { name: 'サーチライン', desc: '選んだ1列（1行）にかかるキューブの数とブロックの数が分かる（例：2キューブ / 3ブロック）' },
+    number: { name: 'サーチサイズ', desc: '選んだブロックのキューブが何ブロックか分かる' },
+    shape: { name: 'サーチシェイプ', desc: '選んだブロックのキューブの形が分かる' },
+    pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
+    node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
+    bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
     warp: { name: 'ワープ', desc: '自分のキューブ1つを空きブロックへ移動する' },
-    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（選んだブロックがトリガーブロック）。コールは×、アイテムは NoData、数にも入らない。トリガーブロックをコールされるか、ステルスのブロックだけでアンサーされると見破られる' },
+    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
   };
 
   function bit(c) { return 1 << c; }
@@ -146,8 +147,8 @@
     }
     return null;
   }
-  // ログ用のキューブの呼び名（バズーカで分解されたものは「1ブロックキューブ」）
-  function pieceName(p) { return p.frag ? '1ブロックキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
+  // ログ用のキューブの呼び名（バズーカで分解されたものは「1ブロックのキューブ」）
+  function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
   // ログ用：ブロックを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
   function coordList(cells, N) { return cells.slice().sort((a, b) => a - b).map((c) => coord(c, N)).join('・'); }
   function lineMask(line, index, N) {
@@ -564,7 +565,7 @@
     if (!this._myTurn(pi, ['answer'])) return { ok: false, reason: 'アンサーできる状態ではありません' };
     cells = Array.from(new Set(cells)).sort((a, b) => a - b);
     const key = identifyShape(cells, this.N);
-    if (!key) return { ok: false, reason: 'パネル型・L型・T型のいずれかの形で宣言してください' };
+    if (!key) return { ok: false, reason: 'R型・L型・T型のいずれかの形で宣言してください' };
     const me = this.players[pi], foe = this.foeOf(pi);
     const mask = maskOf(cells);
     this._tick();
@@ -897,7 +898,7 @@
       }
       case 'line': {
         // その列・行にかかっている（1ブロックでも入っている）生きているキューブの数と、それらが占めているブロックの数（v12.12）。
-        // バズーカの破片は1ブロックキューブ1つずつとして数える
+        // バズーカの破片は1ブロックのキューブ1つずつとして数える
         const lm = lineMask(params.line, params.index, N);
         let occ = 0, k = 0;
         for (const p of livingFoe) { occ |= p.mask; if (p.mask & lm) k++; }
@@ -945,7 +946,7 @@
         break;
       }
       case 'bazooka': {
-        // そのブロックのキューブを1ブロックキューブに分解する。ヒット済みのブロックはその場で撃破。空きブロックと、隠れているステルスのキューブは NoData
+        // そのブロックのキューブを1ブロックのキューブに分解する。ヒット済みのブロックはその場で撃破。空きブロックと、隠れているステルスのキューブは NoData
         const p = this._seenAt(foe.idx, params.cell);
         const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, hit: !!p, killed: [] };
         if (!p) {
@@ -960,7 +961,7 @@
         ev.ownerPriv = { frags: p.cells.filter((c) => !(p.hitMask & bit(c))) };
         this._emit(ev);
         emitted = true;
-        // すでに1ブロックキューブ（分解の破片）なら、形はそのまま（ステルスだけ解除）。撃った側には、ふつうの分解と同じに見える
+        // すでに1ブロックのキューブ（分解の破片）なら、形はそのまま（ステルスだけ解除）。撃った側には、ふつうの分解と同じに見える
         // （破片をもう一度分解すると、元のキューブの数え方（大会で失ったか・置いた数）がくずれるため）
         let sp;
         if (p.frag || p.size === 1) { p.stealth = false; p.stealthAt = null; sp = { killed: [], frags: [p.cells[0]] }; }
@@ -969,7 +970,7 @@
         result.hit = true;
         result.killed = sp.killed;
         const kill = sp.killed.length ? `ヒット済みの${sp.killed.length}ブロックを撃破（${coordList(sp.killed, N)}）` : 'ヒット済みのブロックはなし';
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックキューブに分解・${kill}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックのキューブに分解・${kill}`, null, 'item', key);
         result.ended = this._checkEnd();
         break;
       }
@@ -1029,8 +1030,8 @@
   };
 
   // ---------------- バズーカ（分解） ----------------
-  // キューブを1ブロックキューブに分解する。ヒット済みのブロックはその場で撃破（撃破ポイント1ブロック1pt）、ステルスは解除。
-  // トレジャーは、そのブロックの1ブロックキューブのものになる（ニアの「同じキューブ」はそのブロックだけ）。
+  // キューブを1ブロックのキューブに分解する。ヒット済みのブロックはその場で撃破（撃破ポイント1ブロック1pt）、ステルスは解除。
+  // トレジャーは、そのブロックの1ブロックのキューブのものになる（ニアの「同じキューブ」はそのブロックだけ）。
   // 分解はその試合だけ：元のキューブは splitPieces に残し、大会では次の試合で元の形に戻す
   Game.prototype._split = function (piece) {
     const P = this.players[piece.owner];
@@ -1058,7 +1059,7 @@
   };
 
   // 試合のまとめ（大会の集計用）：得点、失ったキューブ（大会から消える）、残った手持ちのアイテム
-  //  バズーカで分解されたキューブは、1ブロックキューブが1つでも生き残っていれば失わない（次の試合で元のブロック数に戻る）
+  //  バズーカで分解されたキューブは、1ブロックのキューブが1つでも生き残っていれば失わない（次の試合で元のブロック数に戻る）
   Game.prototype.summary = function () {
     return this.players.map((P) => {
       const lost = [];

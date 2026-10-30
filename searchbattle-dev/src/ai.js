@@ -24,7 +24,7 @@
   function currentCounts(kb, N) {
     const res = { all: null, size: {}, cat: {}, lines: [] };
     const matchDead = (q, d) => q.kind === 'all' || (q.kind === 'size' ? d.size === q.value : d.cat === q.value);
-    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'パネル型');
+    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'R型');
     for (const q of kb.counts) {
       if (q.kind === 'line') {
         if (kb.warps.some((w) => w.t > q.t) || kb.adds.some((a) => a.t > q.t)) continue;
@@ -119,7 +119,7 @@
         derivedOccs.push({ c: p.a, t: p.t, cat: null }, { c: p.b, t: p.t, cat: null, dup: true });
       } else if (hitBefore(p.a, p.t) || hitBefore(p.b, p.t) || !warpedAfter(p.t)) pairs.push(p);
     }
-    // バズーカで分解したキューブ：撃ち込んだブロックがヒット済みでなければ、そこに1ブロックキューブが残る（撃破・ワープで説明がつくまで）
+    // バズーカで分解したキューブ：撃ち込んだブロックがヒット済みでなければ、そこに1ブロックのキューブが残る（撃破・ワープで説明がつくまで）
     const splits = [];
     for (const sp of (kb.splits || [])) {
       let killedMask = 0;
@@ -236,12 +236,12 @@
       out.set(P.mask, { mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, branches: [branch], w: (pr / ctx.PL[P.key].length) * (wf || 1), full, lastHit });
     };
     const fa = base | ctx.xMaskAll | ctx.oldMaskAll;
-    // 1ブロックキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎のキューブにはならない（候補は上の「全ブロック命中」で落ちる）
+    // 1ブロックのキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎のキューブにはならない（候補は上の「全ブロック命中」で落ちる）
     const sizes = ctx.fragPossible ? [1, 2, 3, 4, 5] : [2, 3, 4, 5];
     for (const s of sizes) {
       if (s === 1) {
-        // 1ブロックキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のブロックそのものだけを考える
-        if (ctx.counts.size[1] === 0 || !ctx.catAllowed('パネル型')) continue;
+        // 1ブロックのキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のブロックそのものだけを考える
+        if (ctx.counts.size[1] === 0 || !ctx.catAllowed('R型')) continue;
         const P = ctx.PL.A1.find((x) => x.mask === bit(g.c));
         if (P && !(P.mask & base) && factsOK(P, ctx.occs, 0, ctx.N)) add(P, 'a');
         continue;
@@ -569,17 +569,17 @@
         if (live.length === 1 && !g.cands[live[0]].merge) certain.push({ gi: i, cand: g.cands[live[0]] });
       }
     });
-    // バズーカで分解したキューブの、撃ち込んだブロックに残った1ブロックキューブ（撃破もワープもされていなければ確定）
+    // バズーカで分解したキューブの、撃ち込んだブロックに残った1ブロックのキューブ（撃破もワープもされていなければ確定）
     for (const sp of ctx.splits) {
       if (sp.targetFrag < 0 || certain.some((x) => x.cand.mask === bit(sp.targetFrag))) continue;
-      certain.push({ gi: -1, cand: { mask: bit(sp.targetFrag), key: 'A1', size: 1, cat: 'パネル型', cells: [sp.targetFrag] } });
+      certain.push({ gi: -1, cand: { mask: bit(sp.targetFrag), key: 'A1', size: 1, cat: 'R型', cells: [sp.targetFrag] } });
     }
     // ほかの破片：分解したキューブの置き方（撃ち込んだブロックと撃破したブロックを含む）のどれにも入っているブロックには、破片が確実に残っている（v12.6）。
     // 例：角に撃ち込んで分解し、角の隣の片方が×なら、もう片方の隣は破片。アンサー（1ブロック）で撃破できる
     for (const sp of ctx.splits) {
       for (const c of fragCertainCells(ctx, sp, opt)) {
         if (certain.some((x) => x.cand.mask & bit(c))) continue;
-        certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'パネル型', cells: [c] } });
+        certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'R型', cells: [c] } });
       }
     }
 
@@ -769,7 +769,7 @@
     // 位置の分かっている未ヒットキューブ
     for (const o of occPseudo) {
       const p = new Float64Array(NN);
-      if (o.size === 1 || o.deg === 0) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // 1ブロックキューブ（サーチサイズ1・ノード0）
+      if (o.size === 1 || o.deg === 0) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // 1ブロックのキューブ（サーチサイズ1・ノード0）
       let Z = 0;
       for (const sh of prior) {
         if (o.cat && SHAPES[sh.key].cat !== o.cat) continue;

@@ -254,7 +254,7 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.el::before { border-left-width: 2px; }
 .cell.pc.er::before { border-right-width: 2px; }
 .cell.pc.addpc::before { border-style: dashed; }
-/* バズーカで分解された1ブロックキューブ：元のキューブの色のまま、ひびを入れる */
+/* バズーカで分解された1ブロックのキューブ：元のキューブの色のまま、ひびを入れる */
 .cell.pc.frag { background-image: linear-gradient(118deg, transparent 46%, rgba(10, 14, 24, .55) 47%, transparent 49%), linear-gradient(28deg, transparent 60%, rgba(10, 14, 24, .45) 61%, transparent 63%),
     linear-gradient(160deg, color-mix(in srgb, var(--pcc) 40%, var(--steel-1)) 0%, color-mix(in srgb, var(--pcc) 58%, var(--steel-3)) 68%, color-mix(in srgb, var(--pcc) 38%, var(--steel-4)) 100%); }
 .cell.pc.frag::before { border-style: dashed; }
@@ -1206,19 +1206,19 @@ body.replaying #app { display: none; }
   const COLS = 'ABCDE';
   const STOCK = { 2: 5, 3: 4, 4: 3, 5: 2 };
   // Z型（v12.17）：段違いの形。4ブロック・5ブロックに入れて、2×2キューブやL型・T型に化けられるようにした（5ブロックが弱かったため）
-  const CATS = ['パネル型', 'L型', 'T型', 'Z型'];
+  const CATS = ['R型', 'L型', 'T型', 'Z型'];
 
   // base はインデックス順を保ったまま回転・反転する（トレジャー位置の追従に使う）
   const SHAPES = {
-    A1: { size: 1, cat: 'パネル型', name: 'アッド', base: [[0, 0]] },
-    D2: { size: 2, cat: 'パネル型', name: '1×2', base: [[0, 0], [0, 1]] },
-    I3: { size: 3, cat: 'パネル型', name: '1×3', base: [[0, 0], [0, 1], [0, 2]] },
+    A1: { size: 1, cat: 'R型', name: 'アッド', base: [[0, 0]] },
+    D2: { size: 2, cat: 'R型', name: '1×2', base: [[0, 0], [0, 1]] },
+    I3: { size: 3, cat: 'R型', name: '1×3', base: [[0, 0], [0, 1], [0, 2]] },
     L3: { size: 3, cat: 'L型', name: 'L型', base: [[0, 0], [1, 0], [1, 1]] },
-    I4: { size: 4, cat: 'パネル型', name: '1×4', base: [[0, 0], [0, 1], [0, 2], [0, 3]] },
-    O4: { size: 4, cat: 'パネル型', name: '2×2', base: [[0, 0], [0, 1], [1, 0], [1, 1]] },
+    I4: { size: 4, cat: 'R型', name: '1×4', base: [[0, 0], [0, 1], [0, 2], [0, 3]] },
+    O4: { size: 4, cat: 'R型', name: '2×2', base: [[0, 0], [0, 1], [1, 0], [1, 1]] },
     L4: { size: 4, cat: 'L型', name: 'L型', base: [[0, 0], [1, 0], [2, 0], [2, 1]] },
     T4: { size: 4, cat: 'T型', name: 'T型', base: [[0, 0], [0, 1], [0, 2], [1, 1]] },
-    I5: { size: 5, cat: 'パネル型', name: '1×5', base: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
+    I5: { size: 5, cat: 'R型', name: '1×5', base: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]] },
     L5: { size: 5, cat: 'L型', name: 'L型(4+1)', base: [[0, 0], [1, 0], [2, 0], [3, 0], [3, 1]] },
     V5: { size: 5, cat: 'L型', name: 'L型(3+3)', base: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]] },
     T5: { size: 5, cat: 'T型', name: 'T型(3+2)', base: [[0, 0], [0, 1], [0, 2], [1, 1], [2, 1]] },
@@ -1237,18 +1237,19 @@ body.replaying #app { display: none; }
   // 23：v14 ステルスを作り直し（キューブを隠す。ステルスアンサーで見破る）
   // 24：v14.1 ×に撃ったステルスアンサーの外れは手番終了だけ（kb.probes。v14.2 で元に戻した）
   // 25：v14.2 ステルスのトリガーブロック（コールされると STEALTH HIT。すべてのステルスが見破られる）
-  const VERSION = 25;
+  const VERSION = 26;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
+  // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
-    cube: { name: 'サーチキューブ', desc: '指定した形状かブロック数の、残っているキューブの数を調べる' },
-    line: { name: 'サーチライン', desc: '指定した1列・1行に、撃破されていないキューブがいくつかかっていて、そのブロックがいくつあるかを調べる（例：2キューブ / 3ブロック）' },
-    number: { name: 'サーチサイズ', desc: '指定した1ブロックにあるキューブのブロック数を調べる（空きブロックならNoData）' },
-    shape: { name: 'サーチシェイプ', desc: '指定した1ブロックにあるキューブの形状を調べる（空きブロックならNoData）' },
-    pair: { name: 'ペアショット', desc: '指定した2ブロックが同じキューブか調べる' },
-    node: { name: 'ノードショット', desc: '指定した1ブロックで、同じキューブのブロックが上下左右にいくつつながっているか（0〜3）を調べる（空きブロックならNoData）' },
-    bazooka: { name: 'バズーカ', desc: '指定した1ブロックのキューブを1ブロックキューブに分解する（ステルスでも分解し、ステルスは解除）。ヒット済みのブロックはその場で撃破。空きブロックならNoData' },
+    cube: { name: 'サーチキューブ', desc: '選んだ形かブロック数のキューブが、いくつ残っているか分かる' },
+    line: { name: 'サーチライン', desc: '選んだ1列（1行）にかかるキューブの数とブロックの数が分かる（例：2キューブ / 3ブロック）' },
+    number: { name: 'サーチサイズ', desc: '選んだブロックのキューブが何ブロックか分かる' },
+    shape: { name: 'サーチシェイプ', desc: '選んだブロックのキューブの形が分かる' },
+    pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
+    node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
+    bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
     warp: { name: 'ワープ', desc: '自分のキューブ1つを空きブロックへ移動する' },
-    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（選んだブロックがトリガーブロック）。コールは×、アイテムは NoData、数にも入らない。トリガーブロックをコールされるか、ステルスのブロックだけでアンサーされると見破られる' },
+    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
   };
 
   function bit(c) { return 1 << c; }
@@ -1344,8 +1345,8 @@ body.replaying #app { display: none; }
     }
     return null;
   }
-  // ログ用のキューブの呼び名（バズーカで分解されたものは「1ブロックキューブ」）
-  function pieceName(p) { return p.frag ? '1ブロックキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
+  // ログ用のキューブの呼び名（バズーカで分解されたものは「1ブロックのキューブ」）
+  function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
   // ログ用：ブロックを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
   function coordList(cells, N) { return cells.slice().sort((a, b) => a - b).map((c) => coord(c, N)).join('・'); }
   function lineMask(line, index, N) {
@@ -1762,7 +1763,7 @@ body.replaying #app { display: none; }
     if (!this._myTurn(pi, ['answer'])) return { ok: false, reason: 'アンサーできる状態ではありません' };
     cells = Array.from(new Set(cells)).sort((a, b) => a - b);
     const key = identifyShape(cells, this.N);
-    if (!key) return { ok: false, reason: 'パネル型・L型・T型のいずれかの形で宣言してください' };
+    if (!key) return { ok: false, reason: 'R型・L型・T型のいずれかの形で宣言してください' };
     const me = this.players[pi], foe = this.foeOf(pi);
     const mask = maskOf(cells);
     this._tick();
@@ -2095,7 +2096,7 @@ body.replaying #app { display: none; }
       }
       case 'line': {
         // その列・行にかかっている（1ブロックでも入っている）生きているキューブの数と、それらが占めているブロックの数（v12.12）。
-        // バズーカの破片は1ブロックキューブ1つずつとして数える
+        // バズーカの破片は1ブロックのキューブ1つずつとして数える
         const lm = lineMask(params.line, params.index, N);
         let occ = 0, k = 0;
         for (const p of livingFoe) { occ |= p.mask; if (p.mask & lm) k++; }
@@ -2143,7 +2144,7 @@ body.replaying #app { display: none; }
         break;
       }
       case 'bazooka': {
-        // そのブロックのキューブを1ブロックキューブに分解する。ヒット済みのブロックはその場で撃破。空きブロックと、隠れているステルスのキューブは NoData
+        // そのブロックのキューブを1ブロックのキューブに分解する。ヒット済みのブロックはその場で撃破。空きブロックと、隠れているステルスのキューブは NoData
         const p = this._seenAt(foe.idx, params.cell);
         const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, hit: !!p, killed: [] };
         if (!p) {
@@ -2158,7 +2159,7 @@ body.replaying #app { display: none; }
         ev.ownerPriv = { frags: p.cells.filter((c) => !(p.hitMask & bit(c))) };
         this._emit(ev);
         emitted = true;
-        // すでに1ブロックキューブ（分解の破片）なら、形はそのまま（ステルスだけ解除）。撃った側には、ふつうの分解と同じに見える
+        // すでに1ブロックのキューブ（分解の破片）なら、形はそのまま（ステルスだけ解除）。撃った側には、ふつうの分解と同じに見える
         // （破片をもう一度分解すると、元のキューブの数え方（大会で失ったか・置いた数）がくずれるため）
         let sp;
         if (p.frag || p.size === 1) { p.stealth = false; p.stealthAt = null; sp = { killed: [], frags: [p.cells[0]] }; }
@@ -2167,7 +2168,7 @@ body.replaying #app { display: none; }
         result.hit = true;
         result.killed = sp.killed;
         const kill = sp.killed.length ? `ヒット済みの${sp.killed.length}ブロックを撃破（${coordList(sp.killed, N)}）` : 'ヒット済みのブロックはなし';
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックキューブに分解・${kill}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックのキューブに分解・${kill}`, null, 'item', key);
         result.ended = this._checkEnd();
         break;
       }
@@ -2227,8 +2228,8 @@ body.replaying #app { display: none; }
   };
 
   // ---------------- バズーカ（分解） ----------------
-  // キューブを1ブロックキューブに分解する。ヒット済みのブロックはその場で撃破（撃破ポイント1ブロック1pt）、ステルスは解除。
-  // トレジャーは、そのブロックの1ブロックキューブのものになる（ニアの「同じキューブ」はそのブロックだけ）。
+  // キューブを1ブロックのキューブに分解する。ヒット済みのブロックはその場で撃破（撃破ポイント1ブロック1pt）、ステルスは解除。
+  // トレジャーは、そのブロックの1ブロックのキューブのものになる（ニアの「同じキューブ」はそのブロックだけ）。
   // 分解はその試合だけ：元のキューブは splitPieces に残し、大会では次の試合で元の形に戻す
   Game.prototype._split = function (piece) {
     const P = this.players[piece.owner];
@@ -2256,7 +2257,7 @@ body.replaying #app { display: none; }
   };
 
   // 試合のまとめ（大会の集計用）：得点、失ったキューブ（大会から消える）、残った手持ちのアイテム
-  //  バズーカで分解されたキューブは、1ブロックキューブが1つでも生き残っていれば失わない（次の試合で元のブロック数に戻る）
+  //  バズーカで分解されたキューブは、1ブロックのキューブが1つでも生き残っていれば失わない（次の試合で元のブロック数に戻る）
   Game.prototype.summary = function () {
     return this.players.map((P) => {
       const lost = [];
@@ -2554,7 +2555,7 @@ body.replaying #app { display: none; }
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 1;
+  const NET_VERSION = 2;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';
@@ -3114,7 +3115,7 @@ body.replaying #app { display: none; }
   function currentCounts(kb, N) {
     const res = { all: null, size: {}, cat: {}, lines: [] };
     const matchDead = (q, d) => q.kind === 'all' || (q.kind === 'size' ? d.size === q.value : d.cat === q.value);
-    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'パネル型');
+    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'R型');
     for (const q of kb.counts) {
       if (q.kind === 'line') {
         if (kb.warps.some((w) => w.t > q.t) || kb.adds.some((a) => a.t > q.t)) continue;
@@ -3209,7 +3210,7 @@ body.replaying #app { display: none; }
         derivedOccs.push({ c: p.a, t: p.t, cat: null }, { c: p.b, t: p.t, cat: null, dup: true });
       } else if (hitBefore(p.a, p.t) || hitBefore(p.b, p.t) || !warpedAfter(p.t)) pairs.push(p);
     }
-    // バズーカで分解したキューブ：撃ち込んだブロックがヒット済みでなければ、そこに1ブロックキューブが残る（撃破・ワープで説明がつくまで）
+    // バズーカで分解したキューブ：撃ち込んだブロックがヒット済みでなければ、そこに1ブロックのキューブが残る（撃破・ワープで説明がつくまで）
     const splits = [];
     for (const sp of (kb.splits || [])) {
       let killedMask = 0;
@@ -3326,12 +3327,12 @@ body.replaying #app { display: none; }
       out.set(P.mask, { mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, branches: [branch], w: (pr / ctx.PL[P.key].length) * (wf || 1), full, lastHit });
     };
     const fa = base | ctx.xMaskAll | ctx.oldMaskAll;
-    // 1ブロックキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎のキューブにはならない（候補は上の「全ブロック命中」で落ちる）
+    // 1ブロックのキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎のキューブにはならない（候補は上の「全ブロック命中」で落ちる）
     const sizes = ctx.fragPossible ? [1, 2, 3, 4, 5] : [2, 3, 4, 5];
     for (const s of sizes) {
       if (s === 1) {
-        // 1ブロックキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のブロックそのものだけを考える
-        if (ctx.counts.size[1] === 0 || !ctx.catAllowed('パネル型')) continue;
+        // 1ブロックのキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のブロックそのものだけを考える
+        if (ctx.counts.size[1] === 0 || !ctx.catAllowed('R型')) continue;
         const P = ctx.PL.A1.find((x) => x.mask === bit(g.c));
         if (P && !(P.mask & base) && factsOK(P, ctx.occs, 0, ctx.N)) add(P, 'a');
         continue;
@@ -3659,17 +3660,17 @@ body.replaying #app { display: none; }
         if (live.length === 1 && !g.cands[live[0]].merge) certain.push({ gi: i, cand: g.cands[live[0]] });
       }
     });
-    // バズーカで分解したキューブの、撃ち込んだブロックに残った1ブロックキューブ（撃破もワープもされていなければ確定）
+    // バズーカで分解したキューブの、撃ち込んだブロックに残った1ブロックのキューブ（撃破もワープもされていなければ確定）
     for (const sp of ctx.splits) {
       if (sp.targetFrag < 0 || certain.some((x) => x.cand.mask === bit(sp.targetFrag))) continue;
-      certain.push({ gi: -1, cand: { mask: bit(sp.targetFrag), key: 'A1', size: 1, cat: 'パネル型', cells: [sp.targetFrag] } });
+      certain.push({ gi: -1, cand: { mask: bit(sp.targetFrag), key: 'A1', size: 1, cat: 'R型', cells: [sp.targetFrag] } });
     }
     // ほかの破片：分解したキューブの置き方（撃ち込んだブロックと撃破したブロックを含む）のどれにも入っているブロックには、破片が確実に残っている（v12.6）。
     // 例：角に撃ち込んで分解し、角の隣の片方が×なら、もう片方の隣は破片。アンサー（1ブロック）で撃破できる
     for (const sp of ctx.splits) {
       for (const c of fragCertainCells(ctx, sp, opt)) {
         if (certain.some((x) => x.cand.mask & bit(c))) continue;
-        certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'パネル型', cells: [c] } });
+        certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'R型', cells: [c] } });
       }
     }
 
@@ -3859,7 +3860,7 @@ body.replaying #app { display: none; }
     // 位置の分かっている未ヒットキューブ
     for (const o of occPseudo) {
       const p = new Float64Array(NN);
-      if (o.size === 1 || o.deg === 0) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // 1ブロックキューブ（サーチサイズ1・ノード0）
+      if (o.size === 1 || o.deg === 0) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // 1ブロックのキューブ（サーチサイズ1・ノード0）
       let Z = 0;
       for (const sh of prior) {
         if (o.cat && SHAPES[sh.key].cat !== o.cat) continue;
@@ -6034,7 +6035,7 @@ window.SBAudio = (function () {
   const LOCK_SVG = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 6v16M50 78v16M6 50h16M78 50h16"/><path d="M22 22l8 8M78 22l-8 8M22 78l8-8M78 78l-8-8" opacity=".6"/></svg>';
   const RETICLE_SVG = '<svg viewBox="0 0 100 100"><path d="M14 34V14h20M66 14h20v20M86 66v20H66M34 86H14V66"/><circle cx="50" cy="50" r="5"/></svg>';
   const TL = { H: 'H', N: 'N', X: 'X' };
-  const SHAPE_ABBR = { 'パネル型': 'P', 'L型': 'L', 'T型': 'T', 'Z型': 'Z' };
+  const SHAPE_ABBR = { 'R型': 'R', 'L型': 'L', 'T型': 'T', 'Z型': 'Z' };
 
   // ---------------- メモ（スクラッチ） ----------------
   // 相手フィールドの空いているブロックに付ける自分用のしるし。ゲームには影響しない
@@ -6156,11 +6157,11 @@ window.SBAudio = (function () {
     const facts = [];
     for (const o of kb.occs) if (o.src === 'shape' || o.src === 'number') facts.push({ c: o.c, t: o.t, turn: o.turn, src: o.src, v: o.src === 'shape' ? o.cat : o.size, stale: warpedAfter(o.t) });
     for (const e of kb.empties) if (e.src === 'shape' || e.src === 'number' || e.src === 'node' || e.src === 'bazooka') facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src, nd: true, stale: relocatedAfter(e.t) });
-    // バズーカで分解した：撃ち込んだブロックがヒット済みでなければ、そこには1ブロックキューブ（C1）が残る
+    // バズーカで分解した：撃ち込んだブロックがヒット済みでなければ、そこには1ブロックのキューブ（C1）が残る
     for (const sp of (kb.splits || [])) {
       if (sp.killed.indexOf(sp.c) >= 0) continue;
       const gone = kb.warps.some((w) => w.t > sp.t && (w.oldMask & bit(sp.c)));
-      facts.push({ c: sp.c, t: sp.t, turn: sp.turn, src: 'shape', v: 'パネル型', stale: gone });
+      facts.push({ c: sp.c, t: sp.t, turn: sp.turn, src: 'shape', v: 'R型', stale: gone });
       facts.push({ c: sp.c, t: sp.t, turn: sp.turn, src: 'number', v: 1, stale: gone });
     }
     facts.sort((a, b) => a.t - b.t);
@@ -6358,13 +6359,13 @@ window.SBAudio = (function () {
 
   // サーチキューブの選択メニュー（相手フィールド上に出す）
   function cubeMenuHTML() {
-    const cats = [['パネル型', 'O4'], ['L型', 'L4'], ['T型', 'T4'], ['Z型', 'Z4']];
+    const cats = [['R型', 'O4'], ['L型', 'L4'], ['T型', 'T4'], ['Z型', 'Z4']];
     return `<div class="cube-menu" role="group" aria-label="サーチキューブの対象">
       <button type="button" class="cm-close" data-act="cancel" aria-label="閉じる" title="キャンセル">✕</button>
       <p>SEARCH CUBE ─ 形状</p>
       <div class="cm-grid shapes">${cats.map(([c, k]) => `<button type="button" class="cm-btn" data-act="cube" data-kind="cat" data-value="${esc(c)}">${shapeMini(k, 0)}<span>${esc(c)}</span></button>`).join('')}</div>
       <p>ブロック数</p>
-      <div class="cm-grid sizes">${[1, 2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}ブロック${s === 1 ? '（バズーカの破片）' : ''}"${s === 1 ? ' title="1ブロックキューブ（バズーカで分解された破片）"' : ''}><b>${s}</b></button>`).join('')}</div>
+      <div class="cm-grid sizes">${[1, 2, 3, 4, 5].map((s) => `<button type="button" class="cm-btn" data-act="cube" data-kind="size" data-value="${s}" aria-label="${s}ブロック${s === 1 ? '（バズーカの破片）' : ''}"${s === 1 ? ' title="1ブロックのキューブ（バズーカで分解された破片）"' : ''}><b>${s}</b></button>`).join('')}</div>
     </div>`;
   }
 
@@ -6574,31 +6575,31 @@ window.SBAudio = (function () {
         break;
       }
       case 'cube':
-        main = itemHead('cube', '相手フィールドに出たメニューから、調べる形かブロック数を選んでください。');
+        main = itemHead('cube', '相手フィールドのメニューから、調べる形かブロック数を選んでください。');
         acts = cancel;
         break;
       case 'line':
-        main = itemHead('line', '相手フィールドの列（A〜）か行（1〜）のラベルをタップ。そこにかかっている（撃破されていない）キューブの数と、そのブロックの数（例：2キューブ / 3ブロック）が分かり、アイテム欄の下に記録されます。');
+        main = itemHead('line', '調べる列（A〜）か行（1〜）のラベルを選んでください。かかっているキューブの数とブロックの数が分かります。');
         acts = cancel;
         break;
       case 'number':
-        main = itemHead('number', '調べるブロックを選んでください。そこにあるキューブのブロック数が分かります（空きブロックなら NoData）。');
+        main = itemHead('number', '調べるブロックを選んでください。そのキューブが何ブロックか分かります。');
         acts = cancel;
         break;
       case 'shape':
-        main = itemHead('shape', '調べるブロックを選んでください。そこにあるキューブの形が分かります（空きブロックなら NoData）。');
+        main = itemHead('shape', '調べるブロックを選んでください。そのキューブの形が分かります。');
         acts = cancel;
         break;
       case 'pair':
-        main = itemHead('pair', `調べるブロックを2つ選んでください（${ui.sel.length}/2）。同じキューブかどうかが分かります。撃破済み以外ならどこでも選べます。`);
+        main = itemHead('pair', `調べるブロックを2つ選んでください（${ui.sel.length}/2）。同じキューブか分かります。`);
         acts = cancel;
         break;
       case 'node':
-        main = itemHead('node', '調べるブロックを選んでください。同じキューブのブロックが上下左右にいくつつながっているか（0〜3）が分かります。1＝端、2＝途中か角、3＝T型の分かれ目。空きブロックなら NoData。');
+        main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
         acts = cancel;
         break;
       case 'bazooka':
-        main = itemHead('bazooka', '撃ち込むブロックを選んでください。そこにあるキューブを1ブロックキューブに分解し、ヒット済みのブロックはその場で撃破します（ステルスも解除）。空きブロックなら NoData。');
+        main = itemHead('bazooka', '撃ち込むブロックを選んでください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。');
         acts = cancel;
         break;
       case 'warp-pick':
@@ -6610,7 +6611,7 @@ window.SBAudio = (function () {
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
         break;
       case 'stealth-pick':
-        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選んでください。そのブロックがトリガーブロックになり、そのキューブが隠れます。相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません。トリガーブロックをコールされるか、ステルスのブロックだけでアンサーされると、すべてのステルスが見破られます（全ブロック当たっていたキューブはそこで撃破）。ステルス中はワープできません。');
+        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選んでください。そこが弱点（トリガー）になり、撃たれるとばれます。');
         acts = cancel;
         break;
       case 'treasure':
@@ -6833,7 +6834,7 @@ window.SBAudio = (function () {
   }
   // 試合中の「所持キューブ」：大会の持ち数から、この試合で失った分（撃破・差し出し。分解は全部撃破されたとき）を引く
   //  hideSplit：相手の分。バズーカで分解されたキューブを失ったかどうかは、試合が終わるまで伏せる
-  //  （破片は1ブロックキューブとして撃破を知らせるだけ。元のキューブを倒しきったこと・そのブロック数は、試合の結果で分かる）
+  //  （破片は1ブロックのキューブとして撃破を知らせるだけ。元のキューブを倒しきったこと・そのブロック数は、試合の結果で分かる）
   function heldCubes(P, hideSplit) {
     const lostNow = { 2: 0, 3: 0, 4: 0, 5: 0 };
     for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lostNow[p.size]++;
@@ -7106,14 +7107,18 @@ window.SBAudio = (function () {
         </ol>
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
         <p><b>キューブの質感</b>：キューブには、色ごとに違う素材の質感（御影石・コンクリート・トラバーチン・ヘアライン・大理石・木目・スレート・テラゾー）を薄く重ねています。色が見分けにくくても、質感でどのキューブかが分かります。</p>
-        <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。番号は付きません）。全ブロックをコールされたキューブは撃破されます。</p>
+        <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。ステルスの番号つき）。全ブロックをコールされたキューブは撃破されます。</p>
+        <p><b>キューブの形</b>：R型（長方形：まっすぐな形と2×2）・L型・T型・Z型（段違い）の4種類。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
         <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2ブロック×5・3ブロック×4・4ブロック×3・5ブロック×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破したキューブのブロック数を相手から奪います（アンサー失敗で差し出したキューブも）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2ブロック1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
+        <p class="note">空きブロックには、どのアイテムも NoData になります。</p>
         <h3 class="legend-h">攻撃アイテム（相手フィールドに作用）</h3>
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note">ワープすると移動前の位置が×（W付き）で公開され、それ以外の×は薄くなって再コールできるようになります。ステルスは、隠すキューブのブロックを1つ選んで使います（そのブロックがトリガーブロック）。ステルスにしたキューブは隠れます：相手のコールは×、アイテムは NoData になり、サーチキューブ・サーチラインの数にも入りません（どのキューブかは相手に伝わりません）。相手がステルスのブロックだけでアンサーすると（ステルスアンサー。1ブロックでよい）、セーフになり、すべてのステルスのキューブが見破られます。×は STEALTH HIT に変わり、アイテムの結果も本当の値で表示され、以降のコールも STEALTH HIT になります。全ブロック当たっていたキューブはそこで撃破。トリガーブロックをコールされたときも、ステルスアンサーと同じく、すべてのステルスが見破られます。ステルスアンサーが外れたら、ふつうのアンサーの失敗と同じく、キューブを1つ差し出します。ステルス中のキューブはワープできません。ペアショットは撃破済み以外のどの2ブロックにも使えます。ブロックの調査結果は P＝パネル型、L＝L型、T＝T型、Z＝Z型（段違い。4ブロックと5ブロック）、数字＝ブロック数（左上の札）、ひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝T型の分かれ目、0＝1ブロックキューブ）。空きブロックだったときは NoData。バズーカで分解されたキューブは、その試合のあいだ1ブロックキューブ（1ブロック1pt）になり、1回のヒットで撃破されます。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになります。</p>
+        <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選んだブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない。</p>
+        <p class="note"><b>ワープ</b>：移動前の位置は×（W付き）で公開され、それ以外の×は薄くなって、もう一度コールできる。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
+        <p class="note"><b>調べた結果の札</b>：ブロックの左上に R・L・T・Z（形）と数字（ブロック数）、左下のひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝分かれ目、0＝1ブロックのキューブ）。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
     </div>`;
@@ -8143,7 +8148,7 @@ window.SBAudio = (function () {
           ring(mx, my, WH, 4, 40 + els.length * 18, 600, 2, 120);
           const label = ev.cause === 'answerFail' ? 'PENALTY' : 'DESTROYED';
           text(mx, my, label, 'kill', 1600);
-          text(mx, my + 34, ev.size === 1 ? '1ブロックキューブ撃破' : `${ev.size}ブロック撃破`, 'sub', 1600);
+          text(mx, my + 34, ev.size === 1 ? '1ブロックのキューブ撃破' : `${ev.size}ブロック撃破`, 'sub', 1600);
           shake(ev.size >= 4 ? 2 : 1);
           return 1250 * k;
         }
@@ -8749,7 +8754,7 @@ self.onmessage = function (e) {
       return g.validateItem(v, args[1], args[2]);
     }
     if (name === 'answer' && !E.identifyShape(Array.from(new Set(args[1])).sort((a, b) => a - b), g.N)) {
-      return { ok: false, reason: 'パネル型・L型・T型・Z型のいずれかの形で宣言してください' };
+      return { ok: false, reason: 'R型・L型・T型・Z型のいずれかの形で宣言してください' };
     }
     return { ok: true };
   }
@@ -9337,7 +9342,7 @@ self.onmessage = function (e) {
     setTimeout(() => { setupSkipClick = false; }, 350);
     const g = G(), pi = S.pi;
     const m = E.matchPlacement(cells, g.N);
-    if (!m) { toast('置けない形です（パネル型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
+    if (!m) { toast('置けない形です（R型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
     const size = SHAPES[m.key].size;
     if (g.stockLeft(pi, size) <= 0) { toast(size + 'ブロックのキューブはもう残っていません（上限）', 'warn'); render(); return; }
     const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);
