@@ -300,7 +300,7 @@
         if (k != null) k = Math.max(0, k);
         const label = E.lineLabel(q.line, q.index);
         const kApx = k != null && split && !stale;
-        // 札は短く（v14.5）：C＝キューブ、B＝ブロック。くわしくはチップで説明する
+        // サーチラインの札は場所をとるので短く（v14.5）：C＝キューブ、B＝ブロック。くわしくはチップで説明する
         tags.push({ key: 'line', label, pre: '残り', n, unit: 'B', k, kApx, turn: q.turn, stale,
           tip: `サーチライン（T${pad2(q.turn)}）：${label}にかかっている（撃破されていない）キューブの数（C）/ そのブロックの数（B）。◎・○のブロックも数に入ります。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : kApx ? '撃破されると自動で減ります。その後バズーカで分解したキューブがあり、破片は1つずつ数えるため、キューブの数は目安です（ブロックの数は正しい）' : '撃破されると自動で減ります'}` });
         continue;
@@ -313,9 +313,10 @@
       // 1ブロック（バズーカの破片）を調べたときは、破片の撃破で減らす
       for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && !d.isAdd && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
       n = Math.max(0, n);
-      const label = q.kind === 'size' ? q.value + 'B' : q.value;
-      tags.push({ key: 'cube', label, pre: '残り', n, unit: 'C', turn: q.turn, stale: split,
-        tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック（B）' : q.value}のキューブが、いくつ（C＝キューブ）残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
+      // サーチキューブは言葉のまま（「3ブロック 残り 2キューブ」。v14.5 で「体」を「キューブ」に）。短い C・B はサーチラインだけ
+      const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
+      tags.push({ key: 'cube', label, pre: '残り', n, unit: 'キューブ', turn: q.turn, stale: split,
+        tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック' : q.value}のキューブが、いくつ残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
     }
     const cells = {};
     const put = (c, k, val) => { if (!view.dead[c]) cells[c] = Object.assign(cells[c] || {}, { [k]: val }); };
@@ -830,7 +831,7 @@
       <table>
         <thead><tr><th></th>${T ? '<th>持ち点</th>' : ''}<th>撃破</th><th>トレジャー</th><th>残りキューブ</th>${T ? '<th>所持キューブ</th>' : ''}</tr></thead>
         <tbody>
-          ${row(me, `${myLive.length}<small>体・${myCells}ブロック</small>`)}
+          ${row(me, `${myLive.length}<small>キューブ・${myCells}ブロック</small>`)}
           ${row(foe, foeLeft)}
         </tbody>
       </table>
@@ -2605,7 +2606,7 @@ self.onmessage = function (e) {
       const tone = (pi) => (pi === 0 ? 'mine' : 'enemy');
       const chips = `<div class="chiprow">${chipGroup(1 - k, ATK_ITEMS, false, 'atk', `${atk}の攻撃`, tone(1 - k))}${chipGroup(k, DEF_ITEMS, false, 'def', `${def}の防御`, tone(k))}</div>`;
       const cubes = `<div class="rp-cubes"><span class="hr-cap">所持キューブ</span>${heldCubes(g.players[k], false)}</div>`;
-      return `<section class="panel ${k === 0 ? 'own' : 'enemy'} rp-field"><div class="fhead"><b>${esc(def)}のフィールド</b><span class="rp-left">残り${g.living(k).length}体</span></div>${chips}${intelTagsHTML(intel, k === 1)}${board}${cubes}</section>`;
+      return `<section class="panel ${k === 0 ? 'own' : 'enemy'} rp-field"><div class="fhead"><b>${esc(def)}のフィールド</b><span class="rp-left">残り${g.living(k).length}キューブ</span></div>${chips}${intelTagsHTML(intel, k === 1)}${board}${cubes}</section>`;
     };
     document.getElementById('rp-stage').innerHTML = field(0) + field(1);
     document.getElementById('rp-note').textContent = '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。';
