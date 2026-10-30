@@ -1,20 +1,20 @@
 /* サーチバトル — CPU
  * 人間と同じ情報（自分の盤面・攻撃ログ・防御ログ・アイテム状況）だけで推論する。
  *  1. 確定推論：◎ごとに「ありうる配置」を列挙し、すべての事実と矛盾しない組み合わせを全探索。
- *     候補が1つに絞れた個体だけアンサーする（失敗しない）。
- *  2. 確率推論：未発見の個体について、×・ヒット・アイテム結果と矛盾しない配置の密度から
- *     各マスに個体がいる確率を求め、索敵に使う。
+ *     候補が1つに絞れたキューブだけアンサーする（失敗しない）。
+ *  2. 確率推論：未発見のキューブについて、×・ヒット・アイテム結果と矛盾しない配置の密度から
+ *     各ブロックにキューブがいる確率を求め、索敵に使う。
  */
 (function (root) {
   'use strict';
   const E = (typeof module !== 'undefined' && module.exports) ? require('./engine.js') : root.SBEngine;
   const { SHAPES, SHAPES_BY_SIZE, ITEM_KEYS, ORIENT, CATS, placements, bit, popcount, bitsOf, lineMask, cellsFor, blockDist, nodeDegree } = E;
-  // ノードショットの答え（つながりの数 0〜3）の出方の目安：CPUの配置で測った、個体のあるマスのうちの割合
+  // ノードショットの答え（つながりの数 0〜3）の出方の目安：CPUの配置で測った、キューブのあるブロックのうちの割合
   const NODE_PRIOR = [0, 0.6, 0.37, 0.03];
   const CAT_INDEX = {}; CATS.forEach((c, i) => { CAT_INDEX[c] = i; });
   // 実験用：プレイヤーごとの方針の上書き（ふだんは空＝標準の方針）
   const policy = [{}, {}];
-  // 未発見の個体数の見積もり方（0＝旧方式、1＝見つかった数を考慮、2＝さらに重ならない分を証拠に数えない）。
+  // 未発見のキューブ数の見積もり方（0＝旧方式、1＝見つかった数を考慮、2＝さらに重ならない分を証拠に数えない）。
   // CPU同士の対戦とキャリブレーションの検証で 2 がいちばん良かった
   const CALIB_DEFAULT = 2;
 
@@ -24,12 +24,12 @@
   function currentCounts(kb, N) {
     const res = { all: null, size: {}, cat: {}, lines: [] };
     const matchDead = (q, d) => q.kind === 'all' || (q.kind === 'size' ? d.size === q.value : d.cat === q.value);
-    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'キューブ');
+    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'パネル型');
     for (const q of kb.counts) {
       if (q.kind === 'line') {
         if (kb.warps.some((w) => w.t > q.t) || kb.adds.some((a) => a.t > q.t)) continue;
-        // サーチライン＝その列・行にかかっている個体の数 k と、そのマスの数 n（v12.12）。その後に撃破された個体の分を引く。
-        // その後にバズーカの分解があると、破片の数だけ個体が増える（分解された個体がかかっていたかは分からない）ので、k は使わない
+        // サーチライン＝その列・行にかかっているキューブの数 k と、そのブロックの数 n（v12.12）。その後に撃破されたキューブの分を引く。
+        // その後にバズーカの分解があると、破片の数だけキューブが増える（分解されたキューブがかかっていたかは分からない）ので、k は使わない
         const lm = lineMask(q.line, q.index, N);
         let n = q.n;
         let k = q.k != null && !(kb.splits || []).some((sp) => sp.t > q.t) ? q.k : null;
@@ -41,7 +41,7 @@
         res.lines.push({ mask: lm, n, k });
         continue;
       }
-      // バズーカで分解があった後は、分解された個体の形・マス数が分からないので、それより前の個数は使えない
+      // バズーカで分解があった後は、分解されたキューブの形・ブロック数が分からないので、それより前の個数は使えない
       if ((kb.splits || []).some((sp) => sp.t > q.t)) continue;
       let n = q.n;
       for (const d of kb.deads) if (d.t > q.t && matchDead(q, d)) n--;
@@ -77,49 +77,49 @@
     const lineMax = [];
     for (const L of counts.lines) { if (L.n <= 0) lineZeroMask |= L.mask; else lineMax.push(L); }
 
-    // 説明のつかないヒット＝今もそこにいる個体への命中
+    // 説明のつかないヒット＝今もそこにいるキューブへの命中
     const latest = new Map();
     for (const k of kb.calls) if (k.r !== 'x' && !explained(k.c, k.t)) latest.set(k.c, k);
     const U = Array.from(latest.values()).sort((a, b) => a.t - b.t);
     const groups = U.filter((k) => k.r === 'oo').map((k) => ({ num: k.num, c: k.c, t: k.t }));
     const oList = U.filter((k) => k.r === 'o').map((k) => ({ c: k.c, t: k.t }));
     let ooMask = 0; for (const g of groups) ooMask |= bit(g.c);
-    // Stealth hit（v13）：◎か○か分からないヒット。「新しい個体の最初の1発（番号のない◎）」か「前に見つかった個体の○」のどちらか。
+    // Stealth hit（v13）：◎か○か分からないヒット。「新しいキューブの最初の1発（番号のない◎）」か「前に見つかったキューブの○」のどちらか。
     // ◎と同じようにグループを作り、候補に「○だった（merge）」を足す（jointEnumerate で、前のグループの置き方に入っているかを確かめる）。
-    // ooMask には入れない（○だったなら、ほかの個体のマスでもありうるため）
+    // ooMask には入れない（○だったなら、ほかのキューブのブロックでもありうるため）
     for (const k of U) if (k.r === 'q') groups.push({ num: null, c: k.c, t: k.t, q: true });
     let hitMask = 0; for (const u of U) hitMask |= bit(u.c);
     const Ucell = new Map(U.map((u) => [u.c, u]));
 
-    // ペアショット（どの2マスでも）：
-    //  同じ個体 → 2マスの持ち主は今も同じ（どちらのマスからも個体が去っていなければ）
+    // ペアショット（どの2ブロックでも）：
+    //  同じキューブ → 2ブロックの持ち主は今も同じ（どちらのブロックからもキューブが去っていなければ）
     //  同じではない → 今も同じではない（どちらかがその前からのヒット、またはその後ワープがなければ）
     const warpedAfter = (t) => kb.warps.some((w) => w.t > t);
-    // バズーカの分解：その前に調べた「同じ個体」「形・マス数・つながり」は、分解された個体のマスだったなら使えない。
-    // 分解された個体ではないと言い切れるマスの事実はそのまま使う：
-    //  ・分解の前からヒットしていて、撃破されなかったマス（分解ではその個体のヒット済みのマスがすべて撃破されるので、別の個体）
-    //  ・撃ち込んだマスから5ブロック以上離れたマス（個体は5マス以下でつながっているので、撃ち込んだマスから4ブロック以内）
+    // バズーカの分解：その前に調べた「同じキューブ」「形・ブロック数・つながり」は、分解されたキューブのブロックだったなら使えない。
+    // 分解されたキューブではないと言い切れるブロックの事実はそのまま使う：
+    //  ・分解の前からヒットしていて、撃破されなかったブロック（分解ではそのキューブのヒット済みのブロックがすべて撃破されるので、別のキューブ）
+    //  ・撃ち込んだブロックから5ブロック以上離れたブロック（キューブは5ブロック以下でつながっているので、撃ち込んだブロックから4ブロック以内）
     const splitList = (kb.splits || []).map((sp) => { let km = 0; for (const c of sp.killed) km |= bit(c); return { t: sp.t, c: sp.c, km }; });
     const safeFromSplit = (c, sp) => {
       const u = Ucell.get(c);
       if (u && u.t < sp.t && !(sp.km & bit(c))) return true;
       return Math.abs(Math.floor(c / N) - Math.floor(sp.c / N)) + Math.abs((c % N) - (sp.c % N)) > 4;
     };
-    // t より後の分解のどれかで、c が分解された個体のマスだったかもしれない
+    // t より後の分解のどれかで、c が分解されたキューブのブロックだったかもしれない
     const splitTouches = (c, t) => splitList.some((sp) => sp.t > t && !safeFromSplit(c, sp));
     const hitBefore = (c, t) => { const u = Ucell.get(c); return !!u && u.t < t; };
     const pairs = [];
     const derivedOccs = [];
     for (const p of kb.pairs) {
       if (p.same) {
-        // 同じ個体の2マス：どちらかが分解された個体でなければ、もう片方も同じ個体なので分解されていない
+        // 同じキューブの2ブロック：どちらかが分解されたキューブでなければ、もう片方も同じキューブなので分解されていない
         if (explained(p.a, p.t) || explained(p.b, p.t)) continue;
         if (splitList.some((sp) => sp.t > p.t && !safeFromSplit(p.a, sp) && !safeFromSplit(p.b, sp))) continue;
         pairs.push(p);
         derivedOccs.push({ c: p.a, t: p.t, cat: null }, { c: p.b, t: p.t, cat: null, dup: true });
       } else if (hitBefore(p.a, p.t) || hitBefore(p.b, p.t) || !warpedAfter(p.t)) pairs.push(p);
     }
-    // バズーカで分解した個体：撃ち込んだマスがヒット済みでなければ、そこに1マスキューブが残る（撃破・ワープで説明がつくまで）
+    // バズーカで分解したキューブ：撃ち込んだブロックがヒット済みでなければ、そこに1ブロックキューブが残る（撃破・ワープで説明がつくまで）
     const splits = [];
     for (const sp of (kb.splits || [])) {
       let killedMask = 0;
@@ -127,11 +127,11 @@
       const targetFrag = !(killedMask & bit(sp.c)) && !explained(sp.c, sp.t) ? sp.c : -1;
       splits.push({ t: sp.t, c: sp.c, killedMask, targetFrag });
     }
-    // 生きていると分かっている破片のマス（ヒットしたマスは◎の個体として数えるので除く。同じマスに2回撃っても1つ）
+    // 生きていると分かっている破片のブロック（ヒットしたブロックは◎のキューブとして数えるので除く。同じブロックに2回撃っても1つ）
     let fragMask = 0;
     for (const sp of splits) if (sp.targetFrag >= 0) fragMask |= bit(sp.targetFrag);
     fragMask &= ~hitMask;
-    // ステルス：使われた時刻だけが分かる。全マスに当たっても生きている個体は、それより前にステルスになっていたはず
+    // ステルス：使われた時刻だけが分かる。全ブロックに当たっても生きているキューブは、それより前にステルスになっていたはず
     const stealthTimes = (kb.stealths || []).map((x) => x.t).sort((a, b) => a - b);
     // ステルス（v14）：見破られていない数（使った数−見破った数）。見破られていないステルスのキューブは、
     // コールが×・アイテムが NoData・数に入らないので、見えている世界では「いない」のと同じに見える
@@ -151,7 +151,7 @@
 
     const groupIndexByNum = new Map(groups.filter((g) => !g.q).map((g, i) => [g.num, i]));
 
-    // ワープ・アッドで動いた個体の追跡（索敵用の近似）
+    // ワープ・アッドで動いたキューブの追跡（索敵用の近似）
     const wEnt = [];
     const addEnt = kb.adds.map((a) => ({ t: a.t, col: a.col, alive: true }));
     const sortedWarps = kb.warps.slice().sort((a, b) => a.t - b.t);
@@ -193,7 +193,7 @@
     };
   }
 
-  // sizeW：マス数ごとの重み（実験用。既定はどのマス数も同じ）
+  // sizeW：ブロック数ごとの重み（実験用。既定はどのブロック数も同じ）
   function shapePrior(ctx, sizeW) {
     const sizes = [2, 3, 4, 5].filter((s) => ctx.sizeAllowed(s));
     let wsum = 0; for (const s of sizes) wsum += sizeW ? (sizeW[s] || 0) : 1;
@@ -209,7 +209,7 @@
   // ------------------------------------------------------------------
   // ◎ごとの候補配置（健全：本当の配置を必ず含む）
   // ------------------------------------------------------------------
-  // サーチシェイプ（形状）・サーチサイズ（マス数）・ノードショット（つながりの数）の結果と矛盾しないか
+  // サーチシェイプ（形状）・サーチサイズ（ブロック数）・ノードショット（つながりの数）の結果と矛盾しないか
   function factsOK(P, occs, tp, N) {
     for (const o of occs) {
       if (o.t <= tp || !(P.mask & bit(o.c))) continue;
@@ -229,19 +229,19 @@
     const add = (P, branch, wf) => {
       const ex = out.get(P.mask);
       if (ex) { if (ex.branches.indexOf(branch) < 0) ex.branches.push(branch); return; }
-      // 全マスに当たっているのに生きている個体はいない（全マス当たれば撃破される。v13 でステルスの「撃破されない」効果は廃止）
+      // 全ブロックに当たっているのに生きているキューブはいない（全ブロック当たれば撃破される。v13 でステルスの「撃破されない」効果は廃止）
       const full = false, lastHit = -1;
       if ((P.mask & ~ctx.hitMask) === 0) return;
       const pr = priorByKey[P.key] || 0.05;
       out.set(P.mask, { mask: P.mask, key: P.key, size: P.size, cat: P.cat, cells: P.cells, branches: [branch], w: (pr / ctx.PL[P.key].length) * (wf || 1), full, lastHit });
     };
     const fa = base | ctx.xMaskAll | ctx.oldMaskAll;
-    // 1マスキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎の個体にはならない（候補は上の「全マス命中」で落ちる）
+    // 1ブロックキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎のキューブにはならない（候補は上の「全ブロック命中」で落ちる）
     const sizes = ctx.fragPossible ? [1, 2, 3, 4, 5] : [2, 3, 4, 5];
     for (const s of sizes) {
       if (s === 1) {
-        // 1マスキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のマスそのものだけを考える
-        if (ctx.counts.size[1] === 0 || !ctx.catAllowed('キューブ')) continue;
+        // 1ブロックキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のブロックそのものだけを考える
+        if (ctx.counts.size[1] === 0 || !ctx.catAllowed('パネル型')) continue;
         const P = ctx.PL.A1.find((x) => x.mask === bit(g.c));
         if (P && !(P.mask & base) && factsOK(P, ctx.occs, 0, ctx.N)) add(P, 'a');
         continue;
@@ -266,17 +266,17 @@
         add(P, 'w');
       }
     }
-    // ステルス（v14）：◎のあとでステルスにされた個体かもしれない（見破られていないステルスがあるとき）。
-    //  ステルスの後は、そのキューブへのコールが×、アイテムが NoData になるので、ステルスの後の×・NoData のマスにも広がりうる。
-    //  ステルスの後のヒット・調べた結果（形やマス数など）のあるマスは、ほかの個体なので入らない。ステルスの前の×には入らない。
-    //  数（サーチキューブ・ライン）には入らないので、マス数・形の数の条件は在庫だけを見る。重みは小さめ（ステルスにされた見込み）
+    // ステルス（v14）：◎のあとでステルスにされたキューブかもしれない（見破られていないステルスがあるとき）。
+    //  ステルスの後は、そのキューブへのコールが×、アイテムが NoData になるので、ステルスの後の×・NoData のブロックにも広がりうる。
+    //  ステルスの後のヒット・調べた結果（形やブロック数など）のあるブロックは、ほかのキューブなので入らない。ステルスの前の×には入らない。
+    //  数（サーチキューブ・ライン）には入らないので、ブロック数・形の数の条件は在庫だけを見る。重みは小さめ（ステルスにされた見込み）
     if (!g.q && ctx.unrevealed > 0) {
       const unc = uncalledMask(ctx);
       for (const ts of ctx.stealthTimes) {
         if (ts <= g.t) continue;
         let after = 0;
         for (const u of ctx.U) if (u.t > ts) after |= bit(u.c);
-        // アイテムの結果（形・マス数・つながり）だけ。トレジャーの的中（src なし）はステルスでもふつうに出るので、ここでは除かない
+        // アイテムの結果（形・ブロック数・つながり）だけ。トレジャーの的中（src なし）はステルスでもふつうに出るので、ここでは除かない
         for (const o of ctx.occs) if (o.t > ts && (o.src === 'number' || o.src === 'shape' || o.src === 'node')) after |= bit(o.c);
         const fb = others | early | ctx.deadMask | after | ctx.xMaskBetween(-1, ts) | ctx.oldMaskAll;
         const occBefore = ctx.occs.filter((o) => o.t < ts);
@@ -285,7 +285,7 @@
           for (const key of SHAPES_BY_SIZE[sz]) {
             for (const P of ctx.PL[key]) {
               if (!(P.mask & bit(g.c)) || (P.mask & fb)) continue;
-              if (!(P.mask & unc)) continue;   // トリガーマス（まだコールされていない）を含む（v14.2）
+              if (!(P.mask & unc)) continue;   // トリガーブロック（まだコールされていない）を含む（v14.2）
               if (!factsOK(P, occBefore, 0, ctx.N)) continue;
               add(P, 's', 0.3);
             }
@@ -295,8 +295,8 @@
     }
     const list = Array.from(out.values());
     for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
-    // Stealth hit のグループ：「前に見つかった個体の○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
-    // 重みは、新しい個体だった場合の重みの合計と同じ（どちらとも決めない）
+    // Stealth hit のグループ：「前に見つかったキューブの○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
+    // 重みは、新しいキューブだった場合の重みの合計と同じ（どちらとも決めない）
     if (g.q && ctx.groups.some((h) => h !== g && h.t < g.t)) {
       const wsum = list.reduce((a, cd) => a + cd.w, 0) || 1e-6;
       list.push({ mask: 0, key: null, size: 0, cat: null, cells: [], branches: ['m'], w: wsum, full: false, lastHit: -1, merge: true });
@@ -305,7 +305,7 @@
   }
 
   // ------------------------------------------------------------------
-  // ◎個体の組み合わせを全探索（重なり・○の帰属・アイテム結果・在庫を同時に満たすもの）
+  // ◎キューブの組み合わせを全探索（重なり・○の帰属・アイテム結果・在庫を同時に満たすもの）
   // ------------------------------------------------------------------
   function jointEnumerate(ctx, cap, rng) {
     const G = ctx.groups, nG = G.length, NN = ctx.NN;
@@ -329,15 +329,15 @@
     });
 
     function setOwner(mask, v) { let m = mask; while (m) { const lb = m & -m; owner[31 - Math.clz32(lb)] = v; m ^= lb; } }
-    // Stealth hit のグループ（gi）と、そのマス・時刻。merge（○だった）なら、そのマスは前のグループの個体に入っていなければならない
+    // Stealth hit のグループ（gi）と、そのブロック・時刻。merge（○だった）なら、そのブロックは前のグループのキューブに入っていなければならない
     const qList = [];
     G.forEach((g, i) => { if (g.q) qList.push({ gi: i, c: g.c, t: g.t }); });
     const isMerge = (i) => assign[i] >= 0 && G[i].cands[assign[i]].merge;
     function partialOK(depth, used) {
       for (const q of qList) {
         const ow = owner[q.c];
-        if (ow === q.gi) continue;                       // 新しい個体の最初の1発だった
-        if (ow >= 0) { if (tOf[ow] >= q.t) return false; continue; }   // ほかの個体の○：その個体は前に見つかっている
+        if (ow === q.gi) continue;                       // 新しいキューブの最初の1発だった
+        if (ow >= 0) { if (tOf[ow] >= q.t) return false; continue; }   // ほかのキューブの○：そのキューブは前に見つかっている
         if (!isMerge(q.gi)) continue;                    // まだ決めていない
         let ok = false;
         for (let d = depth + 1; d < nG && !ok; d++) {
@@ -360,10 +360,10 @@
       }
       return true;
     }
-    // サーチライン（v12.12）の条件で、探索の途中でも枝を刈る（v12.13）。order[0..depth] の◎個体だけで判断する。
-    //  ・マスの数・個体の数は、◎個体を足すほど増えるので、途中で n・k を超えたらその先も超える
-    //  ・ちょうど k になったら、残りの◎個体はその列・行にかからない（かかれば k を超える）ので、マスもいまの数で n に決まる
-    // 終わりでしか確かめていなかった頃は、厚い盤面（3・4マスの7個体など）で全探索が打ち切られると、近似の部分探索が
+    // サーチライン（v12.12）の条件で、探索の途中でも枝を刈る（v12.13）。order[0..depth] の◎キューブだけで判断する。
+    //  ・ブロックの数・キューブの数は、◎キューブを足すほど増えるので、途中で n・k を超えたらその先も超える
+    //  ・ちょうど k になったら、残りの◎キューブはその列・行にかからない（かかれば k を超える）ので、ブロックもいまの数で n に決まる
+    // 終わりでしか確かめていなかった頃は、厚い盤面（3・4ブロックの7キューブなど）で全探索が打ち切られると、近似の部分探索が
     // 条件を満たす組み合わせに1つも届かず、「矛盾」と判定することがあった（invariants の決勝で1件）
     function lineOK(depth) {
       for (const L of ctx.lineMax) {
@@ -396,8 +396,8 @@
       }
       for (const c in byCat) if (counts.cat[c] != null && byCat[c] > counts.cat[c]) return false;
       for (const L of ctx.lineMax) {
-        // マスの数：◎個体がその列・行で埋めるマス ≦ n。
-        // 個体の数（分かっていれば）：かかっている◎個体＋生きている破片 ≦ k。ちょうど k なら、ほかの個体はかかっていないので、マスもちょうど n
+        // ブロックの数：◎キューブがその列・行で埋めるブロック ≦ n。
+        // キューブの数（分かっていれば）：かかっている◎キューブ＋生きている破片 ≦ k。ちょうど k なら、ほかのキューブはかかっていないので、ブロックもちょうど n
         let cells = 0, pcs = 0;
         for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.st) continue; const m = cd.mask & L.mask; if (m) { pcs++; cells += popcount(m); } }
         if (cells > L.n) return false;
@@ -415,7 +415,7 @@
       }
       return true;
     }
-    // ノードショットを撃ったときの結果の分布（0＝◎個体のマスではない、1〜4＝つながり0〜3）。撃破済み以外のマス
+    // ノードショットを撃ったときの結果の分布（0＝◎キューブのブロックではない、1〜4＝つながり0〜3）。撃破済み以外のブロック
     const probe = [];
     for (let c = 0; c < NN; c++) if (!(ctx.deadMask & bit(c))) probe.push(c);
     for (const c of probe) res.nodeW.set(c, new Float64Array(5));
@@ -433,7 +433,7 @@
         let m = used;
         while (m) { const lb = m & -m; res.cellW[31 - Math.clz32(lb)] += w; m ^= lb; }
         for (const c of probe) { const gi = owner[c]; res.nodeW.get(c)[gi >= 0 ? 1 + nodeDegree(G[gi].cands[assign[gi]].mask, c, ctx.N) : 0] += w; }
-        // サーチキューブを使ったときの結果の分布用：◎個体のうち、各マス数・各形状に当てはまる数
+        // サーチキューブを使ったときの結果の分布用：◎キューブのうち、各ブロック数・各形状に当てはまる数
         szCnt.fill(0); ctCnt.fill(0);
         for (let i = 0; i < nG; i++) { const cd = G[i].cands[assign[i]]; if (cd.merge || cd.pureSt) continue; szCnt[cd.size]++; ctCnt[CAT_INDEX[cd.cat]]++; }
         for (let sz = 2; sz <= 5; sz++) res.qSize[sz][szCnt[sz]] += w;
@@ -481,18 +481,18 @@
     return joint;
   }
 
-  // 分解した個体の破片が確実にいるマス（分解の後に相手がワープ・ステルスを使っていないときだけ。破片は動かず、当たれば撃破される）
-  //  置き方の条件：撃ち込んだマスと、分解で撃破したマスを含む。×（分解の前の最後のワープより後）・ヒットして生きているマス（別の個体）・
-  //  分解の前に撃破された個体のマス・2マス以上の撃破された個体のマスを含まない
+  // 分解したキューブの破片が確実にいるブロック（分解の後に相手がワープ・ステルスを使っていないときだけ。破片は動かず、当たれば撃破される）
+  //  置き方の条件：撃ち込んだブロックと、分解で撃破したブロックを含む。×（分解の前の最後のワープより後）・ヒットして生きているブロック（別のキューブ）・
+  //  分解の前に撃破されたキューブのブロック・2ブロック以上の撃破されたキューブのブロックを含まない
   function fragCertainCells(ctx, sp, opt) {
     const kb = ctx.kb;
-    // 分解の前に分かっていた事実（v14.3。ユーザーの指摘）：分解された個体の置き方なら、分解の前（最後のワープ・前の分解より後）に
-    // そのマスで調べた形・マス数・つながりと合い、ペアショットの「同じ／同じではない」とも合う。人は分解の前の情報で破片の位置を絞れる
+    // 分解の前に分かっていた事実（v14.3。ユーザーの指摘）：分解されたキューブの置き方なら、分解の前（最後のワープ・前の分解より後）に
+    // そのブロックで調べた形・ブロック数・つながりと合い、ペアショットの「同じ／同じではない」とも合う。人は分解の前の情報で破片の位置を絞れる
     const useFacts = !(opt && opt.bzFacts === false);
     //  測定：分解の前の事実を使うと、使わない方針に対して予選52.1%（1000局）
     if (kb.warps.some((w) => w.t > sp.t)) return [];
-    // 前にも分解していて、今回撃破したマスがないときは、撃ち込んだのが前の分解の破片（1マス）かもしれない（マス数は伏せられる）。
-    // そのときは隣に破片がいるとは限らないので、確定させない（ヒット済みのマスがあれば、破片ではなく2マス以上の個体）
+    // 前にも分解していて、今回撃破したブロックがないときは、撃ち込んだのが前の分解の破片（1ブロック）かもしれない（ブロック数は伏せられる）。
+    // そのときは隣に破片がいるとは限らないので、確定させない（ヒット済みのブロックがあれば、破片ではなく2ブロック以上のキューブ）
     if (!sp.killedMask && ctx.splits.some((s0) => s0.t < sp.t)) return [];
     const fixed = sp.killedMask | bit(sp.c);
     const nFixed = popcount(fixed);
@@ -552,16 +552,16 @@
     const joint = solveGroups(ctx, rng);
     const NN = ctx.NN;
 
-    // 確定個体
+    // 確定キューブ
     const certain = [];
     ctx.groups.forEach((g, i) => {
-      // Stealth hit が新しい個体である見込み（索敵で「見つかった個体の数」に使う）
+      // Stealth hit が新しいキューブである見込み（索敵で「見つかったキューブの数」に使う）
       if (g.q) {
         let wr = 0, wt = 0;
         g.cands.forEach((cd, k) => { const w = joint.total > 0 ? joint.candW[i][k] : cd.w; wt += w; if (!cd.merge) wr += w; });
         g.pReal = wt > 0 ? wr / wt : 0.5;
       }
-      // merge（○だった）は個体ではないので、確定の対象にしない
+      // merge（○だった）はキューブではないので、確定の対象にしない
       if (g.cands.length === 1) { if (!g.cands[0].merge) certain.push({ gi: i, cand: g.cands[0] }); return; }
       if (joint.exact && !joint.inconsistent) {
         const live = [];
@@ -569,17 +569,17 @@
         if (live.length === 1 && !g.cands[live[0]].merge) certain.push({ gi: i, cand: g.cands[live[0]] });
       }
     });
-    // バズーカで分解した個体の、撃ち込んだマスに残った1マスキューブ（撃破もワープもされていなければ確定）
+    // バズーカで分解したキューブの、撃ち込んだブロックに残った1ブロックキューブ（撃破もワープもされていなければ確定）
     for (const sp of ctx.splits) {
       if (sp.targetFrag < 0 || certain.some((x) => x.cand.mask === bit(sp.targetFrag))) continue;
-      certain.push({ gi: -1, cand: { mask: bit(sp.targetFrag), key: 'A1', size: 1, cat: 'キューブ', cells: [sp.targetFrag] } });
+      certain.push({ gi: -1, cand: { mask: bit(sp.targetFrag), key: 'A1', size: 1, cat: 'パネル型', cells: [sp.targetFrag] } });
     }
-    // ほかの破片：分解した個体の置き方（撃ち込んだマスと撃破したマスを含む）のどれにも入っているマスには、破片が確実に残っている（v12.6）。
-    // 例：角に撃ち込んで分解し、角の隣の片方が×なら、もう片方の隣は破片。アンサー（1マス）で撃破できる
+    // ほかの破片：分解したキューブの置き方（撃ち込んだブロックと撃破したブロックを含む）のどれにも入っているブロックには、破片が確実に残っている（v12.6）。
+    // 例：角に撃ち込んで分解し、角の隣の片方が×なら、もう片方の隣は破片。アンサー（1ブロック）で撃破できる
     for (const sp of ctx.splits) {
       for (const c of fragCertainCells(ctx, sp, opt)) {
         if (certain.some((x) => x.cand.mask & bit(c))) continue;
-        certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'キューブ', cells: [c] } });
+        certain.push({ gi: -1, cand: { mask: bit(c), key: 'A1', size: 1, cat: 'パネル型', cells: [c] } });
       }
     }
 
@@ -607,19 +607,19 @@
     return { ctx, joint, certain, targetP, certainCover, anyCover, hunt: H };
   }
 
-  // 未発見の個体がいる確率（索敵用）
+  // 未発見のキューブがいる確率（索敵用）
   function huntModel(ctx, prior, joint, certainCover, anyCover, opt, priorByKey) {
     const N = ctx.N, NN = ctx.NN, PL = ctx.PL;
     const forbidA = ctx.xMaskAll | ctx.deadMask | ctx.oldMaskAll | ctx.hitMask | ctx.lineZeroMask | certainCover;
 
     // 形ごとの「証拠を避けられた割合」と被覆密度
-    // calib 2 以上：見つかった個体・撃破済みの個体のマスとは最初から重ならない（個体は重ねて置けない）ので、
+    // calib 2 以上：見つかったキューブ・撃破済みのキューブのブロックとは最初から重ならない（キューブは重ねて置けない）ので、
     // 「そこを避けた」ことは証拠に数えない。分母を「それらと重ならない置き方の数」にする
     const calibLv = opt.calib != null ? opt.calib : CALIB_DEFAULT;
     const occupied = ctx.hitMask | certainCover | ctx.deadMask | ctx.oldMaskAll;
     const bySize = {};
-    const shapeW = {};   // 未発見の個体がその形である重み（サーチキューブの見積もり用）
-    const shapeCov = {}; // 形ごとの被覆（形状の個体数が分かったときに使う）
+    const shapeW = {};   // 未発見のキューブがその形である重み（サーチキューブの見積もり用）
+    const shapeCov = {}; // 形ごとの被覆（形状のキューブ数が分かったときに使う）
     for (const sh of prior) {
       let T = PL[sh.key].length;
       if (calibLv >= 2) { T = 0; for (const P of PL[sh.key]) if (!(P.mask & occupied)) T++; if (!T) { shapeW[sh.key] = 0; continue; } }
@@ -642,14 +642,14 @@
     for (const s of sizes) q += bySize[s].q;
     if (calibLv >= 2) { let pz = 0; for (const s of sizes) pz += bySize[s].pr; if (pz > 0) q /= pz; }
 
-    // ◎個体のサイズ期待値
+    // ◎キューブのサイズ期待値
     const EgSize = { 2: 0, 3: 0, 4: 0, 5: 0 };
     if (joint.total > 0) {
       ctx.groups.forEach((g, i) => {
         for (let k = 0; k < g.cands.length; k++) if (!g.cands[k].merge) EgSize[g.cands[k].size] += joint.candW[i][k] / joint.total;
       });
     }
-    // 位置の分かっている未ヒット個体（サーチシェイプ・トレジャー的中）
+    // 位置の分かっている未ヒットキューブ（サーチシェイプ・トレジャー的中）
     const occPseudo = [];
     for (const o of ctx.occs) {
       if (o.dup || (anyCover & bit(o.c))) continue;
@@ -658,11 +658,11 @@
       occPseudo.push({ c: o.c, t: o.t, cat: o.cat || null, size: o.size || 0, deg: o.deg != null ? o.deg : null });
     }
     const relocAlive = ctx.wEnt.length + ctx.addEnt.length;
-    // 見つかった個体の数（Stealth hit は新しい個体である見込みの分だけ数える）
+    // 見つかったキューブの数（Stealth hit は新しいキューブである見込みの分だけ数える）
     const nG = ctx.groups.reduce((a, g) => a + (g.q ? (g.pReal != null ? g.pReal : 0.5) : 1), 0);
 
     let Etotal;
-    let kDist = [1];   // 未発見の個体数の分布（索敵とサーチキューブの見積もり用）
+    let kDist = [1];   // 未発見のキューブ数の分布（索敵とサーチキューブの見積もり用）
     if (ctx.counts.all != null) {
       Etotal = Math.max(0, ctx.counts.all - nG - relocAlive - occPseudo.length);
       kDist = []; for (let k = 0; k < Math.round(Etotal); k++) kDist.push(0); kDist.push(1);
@@ -671,7 +671,7 @@
       const pri = (opt.kPrior && opt.kPrior[N]) || (N === 4 ? [0, 0.10, 0.20, 0.27, 0.22, 0.12, 0.06, 0.03] : [0, 0.05, 0.12, 0.20, 0.22, 0.18, 0.11, 0.07, 0.03, 0.02]);
       let Z = 0, S = 0;
       const kd = [];
-      // 見つかった個体が known 体あるとき、総数 K の見込みには K!/(K-known)!（どの個体が見つかったかの選び方）が掛かる。
+      // 見つかったキューブが known 体あるとき、総数 K の見込みには K!/(K-known)!（どのキューブが見つかったかの選び方）が掛かる。
       // これを入れないと「もう残っていない」と思い込みやすい
       for (let K = Math.max(1, known); K < pri.length; K++) {
         const k = K - known;
@@ -701,7 +701,7 @@
     for (const s of free) fq += bySize[s].q;
     for (const s of free) Es[s] = fq > 0 ? rest * bySize[s].q / fq : 0;
 
-    // 形ごとの「まだ見つけていない個数」の期待値。サーチキューブで形状の個体数が分かっていれば、それに合わせる
+    // 形ごとの「まだ見つけていない個数」の期待値。サーチキューブで形状のキューブ数が分かっていれば、それに合わせる
     const Esh = {};
     for (const key in shapeCov) {
       const x = shapeCov[key], b = bySize[x.size];
@@ -732,11 +732,11 @@
     const notOcc = new Float64Array(NN);
     for (let c = 0; c < NN; c++) notOcc[c] = 1 - Math.min(0.98, occU[c]);
 
-    // ワープで動いた個体
+    // ワープで動いたキューブ
     const entP = [];
     for (const e of ctx.wEnt) {
       if (e.size < 2) {
-        // ワープしたアッド：1マスの候補
+        // ワープしたアッド：1ブロックの候補
         const forb = ctx.xMaskAfter(e.t) | ctx.deadMask | e.oldMask | ctx.oldMaskAfter(e.t) | ctx.hitMask | certainCover;
         const cells = [];
         for (let c = 0; c < NN; c++) if (!(forb & bit(c))) cells.push(c);
@@ -766,10 +766,10 @@
       for (const c of cells) p[c] = 1 / cells.length;
       entP.push({ p, ent: a, isAdd: true });
     }
-    // 位置の分かっている未ヒット個体
+    // 位置の分かっている未ヒットキューブ
     for (const o of occPseudo) {
       const p = new Float64Array(NN);
-      if (o.size === 1 || o.deg === 0) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // 1マスキューブ（サーチサイズ1・ノード0）
+      if (o.size === 1 || o.deg === 0) { p[o.c] = 1; entP.push({ p, occ: o }); continue; }   // 1ブロックキューブ（サーチサイズ1・ノード0）
       let Z = 0;
       for (const sh of prior) {
         if (o.cat && SHAPES[sh.key].cat !== o.cat) continue;
@@ -788,7 +788,7 @@
       entP.push({ p, occ: o });
     }
 
-    // バズーカで分解した個体の、ほかの破片がいそうなマス（分解した個体の置き方：撃破したマスと撃ち込んだマスを含む）
+    // バズーカで分解したキューブの、ほかの破片がいそうなブロック（分解したキューブの置き方：撃破したブロックと撃ち込んだブロックを含む）
     for (const sp of ctx.splits) {
       const fixed = sp.killedMask | bit(sp.c);
       const nFixed = popcount(fixed);
@@ -822,16 +822,16 @@
       for (const e of entP) none *= 1 - Math.min(0.999, e.p[c]);
       P[c] = 1 - none;
     }
-    // サーチラインの結果（その列・行で埋まっているマスの数）に合うように、列・行ごとに見込みを合わせる。
-    // 分かっている「埋まっている」マス（ヒット・確定した個体）と「空き」（×・撃破済み）を除いた残りで、
-    // ◎個体の候補が埋める見込みを引き、足りない分を見つけていない個体の見込みとして配り直す
+    // サーチラインの結果（その列・行で埋まっているブロックの数）に合うように、列・行ごとに見込みを合わせる。
+    // 分かっている「埋まっている」ブロック（ヒット・確定したキューブ）と「空き」（×・撃破済み）を除いた残りで、
+    // ◎キューブの候補が埋める見込みを引き、足りない分を見つけていないキューブの見込みとして配り直す
     const lines = ctx.counts.lines.filter((L) => L.n > 0);
     if (lines.length) {
       const known1 = ctx.hitMask | certainCover;
       const known0 = lineKnownEmpty(ctx);
       const tP = (c) => (joint.total > 0 ? Math.min(1, joint.cellW[c] / joint.total) : 0);
-      // 個体の数が分かっている列・行で、◎のマスがその列・行にある個体と生きている破片だけで k に届いていれば、
-      // 見つけていない個体（と、ほかの◎個体）はその列・行にかかっていない
+      // キューブの数が分かっている列・行で、◎のブロックがその列・行にあるキューブと生きている破片だけで k に届いていれば、
+      // 見つけていないキューブ（と、ほかの◎キューブ）はその列・行にかかっていない
       const closed = lines.filter((L) => {
         if (L.k == null) return false;
         let m = 0;
@@ -868,9 +868,9 @@
     for (const w of ctx.kb.warps) if (w.t > lastW) lastW = w.t;
     return ctx.deadMask | ctx.xMaskAfter(lastW) | ctx.lineZeroMask;
   }
-  // サーチラインの見積もり：答え（その列・行にかかっている個体の数 k と、そのマスの数 n）の分布の情報量（v12.12）。
-  //  マスごとに独立に「埋まっている」とみなし、列・行の並びで隣り合う埋まったマスは確率 LINE_SPLIT で別の個体とみなす
-  //  （同じ個体は列・行の中で途切れない形だけなので、離れたマスは別の個体）。分かっているヒット・確定した個体は埋まっている、×・撃破済みは空き
+  // サーチラインの見積もり：答え（その列・行にかかっているキューブの数 k と、そのブロックの数 n）の分布の情報量（v12.12）。
+  //  ブロックごとに独立に「埋まっている」とみなし、列・行の並びで隣り合う埋まったブロックは確率 LINE_SPLIT で別のキューブとみなす
+  //  （同じキューブは列・行の中で途切れない形だけなので、離れたブロックは別のキューブ）。分かっているヒット・確定したキューブは埋まっている、×・撃破済みは空き
   const LINE_SPLIT = 0.6;
   function lineOptions(A) {
     const ctx = A.ctx, N = ctx.N, P = A.hunt.P;
@@ -880,7 +880,7 @@
     for (const line of ['row', 'col']) for (let i = 0; i < N; i++) {
       const lm = lineMask(line, i, N);
       if (done.has(lm)) continue;
-      // 状態：[n][k][直前のマスが埋まっているか]
+      // 状態：[n][k][直前のブロックが埋まっているか]
       let st = new Map([['0,0,0', 1]]);
       for (let j = 0; j < N; j++) {
         const c = line === 'row' ? i * N + j : j * N + i;
@@ -907,9 +907,9 @@
 
   // ------------------------------------------------------------------
   // サーチキューブの見積もり
-  //  結果＝「◎個体のうち当てはまる数」＋「まだ見つけていない個体のうち当てはまる数」。
-  //  前者は全探索の分布、後者は索敵モデルの「未発見の個体数の分布」と「形ごとの重み」から求める。
-  //  結果の分かれ方（情報量）のうち、◎個体の絞り込みに効く分を infoA として分けて返す
+  //  結果＝「◎キューブのうち当てはまる数」＋「まだ見つけていないキューブのうち当てはまる数」。
+  //  前者は全探索の分布、後者は索敵モデルの「未発見のキューブ数の分布」と「形ごとの重み」から求める。
+  //  結果の分かれ方（情報量）のうち、◎キューブの絞り込みに効く分を infoA として分けて返す
   // ------------------------------------------------------------------
   function entropyOf(arr) {
     let tot = 0, h = 0;
@@ -939,7 +939,7 @@
     for (const key in H.shapeW) totalW += H.shapeW[key];
     const out = [];
     for (const qy of queries) {
-      // まだ見つけていない個体：k 個体いるとき、それぞれが当てはまる確率 p
+      // まだ見つけていないキューブ：k キューブいるとき、それぞれが当てはまる確率 p
       let pm = 0;
       for (const key in H.shapeW) if (qy.match(key)) pm += H.shapeW[key];
       const p = totalW > 0 ? pm / totalW : 0;
@@ -949,7 +949,7 @@
         const b = binomDist(k, p);
         for (let i = 0; i <= k; i++) U[i] += H.kDist[k] * b[i];
       }
-      // 場所の分かっている未ヒット個体（形状・マス数が分かっていれば、それで絞る）
+      // 場所の分かっている未ヒットキューブ（形状・ブロック数が分かっていれば、それで絞る）
       let R = U;
       for (const o of H.occPseudo) {
         let a = 0, z = 0;
@@ -962,11 +962,11 @@
         const po = z > 0 ? a / z : 0;
         R = convolve(R, new Float64Array([1 - po, po]));
       }
-      // ワープで動いた個体（形が分かっている）
+      // ワープで動いたキューブ（形が分かっている）
       let shift = 0;
       for (const e of ctx.wEnt) if (SHAPES[e.key] && qy.match(e.key)) shift++;
       if (shift) { const t = new Float64Array(R.length + shift); for (let i = 0; i < R.length; i++) t[i + shift] = R[i]; R = t; }
-      // ◎個体のうち当てはまる数
+      // ◎キューブのうち当てはまる数
       let D = new Float64Array([1]);
       if (ctx.groups.length) {
         const arr = qy.kind === 'size' ? J.qSize[qy.value] : J.qCat[CAT_INDEX[qy.value]];
@@ -1019,8 +1019,8 @@
     return best != null ? best : cells[Math.floor(rng() * cells.length)];
   }
 
-  // 確定した個体のアンサー（1件ずつ。成功後は解析し直す）。
-  // コールできるマスが1つも残っていないのに倒せていない個体（ステルスなど）がいるときだけ、いちばんありそうな置き方に賭ける
+  // 確定したキューブのアンサー（1件ずつ。成功後は解析し直す）。
+  // コールできるブロックが1つも残っていないのに倒せていないキューブ（ステルスなど）がいるときだけ、いちばんありそうな置き方に賭ける
   function chooseAnswer(game, pi) {
     const me = game.players[pi];
     const A = analyze(me.kb, game.N, game.rng, policy[pi]);
@@ -1040,13 +1040,13 @@
     return A.certain[0].cand.cells.slice();
   }
 
-  // ステルスアンサー（v14）：宣言したマスが全部、隠れているステルスのキューブのマスならセーフで、ステルスが見破られる。
-  //  ①見えている◎の個体で、ふつうの置き方が残っていない（ステルスにされたとしか考えられない）→ その◎のマス1つ（必ずセーフ）
-  //  ②見えるヒットのない隠れたキューブ：ステルスの後に×・NoData になったマスのうち、隠れている見込みがいちばん高いマス1つ。
-  //    外れると失敗（自分のキューブを1つ差し出して手番が終わる）ので、見込みが高いか、コールできるマスが残っていないときだけ
+  // ステルスアンサー（v14）：宣言したブロックが全部、隠れているステルスのキューブのブロックならセーフで、ステルスが見破られる。
+  //  ①見えている◎のキューブで、ふつうの置き方が残っていない（ステルスにされたとしか考えられない）→ その◎のブロック1つ（必ずセーフ）
+  //  ②見えるヒットのない隠れたキューブ：ステルスの後に×・NoData になったブロックのうち、隠れている見込みがいちばん高いブロック1つ。
+  //    外れると失敗（自分のキューブを1つ差し出して手番が終わる）ので、見込みが高いか、コールできるブロックが残っていないときだけ
   //  policy.stealthHunt：見込みのしきい値（既定 0.8。外れると差し出し。0.5・0.95・コールできないときだけ、より強い。予選各800局・v14）
-  // まだ一度もコールしていないマス（隠れたキューブのトリガーマスは、まだコールされていない。v14.2）
-  //  ワープのあとは×のマスがもう一度コールできるようになるので、最後のコールが×でその後にワープがあれば「まだ」に数える
+  // まだ一度もコールしていないブロック（隠れたキューブのトリガーブロックは、まだコールされていない。v14.2）
+  //  ワープのあとは×のブロックがもう一度コールできるようになるので、最後のコールが×でその後にワープがあれば「まだ」に数える
   function uncalledMask(ctx) {
     const last = new Map();
     for (const k of ctx.kb.calls) last.set(k.c, k);
@@ -1070,24 +1070,24 @@
       pSt += wS / (wS + wN || 1);
     }
     const N = ctx.N, NN = ctx.NN;
-    // ×のマスでトレジャーが的中していたら、そこは隠れたステルスのキューブ（トレジャーのコールはステルスでもふつうに出る）→ 必ずセーフ
+    // ×のブロックでトレジャーが的中していたら、そこは隠れたステルスのキューブ（トレジャーのコールはステルスでもふつうに出る）→ 必ずセーフ
     for (const o of ctx.occs) {
       if (o.src) continue;
       const m = ctx.kb.calls.filter((k) => k.c === o.c).pop();
-      // （その×の後にワープがあれば、ほかの個体が動いてきたかもしれないので除く）
+      // （その×の後にワープがあれば、ほかのキューブが動いてきたかもしれないので除く）
       if (m && m.r === 'x' && ctx.stealthTimes.some((ts) => ts < m.t) && !ctx.kb.warps.some((w) => w.t > m.t)) return [o.c];
     }
     const pHidden = Math.min(1, ctx.unrevealed - pSt);
     if (pHidden < 0.05) return null;
-    // 隠れたキューブが入りうるマス：撃破済み・見えているヒット・調べた結果のあるマス・確かに見えている個体のマス・ステルスの前の×・ワープ前の位置は除く
+    // 隠れたキューブが入りうるブロック：撃破済み・見えているヒット・調べた結果のあるブロック・確かに見えているキューブのブロック・ステルスの前の×・ワープ前の位置は除く
     const lastReveal = (ctx.kb.reveals || []).reduce((a, r) => Math.max(a, r.t), -1);
     const tsList = ctx.stealthTimes.filter((t) => t > lastReveal);
     const ts0 = tsList.length ? tsList[0] : ctx.stealthTimes[0];
     let occM = 0;
     for (const o of ctx.occs) occM |= bit(o.c);
     const block = ctx.deadMask | ctx.hitMask | occM | A.certainCover | ctx.xMaskBetween(-1, ts0) | ctx.oldMaskAll;
-    // 答えるマスの候補：ステルスの後にコールして×になったマス（×のマスだけに撃てば、外れても手番が終わるだけ。v14.1。
-    // NoData（アイテム）のマスは×の印がないので、外れるとふつうのアンサーの失敗になる → 候補にしない）
+    // 答えるブロックの候補：ステルスの後にコールして×になったブロック（×のブロックだけに撃てば、外れても手番が終わるだけ。v14.1。
+    // NoData（アイテム）のブロックは×の印がないので、外れるとふつうのアンサーの失敗になる → 候補にしない）
     let xAfter = 0;
     for (const k of ctx.kb.calls) if (k.r === 'x' && k.t > ts0) xAfter |= bit(k.c);
     xAfter &= ~block;
@@ -1100,9 +1100,9 @@
       for (const key of SHAPES_BY_SIZE[sz]) {
         for (const P of ctx.PL[key]) {
           if (P.mask & block) continue;
-          // トリガーマス（まだコールされていない）を1つは含む（v14.2）
+          // トリガーブロック（まだコールされていない）を1つは含む（v14.2）
           if (!(P.mask & unc)) continue;
-          // まだコールしていないマスだけの置き方も数える（隠れたキューブがそこにいる見込みもあるため）
+          // まだコールしていないブロックだけの置き方も数える（隠れたキューブがそこにいる見込みもあるため）
           const w = 1 / ctx.PL[key].length;
           tot += w;
           for (const c of P.cells) cellW[c] += w;
@@ -1130,7 +1130,7 @@
     const logs = kb.tlogs.filter((l) => l.t > lastGray);
     const occ = new Float64Array(NN);
     if (lastGray >= 0) {
-      // トレジャー入りの個体がワープした後：その個体の候補を優先
+      // トレジャー入りのキューブがワープした後：そのキューブの候補を優先
       const ent = A.hunt.entP.find((e) => e.ent && e.ent.treasure);
       if (ent) for (let c = 0; c < NN; c++) occ[c] += ent.p[c];
       ctx.groups.forEach((g, i) => {
@@ -1177,7 +1177,7 @@
     return best != null ? best : cells[Math.floor(rng() * cells.length)];
   }
 
-  // 相手から見た自分の個体の危険度
+  // 相手から見た自分のキューブの危険度
   function exposure(game, pi) {
     const foe = game.players[1 - pi];
     const me = game.players[pi];
@@ -1196,7 +1196,7 @@
     return out;
   }
 
-  // 次の相手の手番で自分の個体がすべてアンサーされる見込み（相手の推論で候補が1つに絞れている個体ほど危ない）
+  // 次の相手の手番で自分のキューブがすべてアンサーされる見込み（相手の推論で候補が1つに絞れているキューブほど危ない）
   function doomProb(game, pi) {
     const ex = exposure(game, pi);
     let p = 1;
@@ -1220,7 +1220,7 @@
       }
     }
     if (!opts.length) return null;
-    // 相手がすでに×を付けたマスを少し好む（見落とされやすい）
+    // 相手がすでに×を付けたブロックを少し好む（見落とされやすい）
     const foeView = game.players[1 - pi].view;
     const score = (p) => {
       const cells = cellsFor(piece.shape, p.t, p.r0, p.c0, N);
@@ -1244,7 +1244,7 @@
     return bestCells[Math.floor(game.rng() * bestCells.length)];
   }
 
-  // 防御のワープ：見破られかけた個体を逃がす
+  // 防御のワープ：見破られかけたキューブを逃がす
   function defensiveWarp(game, pi, free) {
     const me = game.players[pi];
     const living = game.living(pi);
@@ -1269,16 +1269,16 @@
     return null;
   }
 
-  // ステルス（v14）：選んだキューブを隠す（コールは×・アイテムは NoData・数に入らない）。ステルスのマスだけでアンサーされると見破られる。
+  // ステルス（v14）：選んだキューブを隠す（コールは×・アイテムは NoData・数に入らない）。ステルスのブロックだけでアンサーされると見破られる。
   //  mode（policy.stealth）：
   //   'early'（既定）：1〜3ターン目に、まだ当たっていないキューブに付ける
-  //   'hit'：当たっているキューブ（まだマスが残っているもの）に付ける（「1マス開けさせてから」）
+  //   'hit'：当たっているキューブ（まだブロックが残っているもの）に付ける（「1ブロック開けさせてから」）
   //   'late'：相手に自分のキューブが1つ見つかってから、まだ当たっていないキューブに付ける
   //   'none'：使わない
   //  stealthPick：'rand'（既定）／'big'（いちばん大きい）／'small'（いちばん小さい）
-  //  最後の1個体には、どの方針でも先に付ける（見つからない限り全滅しない）
-  // トリガーマス（v14.2）：隠すキューブの、まだ当たっていないマスのうち、相手に撃たれにくそうなマス
-  //  （相手の推理で、そこに個体がいると見込まれている度合いがいちばん低いマス）
+  //  最後の1キューブには、どの方針でも先に付ける（見つからない限り全滅しない）
+  // トリガーブロック（v14.2）：隠すキューブの、まだ当たっていないブロックのうち、相手に撃たれにくそうなブロック
+  //  （相手の推理で、そこにキューブがいると見込まれている度合いがいちばん低いブロック）
   function stealthTrigger(game, pi, p) {
     const open = p.cells.filter((c) => !(p.hitMask & bit(c)));
     if (open.length <= 1) return open[0];
@@ -1331,7 +1331,7 @@
       // 候補の割れ方（情報量）がいちばん大きいアイテムを使う
       let best = null, bestH = 0.6;
       const consider = (key, params, h) => { if (h > bestH) { bestH = h; best = { key, params }; } };
-      // サーチシェイプ（形状）・サーチサイズ（マス数）：候補が割れている◎
+      // サーチシェイプ（形状）・サーチサイズ（ブロック数）：候補が割れている◎
       for (const i of uncertain) {
         const g = ctx.groups[i];
         const catW = {}, sizeW = {};
@@ -1339,7 +1339,7 @@
         if (free('shape')) consider('shape', { cell: g.c }, entropy(catW));
         if (free('number')) consider('number', { cell: g.c }, entropy(sizeW));
       }
-      // ペアショット：ヒットのマスと、同じ個体か分からないマスの組
+      // ペアショット：ヒットのブロックと、同じキューブか分からないブロックの組
       if (free('pair') && A.joint.sameW) {
         const hits = ctx.U.filter((u) => me.view.marks[u.c] && !me.view.dead[u.c]).map((u) => u.c);
         for (const a of hits) for (let b = 0; b < NN; b++) {
@@ -1349,7 +1349,7 @@
         }
       }
       // ノードショット：つながりの数（0〜3）か NoData の割れ方。
-      // ◎個体のマスでない見込みの分は、見つけていない個体（つながりは目安の割合で）か空きに分ける
+      // ◎キューブのブロックでない見込みの分は、見つけていないキューブ（つながりは目安の割合で）か空きに分ける
       if (free('node') && A.joint.nodeW) {
         const tot = A.joint.total;
         for (const [c, arr] of A.joint.nodeW) {
@@ -1361,22 +1361,22 @@
           consider('node', { cell: c }, entropy(wmap));
         }
       }
-      // サーチライン：その列・行で埋まっているマスの数の割れ方（◎の候補と、見つけていない個体の両方に効く）
+      // サーチライン：その列・行で埋まっているブロックの数の割れ方（◎の候補と、見つけていないキューブの両方に効く）
       if (free('line')) {
         const lp = pol.linePost != null ? pol.linePost : 0.5;
         for (const o of lineOptions(A)) consider('line', o.params, lp * o.H);
       }
-      // サーチキューブ：◎個体の絞り込みに効く分＋まだ見つけていない個体の情報（少し割り引く）
+      // サーチキューブ：◎キューブの絞り込みに効く分＋まだ見つけていないキューブの情報（少し割り引く）
       if (cubeMode === 'eig' && free('cube')) {
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
-      // バズーカ：◎のマスに撃ち込むと、その個体のヒット済みのマスをその場で撃破できる。
-      // 全マスに当たっているのに残っている個体（ステルス）はまるごと撃破できる。
-      // ただし分解すると、まだ当たっていないマスは1マスずつ当てないと撃破できなくなる（アンサー1回でまとめて撃破できなくなる）。
-      // 測定では「ヒットが多い個体に使う」は勝率を下げた（決勝で使わない方が 71.7%）ので、既定は
-      // 「全マスに当たっている見込みが80%以上の個体（ステルス）」に使う（50%以上より勝率 +5.3（決勝）／+3.2（予選））。
-      // ほかは、負けそうなときにヒット済みのマスを撃破ポイントにしておくときだけ（下）。
+      // バズーカ：◎のブロックに撃ち込むと、そのキューブのヒット済みのブロックをその場で撃破できる。
+      // 全ブロックに当たっているのに残っているキューブ（ステルス）はまるごと撃破できる。
+      // ただし分解すると、まだ当たっていないブロックは1ブロックずつ当てないと撃破できなくなる（アンサー1回でまとめて撃破できなくなる）。
+      // 測定では「ヒットが多いキューブに使う」は勝率を下げた（決勝で使わない方が 71.7%）ので、既定は
+      // 「全ブロックに当たっている見込みが80%以上のキューブ（ステルス）」に使う（50%以上より勝率 +5.3（決勝）／+3.2（予選））。
+      // ほかは、負けそうなときにヒット済みのブロックを撃破ポイントにしておくときだけ（下）。
       //  mode: 'smart'（既定）／'eh'（v11途中の方針：ヒットの見込みが bzMin 以上でも使う。比較用）／'never'
       //  bzWarp：相手がまだワープを使えるとき、ヒットの見込みがこの数以上なら先に撃破して進み具合を守る（既定は使わない）
       const bzMode = pol.bazooka || 'smart';
@@ -1392,11 +1392,11 @@
           if (!bzH || eh > bzH.eh) bzH = { eh, pf, cell: g.c };
         }
         if (bzF && bzF.pf >= (pol.bzPf != null ? pol.bzPf : 0.8)) return { key: 'bazooka', params: { cell: bzF.cell } };
-        // 破片の位置が読めるとき（v14.3。ユーザーの提案）：候補の置き方が割れていても、まだ当たっていないマスのほとんどが
-        // どの候補にも入っているなら、分解すればヒット済みのマスは撃破され、残る破片の位置も分解の前の情報から分かる
-        // （そのまま1マスのアンサーで倒せる）。どの候補にも入るとは限らないマスの見込み数が bzFrag 以下で、ヒットが1マス以上
+        // 破片の位置が読めるとき（v14.3。ユーザーの提案）：候補の置き方が割れていても、まだ当たっていないブロックのほとんどが
+        // どの候補にも入っているなら、分解すればヒット済みのブロックは撃破され、残る破片の位置も分解の前の情報から分かる
+        // （そのまま1ブロックのアンサーで倒せる）。どの候補にも入るとは限らないブロックの見込み数が bzFrag 以下で、ヒットが1ブロック以上
         //  測定（CPUどうし）：この使い方を足すとバズーカは1試合0.45→0.8回に増えたが、勝率は予選48.5%（1000局）・決勝37.5%（200局）に下がった
-        //  （1マスの破片が増えて、倒す相手の数が増えるため）。既定では使わない（policy.bzFrag に数を入れると使う）
+        //  （1ブロックの破片が増えて、倒す相手の数が増えるため）。既定では使わない（policy.bzFrag に数を入れると使う）
         const bzFrag = pol.bzFrag != null ? pol.bzFrag : false;
         if (bzFrag !== false) {
           let bestFrag = null;
@@ -1414,7 +1414,7 @@
           }
           if (bestFrag) return { key: 'bazooka', params: { cell: bestFrag.cell } };
         }
-        // 負けそうなとき（次の相手の手番で全個体をアンサーされる見込みが50%以上）は、ヒット済みのマスを撃破ポイントにしておく。
+        // 負けそうなとき（次の相手の手番で全キューブをアンサーされる見込みが50%以上）は、ヒット済みのブロックを撃破ポイントにしておく。
         // 勝率は変わらず（4回の測定で平均50.5%）、決勝の得点が+0.8〜1.1pt。見込み30%以上で使うと勝率が下がった（46〜47%）
         const bzLast = pol.bzLast != null ? pol.bzLast : 1.0;
         if (bzH && bzLast !== false && bzH.eh >= bzLast && doomProb(game, pi) >= (pol.bzDoom != null ? pol.bzDoom : 0.5)) {
@@ -1436,13 +1436,13 @@
       // 索敵中
       const hp = A.hunt.P;
       const cells = callableCells(game, pi).filter((c) => hp[c] > 0.05);
-      // サーチライン：埋まっているマスの数の割れ方がいちばん大きい列・行
+      // サーチライン：埋まっているブロックの数の割れ方がいちばん大きい列・行
       let lineBest = null, lineS = pol.lineMin != null ? pol.lineMin : 0.6;
       if (free('line') && cells.length >= 3) {
         const lk = pol.lineK != null ? pol.lineK : 1.0;
         for (const o of lineOptions(A)) { const v = lk * o.H; if (v > lineS) { lineS = v; lineBest = o.params; } }
       }
-      // サーチキューブ：見つけていない個体の数とマス数・形状の割れ方が大きければ、サーチラインより優先
+      // サーチキューブ：見つけていないキューブの数とブロック数・形状の割れ方が大きければ、サーチラインより優先
       if (cubeMode === 'eig' && free('cube') && game.turn >= (pol.minTurn || 1)) {
         const bh = pol.huntBeta != null ? pol.huntBeta : 1.0;
         let cb = null;
@@ -1450,7 +1450,7 @@
         if (cb && cb.v >= (pol.huntMin != null ? pol.huntMin : 0.3) && cb.v > (lineBest ? lineS : 0)) return { key: 'cube', params: cb.params };
       }
       if (lineBest) return { key: 'line', params: lineBest };
-      // バズーカで角を探る（v12.6）：まだ分かっていない角に個体がいそうなら、コールの前に撃ち込む。
+      // バズーカで角を探る（v12.6）：まだ分かっていない角にキューブがいそうなら、コールの前に撃ち込む。
       // 分解すると、角の破片はその場でアンサーでき、ほかの破片は角の隣（2つしかない）からたどれる（片方が×ならもう片方は確定）
       if (stage === 'pre' && free('bazooka') && pol.bzCorner !== false) {
         const min = pol.bzCornerMin != null ? pol.bzCornerMin : 0.5;
@@ -1461,7 +1461,7 @@
         }
         if (cb != null) return { key: 'bazooka', params: { cell: cb } };
       }
-      // 当たりそうなマスを、コールせずに中身ごと調べる（マス数・形状・つながり）
+      // 当たりそうなブロックを、コールせずに中身ごと調べる（ブロック数・形状・つながり）
       const probeKey = free('number') ? 'number' : free('shape') ? 'shape' : free('node') ? 'node' : null;
       if (probeKey && cells.length >= 3) {
         const sorted = cells.slice().sort((a, b) => hp[b] - hp[a]);
@@ -1477,7 +1477,7 @@
 
   // その種類を今使ってよいか（使える状態で、大会で温存すると決めた数より多く持っている）
   // 大会：この試合で使ってよい攻撃アイテムの残り（itemKeep[pi]._budget から、この試合で使った攻撃アイテムを引く）。
-  // 防御（ワープ・ステルス）は数えない（見破られかけた個体を逃がすのは、数より優先）
+  // 防御（ワープ・ステルス）は数えない（見破られかけたキューブを逃がすのは、数より優先）
   const isDefItem = (k) => k === 'warp' || k === 'stealth';
   function budgetLeft(game, pi) {
     const keep = game.itemKeep && game.itemKeep[pi];
@@ -1501,12 +1501,12 @@
     const can = (k) => itemOK(game, pi, k);
     const free = (k) => itemOK(game, pi, k);
 
-    // 1) 防御：見破られかけた個体をワープで逃がす
+    // 1) 防御：見破られかけたキューブをワープで逃がす
     if (can('warp')) {
       const w = defensiveWarp(game, pi, free);
       if (w) return w;
     }
-    // 2) ステルス（最後の1個体、または序盤に先に付ける方針のとき）
+    // 2) ステルス（最後の1キューブ、または序盤に先に付ける方針のとき）
     if (free('stealth')) {
       const p = chooseStealth(game, pi, 'first');
       if (p) return { key: 'stealth', params: { pieceId: p.id, cell: stealthTrigger(game, pi, p) } };
@@ -1544,13 +1544,13 @@
   // 置くキューブの決め方（v12.17の後。それまでは「型」を重みつきで抽選していた）
   //  性格ごと・試合ごとに、2つの確率を持つ（表 SETUP_PROB。数は割合（%）で、合計が100でなくても比で使う）：
   //   count：何個置くか（例：{ 4: 50, 5: 50 } ＝ 4個が50%・5個が50%）
-  //   size ：1個ごとに、何マスのキューブにするか（例：{ 2: 15, 3: 45, 4: 35, 5: 5 }）
-  //  決め方：まず個数を抽選し、1個ずつマス数を抽選する。手持ちにないマス数・盤（cap マス）に入らないマス数は除いて抽選し直す。
-  //   残りの個数ぶん（2マスずつ）の場所を残して選ぶので、決めた個数をできるだけそのまま置ける（大きいキューブばかりで止まらない）。
-  //   割合のあるマス数がどれも置けないときは、2マス → 5マスの順で埋める（3・4マスを使い切った堅実型が5マスばかり置かないように）。
+  //   size ：1個ごとに、何ブロックのキューブにするか（例：{ 2: 15, 3: 45, 4: 35, 5: 5 }）
+  //  決め方：まず個数を抽選し、1個ずつブロック数を抽選する。手持ちにないブロック数・盤（cap ブロック）に入らないブロック数は除いて抽選し直す。
+  //   残りの個数ぶん（2ブロックずつ）の場所を残して選ぶので、決めた個数をできるだけそのまま置ける（大きいキューブばかりで止まらない）。
+  //   割合のあるブロック数がどれも置けないときは、2ブロック → 5ブロックの順で埋める（3・4ブロックを使い切った堅実型が5ブロックばかり置かないように）。
   //   何も置けなくなったら、その数で止める
   //  決まった組み合わせだと読まれるので、抽選で幅を持たせる（ユーザーの希望）。
-  //  強さの目安（v12.13、Z字の前）：3・4マスが強く、2・5マスは弱い。Z字（v12.17）で5マスは4マスに化けられるようになった
+  //  強さの目安（v12.13、Z型の前）：3・4ブロックが強く、2・5ブロックは弱い。Z型（v12.17）で5ブロックは4ブロックに化けられるようになった
   //  1試合モード（大会でない）のCPUは、標準の性格の表を使う（4×4＝予選、5×5＝決勝）
   // ------------------------------------------------------------------
   const SETUP_PROB = {
@@ -1559,25 +1559,25 @@
       prelim: { count: { 4: 50, 5: 50 }, size: { 2: 15, 3: 45, 4: 34, 5: 6 } },
       final: { count: { 6: 50, 7: 50 }, size: { 2: 5, 3: 40, 4: 45, 5: 10 } },
     },
-    // 物量型：個数を多く、2マスも使って盤面を埋める。5マスも多め
+    // 物量型：個数を多く、2ブロックも使って盤面を埋める。5ブロックも多め
     mass: {
       prelim: { count: { 4: 15, 5: 45, 6: 40 }, size: { 2: 35, 3: 34, 4: 21, 5: 10 } },
       final: { count: { 6: 70, 7: 30 }, size: { 2: 3, 3: 37, 4: 44, 5: 16 } },
     },
-    // キューブ温存型：1・2試合目は2マスを3個だけ（3・4マスを残す）。3試合目から使い、決勝は5マスを多く出す
+    // キューブ温存型：1・2試合目は2ブロックを3個だけ（3・4ブロックを残す）。3試合目から使い、決勝は5ブロックを多く出す
     save: {
       prelim: { count: { 4: 50, 5: 50 }, size: { 2: 15, 3: 44, 4: 31, 5: 10 } },
       prelimByRound: { 0: { count: { 3: 100 }, size: { 2: 85, 3: 14, 4: 0, 5: 1 } }, 1: { count: { 3: 100 }, size: { 2: 85, 3: 14, 4: 0, 5: 1 } } },
       final: { count: { 6: 80, 7: 20 }, size: { 2: 2, 3: 34, 4: 43, 5: 21 } },
     },
-    // 堅実型：3・4マスで4個（2マスは使わない）
+    // 堅実型：3・4ブロックで4個（2ブロックは使わない）
     steady: {
       prelim: { count: { 4: 100 }, size: { 2: 0, 3: 52, 4: 44, 5: 4 } },
       final: { count: { 6: 40, 7: 60 }, size: { 2: 5, 3: 43, 4: 44, 5: 8 } },
     },
   };
   SETUP_PROB.items = SETUP_PROB.std;
-  const SETUP_CAP = { prelim: 16, final: 24 };   // 置くマスの上限（4×4は16マス、5×5は24マス＝1マスは空ける）
+  const SETUP_CAP = { prelim: 16, final: 24 };   // 置くブロックの上限（4×4は16ブロック、5×5は24ブロック＝1ブロックは空ける）
 
   // 割合の表から1つ選ぶ（keys に入っているものだけ。割合が0のものは選ばない）
   function pickWeighted(table, keys, rng) {
@@ -1587,13 +1587,13 @@
     for (const k of keys) { r -= Math.max(0, table[k] || 0); if (r < 0) return +k; }
     return +keys[keys.length - 1];
   }
-  // spec（count・size）から、置くマス数の並びを決める。stock：置けるキューブの数、cap：マスの上限
+  // spec（count・size）から、置くブロック数の並びを決める。stock：置けるキューブの数、cap：ブロックの上限
   function drawSizes(spec, stock, cap, rng) {
     const left = {}; for (const s of [2, 3, 4, 5]) left[s] = Math.max(0, stock[s] | 0);
     const K = pickWeighted(spec.count, Object.keys(spec.count), rng) || 0;
     const list = []; let cells = 0;
     for (let i = 0; i < K; i++) {
-      // 残りの個数ぶん（少なくとも2マスずつ）の場所を残す（「何個置くか」をできるだけ守るため。大きいキューブばかりで止まらない）
+      // 残りの個数ぶん（少なくとも2ブロックずつ）の場所を残す（「何個置くか」をできるだけ守るため。大きいキューブばかりで止まらない）
       const rest = 2 * (K - i - 1);
       let can = [2, 3, 4, 5].filter((s) => left[s] > 0 && cells + s + rest <= cap);
       if (!can.length) can = [2, 3, 4, 5].filter((s) => left[s] > 0 && cells + s <= cap);
@@ -1613,9 +1613,9 @@
   }
 
   // 置き方の評価（小さいほどよい）。layout：
-  //  'spread'（既定）：個体どうしが接しない／'any'：最初に見つかった置き方／'cluster'：個体どうしを接して固める
-  //  'edge'：盤の外周に寄せる／'center'：内側に寄せる／'room'：ワープの逃げ場（空きマスだけで同じ形を置ける場所）を残す
-  // ワープの逃げ場：個体ごとに、同じ形（向きは自由）をいま空いているマスだけで置ける場所の数（cap まで数える）
+  //  'spread'（既定）：キューブどうしが接しない／'any'：最初に見つかった置き方／'cluster'：キューブどうしを接して固める
+  //  'edge'：盤の外周に寄せる／'center'：内側に寄せる／'room'：ワープの逃げ場（空きブロックだけで同じ形を置ける場所）を残す
+  // ワープの逃げ場：キューブごとに、同じ形（向きは自由）をいま空いているブロックだけで置ける場所の数（cap まで数える）
   function warpRoom(game, pi, cap) {
     const PLC = placements(game.N), ps = game.players[pi].pieces;
     let occ = 0; for (const p of ps) occ |= p.mask;
@@ -1660,13 +1660,13 @@
     const plan = planArg || (game.setupPlan && game.setupPlan[pi]);
     let planned = false;
     if (plan && Array.isArray(plan.sizes) && plan.sizes.length && fits(plan.sizes)) { sizes = plan.sizes.slice(); planned = true; }
-    // 実験用：置くマス数の組み合わせを指定
+    // 実験用：置くブロック数の組み合わせを指定
     if (Array.isArray(pol.sizes) && fits(pol.sizes)) sizes = pol.sizes.slice();
     if (!sizes.length) return false;
     // 置き方：方針があればそれ、なければ大会と同じ決め方（盤の80%以上を埋めるならくっつけ、少なければ離して外周に寄せる）
     const dense = sizes.reduce((a, b) => a + b, 0) >= 0.8 * game.N * game.N;
     const layout = pol.layout || (plan && plan.layout) || (dense ? 'cluster' : 'edge');
-    // 大きい個体から置く（盤面を厚く埋めるときに置き切れるように）
+    // 大きいキューブから置く（盤面を厚く埋めるときに置き切れるように）
     const order = sizes.slice().sort((a, b) => b - a);
     let best = null, bestScore = Infinity;
     for (let trial = 0; trial < 40; trial++) {
@@ -1690,11 +1690,11 @@
 
   // ------------------------------------------------------------------
   // 大会の配置の方針：どのキューブを何個・どう置くか（性格・試合・残りのキューブから決める）
-  //  ・何個・何マスを置くかは、性格ごとの確率の表 SETUP_PROB で抽選する（上の「置くキューブの決め方」）
-  //  ・3・4マスは大会で合わせて7個しかない。予選で使うか決勝に残すかが性格の違いになる
-  //  ・置き方：盤の80%以上を埋めるときは個体をくっつけ、それより少ないときは離して外周に寄せる（layout 'auto'）。
+  //  ・何個・何ブロックを置くかは、性格ごとの確率の表 SETUP_PROB で抽選する（上の「置くキューブの決め方」）
+  //  ・3・4ブロックは大会で合わせて7個しかない。予選で使うか決勝に残すかが性格の違いになる
+  //  ・置き方：盤の80%以上を埋めるときはキューブをくっつけ、それより少ないときは離して外周に寄せる（layout 'auto'）。
   //    3・3・4・4 は、くっつけて72%・離して64%（2・2・2・3・3 に対して）。2・2・3 をくっつけると28%（離せば55%）
-  //  ・決勝の盤面が厚いと考える時間が延びる（7個体どうしで1試合平均3.5秒・1手番最大2.8秒、6個体どうしなら1.5秒・0.8秒）
+  //  ・決勝の盤面が厚いと考える時間が延びる（7キューブどうしで1試合平均3.5秒・1手番最大2.8秒、6キューブどうしなら1.5秒・0.8秒）
   // ------------------------------------------------------------------
   // 置き方の抽選に使う乱数。rng を渡さなければ、その大会・その人・その試合で決まる（シミュレーター・見本・テストで再現できる）
   function planRng(T, id, kind) {
@@ -1715,21 +1715,21 @@
     const rng = rngArg || planRng(T, id, kind);
     const P = T.players[id];
     const stock = Object.assign({}, P.stock);
-    if (kind === 'final' && E.Tour.cubes(P) === 0) stock[2] = 1;   // 決勝で置けるキューブがなければ、2マスを1つ支給
+    if (kind === 'final' && E.Tour.cubes(P) === 0) stock[2] = 1;   // 決勝で置けるキューブがなければ、2ブロックを1つ支給
     const N = kind === 'final' ? 5 : 4;
     const sizes = drawSizes(setupSpec(T, id, kind, opt), stock, SETUP_CAP[kind], rng);
     const layout = sizes.reduce((a, b) => a + b, 0) >= 0.8 * N * N ? 'cluster' : 'edge';
     return { sizes, layout, why: kind };
   }
 
-  // トレジャーを置くマス。nearOf(個体, マス)＝そのマスにトレジャーがあるとき「ニア」と答えるマスの数（同じ個体＋上下左右）
-  //  'weighted'（既定）：大きい個体ほど選ばれやすく（重み＝マス数の2乗）、その個体の中では同じ確率で
-  //  'near'（v12.1まで）：いちばん小さい個体の、ニアの範囲がいちばん狭いマス。4×4では角が51.7%（どのマスも同じ確率なら27.7%）
-  //  'uniform'：置いた個体のすべてのマスから同じ確率で／'small'：いちばん小さい個体の中で／'big'：いちばん大きい個体の中で
+  // トレジャーを置くブロック。nearOf(キューブ, ブロック)＝そのブロックにトレジャーがあるとき「ニア」と答えるブロックの数（同じキューブ＋上下左右）
+  //  'weighted'（既定）：大きいキューブほど選ばれやすく（重み＝ブロック数の2乗）、そのキューブの中では同じ確率で
+  //  'near'（v12.1まで）：いちばん小さいキューブの、ニアの範囲がいちばん狭いブロック。4×4では角が51.7%（どのブロックも同じ確率なら27.7%）
+  //  'uniform'：置いたキューブのすべてのブロックから同じ確率で／'small'：いちばん小さいキューブの中で／'big'：いちばん大きいキューブの中で
   //  測定（CPUどうし2000局、相手がトレジャーを見つける割合。CPUの探し方／置き場所のくせを知っている探し方）：
   //   4×4：near 77.2／78.7、small 76.4／75.8、uniform 70.5／71.5、big 69.0／69.8、weighted 69.5／70.5
   //   5×5：near 71.5／75.0、small 71.8／71.5、uniform 72.0／72.9、big 70.0／72.4、weighted 71.4／73.5
-  //   小さい個体は早く撃破されてトレジャーの場所が分かりやすい。角に寄せるくせは、知られると見つかりやすい
+  //   小さいキューブは早く撃破されてトレジャーの場所が分かりやすい。角に寄せるくせは、知られると見つかりやすい
   function nearOf(piece, c, N) {
     const rr = Math.floor(c / N), cc = c % N;
     let near = piece.size;
@@ -1749,7 +1749,7 @@
       return big.cells[Math.floor(rng() * big.cells.length)];
     }
     if (mode === 'weighted') {
-      // 大きい個体のマスほど選ばれやすい（マスの重み＝その個体のマス数）
+      // 大きいキューブのブロックほど選ばれやすい（ブロックの重み＝そのキューブのブロック数）
       let tot = 0; for (const p of pieces) tot += p.size * p.size;
       let r = rng() * tot;
       for (const p of pieces) { r -= p.size * p.size; if (r <= 0) return p.cells[Math.floor(rng() * p.cells.length)]; }
@@ -1769,7 +1769,7 @@
   // ドラフト：決勝ルールのCPU同士の対戦で測った価値の順（片方だけ持たないと勝率がどれだけ下がるか）
   // v11（各1200局）：ワープ−14.8・サイズ−13.6・シェイプ−13.6・ノード−12.9・キューブ−10.7・ステルス−10.3・ペア−8.2・ライン−6.4・バズーカ±0
   // 前の順（ワープ・サイズ・キューブ・シェイプ・ノード・バズーカ・ステルス・ペア・ライン）との対戦で勝率54.8%（2000局）
-  // v12.12：サーチラインが「個体数 / マス数」になり、決勝での価値（持たないときの勝率の下がり方）が−1.2→−13.7になったので、ノードの次へ
+  // v12.12：サーチラインが「キューブ数 / ブロック数」になり、決勝での価値（持たないときの勝率の下がり方）が−1.2→−13.7になったので、ノードの次へ
   const DRAFT_PRIORITY = ['warp', 'number', 'shape', 'node', 'line', 'cube', 'stealth', 'pair', 'bazooka'];
   // 手持ちにすでにある種類は、持っていない種類より後回しにする（大会の決勝は予選の残り＋ドラフト）
   function draftPick(game, pi) {
@@ -1867,7 +1867,7 @@
     return 'done';
   }
 
-  // 画面用：自分が知り得た相手の現在の個体数（サーチオール未使用なら null）
+  // 画面用：自分が知り得た相手の現在のキューブ数（サーチオール未使用なら null）
   function knownCounts(kb, N) { return currentCounts(kb, N); }
 
   const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpTarget, bestAddCell, policy, _cubeOptions: cubeOptions };

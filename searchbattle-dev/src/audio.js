@@ -378,7 +378,7 @@ window.SBAudio = (function () {
       noise(G, t, { ft: 'highpass', f: 5000, f2: 1500, glide: 0.8, a: 0.02, d: 0.9, v: 0.05, pan: p.pan });
       tone(G, t, { f: 147, a: 0.3, d: 0.7, v: 0.06, pan: p.pan });
     },
-    // バズーカ：警報（v10の宣言の音）→ 発射 → 着弾。空きマスなら着弾だけで、分解の音はなし
+    // バズーカ：警報（v10の宣言の音）→ 発射 → 着弾。空きブロックなら着弾だけで、分解の音はなし
     'i-bazooka'(G, t, p) {
       const pan = p.pan || 0;
       noise(G, t, { ft: 'lowpass', f: 1600, a: 0.001, d: 0.05, v: 0.22, pan });
@@ -401,7 +401,7 @@ window.SBAudio = (function () {
         tone(G, s, { f: 180, f2: 60, glide: 0.2, a: 0.001, d: 0.3, v: 0.3, pan });
       }
     },
-    // 調べた結果：数（個体数・マス数・ブロック数）はその回数だけ「ピッ」と鳴らす
+    // 調べた結果：数（キューブ数・ブロック数・ブロック数）はその回数だけ「ピッ」と鳴らす
     readout(G, t, p) {
       const n = Math.max(1, Math.min(8, p.n || 1));
       for (let i = 0; i < n; i++) tone(G, t + i * 0.085, { type: 'square', f: 1568, a: 0.002, d: 0.045, v: 0.065, lp: 3200, pan: p.pan });

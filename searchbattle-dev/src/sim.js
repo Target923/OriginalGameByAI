@@ -19,7 +19,7 @@
   const PERSONA_NAMES = { std: '標準', mass: '物量型', save: 'キューブ温存型', steady: '堅実型', items: 'アイテム浪費型' };
 
   // 1試合の記録（小さく）。k＝P（予選）/F（決勝）、r＝何試合目（0〜2、決勝は3）、a・b＝大会の番号、f＝先攻、w＝勝者（引き分けは-1）、
-  // at＝撃破したマス数、tf＝相手のトレジャーを見つけたか、t＝ターン数、pl＝置いた個体の数、lo＝失った個体の数、it＝使ったアイテムの数
+  // at＝撃破したブロック数、tf＝相手のトレジャーを見つけたか、t＝ターン数、pl＝置いたキューブの数、lo＝失ったキューブの数、it＝使ったアイテムの数
   function compactMatch(g, kind, round, a, b) {
     const sum = g.summary(), r = g.result || { winner: -1, draw: true };
     const it = [0, 0];
@@ -97,7 +97,7 @@
     if (m.tf[0] && B.gems > 0) { B.gems--; A.gems++; A.total += rules.gemPts; B.total -= rules.gemPts; }
     if (m.tf[1] && A.gems > 0) { A.gems--; B.gems++; B.total += rules.gemPts; A.total -= rules.gemPts; }
   }
-  // rounds 試合目までの順位（同点は 勝ち数 → 撃破マス数 → 抽選）。low＝途中でいちばん減ったときの持ち点
+  // rounds 試合目までの順位（同点は 勝ち数 → 撃破ブロック数 → 抽選）。low＝途中でいちばん減ったときの持ち点
   function standing(rec, rules, rounds) {
     const st = [0, 1, 2, 3].map((id) => ({ id, total: startTotal(rules), wins: 0, losses: 0, take: 0, gems: rules.gems, lotto: rec.lotto[id], low: startTotal(rules) }));
     for (const m of rec.m) if (m.r < rounds) { applyMatch(st, m, rules); st[m.a].low = Math.min(st[m.a].low, st[m.a].total); st[m.b].low = Math.min(st[m.b].low, st[m.b].total); }

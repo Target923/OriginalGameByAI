@@ -202,7 +202,7 @@ h1, h2, h3 { text-wrap: balance; }
 .itag.stale { opacity: .45; }
 .itag em.sl { font-style: normal; color: var(--muted); margin: 0 1px 0 3px; font-size: .72rem; }
 .itag b.apx { opacity: .5; }
-/* スマホ幅では、タグの「残り」と調べたターンを省く（ツールチップには出る）。サーチラインの「2個体 / 3マス」が盤の幅に収まるように */
+/* スマホ幅では、タグの「残り」と調べたターンを省く（ツールチップには出る）。サーチラインの「2キューブ / 3ブロック」が盤の幅に収まるように */
 @media (max-width: 560px) { .itag i, .itag small { display: none; } .itag { gap: 3px; padding: 3px 6px 3px 4px; } .itag em.sl { margin: 0 1px; } .intel .itag { max-width: 100%; } }
 /* ===== フィールド ===== */
 .board { --fc: var(--cyan); display: grid; grid-template-columns: 1.15em minmax(0, 1fr); grid-template-rows: 1.35em auto; max-width: 470px; margin-inline: auto; }
@@ -236,7 +236,7 @@ h1, h2, h3 { text-wrap: balance; }
 .panel.enemy.treasure-active .cell.click { box-shadow: inset 0 0 0 1.5px rgba(212, 175, 55, .7), 0 0 8px rgba(212, 175, 55, .3); }
 .panel.enemy.treasure-active .cell.click:hover { background-color: rgba(212, 175, 55, .28); box-shadow: inset 0 0 0 2px #D4AF37, 0 0 18px rgba(212, 175, 55, .8); }
 .panel.enemy.answer-mode .cells { touch-action: none; }
-/* 配置画面：空きマスをなぞって形を描く。なぞったマスを光らせ、スマホでは画面がスクロールしないように */
+/* 配置画面：空きブロックをなぞって形を描く。なぞったブロックを光らせ、スマホでは画面がスクロールしないように */
 .panel.su-draw .cells { touch-action: none; }
 .panel.su-board .cell.sel { background-color: color-mix(in srgb, var(--cyan) 30%, transparent); box-shadow: inset 0 0 0 2px var(--cyan), 0 0 10px rgba(79, 227, 255, .45); }
 
@@ -254,7 +254,7 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.el::before { border-left-width: 2px; }
 .cell.pc.er::before { border-right-width: 2px; }
 .cell.pc.addpc::before { border-style: dashed; }
-/* バズーカで分解された1マスキューブ：元の個体の色のまま、ひびを入れる */
+/* バズーカで分解された1ブロックキューブ：元のキューブの色のまま、ひびを入れる */
 .cell.pc.frag { background-image: linear-gradient(118deg, transparent 46%, rgba(10, 14, 24, .55) 47%, transparent 49%), linear-gradient(28deg, transparent 60%, rgba(10, 14, 24, .45) 61%, transparent 63%),
     linear-gradient(160deg, color-mix(in srgb, var(--pcc) 40%, var(--steel-1)) 0%, color-mix(in srgb, var(--pcc) 58%, var(--steel-3)) 68%, color-mix(in srgb, var(--pcc) 38%, var(--steel-4)) 100%); }
 .cell.pc.frag::before { border-style: dashed; }
@@ -267,21 +267,21 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.dead::before { border-color: var(--bad); filter: none; }
 .cell.pc.revealed { --pcc: var(--magenta); animation: none;
   background: repeating-linear-gradient(135deg, rgba(255, 63, 143, .28) 0 1px, transparent 1px 6px), linear-gradient(160deg, rgba(255, 63, 143, .16), rgba(20, 6, 18, .7)); box-shadow: inset 0 0 14px rgba(255, 63, 143, .35); }
-/* バズーカで砕いたマス */
+/* バズーカで砕いたブロック */
 .cell.pc.revealed.bz { --pcc: var(--amber); background: repeating-linear-gradient(45deg, rgba(255, 193, 74, .32) 0 1px, transparent 1px 6px), linear-gradient(160deg, rgba(255, 193, 74, .14), rgba(20, 14, 6, .7)); box-shadow: inset 0 0 14px rgba(255, 193, 74, .3); }
 .cell.ghost { background: color-mix(in srgb, var(--pcc) 16%, transparent); }
 .cell.ghost::before { content: ""; position: absolute; inset: 0; border: 0 dashed var(--pcc); }
 .cell.ghost.et::before { border-top-width: 2px; } .cell.ghost.eb::before { border-bottom-width: 2px; }
 .cell.ghost.el::before { border-left-width: 2px; } .cell.ghost.er::before { border-right-width: 2px; }
 
-/* ===== 個体の柄（ui.js の patHTML） =====
-   色の見え方に特性があっても個体を見分けられるよう、色ごとに違う素材の質感（石・木・金属）を、キューブに薄く重ねる。
+/* ===== キューブの柄（ui.js の patHTML） =====
+   色の見え方に特性があってもキューブを見分けられるよう、色ごとに違う素材の質感（石・木・金属）を、キューブに薄く重ねる。
    形の柄（図形）は使わない。白と黒の半透明だけで描くので、下のキューブの色がそのまま透ける。
    ・割り当て：1 御影石／2 コンクリート／3 トラバーチン／4 ヘアライン／5 大理石／6 木目／7 スレート／8 テラゾー。
      色覚の特性で近く見える色の組（1と4・2と5・3と7・6と8・2と6 など）は、「粒・穴」と「筋」のように系統の違う質感にした
-   ・細かい質感（1・2・4・8）は決まった大きさの区画を並べる（--pmsz・--pmt）。マスが小さくても粒が潰れない。
-     マスごとに見える位置をずらす（--ox・--oy は 0〜1。patHTML がマスの番号から決める）
-   ・大きな模様（3・5・6・7）は1マスに1枚。マスごとに反転・回転する（v1〜v3）
+   ・細かい質感（1・2・4・8）は決まった大きさの区画を並べる（--pmsz・--pmt）。ブロックが小さくても粒が潰れない。
+     ブロックごとに見える位置をずらす（--ox・--oy は 0〜1。patHTML がブロックの番号から決める）
+   ・大きな模様（3・5・6・7）は1ブロックに1枚。ブロックごとに反転・回転する（v1〜v3）
    ・絵は tools/tile_patterns.py で作り、下の印のあいだに書き込む（形や濃さを変えるときは、そちらを直して実行する） */
 .cell .pm { position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background-image: var(--pm); background-repeat: repeat; background-size: var(--pmsz);
@@ -290,7 +290,7 @@ h1, h2, h3 { text-wrap: balance; }
 /* スレートは層の斜めの向きを保つ（左右だけ・上下だけの反転はしない） */
 .cell .pm.pm7.v1 { transform: none; } .cell .pm.pm7.v2 { transform: rotate(180deg); }
 .cell.pc.dead .pm { opacity: .55; }
-/* 答え合わせの相手の個体（半透明）：明るい所だけを光らせる */
+/* 答え合わせの相手のキューブ（半透明）：明るい所だけを光らせる */
 .cell.ghost .pm { opacity: .75; mix-blend-mode: screen; }
 /* tile-patterns:start */
 .pm1 { --pmsz: 52px 52px; --pmt: 52px; --pm: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath d='M23.5 29.1h0M48.1 24.2h0M26.4 30.5h0M9.6 26.6h0M32.8 41.2h0M4.9 15.8h0M4.7 42.1h0M36.1 2.2h0M51.1 50.2h0M-0.9 50.2h0M34 32h0M8.2 0.8h0M8.2 52.8h0M27.5 3.1h0M9.9 12.6h0M1.6 24.1h0M22.9 43.8h0M27 33.3h0M26 34.4h0M23.8 14.5h0M51.9 51.8h0M51.9 -0.2h0M-0.1 51.8h0M-0.1 -0.2h0M43.7 36.8h0M16.4 11.9h0M15 3.7h0M39.8 20.8h0M44 20.1h0M49.8 44.1h0M0 10.9h0M52 10.9h0M47.3 24.4h0M51 20.7h0M-1 20.7h0M3.8 32.7h0M40.5 14h0M4.5 17.3h0M50.1 39.4h0M6.1 12.8h0M5.3 3.1h0M41.4 9.2h0M29.1 23.3h0M9.9 38.1h0M6.8 33.5h0M6.1 21.9h0M11.1 14h0M50.5 41.8h0M15.8 46h0M11 20.5h0M44.4 33.4h0M5.2 51.4h0M5.2 -0.6h0M11.1 13.4h0M40.2 17.1h0M15.4 3.8h0M4.7 30.3h0M12.6 31.3h0M19.3 23.6h0M49.9 25.2h0M29.9 45.1h0M9.5 8h0M47.2 42.5h0M13 9.9h0M38.5 48.9h0M10.2 49.4h0M45.9 31.4h0M21.9 5.4h0M2 50.1h0M12.4 36.6h0M13.4 42.8h0M31 15.3h0M9.1 37.5h0M3.6 11.9h0M29.1 44.3h0M31.9 14.6h0M47.7 10.6h0M0.9 14h0M52.9 14h0' stroke='%23000' stroke-opacity='0.3' stroke-width='1.3' stroke-linecap='round'/%3E%3Cpath d='M23.2 3.1h0M9.2 19.2h0M29.8 6.8h0M18.8 46.3h0M51 34.2h0M-1 34.2h0M35.9 30.4h0M7.3 1.8h0M7.3 53.8h0M0.9 47.3h0M52.9 47.3h0M36.5 50.1h0M36.5 -1.9h0M1.1 33.1h0M53.1 33.1h0M25.1 38h0M16.6 52h0M16.6 -0h0M3.9 28.4h0M38.3 46.8h0M38.3 36.6h0M41.2 47.6h0M18.3 35.6h0M46.8 45.3h0M21.7 41.1h0M44.9 29.8h0M32.5 19.9h0M30.3 31.7h0' stroke='%23000' stroke-opacity='0.2' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M4.2 33.2h0M51.7 45.7h0M-0.3 45.7h0M37.9 20.2h0M38.2 30.2h0M22.9 43.6h0M4.4 39h0M1.5 31.3h0M25 12h0M36.3 25.9h0M32 47.9h0M13.3 0.6h0M13.3 52.6h0M15.7 35.3h0M10.5 8.8h0M47.1 34.3h0M23 46.4h0M17 34.6h0M10.3 22.4h0M41.9 47.5h0M45.8 20h0M30.3 16.5h0M7.1 25.8h0M43.5 44.1h0M37 49.4h0M14.4 8.8h0M23.4 14.3h0M11.1 21.5h0M32.5 25.7h0M16.4 43.6h0M51.1 23.5h0M-0.9 23.5h0M3.9 1.6h0M45.4 2.2h0M36.8 29.7h0M16.1 41.2h0M1 7.1h0M53 7.1h0M23.7 1.3h0M43.1 12.3h0M7.3 2.4h0M32.7 23.2h0M32.8 34.1h0M42 49.8h0M35.6 10.4h0M24.7 9.3h0M0.6 24.6h0M52.6 24.6h0M37.1 9.3h0M14.2 18h0M36.3 27.1h0' stroke='%23fff' stroke-opacity='0.36' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M32 39.3h0M20.5 41.2h0M47.1 4.5h0M48.5 37.6h0M6.8 23.6h0M32.5 47.3h0M19.6 29.6h0M45.7 41.4h0M49.1 24.1h0M33.9 10.7h0M37.5 42.6h0M33.4 37.3h0M11.1 46.8h0M51 50.8h0' stroke='%23fff' stroke-opacity='0.5' stroke-width='0.8' stroke-linecap='round'/%3E%3C/svg%3E"); }
@@ -309,7 +309,7 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pv-bad { background: color-mix(in srgb, var(--bad) 26%, transparent) !important; box-shadow: inset 0 0 0 2px var(--bad) !important; }
 
 /* 調査の記録（セル） */
-/* マスのタグ（L3・#3・C2 など）：ノードショットのひし形と同じ大きさ・同じ見た目でそろえる。
+/* ブロックのタグ（L3・#3・C2 など）：ノードショットのひし形と同じ大きさ・同じ見た目でそろえる。
    ひし形と同じく、記号の色の細い枠線と淡い光を付ける。背景は半透明（下のキューブの質感が透けて見えるように）。
    大きさは、ひし形の見えている大きさに合わせて一回り小さく（下の --tag-box）、文字の左右の余白も細くする。
    枠の太さはひし形の線と同じ割合（大きさの6%：24pxで約1.4px）。
@@ -323,13 +323,13 @@ h1, h2, h3 { text-wrap: balance; }
 .ctag > i, .tl > i { display: block; font-style: normal; text-box: trim-both cap alphabetic; }
 .board[data-board="own"] .ctag { --tc: var(--magenta); }
 .ctag.stale { opacity: .45; }
-/* マスに付く記号（タグ・H/N/X・ひし形）の共通サイズ。マスの幅に合わせて 16〜24px */
+/* ブロックに付く記号（タグ・H/N/X・ひし形）の共通サイズ。ブロックの幅に合わせて 16〜24px */
 .cell { --tag-sz: clamp(16px, 30cqw, 24px);
   /* 四角い記号の大きさ：ひし形の見えている大きさ（枠の約73%）にそろえて、枠の78%にする（24pxの枠で約19px） */
   --tag-box: calc(var(--tag-sz) * .78);
   /* 四角い記号を、ひし形と同じ枠の中央に置くためのずらし幅（左右・上下とも、ひし形と中心の列・行がそろう） */
   --tag-in: calc((var(--tag-sz) - var(--tag-box)) / 2);
-  /* マスの縁から四角い記号までのすき間：前（4%＋ずらし幅）の半分にして、記号をマスの角へ寄せる（真ん中のマークの周りを広く）。
+  /* ブロックの縁から四角い記号までのすき間：前（4%＋ずらし幅）の半分にして、記号をブロックの角へ寄せる（真ん中のマークの周りを広く）。
      ひし形の枠は、四角い記号と中心の列・行がそろうよう、ずらし幅の分だけ外側に置く */
   --tag-msq: calc(2% + var(--tag-in) / 2);
   --tag-mbx: calc(2% - var(--tag-in) / 2); }
@@ -355,7 +355,7 @@ h1, h2, h3 { text-wrap: balance; }
 .cm-btn span { white-space: nowrap; }
 .cm-btn:hover, .cm-btn:focus-visible { background: rgba(79, 227, 255, .24); box-shadow: 0 0 12px rgba(79, 227, 255, .5); outline: none; }
 .cm-btn .mini { max-width: 30px; height: auto; }
-/* 形のボタンは、図の高さが形ごとに違う（L字は3段、キューブは2段）ため、段ごとに高さがずれていた。
+/* 形のボタンは、図の高さが形ごとに違う（L型は3段、キューブは2段）ため、段ごとに高さがずれていた。
    行の高さをそろえ、図を置く場所も3段分の高さ（30px）に固定して、文字の位置も横一列にそろえる */
 .cm-grid.shapes { grid-auto-rows: 1fr; }
 .cm-grid.shapes .cm-btn { grid-template-rows: 30px auto; }
@@ -366,7 +366,7 @@ h1, h2, h3 { text-wrap: balance; }
 .mk { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; overflow: visible; }
 /* マークの影：自分フィールドのキューブ（とくにミント・シアンなど明るい色）の上でもマークが溶けないように、
    少し下へ落とす薄い影を付ける。そのあとに各マークの色の光を重ねる（暗い相手フィールドでは影は見えず、見た目は変わらない） */
-/* 変数は :root に置く（マスの外の凡例 .lg でも使うため。未定義だと filter ごと無効になり、光も消える） */
+/* 変数は :root に置く（ブロックの外の凡例 .lg でも使うため。未定義だと filter ごと無効になり、光も消える） */
 :root { --mk-shadow: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .9)); }
 .ink-oo { color: var(--magenta); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--magenta)); }
 .ink-o { color: var(--hit); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--hit)); }
@@ -379,11 +379,11 @@ h1, h2, h3 { text-wrap: balance; }
 /* 再コールできる×は、線はそのままで薄く */
 .ink-x.stale { opacity: .3; }
 /* バズーカで公開された×（色だけ少し変える） */
-/* ワープで空いたマス（移動前の位置） */
+/* ワープで空いたブロック（移動前の位置） */
 .wtag { position: absolute; right: 6%; bottom: 4%; z-index: 2; font: 700 clamp(.46rem, 20cqw, .66rem)/1 var(--f-tech); color: var(--violet); text-shadow: 0 0 6px var(--violet); }
-/* ディスタンスショットの結果：○の上は丸、まだヒットしていないマスは角丸の枠、NoData は文字 */
+/* ディスタンスショットの結果：○の上は丸、まだヒットしていないブロックは角丸の枠、NoData は文字 */
 .mk .ordn { fill: currentColor; stroke: none; font: 700 17px var(--f-tech); text-anchor: middle; dominant-baseline: central; }
-/* ノードショットの答え：ひし形の数字。ヒットしたマスでは左下の小さな札 */
+/* ノードショットの答え：ひし形の数字。ヒットしたブロックでは左下の小さな札 */
 .ink-n { color: var(--cyan); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--cyan)); }
 .board[data-board="own"] .ink-n { color: var(--magenta); filter: var(--mk-shadow) drop-shadow(0 0 4px var(--magenta)); }
 .ink-n .mk path { stroke-width: 2.2; }
@@ -598,7 +598,7 @@ h1, h2, h3 { text-wrap: balance; }
 .fit .wrap { padding-bottom: 10px; }
 @media (min-width: 1180px) { .fit .logcol { position: relative; top: auto; height: auto; max-height: none; contain: size; align-self: stretch; } }
 
-/* ログのアンサーにマウスを重ねたとき、盤の上で宣言したマスを囲む（hlAnswer） */
+/* ログのアンサーにマウスを重ねたとき、盤の上で宣言したブロックを囲む（hlAnswer） */
 .hl-layer { position: absolute; inset: 0; z-index: 7; pointer-events: none; filter: drop-shadow(0 0 6px rgba(255, 193, 74, .75)); }
 .hl-layer i { position: absolute; box-sizing: border-box; border: 0 solid var(--amber); background: rgba(255, 193, 74, .22); }
 .hl-layer.miss { filter: drop-shadow(0 0 6px rgba(255, 84, 104, .75)); }
@@ -808,7 +808,7 @@ body.replaying #app { display: none; }
 .fx-text.first { color: var(--magenta); font-size: clamp(1rem, 2.8vw, 1.5rem); }
 .fx-text.hit { color: var(--hit); }
 .fx-text.stealth { color: #48D1CC; }
-/* 見破りで変わった情報：一度大きくなってから元に戻る（2回）。マス全体も淡く光らせる（v14.3） */
+/* 見破りで変わった情報：一度大きくなってから元に戻る（2回）。ブロック全体も淡く光らせる（v14.3） */
 @keyframes factPop { 0% { transform: scale(1); } 22% { transform: scale(1.75); filter: brightness(1.7) drop-shadow(0 0 6px #48D1CC); } 50% { transform: scale(.9); } 72% { transform: scale(1.08); } 100% { transform: scale(1); } }
 .fact-pop { animation: factPop .9s ease-out 2; transform-origin: center; }
 .fxo.factflash { position: absolute; inset: 0; z-index: 4; pointer-events: none; background: radial-gradient(circle, rgba(72, 209, 204, .38), transparent 70%); animation: flash 1s ease-out forwards; }
@@ -870,8 +870,8 @@ body.replaying #app { display: none; }
 .fxb.column.enemy .bar { background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(255, 63, 143, .55) 35%, rgba(255, 63, 143, .08)); box-shadow: 0 0 22px var(--magenta); }
 @keyframes drop { 0% { transform: scaleY(0); opacity: 1; } 40% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
 .fxb.shock { background: radial-gradient(circle, rgba(255, 255, 255, .9), rgba(255, 63, 143, .5) 30%, transparent 62%); animation: impact .8s ease-out forwards; }
-/* バズーカで空きマスが開く */
-/* バズーカで分解されたマス（持ち主にだけ見せる）：ひびが走る */
+/* バズーカで空きブロックが開く */
+/* バズーカで分解されたブロック（持ち主にだけ見せる）：ひびが走る */
 .fxo.crack { background: linear-gradient(118deg, transparent 44%, rgba(255, 244, 214, .95) 47%, transparent 50%), linear-gradient(28deg, transparent 58%, rgba(255, 193, 74, .9) 61%, transparent 64%); animation: crack .9s ease-out forwards; }
 @keyframes crack { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 40% { opacity: 1; clip-path: inset(0 0 0 0); } 100% { opacity: 0; } }
 .fxb.holo { display: grid; place-items: center; perspective: 500px; container-type: size; background: radial-gradient(circle, rgba(79, 227, 255, .2), transparent 60%); animation: flash 1.5s ease-in forwards; }

@@ -69,8 +69,8 @@
   }
 
   // ---------------- ② 伏せる ----------------
-  // 撃破された相手の個体のうち、ゲストに送ってよい項目（撃破されたキューブは公開済み）。
-  //  送らないもの：fromId（バズーカの破片の元の個体＝元の形が分かる）、stealth（どれをステルスにしたか）、placedAt など
+  // 撃破された相手のキューブのうち、ゲストに送ってよい項目（撃破されたキューブは公開済み）。
+  //  送らないもの：fromId（バズーカの破片の元のキューブ＝元の形が分かる）、stealth（どれをステルスにしたか）、placedAt など
   const DEAD_FIELDS = ['id', 'owner', 'shape', 'size', 'cat', 'isAdd', 'frag', 't', 'r0', 'c0', 'cells', 'mask', 'alive', 'hitMask', 'hitOrder', 'oonums', 'cause', 'deadAt'];
 
   // 対戦（Game）を、送れる形（ただのデータ）に写す。乱数の関数（rng）は送れないので外す。
@@ -89,8 +89,8 @@
     // 操作の記録（actions）は配置の座標を含むので送らない。はじめの設定（initOpts）・CPUの方針も要らない
     const s = plain(game, ['actions', 'initOpts', 'setupPlan', 'itemKeep']);
     const H = s.players[hide], me = s.players[seat];
-    // ① 相手の個体：撃破されたもの（公開済み）だけを残す。
-    //    個体の番号は置いた順に付いているので、そのままだと「何個置いたか」の手がかりになる。撃破された順に付け直す
+    // ① 相手のキューブ：撃破されたもの（公開済み）だけを残す。
+    //    キューブの番号は置いた順に付いているので、そのままだと「何個置いたか」の手がかりになる。撃破された順に付け直す
     const dead = H.pieces.filter((p) => !p.alive).sort((a, b) => (a.deadAt - b.deadAt) || (a.id - b.id));
     const newId = {};
     H.pieces = dead.map((p, i) => {
@@ -99,24 +99,24 @@
       newId[p.id] = q.id = i + 1;
       return q;
     });
-    // 自分から見た相手の盤（撃破したマス）も、同じ番号に付け直す（どのマスが同じ個体だったかは公開済み）
+    // 自分から見た相手の盤（撃破したブロック）も、同じ番号に付け直す（どのブロックが同じキューブだったかは公開済み）
     for (const d of me.view.dead) if (d && newId[d.pieceId] != null) d.pieceId = newId[d.pieceId];
-    H.treasure = null;     // トレジャーのマス
-    H.splitPieces = [];    // バズーカで分解された元の個体の形
-    H.nextId = 0;          // 次の個体の番号（置いた数が分かる）
+    H.treasure = null;     // トレジャーのブロック
+    H.splitPieces = [];    // バズーカで分解された元のキューブの形
+    H.nextId = 0;          // 次のキューブの番号（置いた数が分かる）
     // ② 先攻・後攻は、配置が終わるまで伏せる（ふつうの試合でも、配置のあとの「試合開始」で分かる）
     if (s.phase === 'setup') { s.first = null; s.cur = null; }
     // ③ 演出の記録：数と順番は変えない（ゲストの画面は「どこまで見せたか」を番号で覚えているため）
     for (const ev of s.events) {
-      if (ev.actor === hide) delete ev.priv;          // 相手のワープの移動先・ステルスをかけたマス
+      if (ev.actor === hide) delete ev.priv;          // 相手のワープの移動先・ステルスをかけたブロック
       if (ev.owner === hide) {
-        delete ev.ownerPriv;                          // バズーカで分解された相手の個体の、残りのマス
-        if (ev.type === 'shield') delete ev.cells;    // ステルスが撃破を防いだ相手のキューブのマス
+        delete ev.ownerPriv;                          // バズーカで分解された相手のキューブの、残りのブロック
+        if (ev.type === 'shield') delete ev.cells;    // ステルスが撃破を防いだ相手のキューブのブロック
       }
     }
     // ④ ログ：本人向けの詳しい文（priv。ワープの移動先など）は消す
     for (const e of s.log) if (e.actor === hide) e.priv = null;
-    // ⑤ 直前の操作：相手のステルスの結果（マス）
+    // ⑤ 直前の操作：相手のステルスの結果（ブロック）
     const la = s.lastAction;
     if (la && la.pi === hide && la.result) { delete la.result.cells; delete la.result.newCells; }
     return s;
@@ -184,7 +184,7 @@
             if (isInt(p.pieceId, 1, 9999) && isInt(p.t, 0, 7) && isInt(p.r0, 0, N - 1) && isInt(p.c0, 0, N - 1)) q = { pieceId: p.pieceId, t: p.t, r0: p.r0, c0: p.c0 };
             break;
           case 'stealth':
-            if (isInt(p.pieceId, 1, 9999) && cell(p.cell)) q = { pieceId: p.pieceId, cell: p.cell };   // cell＝トリガーマス（v14.2）
+            if (isInt(p.pieceId, 1, 9999) && cell(p.cell)) q = { pieceId: p.pieceId, cell: p.cell };   // cell＝トリガーブロック（v14.2）
             break;
         }
         return q ? [key, q] : null;
@@ -192,7 +192,7 @@
     }
     return null;
   }
-  // 配置（形・向き・位置の並びと、トレジャーのマス）の形をそろえる
+  // 配置（形・向き・位置の並びと、トレジャーのブロック）の形をそろえる
   function cleanSetup(msg, g) {
     const list = msg && msg.pieces;
     if (!Array.isArray(list) || list.length < 1 || list.length > 20) return null;
@@ -273,7 +273,7 @@
     this._emit('change', 'setup');
   };
   // ゲストの対戦中の操作。いつでもゲストの席（1番）として実行するので、ホストの席の操作はできない。
-  //  手番・アイテムの残り・マスの範囲などは、ルールのプログラム（engine.js）が確かめる
+  //  手番・アイテムの残り・ブロックの範囲などは、ルールのプログラム（engine.js）が確かめる
   Host.prototype._act = function (msg) {
     const g = this.game;
     const seq = isInt(msg.seq, 1, 1e9) ? msg.seq : 0;
@@ -370,11 +370,11 @@
     this.send({ t: 'act', name, args: args || [], seq: this.seq });
     return { ok: true, sent: true };
   };
-  // 配置をまとめてホストに送る（形・向き・位置・色と柄の番号と、トレジャーのマス）。置いた順に並べる（個体の色が変わらないように）
+  // 配置をまとめてホストに送る（形・向き・位置・色と柄の番号と、トレジャーのブロック）。置いた順に並べる（キューブの色が変わらないように）
   Guest.prototype.sendSetup = function () {
     const g = this.game, P = g && g.players[this.seat];
     if (!P || g.phase !== 'setup' || P.setupDone || this.setupSent) return { ok: false, reason: '配置の時間ではありません' };
-    if (!P.pieces.length) return { ok: false, reason: '最低1個体を置いてください' };
+    if (!P.pieces.length) return { ok: false, reason: '最低1キューブを置いてください' };
     if (!P.treasure) return { ok: false, reason: 'トレジャーをセットしてください' };
     const pieces = P.pieces.slice().sort((a, b) => a.id - b.id).map((p) => ({ key: p.shape, t: p.t, r0: p.r0, c0: p.c0, col: p.col }));
     this.setupSent = true;
