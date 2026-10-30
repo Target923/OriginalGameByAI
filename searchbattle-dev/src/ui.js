@@ -501,12 +501,11 @@
         inner += patHTML(ci, c);   // 柄はいちばん下に置く（印やタグがその上に重なる）
         if (opts.pick && p.alive) cls += ' pickable';
         if (opts.selectedPiece === p.id) cls += ' picked';
-        if (p.stealth && p.alive) {
-          cls += ' stealth';
-          // トリガーマス（v14.2：ここをコールされると見破られる）に印を付ける。トリガーのない古い対戦は読み順で最初のマス
-          const tg = p.stealthTrigger != null ? p.stealthTrigger : Math.min.apply(null, p.cells);
-          if (c === tg) { inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`; cls += ' trigger'; }
-        }
+        if (p.stealth && p.alive) cls += ' stealth';
+        // トリガーマス（v14.2：ここをコールされると見破られる）に目の印を付ける。見破られた後・撃破された後・リプレイでも残す
+        // （どこがトリガーだったか分かるように）。トリガーのない古い対戦は、隠れているあいだだけ読み順で最初のマス
+        const tg = p.stealthTrigger != null ? p.stealthTrigger : (p.stealth && p.alive ? Math.min.apply(null, p.cells) : -1);
+        if (c === tg) { inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`; cls += ' trigger'; }
       }
       inner += cellMarkHTML(m, intel, c);
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
@@ -556,6 +555,9 @@
         if (tp) { const ci = colorIndex(foe, tp); cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${ci});`; inner += patHTML(ci, c); }
       }
       inner += cellMarkHTML(v.marks[c], intel, c);
+      // トリガーマス（v14.2）：当てたトリガーマスと、答え合わせのときの相手のトリガーマスに目の印
+      const tgp = opts.reveal ? g.pieceAt(foe.idx, c, true) : null;
+      if ((v.marks[c] && v.marks[c].trigger) || (tgp && tgp.stealthTrigger === c)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
       if (opts.reveal && foe.treasure && foe.treasure.cell === c) inner += MARK.gem;
       const tl = v.tlog[c];
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;

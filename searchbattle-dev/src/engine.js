@@ -501,7 +501,7 @@
       if (p.stealth && c === p.stealthTrigger) {
         // トリガーマス（v14.2）：隠れたキューブの弱点。ここをコールされると STEALTH HIT になり、
         // ステルスアンサーと同じく、すべてのステルスのキューブが見破られる（このあと _revealAll）
-        v.marks[c] = { r: 'q', t };
+        v.marks[c] = { r: 'q', t, trigger: true };   // trigger：ここがトリガーマスだった（画面で目の印を出す）
         me.kb.calls.push({ c, t, r: 'q' });
         res = { r: 'q', trigger: true };
         this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT（トリガー）`, null, 'hit');
