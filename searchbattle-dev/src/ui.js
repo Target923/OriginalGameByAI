@@ -472,6 +472,8 @@
     }
     let s = `<span class="mkw ink-${m.r}">${MARK[m.r]}</span>`;
     if (m.r === 'oo' && m.num != null) s += `<span class="num">${m.num}</span>`;
+    // STEALTH HIT の番号（ステルスを使った順。同じ番号は同じキューブ。v14.3）
+    if (m.r === 'q' && m.num != null) s += `<span class="num qn">${m.num}</span>`;
     return s;
   }
 
@@ -569,7 +571,7 @@
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ' STEALTH HIT' : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : ' ○';
       label += probeLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
@@ -2241,7 +2243,7 @@
             over(el, 'impact', '', 520);
             sparks(p.x, p.y, QT, 16, 1.1, 0.5);
             ring(p.x, p.y, QT, p.w * 0.12, p.w * 1.2, 700, 2.5);
-            text(p.x, p.y - p.h * 0.6, 'STEALTH HIT', 'stealth', 1400);
+            text(p.x, p.y - p.h * 0.6, ev.num != null ? `STEALTH HIT ${ev.num}` : 'STEALTH HIT', 'stealth', 1400);
             shake(1);
             return 880 * k;
           }

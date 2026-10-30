@@ -501,10 +501,11 @@
       if (p.stealth && c === p.stealthTrigger) {
         // トリガーマス（v14.2）：隠れたキューブの弱点。ここをコールされると STEALTH HIT になり、
         // ステルスアンサーと同じく、すべてのステルスのキューブが見破られる（このあと _revealAll）
-        v.marks[c] = { r: 'q', t, trigger: true };   // trigger：ここがトリガーマスだった（画面で目の印を出す）
-        me.kb.calls.push({ c, t, r: 'q' });
-        res = { r: 'q', trigger: true };
-        this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT（トリガー）`, null, 'hit');
+        // num：ステルスの番号（使った順。v14.3）。同じ番号の STEALTH HIT は同じキューブ
+        v.marks[c] = { r: 'q', num: p.stealthNo, t, trigger: true };   // trigger：ここがトリガーマスだった（画面で目の印を出す）
+        me.kb.calls.push({ c, t, r: 'q', num: p.stealthNo });
+        res = { r: 'q', num: p.stealthNo, trigger: true };
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT ${p.stealthNo}（トリガー）`, null, 'hit');
       } else if (p.stealth) {
         // ステルス（v14）：見破られるまでは、当たっても×に見せる（コールした側には空きマスと同じに見える）。
         //  ヒットとしては数えておき、見破られたら STEALTH HIT に変わる。見破られるまでは全マス当たっても撃破されない（相手に見えないため）
@@ -514,10 +515,10 @@
         this._log(pi, `${me.name}：${this.coord(c)}をコール → ×`, null, 'call');
       } else if (p.stealthRevealed) {
         // 見破られたステルスのキューブ：ヒットは STEALTH HIT（◎の番号は使わない）
-        v.marks[c] = { r: 'q', t };
-        me.kb.calls.push({ c, t, r: 'q' });
-        res = { r: 'q' };
-        this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT`, null, 'hit');
+        v.marks[c] = { r: 'q', num: p.stealthNo, t };
+        me.kb.calls.push({ c, t, r: 'q', num: p.stealthNo });
+        res = { r: 'q', num: p.stealthNo };
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT ${p.stealthNo}`, null, 'hit');
       } else if (first) {
         v.oo += 1;
         p.oonums.push(v.oo);
@@ -696,8 +697,8 @@
     for (const p of pieces) {
       const ts = p.stealthAt;
       const inP = (c) => (p.mask & bit(c)) !== 0;
-      for (const k of kb.calls) if (k.r === 'x' && k.t > ts && inP(k.c)) k.r = 'q';
-      for (const c of p.cells) { const m = v.marks[c]; if (m && m.r === 'x' && m.t > ts) { v.marks[c] = { r: 'q', t: m.t }; turned.push(c); } }
+      for (const k of kb.calls) if (k.r === 'x' && k.t > ts && inP(k.c)) { k.r = 'q'; k.num = p.stealthNo; }
+      for (const c of p.cells) { const m = v.marks[c]; if (m && m.r === 'x' && m.t > ts) { v.marks[c] = { r: 'q', num: p.stealthNo, t: m.t }; turned.push(c); } }
       const keep = [];
       for (const e of kb.empties) {
         if (!(e.t > ts && inP(e.c))) { keep.push(e); continue; }
@@ -985,6 +986,9 @@
         p.stealth = true;
         p.stealthAt = t;
         p.stealthTrigger = params.cell;
+        // ステルスの番号（使った順に1・2…。見破られたら STEALTH HIT に添える。v14.3）
+        me.stealthCount = (me.stealthCount || 0) + 1;
+        p.stealthNo = me.stealthCount;
         foe.kb.stealths.push({ t });
         result.cells = p.cells.slice();
         this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
