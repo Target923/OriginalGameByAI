@@ -22,25 +22,39 @@
   };
 
   // 設定：モード（cpu／pvp／online＝オンライン対戦）、ルール（prelim＝4×4／final＝5×5／tour＝大会）、
-  //  アイテム（pick＝選ぶ／random＝ランダム randomN 種／draft＝ドラフト 1人 draftN 個）
-  const DRAFT_MAX = Math.floor(ITEM_KEYS.length / 2);
+  //  アイテム（v15.3。ユーザーの案）：pick＝選ぶ（種類と数を自由に。2人共通 itemCount）／draft＝ドラフト（並べる種類と数を自由に draftPool、
+  //   1人 draftN 個）／mirror＝ミラー（試合ごとにランダムな randomN 種を2人とも同じに。v15.2 までの「ランダム」）／random＝ランダム（2人別々のランダム randomN 種）
+  const COUNT_MAX = 5;   // 1種類あたりの数の上限（選ぶ・ドラフトの並べる数）
+  function allOnes() { const o = {}; for (const k of ITEM_KEYS) o[k] = 1; return o; }
+  function cleanCounts(o) { const r = {}; for (const k of ITEM_KEYS) r[k] = Math.max(0, Math.min(COUNT_MAX, (o && o[k]) | 0)); return r; }
+  function countTotal(o) { return ITEM_KEYS.reduce((a, k) => a + ((o && o[k]) | 0), 0); }
   function migrateSettings(st) {
     if (st.items === 'all') { st.items = 'pick'; st.itemPick = ITEM_KEYS.slice(); }
     else if (st.items === 'r6') { st.items = 'random'; st.randomN = 6; }
     else if (st.items === 'r4') { st.items = 'random'; st.randomN = 4; }
-    if (['pick', 'random', 'draft'].indexOf(st.items) < 0) st.items = 'pick';
+    // v15.3：それまでの「ランダム」（2人とも同じ種類）は「ミラー」に。選んだ種類（itemPick）は1つずつの数に
+    if (!(st.itemsV >= 2)) {
+      if (st.items === 'random') st.items = 'mirror';
+      if (!st.itemCount) { st.itemCount = {}; const on = Array.isArray(st.itemPick) && st.itemPick.length ? st.itemPick : ITEM_KEYS; for (const k of ITEM_KEYS) st.itemCount[k] = on.indexOf(k) >= 0 ? 1 : 0; }
+      st.itemsV = 2;
+    }
+    if (['pick', 'draft', 'mirror', 'random'].indexOf(st.items) < 0) st.items = 'pick';
+    st.itemCount = cleanCounts(st.itemCount || allOnes());
+    if (!countTotal(st.itemCount)) st.itemCount = allOnes();
+    st.draftPool = cleanCounts(st.draftPool || allOnes());
+    if (countTotal(st.draftPool) < 2) st.draftPool = allOnes();
     if (['prelim', 'final', 'tour'].indexOf(st.rules) < 0) st.rules = 'prelim';
     if (['cpu', 'pvp', 'online'].indexOf(st.mode) < 0) st.mode = 'cpu';
     if (typeof st.netName !== 'string') st.netName = '';   // オンライン対戦で相手に見せる名前
     st.randomN = Math.max(1, Math.min(ITEM_KEYS.length, (st.randomN | 0) || 6));
-    st.draftN = Math.max(1, Math.min(DRAFT_MAX, (st.draftN | 0) || DRAFT_MAX));
-    if (!Array.isArray(st.itemPick)) st.itemPick = ITEM_KEYS.slice();
+    st.draftN = Math.max(1, Math.min(draftMax(st), (st.draftN | 0) || 4));
+    delete st.itemPick;
     delete st.wallet;
     return st;
   }
   const app = {
     screen: 'title',
-    settings: migrateSettings(Object.assign({ mode: 'cpu', rules: 'prelim', speed: 'normal', items: 'pick', itemPick: ITEM_KEYS.slice(), randomN: 6, draftN: DRAFT_MAX, sound: 'all' }, store.get('settings', {}))),
+    settings: migrateSettings(Object.assign({ mode: 'cpu', rules: 'prelim', speed: 'normal', items: 'pick', randomN: 6, draftN: 4, sound: 'all' }, store.get('settings', {}))),
     game: null,
     tour: null,       // 大会の状態（engine の Tour で動かす）
     tourFx: null,     // 大会の画面の演出（一度きり）
@@ -983,27 +997,46 @@
   }
 
   // 使えるアイテムの設定（今後アイテムが増えても、この一覧に並ぶ）
-  function pickedItems() {
-    const list = (app.settings.itemPick || []).filter((k) => ITEM_KEYS.indexOf(k) >= 0);
-    return list.length ? list : ITEM_KEYS.slice();
+  // ドラフトで1人が取れる数の上限（並べた数の半分）
+  function draftMax(st) { return Math.max(1, Math.floor(countTotal((st || app.settings).draftPool) / 2)); }
+  function shuffled(list) { const a = list.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function randomKinds(n) { const c = shuffled(ITEM_KEYS).slice(0, Math.max(1, Math.min(ITEM_KEYS.length, n | 0))); return ITEM_KEYS.filter((k) => c.indexOf(k) >= 0); }
+  // 1試合のアイテムの設定から、Game に渡す項目（items・inventory・draftPool・draftEach）を作る（v15.3）
+  function matchItemOpts() {
+    const s = app.settings;
+    if (s.items === 'pick') {
+      const inv = cleanCounts(s.itemCount);
+      return { items: ITEM_KEYS.filter((k) => inv[k] > 0), inventory: [Object.assign({}, inv), Object.assign({}, inv)] };
+    }
+    if (s.items === 'draft') {
+      const pool = [];
+      for (const k of ITEM_KEYS) for (let i = 0; i < (s.draftPool[k] | 0); i++) pool.push(k);
+      return { draftPool: pool, draftEach: Math.min(s.draftN, Math.floor(pool.length / 2)) };
+    }
+    if (s.items === 'random') {
+      // 2人別々のランダム：それぞれ randomN 種を1つずつ
+      const a = randomKinds(s.randomN), b = randomKinds(s.randomN);
+      const inv = (list) => { const o = {}; for (const k of ITEM_KEYS) o[k] = list.indexOf(k) >= 0 ? 1 : 0; return o; };
+      return { items: ITEM_KEYS.filter((k) => a.indexOf(k) >= 0 || b.indexOf(k) >= 0), inventory: [inv(a), inv(b)] };
+    }
+    return { items: randomKinds(s.randomN) };   // ミラー：2人とも同じ randomN 種を1つずつ
   }
-  function itemsForMatch() {
-    const mode = app.settings.items;
-    if (mode === 'pick') return pickedItems();
-    if (mode === 'draft') return ITEM_KEYS.slice();
-    const n = app.settings.randomN | 0;
-    if (!n || n >= ITEM_KEYS.length) return ITEM_KEYS.slice();
-    const pool = ITEM_KEYS.slice();
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-    const chosen = pool.slice(0, n);
-    return ITEM_KEYS.filter((k) => chosen.indexOf(k) >= 0);
+  function itemsSummary(s) {
+    if (s.items === 'draft') return `ドラフト（${countTotal(s.draftPool)}個から1人${Math.min(s.draftN, draftMax(s))}個）`;
+    if (s.items === 'mirror') return `ミラー（毎試合 同じ${s.randomN}種）`;
+    if (s.items === 'random') return `ランダム（毎試合 別々の${s.randomN}種）`;
+    return `${countTotal(s.itemCount)}個（${ITEM_KEYS.filter((k) => s.itemCount[k] > 0).length}種）`;
   }
-  function itemPickHTML() {
-    const on = pickedItems();
-    return `<div class="item-pick" role="group" aria-label="使うアイテムを選ぶ">${ITEM_KEYS.map((k) => {
-      const id = 'pick-' + k;
-      return `<input type="checkbox" id="${id}" data-pick="${k}" ${on.indexOf(k) >= 0 ? 'checked' : ''}><label for="${id}" title="${esc(ITEMS[k].desc)}">${ICON[k]}<span>${esc(ITEMS[k].name)}</span></label>`;
-    }).join('')}<p class="note" id="pick-count">${on.length}種を使います。</p></div>`;
+  // 種類ごとの数の指定（選ぶ＝持つ数、ドラフト＝並べる数）
+  function itemCountHTML(set) {
+    const o = app.settings[set];
+    return `<div class="item-count" role="group" aria-label="${set === 'draftPool' ? 'ドラフトに並べるアイテムの数' : '持つアイテムの数（2人共通）'}">${ITEM_KEYS.map((k) => {
+      const n = o[k] | 0;
+      return `<div class="ic-row${n ? ' on' : ''}" title="${esc(ITEMS[k].desc)}">${ICON[k]}<span class="ic-name">${esc(ITEMS[k].name)}</span>
+        <button type="button" class="btn ghost sq" data-act="icnt" data-set="${set}" data-key="${k}" data-d="-1" ${n <= 0 ? 'disabled' : ''} aria-label="${esc(ITEMS[k].name)}を減らす">−</button>
+        <output>${n}</output>
+        <button type="button" class="btn ghost sq" data-act="icnt" data-set="${set}" data-key="${k}" data-d="1" ${n >= COUNT_MAX ? 'disabled' : ''} aria-label="${esc(ITEMS[k].name)}を増やす">＋</button></div>`;
+    }).join('')}<p class="note">${set === 'draftPool' ? `合わせて${countTotal(o)}個を並べます。` : `2人とも合わせて${countTotal(o)}個を持って始めます。`}</p></div>`;
   }
   // 個数の指定（ランダム＝何種類使うか、ドラフト＝1人が何個取るか）
   function stepperHTML(key, value, min, max, unit, note) {
@@ -1052,10 +1085,10 @@
           <div class="set-row"><h2>ルール</h2>${seg('rules', s.rules, [['prelim', '4×4', 'トレジャー4回'], ['final', '5×5', 'トレジャー5回'], ['tour', '大会', '予選3試合＋決勝']])}</div>
           <div class="set-row"><h2>使えるアイテム</h2>${tour
             ? `<p class="set-fixed">9種を<b>2つずつ（18個）</b>持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ドラフト（4つずつ）。持ち点<b>${E.Tour.START}</b>から、撃破と勝利で相手の点を奪い合います。</p>`
-            : seg('items', s.items, [['pick', '選ぶ', pickedItems().length + '種を指定'], ['random', 'ランダム', s.randomN + '種を毎試合'], ['draft', 'ドラフト', `1人${s.draftN}個ずつ`]])}</div>
-          ${!tour && s.items === 'pick' ? `<div class="set-row"><span aria-hidden="true"></span>${itemPickHTML()}</div>` : ''}
-          ${!tour && s.items === 'random' ? `<div class="set-row"><span aria-hidden="true"></span>${stepperHTML('randomN', s.randomN, 1, ITEM_KEYS.length, '種', `${ITEM_KEYS.length}種類の中から、試合ごとにランダムに選びます`)}</div>` : ''}
-          ${!tour && s.items === 'draft' ? `<div class="set-row"><span aria-hidden="true"></span>${stepperHTML('draftN', s.draftN, 1, DRAFT_MAX, '個', `${ITEM_KEYS.length}種類から、1人がこの数ずつドラフトで取ります（後攻から）`)}</div>` : ''}
+            : seg('items', s.items, [['pick', '選ぶ', countTotal(s.itemCount) + '個を指定'], ['draft', 'ドラフト', `1人${Math.min(s.draftN, draftMax(s))}個ずつ`], ['mirror', 'ミラー', `同じ${s.randomN}種`], ['random', 'ランダム', `別々の${s.randomN}種`]])}</div>
+          ${!tour && s.items === 'pick' ? `<div class="set-row"><span aria-hidden="true"></span>${itemCountHTML('itemCount')}</div>` : ''}
+          ${!tour && (s.items === 'mirror' || s.items === 'random') ? `<div class="set-row"><span aria-hidden="true"></span>${stepperHTML('randomN', s.randomN, 1, ITEM_KEYS.length, '種', s.items === 'mirror' ? `${ITEM_KEYS.length}種類の中から試合ごとにランダムに選び、2人とも同じ種類を1つずつ持ちます` : `${ITEM_KEYS.length}種類の中から試合ごとに、2人それぞれ別々にランダムに選びます（1つずつ）`)}</div>` : ''}
+          ${!tour && s.items === 'draft' ? `<div class="set-row"><span aria-hidden="true"></span>${itemCountHTML('draftPool')}</div><div class="set-row"><span aria-hidden="true"></span>${stepperHTML('draftN', Math.min(s.draftN, draftMax(s)), 1, draftMax(s), '個', '並べたアイテムから、1人がこの数ずつドラフトで取ります（後攻から）')}</div>` : ''}
           <div class="set-row"><h2>演出とCPUの速さ</h2>${seg('speed', s.speed, [['normal', 'ふつう', ''], ['fast', 'はやい', '']])}</div>
           <div class="set-row"><h2>サウンド</h2>${seg('sound', soundMode(), [['all', 'BGMと効果音', ''], ['sfx', '効果音だけ', ''], ['off', 'なし', '']])}</div>
           <div class="start-row">
@@ -1186,13 +1219,13 @@
     };
     root.innerHTML = `
       <div class="wrap">
-        ${hudHTML(`<span class="stat">決勝<b>DRAFT</b></span><span class="stat me">PICK<b>${esc(g.players[turn].name)}</b></span>`)}
+        ${hudHTML(`<span class="stat">${app.tour ? "決勝" : "バトル"}<b>DRAFT</b></span><span class="stat me">PICK<b>${esc(g.players[turn].name)}</b></span>`)}
         <section class="panel draft">
           <h2 class="ptitle">アイテムドラフト<small>ITEM DRAFT</small></h2>
-          <p class="note">この試合の${g.itemKeys.length}種類から、${d.each || Math.floor(g.itemKeys.length / 2)}つずつ取ります。順番は ${d.order.map((p) => (p === g.first ? '先' : '後')).join('')}（後＝${esc(g.players[second].name)}）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。</p>
+          <p class="note">${g.draftPool ? `並べた${g.draftPool.length}個` : `この試合の${g.itemKeys.length}種類`}から、${d.each || Math.floor(g.itemKeys.length / 2)}つずつ取ります。順番は ${d.order.map((p) => (p === g.first ? '先' : '後')).join('')}（後＝${esc(g.players[second].name)}）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。</p>
           <p class="prompt">${esc(g.players[turn].name)}の番です${humanTurn ? '。アイテムを選んでください' : '…'}</p>
           <div class="draft-pool">
-            ${d.pool.map((k) => `<button class="item-card" data-act="draft-pick" data-key="${k}" ${humanTurn && !app.busy ? '' : 'disabled'}>${ICON[k]}<b>${esc(ITEMS[k].name)}</b><span>${esc(ITEMS[k].desc)}</span></button>`).join('')}
+            ${ITEM_KEYS.filter((k) => d.pool.indexOf(k) >= 0).map((k) => { const n = d.pool.filter((x) => x === k).length; return `<button class="item-card" data-act="draft-pick" data-key="${k}" ${humanTurn && !app.busy ? '' : 'disabled'}>${ICON[k]}<b>${esc(ITEMS[k].name)}${n > 1 ? ` <i class="dn">×${n}</i>` : ''}</b><span>${esc(ITEMS[k].desc)}</span></button>`; }).join('')}
           </div>
           <div class="draft-picks">
             ${[g.first, second].map((pi) => `<div><h3>${esc(g.players[pi].name)}（${pi === g.first ? '先攻' : '後攻'}）</h3>${held(pi)}<ul>${picks(pi)}</ul></div>`).join('')}
@@ -2853,7 +2886,7 @@ self.onmessage = function (e) {
     const cpu = s.mode === 'cpu';
     app.game = new E.Game({
       rules: s.rules, mode: s.mode, label: 'バトル', names: cpu ? ['あなた', 'CPU'] : ['プレイヤー1', 'プレイヤー2'], cpu: [false, cpu],
-      items: itemsForMatch(), draftEach: s.items === 'draft' ? s.draftN : 0,
+      ...matchItemOpts(),
     });
     beginMatchUI();
   }
@@ -3136,12 +3169,27 @@ self.onmessage = function (e) {
     },
     step(el) {
       const k = el.dataset.key, d = +el.dataset.d;
-      const max = k === 'draftN' ? DRAFT_MAX : ITEM_KEYS.length;
-      app.settings[k] = Math.max(1, Math.min(max, (app.settings[k] | 0) + d));
+      const max = k === 'draftN' ? draftMax() : ITEM_KEYS.length;
+      app.settings[k] = Math.max(1, Math.min(max, Math.min(max, app.settings[k] | 0) + d));
       store.set('settings', app.settings);
       render();
       const f = root.querySelector(`[data-act="step"][data-key="${k}"][data-d="${d}"]`);
       if (f && !f.disabled) f.focus();
+    },
+    // 種類ごとの数（選ぶ・ドラフトの並べる数。v15.3）。選ぶは合わせて1個以上、ドラフトは2個以上
+    icnt(el) {
+      const set = el.dataset.set, k = el.dataset.key, d = +el.dataset.d;
+      const o = app.settings[set];
+      const next = Math.max(0, Math.min(COUNT_MAX, (o[k] | 0) + d));
+      if (d < 0 && countTotal(o) - 1 < (set === 'draftPool' ? 2 : 1)) { toast(set === 'draftPool' ? 'ドラフトには2個以上並べてください' : 'アイテムは1個以上にしてください'); return; }
+      o[k] = next;
+      if (set === 'draftPool') app.settings.draftN = Math.min(app.settings.draftN, draftMax());
+      SND.sfx('tick');
+      store.set('settings', app.settings);
+      render();
+      const f = root.querySelector(`[data-act="icnt"][data-set="${set}"][data-key="${k}"][data-d="${d}"]`);
+      if (f && !f.disabled) f.focus();
+      else { const g = root.querySelector(`[data-act="icnt"][data-set="${set}"][data-key="${k}"]:not([disabled])`); if (g) g.focus(); }
     },
     'tour-next'() {
       const T = app.tour;
@@ -3471,20 +3519,6 @@ self.onmessage = function (e) {
       store.set('settings', app.settings);
       SND.sfx('tick');
       if (k === 'items' || k === 'rules' || k === 'mode') { render(); const f = document.getElementById(el.id); if (f) f.focus(); }
-    }
-    if (el && el.dataset && el.dataset.pick) {
-      let list = pickedItems().slice();
-      const k = el.dataset.pick;
-      if (el.checked) { if (list.indexOf(k) < 0) list.push(k); }
-      else list = list.filter((x) => x !== k);
-      if (!list.length) { el.checked = true; toast('アイテムは1種類以上選んでください'); return; }
-      app.settings.itemPick = ITEM_KEYS.filter((x) => list.indexOf(x) >= 0);
-      store.set('settings', app.settings);
-      SND.sfx('tick');
-      const cnt = document.getElementById('pick-count');
-      if (cnt) cnt.textContent = `${list.length}種を使います。`;
-      const lab = root.querySelector('label[for="opt-items-0"] small');
-      if (lab) lab.textContent = list.length + '種を指定';
     }
   });
   root.addEventListener('pointerover', (ev) => {
@@ -4122,7 +4156,7 @@ self.onmessage = function (e) {
         const s = app.settings;
         return new E.Game({
           rules: s.rules === 'final' ? 'final' : 'prelim', mode: 'online', label: 'オンライン', names, cpu: [false, false],
-          items: itemsForMatch(), draftEach: s.items === 'draft' ? s.draftN : 0,
+          ...matchItemOpts(),
         });
       },
       on: {
@@ -4232,7 +4266,7 @@ self.onmessage = function (e) {
   // ロビーの画面
   function renderLobby() {
     const s = app.settings, L = app.lobby || { st: 'idle' }, N = app.net;
-    const rulesTxt = `${s.rules === 'final' ? '5×5（トレジャー5回）' : '4×4（トレジャー4回）'}・アイテム：${s.items === 'draft' ? `ドラフト（1人${s.draftN}個）` : s.items === 'random' ? `ランダム（毎試合${s.randomN}種）` : `${pickedItems().length}種`}`;
+    const rulesTxt = `${s.rules === 'final' ? '5×5（トレジャー5回）' : '4×4（トレジャー4回）'}・アイテム：${itemsSummary(s)}`;
     let body;
     if (!NET.supported()) {
       // claude.ai の公開ページなど、通信が止められているページでは、遊べるページ（GitHub Pages 版）を案内する

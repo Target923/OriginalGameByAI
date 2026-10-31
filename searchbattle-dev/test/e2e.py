@@ -14,22 +14,25 @@ async def play_game(page, rules, mode, log, shots=False, do_items=True, items='a
     await page.wait_for_selector('[data-act=start]')
     if items == 'pick':
         await page.click('label[for=opt-items-0]')
-        await page.wait_for_selector('.item-pick')
-        # すべて外してから3つだけ選ぶ（最後の1つは外せない）
+        await page.wait_for_selector('.item-count')
+        # 種類ごとの数（v15.3）：サーチサイズ2・ノード1・ワープ1だけにする（ほかは0に）
+        want = {'number': 2, 'node': 1, 'warp': 1}
         for k in ['cube','line','number','shape','pair','node','bazooka','warp','stealth']:
-            if await page.is_checked(f'#pick-{k}'): await page.click(f'label[for=pick-{k}]')
-        for k in ['number','node','warp']:
-            if not await page.is_checked(f'#pick-{k}'): await page.click(f'label[for=pick-{k}]')
-        if await page.is_checked('#pick-stealth'): await page.click('label[for=pick-stealth]')
+            n = want.get(k, 0)
+            for _ in range(3):
+                cur = int(await page.inner_text(f'.item-count [data-key={k}][data-d="1"] >> xpath=preceding-sibling::output[1]'))
+                if cur == n: break
+                d = '1' if cur < n else '-1'
+                await page.click(f'[data-act=icnt][data-set=itemCount][data-key={k}][data-d="{d}"]')
         if shots: await page.screenshot(path=f'{SHOTS}/v4_0_items.png', full_page=True)
     elif items == 'r4':
-        # ランダム：6種から2つ減らして4種
-        await page.click('label[for=opt-items-1]')
+        # ランダム（2人別々。v15.3）：6種から2つ減らして4種
+        await page.click('label[for=opt-items-3]')
         await page.click('[data-act=step][data-key=randomN][data-d="-1"]')
         await page.click('[data-act=step][data-key=randomN][data-d="-1"]')
     elif items == 'draft':
         # ドラフト：1人3個ずつ
-        await page.click('label[for=opt-items-2]')
+        await page.click('label[for=opt-items-1]')
         await page.click('[data-act=step][data-key=draftN][data-d="-1"]')
     else:
         await page.click('label[for=opt-items-0]')

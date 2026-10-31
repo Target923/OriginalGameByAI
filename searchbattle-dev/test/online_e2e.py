@@ -201,7 +201,7 @@ async def main():
             host = await open_page(browser, 1360, 900, errors, 'host')
             guest = await open_page(browser, 390, 844, errors, 'guest')
             # ホスト：ドラフトありの設定で部屋を作る
-            await host.click('label[for=opt-items-2]')
+            await host.click('label[for=opt-items-1]')   # ドラフト（v15.3 から2番目）
             await host.click('[data-act=start]')
             await host.fill('#net-name', 'ホスト太郎')
             await host.click('[data-act=net-create]')
@@ -263,7 +263,7 @@ async def main():
             # もう一度：ホストが始めると、両方とも配置へ
             if await guest.query_selector('.overlay [data-act=restart]'): fail('ゲストに「もう一度」が出ている')
             # 2試合目はドラフトなし・9種を1つずつ（ホストの設定を変えてから「もう一度」）
-            await host.evaluate("() => { window.__sb.app.settings.items = 'pick'; window.__sb.app.settings.itemPick = window.SBEngine.ITEM_KEYS.slice(); }")
+            await host.evaluate("() => { window.__sb.app.settings.items = 'pick'; window.__sb.app.settings.itemCount = Object.fromEntries(window.SBEngine.ITEM_KEYS.map((k) => [k, 1])); }")
             await host.click('.overlay [data-act=restart]')
             await wait_for(host, lambda s: s.get('screen') == 'setup' and s.get('phase') == 'setup', 10, 'もう一度（ホスト）')
             await wait_for(guest, lambda s: s.get('screen') == 'setup' and s.get('phase') == 'setup', 10, 'もう一度（ゲスト）')

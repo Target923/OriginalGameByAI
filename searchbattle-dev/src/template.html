@@ -553,6 +553,20 @@ h1, h2, h3 { text-wrap: balance; }
 .item-pick input:checked + label svg { color: var(--cyan); }
 .item-pick input:focus-visible + label { box-shadow: 0 0 0 2px var(--amber); }
 .item-pick .note { flex-basis: 100%; }
+/* 種類ごとの数（v15.3：選ぶ・ドラフトの並べる数） */
+.item-count { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
+.item-count .ic-row { display: flex; align-items: center; gap: 6px; padding: .3em .4em .3em .55em; border: 1px solid var(--edge); border-radius: 4px; background: rgba(79, 227, 255, .03); color: var(--muted); font-size: .78rem; }
+.item-count .ic-row.on { color: var(--text); border-color: rgba(79, 227, 255, .55); background: rgba(79, 227, 255, .1); }
+.item-count .ic-row svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.item-count .ic-row svg .f { fill: currentColor; stroke: none; }
+.item-count .ic-row.on svg { color: var(--cyan); }
+.item-count .ic-row.on svg.ic-bz { color: var(--amber); }
+.item-count .ic-name { flex: 1; min-width: 0; }
+.item-count .btn.sq { width: 28px; height: 28px; padding: 0; min-width: 0; }
+.item-count output { width: 1.4em; text-align: center; font: 700 1rem/1 var(--f-tech); color: var(--cyan); }
+.item-count .ic-row:not(.on) output { color: var(--muted); }
+.item-count .note { grid-column: 1 / -1; }
+.item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
 .match-items { display: grid; gap: 6px; border-top: 1px solid rgba(96, 196, 255, .14); padding-top: 10px; }
 .match-items .cap { font: 600 .66rem/1 var(--f-tech); letter-spacing: .12em; color: var(--muted); }
 .mi-list { display: flex; flex-wrap: wrap; gap: 6px; }

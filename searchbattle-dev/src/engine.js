@@ -194,6 +194,7 @@
   //  rules 'prelim'（4×4）／'final'（5×5）、label 画面に出す試合名
   //  items この試合で使えるアイテムの種類、inventory [手持ち, 手持ち]（種類ごとの数。省略時は使える種類を1つずつ）
   //  draftEach ドラフトで1人が取る数（0＝ドラフトなし。ドラフトのときは手持ち0から始める）
+  //  draftPool ドラフトに並べるアイテム（同じ種類を何個でも。省略時は使える種類を1つずつ。v15.3：1試合のドラフトは種類と数を自由に決める）
   //  oncePerMatch 1試合で同じ種類のアイテムは1回まで（大会の予選）
   //  stocks [置けるキューブ, 置けるキューブ]（ブロック数ごとの数。大会では試合ごとに減る）
   //  setupPlan [席0の方針, 席1の方針]（CPUの配置の方針。大会で使う）
@@ -208,9 +209,12 @@
     this.mode = opts.mode || 'pvp';
     this.v = VERSION;
     // この試合で使えるアイテム
-    const pick = Array.isArray(opts.items) ? ITEM_KEYS.filter((k) => opts.items.indexOf(k) >= 0) : [];
+    const dpool = Array.isArray(opts.draftPool) ? opts.draftPool.filter((k) => ITEM_KEYS.indexOf(k) >= 0) : null;
+    const pick = Array.isArray(opts.items) ? ITEM_KEYS.filter((k) => opts.items.indexOf(k) >= 0)
+      : dpool && dpool.length ? ITEM_KEYS.filter((k) => dpool.indexOf(k) >= 0) : [];
     this.itemKeys = pick.length ? pick : ITEM_KEYS.slice();
-    this.draftEach = Math.max(0, Math.min(Math.floor(this.itemKeys.length / 2), opts.draftEach | 0));
+    this.draftPool = dpool && dpool.length ? dpool : null;
+    this.draftEach = Math.max(0, Math.min(Math.floor((this.draftPool || this.itemKeys).length / 2), opts.draftEach | 0));
     this.oncePerMatch = !!opts.oncePerMatch;
     // CPUの配置の方針（[席0, 席1]。大会で、CPUが順位・残りのキューブ・試合の残りから決めたもの。中身はCPUだけが読む）
     this.setupPlan = Array.isArray(opts.setupPlan) ? opts.setupPlan : null;
@@ -427,7 +431,7 @@
         // 4つずつ＝後先先後先後後先（v11.1で 後先先後後先後先 から変更。CPUどうしの先攻勝率 41.1%→50.1%）
         // 3つずつ＝後先先後後先、2つずつ＝後先後先（これらは前と同じ）
         const second = 1 - this.first;
-        const pool = this.itemKeys.slice();
+        const pool = (this.draftPool || this.itemKeys).slice();
         const each = this.draftEach;
         const order = [];
         for (let i = 0; i < each * 2; i++) {
