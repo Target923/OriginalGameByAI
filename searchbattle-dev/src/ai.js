@@ -1176,8 +1176,10 @@
     const pHidden = Math.min(1, ctx.unrevealed - pSt);
     if (pHidden < 0.05) return null;
     // 隠れたキューブが入りうるブロック：撃破済み・見えているヒット・調べた結果のあるブロック・確かに見えているキューブのブロック・ステルスの前の×・ワープ前の位置は除く
-    const lastReveal = (ctx.kb.reveals || []).reduce((a, r) => Math.max(a, r.t), -1);
-    const tsList = ctx.stealthTimes.filter((t) => t > lastReveal);
+    // まだ見破っていないステルスの使った時刻（v15.1 から見破りはキューブごと。番号＝使った順で、見破ったものを除く）
+    const revealed = new Set();
+    for (const r of ctx.kb.reveals || []) for (const n of r.nums || []) revealed.add(n);
+    const tsList = (ctx.kb.stealths || []).filter((x, i) => !revealed.has(x.num != null ? x.num : i + 1)).map((x) => x.t).sort((a, b) => a - b);
     const ts0 = tsList.length ? tsList[0] : ctx.stealthTimes[0];
     let occM = 0;
     for (const o of ctx.occs) occM |= bit(o.c);

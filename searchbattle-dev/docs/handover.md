@@ -3,7 +3,8 @@
 新しいチャットで続きをするための資料。最初にこれを読み、ルールの細部が要るときだけ「確定ルール」「総括」の該当箇所を読む（全部は読まない）。
 
 ## いまの状態
-- ルール v15（ワープの作り直し）、エンジンのバージョン27（src/engine.js の `VERSION`）、通信の版3（src/net.js の `NET_VERSION`）。
+- ルール v15.1（v15 ワープの作り直し＋ステルスの見破りをキューブごとに）、エンジンのバージョン28（src/engine.js の `VERSION`）、通信の版4（src/net.js の `NET_VERSION`）。
+  - **ステルス v15.1（2026-10-31。ユーザーの指摘）**：見破られるのはそのキューブだけ（トリガー＝そのキューブ、ステルスアンサー＝宣言したブロックを含むキューブ、ぴったりのアンサー＝そのキューブ）。それまでは全部まとめて見破られていた。テストは test/stealth_check.js（`node test/stealth_check.js 60` で約6分）。
 - 直近の変更
   - **ワープ v15（2026-10-31。ユーザーの案。ユーザーが触って様子を見る）**：使ったときには動かず、キューブ・トリガーブロック（まだ当たっていないブロック）・移動先（空きブロック、回転だけ・反転なし）を決めておく。トリガーをコールされると発動（そのブロックがワープレティクルになり、移動先のトリガーにあたるブロックにもレティクル＝相手のヒント。1発目のヒットとして数える）。トリガーをコールされる前にアンサーで当てられても逃げる（ヒントなし。アンサーは成功扱い・手番は続く）。移動前は当たっていたブロック（アンサーなら宣言したブロック）だけ×W。ステルスとは同じキューブに重ねられない、差し出しでは発動しない、バズーカで取り消し。仕様の全文は docs/rules.md の「ワープ」と「v15」。
     - engine：validateItem の warp（params に cell＝トリガー）、_warpDest（移動先の条件。回転だけ。左右対称な形は回転の向きの番号に直す）、warpOptions・warpable、p.warpPlan（at・trigger・t・r0・c0・cells・mask）、call() のトリガーの枝（r:'wp'）、answer() の逃げる枝（escaped）、_warpFire（発動。kb.warps に partial・trigger・reticle・reticleT、アンサーなら key と fullCells）、イベント warpfire（from・trigger・reticle、ownerPriv に移動前全部と移動後）、kb.warpUses。VERSION 27。rotationOf を公開。
@@ -106,6 +107,7 @@
 | リプレイの再現 | `node test/replay_check.js` | 約4.5分 |
 | 大会（CPU だけ。アンサー失敗・点の合計も厳しく） | `node test/tour_sim.js 20` | 約1分 |
 | 画面 | `python3 test/vis129.py`（リプレイ）・`test/vis_sim.py`（シミュレーター）・`test/tour_e2e.py`（大会を画面で通す）・`test/e2e.py`（1試合モード：CPU戦・プレイヤーバトル） | 各2〜4分 |
+| ステルス（v15.1） | `node test/stealth_check.js 60`（見破りがキューブごと・推理の正しさ・リプレイ） | 約6分 |
 | ワープ（v15） | `node test/warp_check.js 60`（発動の印・推理の正しさ・リプレイ）・`python3 test/vis15.py`（画面） | 約5分・約1分 |
 | オンライン対戦（通信なしの模擬） | `node test/net_sim.js`（既定24試合。秘密が漏れない・ゲストの全部がホストと同じ・記録のやり直しと同じ・変な操作を断る） | 約30秒 |
 | オンライン対戦（画面・通信あり） | `python3 test/online_e2e.py`（PeerServer を 127.0.0.1:9000 に立て、ブラウザ2つで部屋〜決着〜もう一度〜退出。SB_NETDEPS に peer・peerjs を npm で入れる） | 約2分 |

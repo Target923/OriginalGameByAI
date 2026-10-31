@@ -41,7 +41,8 @@
   // 25：v14.2 ステルスのトリガーブロック（コールされると STEALTH HIT。すべてのステルスが見破られる）
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
-  const VERSION = 27;
+  // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  const VERSION = 28;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -523,7 +524,7 @@
       (p.hitOrder || (p.hitOrder = [])).push(c);
       if (p.stealth && c === p.stealthTrigger) {
         // トリガーブロック（v14.2）：隠れたキューブの弱点。ここをコールされると STEALTH HIT になり、
-        // ステルスアンサーと同じく、すべてのステルスのキューブが見破られる（このあと _revealAll）
+        // 見破られるのはこのキューブだけ（v15.1。ユーザーの指摘：v14.2 までは、ほかのステルスもまとめて見破られていた）
         // num：ステルスの番号（使った順。v14.3）。同じ番号の STEALTH HIT は同じキューブ
         v.marks[c] = { r: 'q', num: p.stealthNo, t, trigger: true };   // trigger：ここがトリガーブロックだった（画面で目の印を出す）
         me.kb.calls.push({ c, t, r: 'q', num: p.stealthNo });
@@ -556,7 +557,7 @@
         this._log(pi, `${me.name}：${this.coord(c)}をコール → ○`, null, 'hit');
       }
       this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num });
-      if (res.trigger) this._revealAll(foe.idx, foe.pieces.filter((x) => x.alive && x.stealth), pi);
+      if (res.trigger) this._revealAll(foe.idx, [p], pi);
       // 全ブロックに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない。見破りで撃破済みなら何もしない）
       if (p.alive && p.hitMask === p.mask && !p.stealth) {
         this._destroy(p, 'destroy');
@@ -605,8 +606,8 @@
     }
     if (target) {
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true });
-      // 隠れているステルスのキューブをぴったり当てたら、ふつうに撃破。ほかのステルスのキューブも見破られる（v14）
-      if (target.stealth) this._revealAll(foe.idx, hidden.filter((p) => p !== target), pi, null, target);
+      // 隠れているステルスのキューブをぴったり当てたら、ふつうに撃破。ほかのステルスのキューブは隠れたまま（v15.1）
+      if (target.stealth) this._revealAll(foe.idx, [], pi, null, target);
       this._destroy(target, 'answer');
       this._log(pi, `${me.name}：アンサー成功（${where}）`, null, 'kill', null, { cells: cells.slice() });
       this.lastAction = { kind: 'answer', pi, ok: true, cells };
@@ -614,14 +615,14 @@
       return { ok: true, success: true, size: target.size, ended };
     }
     // ステルスアンサー（v14）：宣言したブロックが全部、隠れているステルスのキューブのブロックならセーフ（失敗にならない）。
-    //  すべてのステルスのキューブが見破られる（×が STEALTH HIT に、アイテムの結果が本当の値に変わる）。手番は続く（アンサー成功と同じ）。
+    //  見破られるのは、宣言したブロックを含むステルスのキューブだけ（×が STEALTH HIT に、アイテムの結果が本当の値に変わる。v15.1）。手番は続く（アンサー成功と同じ）。
     //  1ブロックでよい（何ブロックでもよいが、関係ないブロックが1つでも入れば、ふつうのアンサーとして失敗）
     let sMask = 0;
     for (const p of hidden) sMask |= p.mask;
     if (sMask && (mask & ~sMask) === 0) {
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true, stealth: true });
       this._log(pi, `${me.name}：ステルスアンサー（${where}）→ ステルスを見破った`, null, 'kill', null, { cells: cells.slice() });
-      this._revealAll(foe.idx, hidden, pi, cells);
+      this._revealAll(foe.idx, hidden.filter((p) => p.mask & mask), pi, cells);
       this.lastAction = { kind: 'answer', pi, ok: true, stealth: true, cells };
       const ended = this._checkEnd();
       return { ok: true, success: true, stealth: true, ended };
@@ -774,10 +775,11 @@
       p.stealth = false;
       p.stealthRevealed = true;
     }
-    kb.reveals.push({ t: this.clock, n: pieces.length });
+    // nums：見破ったステルスの番号（STEALTH HIT の番号＝使った順。どのステルスがまだ隠れているかを CPU が知るため。v15.1）
+    kb.reveals.push({ t: this.clock, n: pieces.length, nums: pieces.map((p) => p.stealthNo) });
     return { turned, fixed: Array.from(new Set(fixed)), counts: countsChanged };
   };
-  // ステルスアンサー・ステルスのキューブの撃破：すべての隠れているステルスのキューブを見破る。全ブロック当たっていたキューブは撃破
+  // ステルスの見破り（トリガー・ステルスアンサー・ぴったりのアンサー）：pieces のキューブだけを見破る（v15.1）。全ブロック当たっていたキューブは撃破
   //  target：ぴったり当てて撃破するキューブ（このあと answer が撃破する）。×の付け替えとアイテムの結果の訂正だけして、ここでは撃破しない
   Game.prototype._revealAll = function (owner, pieces, actor, answered, target) {
     const all = target ? pieces.concat([target]) : pieces;
@@ -1131,7 +1133,7 @@
         // ステルスの番号（使った順に1・2…。見破られたら STEALTH HIT に添える。v14.3）
         me.stealthCount = (me.stealthCount || 0) + 1;
         p.stealthNo = me.stealthCount;
-        foe.kb.stealths.push({ t });
+        foe.kb.stealths.push({ t, num: p.stealthNo });   // num：ステルスの番号（STEALTH HIT に出るので相手も知る）
         result.cells = p.cells.slice();
         this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
         break;
