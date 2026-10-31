@@ -510,6 +510,8 @@
     if (!m) return '';
     if (m.r === 'x') {
       if (m.callable) return `<span class="mkw ink-x stale">${MARK.x}</span>`;
+      // 当てたワープのトリガー（wtrig）は、W の札の代わりにワープの印（同じ角に重なるため）
+      if (m.wtrig) return `<span class="mkw ink-x">${MARK.x}</span><span class="wtr" aria-hidden="true">${ICON.warp}</span>`;
       return `<span class="mkw ink-x">${MARK.x}</span>${m.warp ? '<span class="wtag" aria-hidden="true">W</span>' : ''}`;
     }
     let s = `<span class="mkw ink-${m.r}">${MARK[m.r]}</span>`;
@@ -528,16 +530,25 @@
     const fv = foe.view;
     const inSetup = g.phase === 'setup';
     const intel = opts.intel;
-    // ワープ（v15）：ワープを待っているキューブの移動先（薄いキューブの形で、自分のフィールドの色）と、選んでいる途中の移動先
-    const wdest = new Map();   // ブロック → その移動先の形（枠の線を引く辺を決めるため）
-    for (const q of P.pieces) if (q.alive && q.warpPlan) for (const c of q.warpPlan.cells) wdest.set(c, { mask: q.warpPlan.mask, set: false });
+    // ワープ（v15）：ワープを待っているキューブの移動先（薄いキューブの形で、自分のフィールドの色）と、選んでいる途中の移動先。
+    //  移動先の中の「ワープ後のトリガー」（トリガーを移動先へ回して運んだブロック＝トリガーで発動したときにワープレティクルが出るブロック）にも、
+    //  トリガーと同じ印を出す（2×2 のように回しても形が同じキューブでは、回すとトリガーの行き先だけが変わるため。ユーザーの指摘）。
+    //  キューブのブロックの並び（cells）は、向きを変えても同じ番号が同じブロックを指すので、トリガーの番号の移動先のブロックが行き先（engine の _warpFire と同じ）
+    const wdest = new Map();   // ブロック → その移動先の形（枠の線を引く辺を決めるため）と、ワープ後のトリガーか
+    for (const q of P.pieces) if (q.alive && q.warpPlan) {
+      const ti = q.cells.indexOf(q.warpPlan.trigger);
+      q.warpPlan.cells.forEach((c, i) => wdest.set(c, { mask: q.warpPlan.mask, set: false, trig: i === ti }));
+    }
     const ws = opts.warpSel;
     let wsTrig = -1;
     if (ws) {
       wsTrig = ws.trig;
       const q = P.pieces.find((x) => x.id === ws.pieceId);
       const cells = q && ws.pos ? cellsFor(q.shape, ws.t, ws.pos.r0, ws.pos.c0, N) : null;
-      if (cells) { const mk = cells.reduce((a, c) => a | (1 << c), 0); for (const c of cells) wdest.set(c, { mask: mk, set: true }); }
+      if (cells) {
+        const mk = cells.reduce((a, c) => a | (1 << c), 0), ti = q.cells.indexOf(ws.trig);
+        cells.forEach((c, i) => wdest.set(c, { mask: mk, set: true, trig: i === ti }));
+      }
     }
     let html = '';
     for (let c = 0; c < g.NN; c++) {
@@ -545,7 +556,11 @@
       let inner = '', style = '';
       const p = g.pieceAt(pi, c, true);
       const m = inSetup ? null : fv.marks[c];
-      if (!p && wdest.has(c)) { const d = wdest.get(c); cls += ' wdest' + (d.set ? ' wset' : '') + edgeClasses(d.mask, c, N); }
+      if (!p && wdest.has(c)) {
+        const d = wdest.get(c);
+        cls += ' wdest' + (d.set ? ' wset' : '') + edgeClasses(d.mask, c, N);
+        if (d.trig) inner += `<span class="wtr wtr-dest" aria-hidden="true">${ICON.warp}</span>`;   // ワープ後のトリガー
+      }
       if (p) {
         cls += ' pc' + edgeClasses(p.mask, c, N);
         if (p.isAdd) cls += ' addpc';
@@ -563,7 +578,10 @@
         const tg = p.stealthTrigger != null ? p.stealthTrigger : (p.stealth && p.alive ? Math.min.apply(null, p.cells) : -1);
         if (c === tg) { inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`; cls += ' trigger'; }
         // ワープのトリガーブロック（v15）：ワープを待っているキューブ、または選んでいる途中のトリガーに、ワープの印
-        if (p.alive && ((p.warpPlan && p.warpPlan.trigger === c) || c === wsTrig)) { inner += `<span class="wtr" aria-hidden="true">${ICON.warp}</span>`; cls += ' wtrigger' + (c === wsTrig ? ' wtsel' : ''); }
+        // ワープのトリガー（v15）：待っているワープのトリガー、選んでいる途中のトリガー、発動したあとのトリガー（warpTrig。移動先へ運ばれたブロック）に
+        //  ワープの印。発動・撃破のあとやリプレイでも残す（ステルスの目の印と同じ。ユーザーの希望）
+        const wt = p.warpPlan ? p.warpPlan.trigger : p.warpTrig;
+        if ((p.alive && c === wsTrig) || c === wt) { inner += `<span class="wtr" aria-hidden="true">${ICON.warp}</span>`; cls += ' wtrigger' + (c === wsTrig ? ' wtsel' : ''); }
         if (p.alive && p.warpPlan) cls += ' warping';
       }
       inner += cellMarkHTML(m, intel, c);
@@ -574,7 +592,7 @@
       if (!inSetup && fv.lastCall === c && opts.flash) cls += ' last';
       if (opts.sel && opts.sel.indexOf(c) >= 0) cls += ' sel';
       if (opts.clickable && opts.clickable(c)) cls += ' click';
-      const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}${p.warpPlan ? '（ワープ待ち' + (p.warpPlan.trigger === c ? '・トリガー' : '') + '）' : ''}` : ' 撃破済み') : (wdest.has(c) ? ' ワープの移動先' : '')) + probeLabel(intel, c, m);
+      const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}${p.warpPlan ? '（ワープ待ち' + (p.warpPlan.trigger === c ? '・トリガー' : '') + '）' : ''}` : ' 撃破済み') : (wdest.has(c) ? (wdest.get(c).trig ? ' ワープの移動先（ワープ後のトリガー）' : ' ワープの移動先') : '')) + probeLabel(intel, c, m);
       html += `<div class="${cls}" style="${style}" data-act="cell" data-board="${kind}" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${inner}</div>`;
     }
     return boardFrame(N, kind, html, opts.cls, { overlay: pairsSVG(intel, N) + (opts.overlay || '') });
@@ -617,6 +635,9 @@
       // トリガーブロック（v14.2）：当てたトリガーブロックと、答え合わせのときの相手のトリガーブロックに目の印
       const tgp = opts.reveal ? g.pieceAt(foe.idx, c, true) : null;
       if ((v.marks[c] && v.marks[c].trigger) || (tgp && tgp.stealthTrigger === c)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
+      // ワープのトリガー（v15）：当てたトリガー（いまは W付きの×）と、答え合わせのときの相手のトリガー（待っていたワープ・発動したあとのブロック）にワープの印
+      const wtg = tgp ? (tgp.warpPlan ? tgp.warpPlan.trigger : tgp.warpTrig) : -1;
+      if (tgp && wtg === c && !(v.marks[c] && v.marks[c].wtrig && !v.marks[c].callable)) inner += `<span class="wtr" aria-hidden="true">${ICON.warp}</span>`;   // 当てたトリガーの印は markHTML が出す
       if (opts.reveal && foe.treasure && foe.treasure.cell === c) inner += MARK.gem;
       const tl = v.tlog[c];
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
@@ -628,7 +649,7 @@
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : m.r === 'wp' ? ' ワープレティクル' : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? (m.wtrig ? ' ×（ワープ前の位置・トリガー）' : ' ×（ワープ前の位置）') : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : m.r === 'wp' ? ' ワープレティクル' : ' ○';
       label += probeLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
@@ -834,7 +855,7 @@
       case 'warp-place': {
         // v15：移動先をタップして置き、回転で向きを合わせ、「完了」で決める（反転はなし）。自分のキューブのブロックをタップすると、トリガーを選び直せる
         const w = ui.warp, ok = !!(w && w.pos);
-        main = itemHead('warp', '移動先の空きブロックをタップして置き、回転で向きを合わせて「完了」。トリガーは、自分のキューブのまだ当たっていないブロックをタップすると選び直せます。');
+        main = itemHead('warp', '移動先の空きブロックをタップして置き、回転で向きを合わせて「完了」。移動先の印のブロックが、ワープ後のトリガー（トリガーで発動したとき、ワープレティクルが出るブロック）です。トリガーは、自分のキューブのまだ当たっていないブロックをタップすると選び直せます。');
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn primary" data-act="warp-done" ${ok ? '' : 'disabled'}>完了</button>${cancel}`;
         break;
       }
@@ -1857,7 +1878,8 @@
       const p = g.players[v].pieces.find((x) => x.id === w.pieceId);
       if (!p || g.pieceAt(v, app.hover)) return null;
       const pos = warpPos(g, v, p, w.t, app.hover);
-      if (pos.ok) return { cells: pos.cells, ok: true };
+      // trig：ワープ後のトリガーのブロック（置く前の形にも印を出す）
+      if (pos.ok) return { cells: pos.cells, ok: true, trig: pos.cells[p.cells.indexOf(w.trig)] };
       const a = anchorFor(p.shape, w.t, app.hover, N);
       return a ? { cells: cellsFor(p.shape, w.t, a.r0, a.c0, N) || [], ok: false } : null;
     }
@@ -1865,11 +1887,15 @@
   }
   function applyPreview() {
     root.querySelectorAll('.cell.pv-ok, .cell.pv-bad').forEach((el) => el.classList.remove('pv-ok', 'pv-bad'));
+    root.querySelectorAll('.wtr-pv').forEach((el) => el.remove());
     const pv = previewCells();
     if (!pv) return;
     for (const c of pv.cells) {
       const el = root.querySelector(`[data-board="own"] .cell[data-cell="${c}"]`);
-      if (el) el.classList.add(pv.ok ? 'pv-ok' : 'pv-bad');
+      if (!el) continue;
+      el.classList.add(pv.ok ? 'pv-ok' : 'pv-bad');
+      // ワープ（v15）：ワープ後のトリガーのブロックに、トリガーと同じ印
+      if (c === pv.trig) el.insertAdjacentHTML('beforeend', `<span class="wtr wtr-pv" aria-hidden="true">${ICON.warp}</span>`);
     }
   }
   // サーチラインの列・行ラベルに触れたら、その列・行を光らせる

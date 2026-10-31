@@ -25,6 +25,8 @@ STATE = """() => { const a = window.__sb.app, g = a.game, P = g.players[0];
   return { mode: a.ui.mode, warp: a.ui.warp, armed,
     wtr: document.querySelectorAll('.board[data-board="own"] .wtr').length,
     wdest: document.querySelectorAll('.board[data-board="own"] .cell.wdest').length,
+    // ワープ後のトリガー（移動先の中で、トリガーで発動したときにワープレティクルが出るブロック）の印
+    wtrDest: [...document.querySelectorAll('.board[data-board="own"] .wtr-dest')].map((e) => +e.closest('.cell').dataset.cell),
     done: !!document.querySelector('[data-act="warp-done"]:not([disabled])'),
     errs: window.__errs || [] }; }"""
 
@@ -126,12 +128,18 @@ async def main():
     for o in out:
         print(o['view'], 'pick', o['pick']['mode'], o['pick']['warp'], 'wtr', o['pick']['wtr'])
         print('  repick trig', o['repick']['warp'] and o['repick']['warp'].get('trig'), 'placed pos', o['placed']['warp'] and o['placed']['warp'].get('pos'), 'wdest', o['placed']['wdest'], 'done', o['placed']['done'])
-        print('  armed', o['armed']['armed'], 'wtr', o['armed']['wtr'], 'wdest', o['armed']['wdest'], 'mode', o['armed']['mode'])
+        print('  armed', o['armed']['armed'], 'wtr', o['armed']['wtr'], 'wdest', o['armed']['wdest'], 'wtrDest', o['armed']['wtrDest'], 'mode', o['armed']['mode'])
         print('  fire', o['fire'])
         print('  escape', o['escape'])
         print('  errs', o['errs'][:5])
         if o['errs']: bad += 1
         if not o['armed']['armed'] or o['armed']['wtr'] < 1 or o['armed']['wdest'] < 1: bad += 1
+        # ワープ後のトリガーの印が1つだけ、トリガーを移動先へ運んだブロックに出ている
+        a0 = o['armed']['armed'][0] if o['armed']['armed'] else None
+        if a0 and o['armed']['wtrDest'] != [a0['dest'][a0['cells'].index(a0['trig'])]]: bad += 1
+        # 発動したとき、レティクルはその印のブロックに出る
+        f = o['fire']
+        if a0 and f.get('reticle') is not None and f['reticle'] != a0['dest'][a0['cells'].index(a0['trig'])]: bad += 1
         f = o['fire']
         if f.get('r') and (f['r'] != 'wp' or f['mark'] != 'wp' or f['before'] == f['after']): bad += 1
         e = o['escape']

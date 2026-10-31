@@ -816,10 +816,14 @@
     const idx = oldCells.indexOf(plan.trigger);   // トリガーが、キューブの何番目のブロックか（向きを変えても番号は同じブロックを指す）
     const shown = by === 'answer' ? oldCells.slice() : oldCells.filter((c) => p.hitMask & bit(c));
     for (let c = 0; c < this.NN; c++) { const m = v.marks[c]; if (m && m.r === 'x') m.callable = true; }
-    for (const c of shown) v.marks[c] = { r: 'x', callable: false, t, warp: true };
+    // wtrig：相手が当てたトリガーのブロック（画面でワープの印を出す。ステルスの trigger と同じ考え方）
+    for (const c of shown) v.marks[c] = by === 'trigger' && c === plan.trigger ? { r: 'x', callable: false, t, warp: true, wtrig: true } : { r: 'x', callable: false, t, warp: true };
     // キューブを動かす（被弾はリセット）
     p.t = plan.t; p.r0 = plan.r0; p.c0 = plan.c0;
     p.cells = plan.cells.slice(); p.mask = plan.mask; p.hitMask = 0; p.hitOrder = [];
+    // warpTrig：ワープしたあとのトリガーのブロック（トリガーを移動先へ運んだブロック）。発動したあとも、持ち主の画面・リプレイ・答え合わせで
+    //  ワープの印を出し続ける（どこがトリガーだったか分かるように。ステルスの stealthTrigger と同じ。ユーザーの希望）
+    p.warpTrig = p.cells[idx];
     const hadT = !!(owner.treasure && owner.treasure.pieceId === p.id);
     if (hadT) {
       owner.treasure.cell = p.cells[owner.treasure.idx];
