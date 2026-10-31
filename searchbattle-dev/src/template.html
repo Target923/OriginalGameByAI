@@ -376,8 +376,8 @@ h1, h2, h3 { text-wrap: balance; }
 .ink-q .dot { fill: currentColor; stroke: none; }
 /* ワープレティクル（v15 のワープで使う予定）：ラズベリー（ユーザーの指定）。ほかのヒットの印と同じく、下へ落とす影と同じ色の光を重ねる */
 .ink-wp { color: #B24962; filter: var(--mk-shadow) drop-shadow(0 0 4px #B24962); }
-/* 中央の×：○の中央の点と同じ大きさに収めるため、ほかの線（3）より細くする */
-.ink-wp .wx { stroke-width: 1.8; }
+/* 中央の×：小さな印なので、ほかの線（3）より細くする（同じ太さだと×がつぶれて点に見える） */
+.ink-wp .wx { stroke-width: 2; }
 .ink-x { color: var(--steel-2); opacity: .82; filter: var(--mk-shadow); }
 .ink-x .mk { stroke-width: 2.4; }
 /* 再コールできる×は、線はそのままで薄く */
