@@ -2,7 +2,7 @@
 //  1. 生きている個体のマスに「再コール不可の×」が付いていない（当てられない状態にならない）
 //  2. 個体のマスが (形, 向き, 位置) と一致し、生きている個体どうしが重ならない
 //  3. ◎・○ は生きている個体のヒット済みマスか、撃破済みのマスにだけ付く
-//  4. ワープのログ・イベント・×マークがすべて同じ移動前のマスを指す
+//  4. ワープ（v15）の発動の検査は test/warp_check.js（ここではランダムに使うだけ）
 //  5. バズーカで分解した個体は1マスキューブに置き換わり、ヒット済みのマスは撃破済み。トレジャーは残ったマスの持ち主を指す
 const E = require('../src/engine.js');
 const AI = require('../src/ai.js');
@@ -63,7 +63,7 @@ function check(G, tag) {
         if (m && m.r === 'x' && !m.callable && !p.stealth) fail('unhittable', { tag, c: G.coord(c), piece: p.cells.map((x) => G.coord(x)), mark: m });
         if (fv.dead[c]) fail('dead-on-live', { tag, c });
         const hit = !!(p.hitMask & (1 << c));
-        const hm = m && (m.r === 'o' || m.r === 'oo' || m.r === 'q');   // q＝Stealth hit（v13）
+        const hm = m && (m.r === 'o' || m.r === 'oo' || m.r === 'q' || m.r === 'wp');   // q＝Stealth hit（v13）、wp＝ワープレティクル（v15）
         if (hit !== !!hm && !(p.stealth && hit && m && m.r === 'x')) fail('hit-mark', { tag, c: G.coord(c), hit, m });
       }
     }
@@ -97,17 +97,16 @@ function randomItem(G, pi, rng) {
       params = { a, b }; break;
     }
     case 'warp': {
-      const ps = G.living(pi); const p = ps[Math.floor(rng() * ps.length)];
-      const opts = [];
-      for (let t = 0; t < 8; t++) for (let r0 = 0; r0 < N; r0++) for (let c0 = 0; c0 < N; c0++) {
-        const pr = { pieceId: p.id, t, r0, c0 };
-        if (G.validateItem(pi, 'warp', pr).ok) opts.push(pr);
-      }
-      if (!opts.length) return false;
-      params = opts[Math.floor(rng() * opts.length)];
+      // v15：キューブ・トリガー（まだ当たっていないブロック）・移動先（回転だけ）を決めておく
+      const ps = G.warpable(pi); if (!ps.length) return false;
+      const p = ps[Math.floor(rng() * ps.length)];
+      const open = p.cells.filter((c) => !(p.hitMask & (1 << c)));
+      const opts = G.warpOptions(pi, p);
+      const o = opts[Math.floor(rng() * opts.length)];
+      params = { pieceId: p.id, cell: open[Math.floor(rng() * open.length)], t: o.t, r0: o.r0, c0: o.c0 };
       break;
     }
-    case 'stealth': { const ps = G.living(pi).filter((p) => !p.stealth && !p.stealthRevealed && p.hitMask !== p.mask); if (!ps.length) return false; const sp = ps[Math.floor(rng() * ps.length)]; const op = sp.cells.filter((c) => !(sp.hitMask & (1 << c))); params = { pieceId: sp.id, cell: op[Math.floor(rng() * op.length)] }; break; }
+    case 'stealth': { const ps = G.living(pi).filter((p) => !p.stealth && !p.stealthRevealed && !p.warpPlan && p.hitMask !== p.mask); if (!ps.length) return false; const sp = ps[Math.floor(rng() * ps.length)]; const op = sp.cells.filter((c) => !(sp.hitMask & (1 << c))); params = { pieceId: sp.id, cell: op[Math.floor(rng() * op.length)] }; break; }
   }
   if (!params) return false;
   const r = G.useItem(pi, k, params);
@@ -115,21 +114,11 @@ function randomItem(G, pi, rng) {
   return r.ok;
 }
 
+// ワープ（v15）は使ったときには動かない（トリガーのコール・アンサーで発動）。発動の検査は test/warp_check.js。ここでは決めた数だけ数える
 const origUse = E.Game.prototype.useItem;
 E.Game.prototype.useItem = function (pi, key, params) {
-  if (key !== 'warp') return origUse.call(this, pi, key, params);
-  const p = this.players[pi].pieces.find((x) => x.id === (params && params.pieceId));
-  const before = p ? p.cells.slice() : null;
-  const nEv = this.events.length, nLog = this.log.length;
   const r = origUse.call(this, pi, key, params);
-  if (!r.ok) return r;
-  stats.warps++;
-  const ev = this.events.slice(nEv).find((e) => e.type === 'item' && e.key === 'warp');
-  const lg = this.log[nLog];
-  const fromTxt = E.coordList(before, this.N);
-  if (!ev || ev.oldCells.join() !== before.join()) fail('warp-event', { before, ev });
-  if (!lg || lg.text.indexOf(fromTxt) < 0) fail('warp-log', { fromTxt, text: lg && lg.text });
-  if (p.cells.some((c) => before.indexOf(c) >= 0)) fail('warp-overlap', { before, after: p.cells });
+  if (key === 'warp' && r.ok) stats.warps++;
   return r;
 };
 

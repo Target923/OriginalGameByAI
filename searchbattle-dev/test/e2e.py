@@ -104,23 +104,16 @@ async def play_game(page, rules, mode, log, shots=False, do_items=True, items='a
                     if c is None: await page.click('[data-act=cancel]'); used_items.add(k); continue
                     await page.click(f'.cell[data-board=own][data-cell="{c}"]')
                 elif k=='warp':
-                    p = await page.evaluate(f"() => {{ const g=window.__sb.app.game; const p=g.living({hv}).find(p=>!p.isAdd); if(!p) return null; for(let c=0;c<g.NN;c++){{ }} return {{cell:p.cells[0]}} }}")
-                    if p is None: continue
-                    await page.click(f'.cell[data-board=own][data-cell="{p["cell"]}"]')
-                    await page.click('[data-act=warp-rotate]')
-                    # 有効な移動先を探してクリック
-                    tgt = await page.evaluate(f"""() => {{ const a=window.__sb.app,g=a.game,w=a.ui.warp,p=g.players[{hv}].pieces.find(x=>x.id===w.pieceId);
-                        for(let c=0;c<g.NN;c++){{ const o=SBEngine.ORIENT[p.shape][w.t]; }}
-                        return null }}""")
-                    # 盤面の各セルを試す（UIのアンカー計算を使う）
-                    placed=False
-                    for c in range(25 if rules=='final' else 16):
-                        before = await page.evaluate("() => window.__sb.app.game.itemUsed")
-                        await page.click(f'.cell[data-board=own][data-cell="{c}"]')
-                        after = await page.evaluate("() => window.__sb.app.game.itemUsed")
-                        if after and not before: placed=True; break
-                    if not placed:
-                        await page.click('[data-act=cancel]'); used_items.add(k); continue
+                    # v15：トリガー（まだ当たっていないブロック）→ 移動先（いまの向きで置けるブロック）→ 完了。ワープできるキューブがなければ、選べずに知らせが出る
+                    info = await page.evaluate(f"""() => {{ const g=window.__sb.app.game; const p=g.warpable({hv}).find(p=>g.warpOptions({hv},p).some(o=>o.t===p.t));
+                        if(!p) return null; const o=g.warpOptions({hv},p).find(o=>o.t===p.t); return {{trig:p.cells.find(c=>!(p.hitMask&(1<<c))), dest:o.cells[0]}} }}""")
+                    if info is None:
+                        if await page.evaluate("() => !!window.__sb.app.ui.mode"): await page.click('[data-act=cancel]')
+                        used_items.add(k); continue
+                    await page.click(f'.cell[data-board=own][data-cell="{info["trig"]}"]')
+                    await page.click(f'.cell[data-board=own][data-cell="{info["dest"]}"]')
+                    try: await page.click('[data-act=warp-done]', timeout=2000)
+                    except Exception: await page.click('[data-act=cancel]'); used_items.add(k); continue
                 used_items.add(k); done=True
                 log.append(('item',k))
                 break

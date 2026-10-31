@@ -81,7 +81,9 @@
     const latest = new Map();
     for (const k of kb.calls) if (k.r !== 'x' && !explained(k.c, k.t)) latest.set(k.c, k);
     const U = Array.from(latest.values()).sort((a, b) => a.t - b.t);
-    const groups = U.filter((k) => k.r === 'oo').map((k) => ({ num: k.num, c: k.c, t: k.t }));
+    // ワープレティクル（v15）：トリガーをコールされてワープしたキューブの、移動後の1発目のヒット。◎と同じく「別のキューブの最初のヒット」として
+    //  グループにする（番号はないので、時刻から作った名前を付ける）。wp：このグループはワープしたキューブ（groupCands で移動の条件を使う）
+    const groups = U.filter((k) => k.r === 'oo' || k.r === 'wp').map((k) => (k.r === 'wp' ? { num: 'w' + k.t, c: k.c, t: k.t, wp: true } : { num: k.num, c: k.c, t: k.t }));
     const oList = U.filter((k) => k.r === 'o').map((k) => ({ c: k.c, t: k.t }));
     let ooMask = 0; for (const g of groups) ooMask |= bit(g.c);
     // Stealth hit（v13）：◎か○か分からないヒット。「新しいキューブの最初の1発（番号のない◎）」か「前に見つかったキューブの○」のどちらか。
@@ -108,6 +110,15 @@
     // t より後の分解のどれかで、c が分解されたキューブのブロックだったかもしれない
     const splitTouches = (c, t) => splitList.some((sp) => sp.t > t && !safeFromSplit(c, sp));
     const hitBefore = (c, t) => { const u = Ucell.get(c); return !!u && u.t < t; };
+    // トリガーで発動したワープ（v15）：移動前の位置は、当たっていたブロックしか分からない（当たっていないブロックは伏せられる）。
+    //  そのため、ワープの前にそのキューブの当たっていないブロックで調べた事実（形・ブロック数・つながり・同じキューブ）は、
+    //  もう空いたブロックの事実かもしれない。分かっているブロックから（5−分かっている数）ブロック以内は、そのキューブだったかもしれないので使わない。
+    //  ただし、ワープの前からヒットしていて今も説明のつかないブロックは、ほかのキューブなので使ってよい（ワープしたキューブのヒットは全部公開される）
+    const partialWarps = kb.warps.filter((w) => w.partial).map((w) => ({ t: w.t, mask: w.oldMask, reach: Math.max(0, 5 - popcount(w.oldMask)) }));
+    const distTo = (c, m) => { let d = Infinity; for (const x of bitsOf(m)) { const k = blockDist(c, x, N); if (k < d) d = k; } return d; };
+    const safeFromWarp = (c, w) => hitBefore(c, w.t) || distTo(c, w.mask) > w.reach;
+    // t より後のトリガーのワープのどれかで、c がワープしたキューブの（伏せられた）ブロックだったかもしれない
+    const warpTouches = (c, t) => partialWarps.some((w) => w.t > t && !(w.mask & bit(c)) && !safeFromWarp(c, w));
     const pairs = [];
     const derivedOccs = [];
     for (const p of kb.pairs) {
@@ -115,6 +126,8 @@
         // 同じキューブの2ブロック：どちらかが分解されたキューブでなければ、もう片方も同じキューブなので分解されていない
         if (explained(p.a, p.t) || explained(p.b, p.t)) continue;
         if (splitList.some((sp) => sp.t > p.t && !safeFromSplit(p.a, sp) && !safeFromSplit(p.b, sp))) continue;
+        // ワープ（トリガー）も同じ考え方：どちらかがワープしたキューブではないと言い切れれば、もう片方も同じキューブなのでワープしていない
+        if (partialWarps.some((w) => w.t > p.t && !safeFromWarp(p.a, w) && !safeFromWarp(p.b, w))) continue;
         pairs.push(p);
         derivedOccs.push({ c: p.a, t: p.t, cat: null }, { c: p.b, t: p.t, cat: null, dup: true });
       } else if (hitBefore(p.a, p.t) || hitBefore(p.b, p.t) || !warpedAfter(p.t)) pairs.push(p);
@@ -136,7 +149,7 @@
     // ステルス（v14）：見破られていない数（使った数−見破った数）。見破られていないステルスのキューブは、
     // コールが×・アイテムが NoData・数に入らないので、見えている世界では「いない」のと同じに見える
     const unrevealed = Math.max(0, stealthTimes.length - (kb.reveals || []).reduce((a, r) => a + r.n, 0));
-    const occs = kb.occs.filter((o) => !explained(o.c, o.t))
+    const occs = kb.occs.filter((o) => !explained(o.c, o.t) && !warpTouches(o.c, o.t))
       .map((o) => ((o.cat || o.size || o.deg != null) && splitTouches(o.c, o.t) ? { c: o.c, t: o.t, cat: null, src: o.src } : o))
       .concat(derivedOccs);
     const occMaskBefore = (t0) => { let m = 0; for (const o of occs) if (o.t < t0) m |= bit(o.c); return m; };
@@ -156,6 +169,8 @@
     const addEnt = kb.adds.map((a) => ({ t: a.t, col: a.col, alive: true }));
     const sortedWarps = kb.warps.slice().sort((a, b) => a.t - b.t);
     for (const w of sortedWarps) {
+      // トリガーで発動したワープ（v15）は、移動後のレティクルがグループ（見つかったキューブ）になるので、ここでは追わない（形も分からない）
+      if (!w.key) continue;
       if (w.size === 1) {
         const col = bitsOf(w.oldMask)[0] % N;
         const pick = addEnt.filter((a) => a.alive && a.t < w.t && a.col === col).pop()
@@ -238,6 +253,26 @@
     const fa = base | ctx.xMaskAll | ctx.oldMaskAll;
     // 1ブロックのキューブ（バズーカの破片）は当たれば撃破されるので、生きている◎のキューブにはならない（候補は上の「全ブロック命中」で落ちる）
     const sizes = ctx.fragPossible ? [1, 2, 3, 4, 5] : [2, 3, 4, 5];
+    // ワープレティクルのグループ（v15）：ワープしたキューブだと分かっているので、「動いていないキューブ」（枝 a）と「ステルス」（枝 s）は考えない。
+    //  移動の条件（ワープより後の×だけを避ける・移動前の位置に重ならない・形は移動前と同じで回転だけ）で候補を作る
+    if (g.wp) {
+      const w = ctx.kb.warps.find((x) => x.reticle === g.c && x.reticleT === g.t);
+      if (w) {
+        warpGroupCands(g, w, ctx, base, add, null);
+        // ワープの後でステルスにされたかもしれない（ワープしたあとのキューブには、ステルスを使える）。ふつうの◎の枝 s と同じ考え方
+        if (ctx.unrevealed > 0) {
+          const unc = uncalledMask(ctx);
+          for (const ts of ctx.stealthTimes) {
+            if (ts <= g.t) continue;
+            let after = 0;
+            for (const u of ctx.U) if (u.t > ts) after |= bit(u.c);
+            for (const o of ctx.occs) if (o.t > ts && (o.src === 'number' || o.src === 'shape' || o.src === 'node')) after |= bit(o.c);
+            warpGroupCands(g, w, ctx, others | early | ctx.deadMask, add, { ts, after, unc });
+          }
+        }
+      }
+      return finishCands(g, out, ctx);
+    }
     for (const s of sizes) {
       if (s === 1) {
         // 1ブロックのキューブは分解のときにできるので、それより前の×やワープ前の位置とは関係ない。◎のブロックそのものだけを考える
@@ -257,11 +292,16 @@
       }
     }
     for (const w of ctx.kb.warps) {
+      // トリガーで発動したワープ（v15）のキューブは、移動後のレティクルのグループだけ（上の g.wp）。ほかの◎はそのキューブではない
+      if (!w.key) continue;
       if (w.t >= g.t || w.size < 2) continue;
       if (!ctx.sizeAllowed(w.size) || !ctx.catAllowed(w.cat)) continue;
       const fb = base | ctx.xMaskAfter(w.t) | w.oldMask | ctx.oldMaskAfter(w.t) | ctx.occMaskBefore(w.t);
+      // アンサーで当てて逃げられたワープ（v15）：移動前の形が全部分かっていて、向きはそれを回しただけ（反転なし）
+      const rot = w.fullCells ? rotSigs(w.key, w.fullCells, ctx) : null;
       for (const P of ctx.PL[w.key]) {
         if (!(P.mask & bit(g.c)) || (P.mask & fb)) continue;
+        if (rot && !rot.has(ORIENT[w.key][P.t].sig)) continue;
         if (!factsOK(P, ctx.occs, w.t, ctx.N)) continue;
         add(P, 'w');
       }
@@ -293,6 +333,10 @@
         }
       }
     }
+    return finishCands(g, out, ctx);
+  }
+  // 候補の一覧を仕上げる（ステルスの枝の印・Stealth hit の merge 候補）
+  function finishCands(g, out, ctx) {
     const list = Array.from(out.values());
     for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     // Stealth hit のグループ：「前に見つかったキューブの○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
@@ -302,6 +346,58 @@
       list.push({ mask: 0, key: null, size: 0, cat: null, cells: [], branches: ['m'], w: wsum, full: false, lastHit: -1, merge: true });
     }
     return list;
+  }
+  // ワープレティクルのグループの候補（v15）。w：そのワープ（kb.warps）。ワープしたキューブについて分かっていること：
+  //  ・移動前に当たっていたブロック（w.oldCells。トリガーも含む）は同じキューブで、形は移動前と同じ・向きは回しただけ（反転なし）
+  //   → トリガーがレティクルに重なるように、移動前のブロックを4通りに回して置いた形のどれかを、候補は必ず含む
+  //  ・ワープより後の×・NoData のブロック、移動前に分かっているブロックには重ならない（ワープより前の×には動いてきうる）
+  //  ・ワープより後に調べた事実（形・ブロック数・つながり）と合う
+  //  st（ステルスの枝）：{ ts＝ステルスの時刻, after＝ステルスの後のヒット・調べた結果のあるブロック, unc＝まだコールされていないブロック }。
+  //   ステルスの後の×・NoData のブロックにも広がりうる（そのキューブへのコールは×に見えるため）。トリガー（まだコールされていないブロック）を含む
+  function warpGroupCands(g, w, ctx, base, add, st) {
+    const N = ctx.N;
+    const tr = Math.floor(w.trigger / N), tc = w.trigger % N;
+    const rr = Math.floor(g.c / N), rc = g.c % N;
+    const images = [];
+    for (let k = 0; k < 4; k++) {
+      let m = 0, ok = true;
+      for (const c of w.oldCells) {
+        let dr = Math.floor(c / N) - tr, dc = (c % N) - tc;
+        for (let j = 0; j < k; j++) { const tmp = dr; dr = dc; dc = -tmp; }   // engine の transform と同じ向きの回転
+        const r = rr + dr, cc = rc + dc;
+        if (r < 0 || cc < 0 || r >= N || cc >= N) { ok = false; break; }
+        m |= bit(r * N + cc);
+      }
+      if (ok) images.push(m);
+    }
+    if (!images.length) return;
+    const xm = st ? ctx.xMaskBetween(w.t, st.ts) | st.after : ctx.xMaskAfter(w.t);
+    const fb = base | xm | w.oldMask | ctx.oldMaskAfter(w.t) | ctx.occMaskBefore(w.t);
+    const occs = st ? ctx.occs.filter((o) => o.t < st.ts) : ctx.occs;
+    const minSize = Math.max(2, popcount(w.oldMask));
+    for (const s of [2, 3, 4, 5]) {
+      // ステルスのキューブは数（サーチキューブ）に入らないので、ステルスの枝では在庫だけを見る（ふつうの枝 s と同じ）
+      if (s < minSize || !(st ? ctx.stockBound[s] > 0 : ctx.sizeAllowed(s))) continue;
+      for (const key of SHAPES_BY_SIZE[s]) {
+        if (!st && !ctx.catAllowed(SHAPES[key].cat)) continue;
+        for (const P of ctx.PL[key]) {
+          if (!(P.mask & bit(g.c)) || (P.mask & fb)) continue;
+          if (!images.some((m) => (P.mask & m) === m)) continue;
+          if (st && !(P.mask & st.unc)) continue;
+          if (!factsOK(P, occs, w.t, N)) continue;
+          if (st) add(P, 's', 0.3); else add(P, 'w');
+        }
+      }
+    }
+  }
+  // アンサーで逃げられたワープの、移動後にありうる向き（形の sig）：移動前の向きを回したものだけ（反転なし。v15）
+  function rotSigs(key, cells, ctx) {
+    const m = 0 | cells.reduce((a, c) => a | bit(c), 0);
+    const P0 = ctx.PL[key].find((P) => P.mask === m);
+    if (!P0) return null;
+    const set = new Set();
+    for (let t = 0; t < 8; t++) if (E.rotationOf(key, P0.t, t)) set.add(ORIENT[key][t].sig);
+    return set;
   }
 
   // ------------------------------------------------------------------
@@ -1209,27 +1305,19 @@
     return p;
   }
 
-  function bestWarpTarget(game, pi, piece) {
-    const N = game.N;
-    const opts = [];
-    for (let t = 0; t < 8; t++) {
-      const o = ORIENT[piece.shape][t];
-      for (let r0 = 0; r0 + o.h <= N; r0++) for (let c0 = 0; c0 + o.w <= N; c0++) {
-        const params = { pieceId: piece.id, t, r0, c0 };
-        if (game.validateItem(pi, 'warp', params).ok) opts.push(params);
-      }
-    }
+  // ワープ（v15）の移動先：選べる移動先（回転だけ）のうち、相手がすでに×を付けたブロックを少し好む（人には見落とされやすい）。あとは抽選
+  function bestWarpDest(game, pi, piece) {
+    const opts = game.warpOptions(pi, piece);
     if (!opts.length) return null;
-    // 相手がすでに×を付けたブロックを少し好む（見落とされやすい）
     const foeView = game.players[1 - pi].view;
-    const score = (p) => {
-      const cells = cellsFor(piece.shape, p.t, p.r0, p.c0, N);
+    const score = (o) => {
       let s = 0;
-      for (const c of cells) if (foeView.marks[c] && foeView.marks[c].r === 'x') s += 1;
+      for (const c of o.cells) if (foeView.marks[c] && foeView.marks[c].r === 'x') s += 1;
       return s + game.rng() * 1.5;
     };
-    opts.sort((a, b) => score(b) - score(a));
-    return opts[0];
+    let best = opts[0], bs = -Infinity;
+    for (const o of opts) { const s = score(o); if (s > bs) { bs = s; best = o; } }
+    return best;
   }
 
   function bestAddCell(game, pi) {
@@ -1244,29 +1332,49 @@
     return bestCells[Math.floor(game.rng() * bestCells.length)];
   }
 
-  // 防御のワープ：見破られかけたキューブを逃がす
-  function defensiveWarp(game, pi, free) {
-    const me = game.players[pi];
+  // ワープ（v15）：キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると、移動先へ逃げる。
+  //  mode（policy.warp）：
+  //   'threat'（既定）：相手に形を絞られかけている、当たっているキューブに使う（相手の推理での候補が warpCands 通り以下。既定3）。
+  //     相手は確かなときにアンサーするので、その前に付けておけば、アンサーされても逃げられる
+  //   'hit'：当たったキューブにすぐ使う／'early'：1〜3ターン目に、まだ当たっていないキューブに使う／'none'：使わない
+  //  最後の1キューブには、どの方針でも先に使う（全滅を1回防げる）。1ブロックのキューブ（破片）には使わない（トリガーで移ると、
+  //  移動先のレティクルで全ブロックに当たったことになり、そこで撃破されるため）
+  //  トリガーブロック：相手に撃たれにくそうなブロック（ステルスと同じ選び方）。トリガーで発動すると移動先のヒントが出るが、
+  //  アンサーで発動すればヒントは出ないので、トリガーは撃たれにくい方がよい
+  function chooseWarp(game, pi) {
+    const pol = policy[pi] || {};
+    const mode = pol.warp || 'threat';
+    if (mode === 'none') return null;
     const living = game.living(pi);
-    const livingReal = living.filter((p) => !p.isAdd);
-    const ex = exposure(game, pi);
-    let best = null, bestV = 0;
-    for (const p of living) {
-      if (p.isAdd || p.stealth) continue;   // ステルス中のキューブはワープできない（v14）
-      const e = ex.get(p.id);
-      if (!e) continue;
-      const hits = popcount(p.hitMask);
-      if (!hits) continue;
-      const danger = Math.max(e.danger, e.hitsLeft <= 1 ? 0.9 : 0);
-      const last = livingReal.length === 1 ? 4 : 0;
-      const value = (p.size + last + (me.treasure && me.treasure.pieceId === p.id ? 1 : 0)) * danger;
-      if (danger >= 0.5 && value > bestV && (p.size >= 3 || last)) { best = p; bestV = value; }
+    const cands = game.warpable(pi).filter((p) => p.size >= 2);
+    if (!cands.length) return null;
+    let pick = null;
+    if (living.length === 1) pick = cands[0];
+    else if (mode === 'early') {
+      if (game.turn > (pol.warpTurn || 3)) return null;
+      const open = cands.filter((p) => !p.hitMask);
+      if (open.length) pick = open[Math.floor(game.rng() * open.length)];
+    } else if (mode === 'hit') {
+      const hit = cands.filter((p) => p.hitMask);
+      if (hit.length) pick = hit[Math.floor(game.rng() * hit.length)];
+    } else {
+      let ex = null;
+      try { ex = exposure(game, pi); } catch (e) { ex = null; }
+      const lim = pol.warpCands || 3;
+      const me = game.players[pi];
+      let bestV = 0;
+      for (const p of cands) {
+        if (!p.hitMask) continue;
+        const e = ex && ex.get(p.id);
+        if (!e || !(e.cands <= lim)) continue;
+        const v = e.danger * (p.size + (me.treasure && me.treasure.pieceId === p.id ? 1 : 0));
+        if (v > bestV) { bestV = v; pick = p; }
+      }
     }
-    if (best && (free('warp') || best.size >= 4 || livingReal.length === 1)) {
-      const tgt = bestWarpTarget(game, pi, best);
-      if (tgt) return { key: 'warp', params: tgt };
-    }
-    return null;
+    if (!pick) return null;
+    const dest = bestWarpDest(game, pi, pick);
+    if (!dest) return null;
+    return { key: 'warp', params: { pieceId: pick.id, cell: stealthTrigger(game, pi, pick), t: dest.t, r0: dest.r0, c0: dest.c0 } };
   }
 
   // ステルス（v14）：選んだキューブを隠す（コールは×・アイテムは NoData・数に入らない）。ステルスのブロックだけでアンサーされると見破られる。
@@ -1292,7 +1400,7 @@
     const pol = policy[pi] || {};
     const mode = pol.stealth || 'early';
     const living = game.living(pi);
-    const open = living.filter((p) => !p.stealth && !p.stealthRevealed && p.hitMask !== p.mask);
+    const open = living.filter((p) => !p.stealth && !p.stealthRevealed && !p.warpPlan && p.hitMask !== p.mask);   // ワープ待ちのキューブには使えない（v15）
     if (!open.length || mode === 'none') return null;
     if (when !== 'first') return null;
     if (living.length === 1 && open.length === 1) return open[0];
@@ -1501,9 +1609,9 @@
     const can = (k) => itemOK(game, pi, k);
     const free = (k) => itemOK(game, pi, k);
 
-    // 1) 防御：見破られかけたキューブをワープで逃がす
+    // 1) 防御：ワープ（v15）。絞られかけたキューブに、トリガーと移動先を決めておく
     if (can('warp')) {
-      const w = defensiveWarp(game, pi, free);
+      const w = chooseWarp(game, pi);
       if (w) return w;
     }
     // 2) ステルス（最後の1キューブ、または序盤に先に付ける方針のとき）
@@ -1532,6 +1640,8 @@
     living.sort((a, b) => {
       // 隠れているステルスのキューブは、差し出すと公開されるので後回し（v14）
       if (!!a.stealth !== !!b.stealth) return a.stealth ? 1 : -1;
+      // ワープを待っているキューブも後回し（差し出すとワープはむだになる。v15）
+      if (!!a.warpPlan !== !!b.warpPlan) return a.warpPlan ? 1 : -1;
       if (a.size !== b.size) return a.size - b.size;
       const da = ex && ex.get(a.id) ? ex.get(a.id).danger : 0;
       const db = ex && ex.get(b.id) ? ex.get(b.id).danger : 0;
@@ -1875,7 +1985,7 @@
   // 画面用：自分が知り得た相手の現在のキューブ数（サーチオール未使用なら null）
   function knownCounts(kb, N) { return currentCounts(kb, N); }
 
-  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpTarget, bestAddCell, policy, _cubeOptions: cubeOptions };
+  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpDest, chooseWarp, bestAddCell, policy, _cubeOptions: cubeOptions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBAI = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -265,6 +265,39 @@
     return { r0, c0 };
   }
   const rotT = (t) => (t & 4) | ((t + 1) & 3);
+  // ワープ（v15）の移動先：押したブロック c を含む置き方のうち、置けるもの。まず形の真ん中のブロックが c に来る置き方を試し、
+  //  置けなければ、c を含むほかの置き方を探す（盤の端や、ほかのキューブの近くでも置きやすいように）
+  function warpPos(g, v, p, t, c) {
+    const N = g.N, o = ORIENT[p.shape][t];
+    const tries = [];
+    const a = anchorFor(p.shape, t, c, N);
+    if (a) tries.push(a);
+    const r = Math.floor(c / N), col = c % N;
+    for (const [rr, cc] of o.cells) tries.push({ r0: r - rr, c0: col - cc });
+    let first = null;
+    for (const x of tries) {
+      if (x.r0 < 0 || x.c0 < 0 || x.r0 + o.h > N || x.c0 + o.w > N) continue;
+      const cells = cellsFor(p.shape, t, x.r0, x.c0, N);
+      if (!cells || cells.indexOf(c) < 0) continue;
+      const d = g._warpDest(v, p, t, x.r0, x.c0);
+      if (d.ok) return { ok: true, r0: x.r0, c0: x.c0, cells };
+      if (!first) first = d;
+    }
+    return { ok: false, reason: first ? first.reason : '盤面からはみ出します' };
+  }
+  // 回転：置いた移動先は、押したブロックを含むように置き直す（その向きで置けなければ、置いた場所を外す）
+  function warpRotate() {
+    const g = G(), v = viewer(), w = app.ui && app.ui.warp;
+    if (!w) return;
+    w.t = rotT(w.t);
+    if (w.at != null) {
+      const p = g.players[v].pieces.find((x) => x.id === w.pieceId);
+      const pos = p ? warpPos(g, v, p, w.t, w.at) : { ok: false };
+      w.pos = pos.ok ? { r0: pos.r0, c0: pos.c0 } : null;
+      if (!pos.ok) toast('この向きでは、そこに置けません。置き直してください');
+    }
+    render();
+  }
   const flipT = (t) => t ^ 4;
   function shapeMini(key, t) {
     const o = ORIENT[key][t || 0];
@@ -495,12 +528,24 @@
     const fv = foe.view;
     const inSetup = g.phase === 'setup';
     const intel = opts.intel;
+    // ワープ（v15）：ワープを待っているキューブの移動先（薄いキューブの形で、自分のフィールドの色）と、選んでいる途中の移動先
+    const wdest = new Map();   // ブロック → その移動先の形（枠の線を引く辺を決めるため）
+    for (const q of P.pieces) if (q.alive && q.warpPlan) for (const c of q.warpPlan.cells) wdest.set(c, { mask: q.warpPlan.mask, set: false });
+    const ws = opts.warpSel;
+    let wsTrig = -1;
+    if (ws) {
+      wsTrig = ws.trig;
+      const q = P.pieces.find((x) => x.id === ws.pieceId);
+      const cells = q && ws.pos ? cellsFor(q.shape, ws.t, ws.pos.r0, ws.pos.c0, N) : null;
+      if (cells) { const mk = cells.reduce((a, c) => a | (1 << c), 0); for (const c of cells) wdest.set(c, { mask: mk, set: true }); }
+    }
     let html = '';
     for (let c = 0; c < g.NN; c++) {
       let cls = cellBase(c, N);
       let inner = '', style = '';
       const p = g.pieceAt(pi, c, true);
       const m = inSetup ? null : fv.marks[c];
+      if (!p && wdest.has(c)) { const d = wdest.get(c); cls += ' wdest' + (d.set ? ' wset' : '') + edgeClasses(d.mask, c, N); }
       if (p) {
         cls += ' pc' + edgeClasses(p.mask, c, N);
         if (p.isAdd) cls += ' addpc';
@@ -517,6 +562,9 @@
         // （どこがトリガーだったか分かるように）。トリガーのない古い対戦は、隠れているあいだだけ読み順で最初のブロック
         const tg = p.stealthTrigger != null ? p.stealthTrigger : (p.stealth && p.alive ? Math.min.apply(null, p.cells) : -1);
         if (c === tg) { inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`; cls += ' trigger'; }
+        // ワープのトリガーブロック（v15）：ワープを待っているキューブ、または選んでいる途中のトリガーに、ワープの印
+        if (p.alive && ((p.warpPlan && p.warpPlan.trigger === c) || c === wsTrig)) { inner += `<span class="wtr" aria-hidden="true">${ICON.warp}</span>`; cls += ' wtrigger' + (c === wsTrig ? ' wtsel' : ''); }
+        if (p.alive && p.warpPlan) cls += ' warping';
       }
       inner += cellMarkHTML(m, intel, c);
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
@@ -526,7 +574,7 @@
       if (!inSetup && fv.lastCall === c && opts.flash) cls += ' last';
       if (opts.sel && opts.sel.indexOf(c) >= 0) cls += ' sel';
       if (opts.clickable && opts.clickable(c)) cls += ' click';
-      const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}` : ' 撃破済み') : '') + probeLabel(intel, c, m);
+      const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}${p.warpPlan ? '（ワープ待ち' + (p.warpPlan.trigger === c ? '・トリガー' : '') + '）' : ''}` : ' 撃破済み') : (wdest.has(c) ? ' ワープの移動先' : '')) + probeLabel(intel, c, m);
       html += `<div class="${cls}" style="${style}" data-act="cell" data-board="${kind}" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${inner}</div>`;
     }
     return boardFrame(N, kind, html, opts.cls, { overlay: pairsSVG(intel, N) + (opts.overlay || '') });
@@ -580,7 +628,7 @@
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? ' ×（ワープ前の位置）' : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : m.r === 'wp' ? ' ワープレティクル' : ' ○';
       label += probeLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
@@ -700,6 +748,8 @@
       case 'answer': return who + '相手フィールドで、キューブの全ブロックを選んでください';
       case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのブロックを1つ選んでください`;
       case 'stealth-pick': return who + 'ステルス：隠すキューブのブロックを1つ選んでください（そのブロックがトリガーブロック）';
+      case 'warp-pick': return who + 'ワープ：キューブの、まだ当たっていないブロックを1つ選んでください（そのブロックがトリガーブロック）';
+      case 'warp-place': return who + 'ワープ：移動先をタップして、向きを回し、「完了」で決めてください';
       case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選んでください';
       case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
       case 'number': return who + 'サーチサイズ：相手フィールドで調べるブロックを選んでください';
@@ -778,13 +828,16 @@
         acts = cancel;
         break;
       case 'warp-pick':
-        main = itemHead('warp', '自分フィールドで、移動するキューブを選んでください。');
+        main = itemHead('warp', 'ワープするキューブの、まだ当たっていないブロックを1つ選んでください。そこがトリガー（撃たれると発動）になります。');
         acts = cancel;
         break;
-      case 'warp-place':
-        main = itemHead('warp', '移動先をタップ。移動前の位置は相手に公開されます。');
-        acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn" data-act="warp-flip" title="F キー">⇋ 反転</button><button class="btn ghost" data-act="warp-repick">選び直す</button>${cancel}`;
+      case 'warp-place': {
+        // v15：移動先をタップして置き、回転で向きを合わせ、「完了」で決める（反転はなし）。自分のキューブのブロックをタップすると、トリガーを選び直せる
+        const w = ui.warp, ok = !!(w && w.pos);
+        main = itemHead('warp', '移動先の空きブロックをタップして置き、回転で向きを合わせて「完了」。トリガーは、自分のキューブのまだ当たっていないブロックをタップすると選び直せます。');
+        acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn primary" data-act="warp-done" ${ok ? '' : 'disabled'}>完了</button>${cancel}`;
         break;
+      }
       case 'stealth-pick':
         main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選んでください。そこが弱点（トリガー）になり、撃たれるとばれます。');
         acts = cancel;
@@ -1142,10 +1195,13 @@
     else if (mode === 'treasure') predClick = (c) => g.isTreasureCallable(v, c);
     else if (mode === 'answer' || mode === 'shape' || mode === 'number' || mode === 'node' || mode === 'bazooka') predClick = (c) => !P.view.dead[c];
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
-    if (mode === 'warp-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth; }; }   // ステルス中はワープできない（v14）
+    // ワープ（v15）：トリガーにできるのは、ワープできるキューブ（ステルス中・ワープ待ちでなく、移動先があるもの）の、まだ当たっていないブロック
+    const warpOK = (mode === 'warp-pick' || mode === 'warp-place') ? new Set(g.warpable(v).map((p) => p.id)) : null;
+    const trigOK = (c) => { const p = g.pieceAt(v, c); return !!p && warpOK.has(p.id) && !(p.hitMask & (1 << c)); };
+    if (mode === 'warp-pick') { ownPick = true; ownClick = trigOK; }
     else if (mode === 'sacrifice') { ownPick = true; ownClick = (c) => !!g.pieceAt(v, c); }
     else if (mode === 'stealth-pick') { ownPick = true; ownClick = (c) => { const p = g.pieceAt(v, c); return !!p && !p.stealth && !p.stealthRevealed && !(p.hitMask & (1 << c)); }; }
-    else if (mode === 'warp-place') ownClick = () => true;
+    else if (mode === 'warp-place') ownClick = (c) => !g.pieceAt(v, c) || trigOK(c);   // 空きブロック＝移動先、自分のキューブ＝トリガーの選び直し
     const predActive = !!predClick || mode === 'line' || mode === 'cube';
 
     const reveal = g.phase === 'over' && ui.reveal;
@@ -1170,7 +1226,7 @@
                 <div class="fhead"><b>自分フィールド</b><small>MY FIELD</small></div>
                 ${fieldChips(v, v)}
                 ${intelTagsHTML(myIntel, false)}
-                ${ownBoard(v, { clickable: ownClick, pick: ownPick, selectedPiece: ui.warp ? ui.warp.pieceId : null, flash: true, intel: myIntel })}
+                ${ownBoard(v, { clickable: ownClick, pick: ownPick, selectedPiece: ui.warp ? ui.warp.pieceId : null, warpSel: ui.warp, flash: true, intel: myIntel })}
               </section>
               <section class="panel enemy${predActive ? ' active' : ''}${mode === 'treasure' ? ' treasure-active' : ''}${mode === 'answer' ? ' answer-mode' : ''}">
                 <div class="fhead"><b>${reveal ? '相手フィールド（答え合わせ）' : '相手フィールド'}</b><small>ENEMY FIELD</small></div>
@@ -1282,7 +1338,7 @@
         </ol>
         <p><b>アイテム</b>：コールの前か後のどちらかで、1ターンに1つまで。</p>
         <p><b>キューブの質感</b>：キューブには、色ごとに違う素材の質感（御影石・コンクリート・トラバーチン・ヘアライン・大理石・木目・スレート・テラゾー）を薄く重ねています。色が見分けにくくても、質感でどのキューブかが分かります。</p>
-        <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。ステルスの番号つき）。全ブロックをコールされたキューブは撃破されます。</p>
+        <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。ステルスの番号つき）、ラズベリーの記号（斜めの線と中央の×）＝ワープレティクル（ワープのトリガーに当たった。移動先のブロックにも出る）。全ブロックをコールされたキューブは撃破されます。</p>
         <p><b>キューブの形</b>：R型（長方形：まっすぐな形と2×2）・L型・T型・Z型（段違い）の4種類。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
         <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2ブロック×5・3ブロック×4・4ブロック×3・5ブロック×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破したキューブのブロック数を相手から奪います（アンサー失敗で差し出したキューブも）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2ブロック1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
@@ -1291,8 +1347,8 @@
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選んだブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない。</p>
-        <p class="note"><b>ワープ</b>：移動前の位置は×（W付き）で公開され、それ以外の×は薄くなって、もう一度コールできる。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
+        <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選んだブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない（ワープを待っているキューブにもステルスは使えない）。</p>
+        <p class="note"><b>ワープ</b>：①キューブの、まだ当たっていないブロックを1つ（トリガー）と、移動先（空きブロック。回転だけで、反転はできない）を決めておく。使ったことは相手に伝わるが、どのキューブか・移動先は伏せられる。②トリガーをコールされると発動：キューブは移動先へ移り、移動先のトリガーにあたるブロックにワープレティクルが出る（相手のヒント。1発目のヒットとして数える）。③トリガーをコールされる前にアンサーで当てられても発動して逃げる（撃破されない。移動先のヒントは出ない。アンサーは成功扱いで手番は続く）。④発動すると、移動前の当たっていたブロック（アンサーなら宣言したブロック）は×（W付き）になり、それ以外の×は薄くなって、もう一度コールできる。差し出したキューブでは発動しない。バズーカで分解されると取り消し。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
         <p class="note"><b>調べた結果の札</b>：ブロックの左上に R・L・T・Z（形）と数字（ブロック数）、左下のひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝分かれ目、0＝1ブロックのキューブ）。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
@@ -1796,13 +1852,14 @@
       return { cells: cells || [], ok: chk.ok && g.stockLeft(S.pi, SHAPES[S.key].size) > 0 };
     }
     if (app.screen === 'battle' && effMode() === 'warp-place') {
-      const w = app.ui.warp;
-      const p = g.players[viewer()].pieces.find((x) => x.id === w.pieceId);
-      if (!p) return null;
+      // ワープ（v15）：空きブロックに重ねたときだけ、そこに置いたときの形を見せる（自分のキューブの上はトリガーの選び直し）
+      const w = app.ui.warp, v = viewer();
+      const p = g.players[v].pieces.find((x) => x.id === w.pieceId);
+      if (!p || g.pieceAt(v, app.hover)) return null;
+      const pos = warpPos(g, v, p, w.t, app.hover);
+      if (pos.ok) return { cells: pos.cells, ok: true };
       const a = anchorFor(p.shape, w.t, app.hover, N);
-      if (!a) return null;
-      const val = g.validateItem(viewer(), 'warp', { pieceId: p.id, t: w.t, r0: a.r0, c0: a.c0 });
-      return { cells: cellsFor(p.shape, w.t, a.r0, a.c0, N) || [], ok: val.ok };
+      return a ? { cells: cellsFor(p.shape, w.t, a.r0, a.c0, N) || [], ok: false } : null;
     }
     return null;
   }
@@ -1832,6 +1889,7 @@
     const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF';
     const QT = '#48D1CC';   // Stealth hit（ミディアムターコイズ）
+    const WP = '#B24962';   // ワープレティクル（ラズベリー。v15）
     const METAL = ['#F3F7FC', '#B8C3D4', '#6E7A8F', '#D3DCE8'];
     let cv = null, cx = null, dpr = 1, raf = 0;
     const parts = [];
@@ -2141,28 +2199,19 @@
           return 1650 * k;
         }
         case 'warp': {
+          // ワープ（v15）：トリガーと移動先を決めただけ（まだ動かない）。本人には移動先とトリガーを光らせ、相手には場所を見せない
           SND.sfx('i-warp', 0, pan);
           const owner = ev.actor;
-          let sx = 0, sy = 0, n = 0;
-          for (const cc of ev.oldCells) {
-            const el = cellOf(owner, cc);
-            if (!el) continue;
-            const p = ctr(el);
-            sx += p.x; sy += p.y; n++;
-            over(el, 'dissolve', '', 950);
-            pixels(p.r, c, 24);
-          }
-          if (n) { ring(sx / n, sy / n, c, 6, 80, 820, 3); text(sx / n, sy / n, 'WARP', 'count' + ecls, 1300); }
+          const b = boardOf(owner);
+          if (!b) return 0;
+          const bc = ctr(b);
           if ((mine || app.replay) && ev.priv) {
-            for (const cc of ev.priv.newCells) {
-              const el = cellOf(owner, cc);
-              if (!el) continue;
-              el.classList.add('materialize');
-              const p = ctr(el);
-              sparks(p.x, p.y, CY, 8, 0.8, 0, 380);
-            }
-          }
-          return 1300 * k;
+            for (const cc of ev.priv.dest) { const el = cellOf(owner, cc); if (!el) continue; const p = ctr(el); pixels(p.r, CY, 10); sparks(p.x, p.y, CY, 6, 0.7, 0, 300); }
+            const te = cellOf(owner, ev.priv.trigger);
+            if (te) { const p = ctr(te); ring(p.x, p.y, CY, p.w * 0.15, p.w * 0.9, 650, 2); }
+          } else bover(b, 'cloakfield', '', 1200);
+          text(bc.x, bc.r.top + 22, 'WARP READY', 'count' + ecls, 1400);
+          return 1200 * k;
         }
         case 'stealth': {
           SND.sfx('i-stealth', 0, pan);
@@ -2241,7 +2290,7 @@
           return 1000 * k;
         }
         case 'call': {
-          SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' ? 'hit' : ev.r === 'q' ? 'shield' : 'first', 0, { pan: panOf(ev.owner, v) });
+          SND.sfx(ev.r === 'x' ? 'miss' : ev.r === 'o' || ev.r === 'wp' ? 'hit' : ev.r === 'q' ? 'shield' : 'first', 0, { pan: panOf(ev.owner, v) });
           const el = cellOf(ev.owner, ev.c);
           if (!el) return 0;
           const p = ctr(el);
@@ -2250,6 +2299,15 @@
             sparks(p.x, p.y, ST, 5, 0.5);
             text(p.x, p.y - p.h * 0.55, 'NO HIT', 'miss', 1200);
             return 650 * k;
+          }
+          if (ev.r === 'wp') {
+            // ワープのトリガー（v15）：ワープレティクルが現れて、ワープが発動する（移動は次の warpfire の演出）
+            over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900);
+            ring(p.x, p.y, WP, p.w * 0.1, p.w * 1.3, 760, 3);
+            sparks(p.x, p.y, WP, 18, 1.1, 0.4);
+            text(p.x, p.y - p.h * 0.62, 'WARP TRIGGER', 'warp', 1400);
+            shake(1);
+            return 900 * k;
           }
           if (ev.r === 'q') {
             // STEALTH HIT：見破ったステルスのキューブへのヒット。ターコイズの輪と文字だけで見せる（番号は出さない）
@@ -2344,6 +2402,41 @@
         }
         case 'item':
           return playItem(ev, v, k);
+        case 'warpfire': {
+          // ワープの発動（v15）：移動前の分かっているブロックが消え、トリガーなら移動先にワープレティクルが現れる。
+          //  持ち主（とリプレイ）には、移動前のキューブ全体が消えて移動先に現れるところを見せる
+          SND.sfx('i-warp', 0, { pan: panOf(ev.owner, v) });
+          const own = ev.owner === v || app.replay;
+          const from = own && ev.ownerPriv ? ev.ownerPriv.oldCells : ev.from;
+          let sx = 0, sy = 0, n = 0;
+          for (const cc of from) {
+            const el = cellOf(ev.owner, cc);
+            if (!el) continue;
+            const p = ctr(el);
+            sx += p.x; sy += p.y; n++;
+            over(el, 'dissolve', '', 950);
+            pixels(p.r, WP, 18);
+          }
+          if (n) ring(sx / n, sy / n, WP, 6, 80, 820, 3);
+          const tx = n ? sx / n : null, ty = n ? sy / n : null;
+          if (tx != null) text(tx, ty, ev.by === 'answer' ? 'WARP ESCAPE' : 'WARP', 'warp', 1400);
+          setTimeout(() => {
+            if (own && ev.ownerPriv) {
+              for (const cc of ev.ownerPriv.newCells) {
+                const el = cellOf(ev.owner, cc);
+                if (!el) continue;
+                el.classList.add('materialize');
+                const p = ctr(el);
+                sparks(p.x, p.y, CY, 8, 0.8, 0, 200);
+              }
+            }
+            if (ev.reticle >= 0) {
+              const el = cellOf(ev.owner, ev.reticle);
+              if (el) { const p = ctr(el); over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900); ring(p.x, p.y, WP, p.w * 0.1, p.w * 1.2, 700, 2.5); }
+            }
+          }, 520 * k);
+          return 1350 * k;
+        }
         case 'over': {
           const r = ev.result;
           let big, small, cls = '';
@@ -2553,14 +2646,14 @@ self.onmessage = function (e) {
     }
     return `<div class="rp-pcts" aria-hidden="true">${h}</div>`;
   }
-  // ワープした場面：移動前の位置を点線で残す（どこへ移ったかは演出で見せる）
+  // ワープが発動した場面（v15：トリガーのコール・アンサー）：移動前の位置を点線で残す（どこへ移ったかは演出で見せる）
   function warpOverlay(g, fr, prevEv) {
-    if (fr.start || fr.m !== 'useItem' || fr.key !== 'warp') return null;
-    const ev = g.events.slice(prevEv, fr.ev).find((e) => e.type === 'item' && e.key === 'warp');
-    if (!ev || !ev.oldCells || !ev.priv) return null;
+    if (fr.start) return null;
+    const ev = g.events.slice(prevEv, fr.ev).find((e) => e.type === 'warpfire');
+    if (!ev || !ev.ownerPriv) return null;
     const N = g.N;
-    const rects = ev.oldCells.map((c) => `<rect x="${(c % N) + 0.06}" y="${Math.floor(c / N) + 0.06}" width=".88" height=".88" rx=".06"/>`).join('');
-    return { owner: ev.actor, svg: `<svg class="rp-warp" viewBox="0 0 ${N} ${N}" preserveAspectRatio="none" aria-hidden="true">${rects}</svg>` };
+    const rects = ev.ownerPriv.oldCells.map((c) => `<rect x="${(c % N) + 0.06}" y="${Math.floor(c / N) + 0.06}" width=".88" height=".88" rx=".06"/>`).join('');
+    return { owner: ev.owner, svg: `<svg class="rp-warp" viewBox="0 0 ${N} ${N}" preserveAspectRatio="none" aria-hidden="true">${rects}</svg>` };
   }
   function renderReplay() {
     const R = app.replay;
@@ -2934,6 +3027,8 @@ self.onmessage = function (e) {
       else toast('このアイテムは持っていません');
       return;
     }
+    // ワープ（v15）：移動先にできる空きブロックがなければ使えない（ステルス中・ワープ待ちのキューブも選べない）
+    if (key === 'warp' && !g.warpable(v).length) { toast('ワープできるキューブがありません（移動先にできる空きブロックが足りません）', 'warn'); return; }
     resetMode();
     app.ui.item = key;
     const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', warp: 'warp-pick', stealth: 'stealth-pick' };
@@ -2956,7 +3051,7 @@ self.onmessage = function (e) {
     rules: 'open', 'close-modal': 'close', start: 'confirm', 'to-title': 'cancel', restart: 'confirm',
     'show-result': 'open', 'replay-open': 'open', reveal: 'ui', shape: 'ui', rotate: 'rotate', flip: 'rotate', 'treasure-mode': 'ui',
     random: 'shuffle', clear: 'remove', 'setup-done': 'confirm', 'draft-pick': 'pick', cancel: 'cancel',
-    'answer-start': 'select', 'end-turn': 'ui', 'skip-call': 'ui', 'warp-rotate': 'rotate', 'warp-flip': 'rotate', 'warp-repick': 'cancel',
+    'answer-start': 'select', 'end-turn': 'ui', 'skip-call': 'ui', 'warp-rotate': 'rotate', 'warp-done': 'confirm',
     step: 'tick', 'memo-type': 'ui', 'memo-clear': 'remove', 'tour-next': 'confirm', 'tour-choose': 'select', 'tour-end': 'ui', 'tour-back': 'confirm', 'quit-tour': 'cancel',
     'net-create': 'confirm', 'net-join': 'confirm', 'net-cancel': 'cancel', 'net-copy': 'ui', 'net-quit': 'cancel',
     'sim-open': 'open', 'sim-back': 'cancel', 'sim-run': 'confirm', 'sim-stop': 'cancel', 'sim-refinal': 'confirm', 'sim-pin': 'pick', 'sim-reset': 'ui', 'sim-rm': 'remove',
@@ -3147,9 +3242,12 @@ self.onmessage = function (e) {
       resetMode();
       afterHuman();
     },
-    'warp-rotate'() { if (app.ui.warp) { app.ui.warp.t = rotT(app.ui.warp.t); render(); } },
-    'warp-flip'() { if (app.ui.warp) { app.ui.warp.t = flipT(app.ui.warp.t); render(); } },
-    'warp-repick'() { app.ui.warp = null; app.ui.mode = 'warp-pick'; render(); },
+    'warp-rotate'() { warpRotate(); },
+    'warp-done'() {
+      const w = app.ui.warp;
+      if (!w || !w.pos) { toast('先に移動先をタップしてください'); return; }
+      useItem('warp', { pieceId: w.pieceId, cell: w.trig, t: w.t, r0: w.pos.r0, c0: w.pos.c0 });
+    },
 
     cell(el) {
       const c = +el.dataset.cell;
@@ -3258,21 +3356,32 @@ self.onmessage = function (e) {
     const g = G(), v = viewer(), mode = effMode(), ui = app.ui;
     if (app.busy || netWaiting()) return;
     switch (mode) {
-      case 'warp-pick': {
-        const p = g.pieceAt(v, c);
-        if (!p) { toast('移動する自分のキューブを選んでください'); return; }
-        if (p.stealth) { toast('ステルス中のキューブはワープできません'); return; }
-        ui.warp = { pieceId: p.id, t: p.t };
-        ui.mode = 'warp-place';
-        render();
-        SND.sfx('sel', 0, { n: 1, pan: -0.35 });
-        return;
-      }
+      case 'warp-pick':
       case 'warp-place': {
-        const p = g.players[v].pieces.find((x) => x.id === ui.warp.pieceId);
-        const a = anchorFor(p.shape, ui.warp.t, c, g.N);
-        if (!a) { toast('フィールドに入りません', 'warn'); return; }
-        useItem('warp', { pieceId: p.id, t: ui.warp.t, r0: a.r0, c0: a.c0 });
+        // ワープ（v15）：①自分のキューブのまだ当たっていないブロックを押す → そこがトリガー（何度でも選び直せる）
+        //  ②空きブロックを押す → そこに移動先を置く（回転で向きを変えられる）。「完了」で決める
+        const p = g.pieceAt(v, c);
+        if (p || mode === 'warp-pick') {
+          if (!p) { toast('ワープする自分のキューブの、まだ当たっていないブロックを選んでください'); return; }
+          if (p.stealth) { toast('ステルス中のキューブはワープできません'); return; }
+          if (p.warpPlan) { toast('そのキューブはすでにワープを待っています'); return; }
+          if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選んでください'); return; }
+          if (!g.warpOptions(v, p).length) { toast('このキューブには、移動先にできる空きブロックがありません', 'warn'); return; }
+          // 同じキューブのトリガーを選び直したときは、向きと置いた場所をそのまま残す
+          const same = ui.warp && ui.warp.pieceId === p.id;
+          ui.warp = same ? Object.assign(ui.warp, { trig: c }) : { pieceId: p.id, trig: c, t: p.t, pos: null, at: null };
+          ui.mode = 'warp-place';
+          render();
+          SND.sfx('sel', 0, { n: 1, pan: -0.35 });
+          return;
+        }
+        const wp = g.players[v].pieces.find((x) => x.id === ui.warp.pieceId);
+        const pos = warpPos(g, v, wp, ui.warp.t, c);
+        if (!pos.ok) { toast(pos.reason || 'そこには置けません', 'warn'); return; }
+        ui.warp.pos = { r0: pos.r0, c0: pos.c0 };
+        ui.warp.at = c;
+        render();
+        SND.sfx('place', 0, { pan: -0.35 });
         return;
       }
       case 'stealth-pick': {
@@ -3539,8 +3648,7 @@ self.onmessage = function (e) {
       if (k === 'f') { app.setup.t = flipT(app.setup.t); render(); SND.sfx('rotate'); }
     }
     if (app.screen === 'battle' && app.ui && app.ui.warp && effMode() === 'warp-place') {
-      if (k === 'r') { app.ui.warp.t = rotT(app.ui.warp.t); render(); SND.sfx('rotate'); }
-      if (k === 'f') { app.ui.warp.t = flipT(app.ui.warp.t); render(); SND.sfx('rotate'); }
+      if (k === 'r') { warpRotate(); SND.sfx('rotate'); }
     }
   });
 

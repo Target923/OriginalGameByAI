@@ -59,9 +59,9 @@ CHOOSE = """(arg) => {
       if (arg.used.indexOf(k) >= 0 || !g.itemStatus(v, k).usable) continue;
       if (k === 'stealth') { const p = g.living(v).find((p) => !p.stealth); if (p) return { kind: 'item', key: k, own: p.cells[0] }; continue; }
       if (k === 'warp') {
-        // 今の向きのまま置ける場所がある個体だけ（盤がいっぱいだと動かせない）
-        const p = g.living(v).find((p) => !p.isAdd && !p.frag && [...Array(g.NN).keys()].some((c) => g.validateItem(v, 'warp', { pieceId: p.id, t: p.t, r0: Math.floor(c / g.N), c0: c % g.N }).ok));
-        if (p) return { kind: 'item', key: k, own: p.cells[0], warp: true };
+        // v15：ワープできるキューブ（移動先がある）の、まだ当たっていないブロックをトリガーにし、いまの向きのまま置ける移動先の1ブロックを押す
+        const p = g.warpable(v).find((p) => g.warpOptions(v, p).some((o) => o.t === p.t));
+        if (p) { const o = g.warpOptions(v, p).find((o) => o.t === p.t); return { kind: 'item', key: k, own: p.cells.find((c) => !(p.hitMask & (1 << c))), dest: o.cells[0], warp: true }; }
         continue;
       }
       if (k === 'line') return { kind: 'item', key: k, line: 'col', index: 1 };
@@ -118,14 +118,11 @@ async def do_plan(page, plan, N):
         if plan['key'] == 'line': await page.click(f'.axbtn[data-line={plan["line"]}][data-index="{plan["index"]}"]')
         elif 'pred' in plan: await page.click(f'.cell[data-board=pred][data-cell="{plan["pred"]}"]')
         elif plan.get('warp'):
+            # v15：トリガーのブロックを押す → 移動先のブロックを押す → 完了
             await page.click(f'.cell[data-board=own][data-cell="{plan["own"]}"]')
-            # 置ける場所を、自分の盤のマスを順に押して探す（置けないマスは手元で断られる）
-            for c in range(N):
-                await page.click(f'.cell[data-board=own][data-cell="{c}"]')
-                s = await page.evaluate(STATE)
-                if s.get('wait') or s.get('itemUsed'): break
-            else:
-                await page.click('[data-act=cancel]')
+            await page.click(f'.cell[data-board=own][data-cell="{plan["dest"]}"]')
+            try: await page.click('[data-act=warp-done]', timeout=2000)
+            except Exception: await page.click('[data-act=cancel]')
         else: await page.click(f'.cell[data-board=own][data-cell="{plan["own"]}"]')
 
 async def play_match(host, guest, no):

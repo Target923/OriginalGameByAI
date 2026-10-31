@@ -23,7 +23,7 @@
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 2;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）
+  const NET_VERSION = 3;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';
@@ -108,9 +108,9 @@
     if (s.phase === 'setup') { s.first = null; s.cur = null; }
     // ③ 演出の記録：数と順番は変えない（ゲストの画面は「どこまで見せたか」を番号で覚えているため）
     for (const ev of s.events) {
-      if (ev.actor === hide) delete ev.priv;          // 相手のワープの移動先・ステルスをかけたブロック
+      if (ev.actor === hide) delete ev.priv;          // 相手のワープのキューブ・トリガー・移動先、ステルスをかけたブロック
       if (ev.owner === hide) {
-        delete ev.ownerPriv;                          // バズーカで分解された相手のキューブの、残りのブロック
+        delete ev.ownerPriv;                          // バズーカで分解された相手のキューブの、残りのブロック／ワープの移動前の全部のブロックと移動後（v15）
         if (ev.type === 'shield') delete ev.cells;    // ステルスが撃破を防いだ相手のキューブのブロック
       }
     }
@@ -181,7 +181,8 @@
             if (cell(p.a) && cell(p.b)) q = { a: p.a, b: p.b };
             break;
           case 'warp':
-            if (isInt(p.pieceId, 1, 9999) && isInt(p.t, 0, 7) && isInt(p.r0, 0, N - 1) && isInt(p.c0, 0, N - 1)) q = { pieceId: p.pieceId, t: p.t, r0: p.r0, c0: p.c0 };
+            // v15：cell＝トリガーブロック。t・r0・c0＝移動先（向きと位置）
+            if (isInt(p.pieceId, 1, 9999) && cell(p.cell) && isInt(p.t, 0, 7) && isInt(p.r0, 0, N - 1) && isInt(p.c0, 0, N - 1)) q = { pieceId: p.pieceId, cell: p.cell, t: p.t, r0: p.r0, c0: p.c0 };
             break;
           case 'stealth':
             if (isInt(p.pieceId, 1, 9999) && cell(p.cell)) q = { pieceId: p.pieceId, cell: p.cell };   // cell＝トリガーブロック（v14.2）

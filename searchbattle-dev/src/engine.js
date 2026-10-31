@@ -39,7 +39,9 @@
   // 23：v14 ステルスを作り直し（キューブを隠す。ステルスアンサーで見破る）
   // 24：v14.1 ×に撃ったステルスアンサーの外れは手番終了だけ（kb.probes。v14.2 で元に戻した）
   // 25：v14.2 ステルスのトリガーブロック（コールされると STEALTH HIT。すべてのステルスが見破られる）
-  const VERSION = 26;
+  // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
+  // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
+  const VERSION = 27;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -50,7 +52,7 @@
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
-    warp: { name: 'ワープ', desc: '自分のキューブ1つを空きブロックへ移動する' },
+    warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
     stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
   };
 
@@ -90,6 +92,13 @@
     }
   }
 
+  // 向き t2 が、向き t1 を回しただけの形か（裏返していないか）。ワープの「回転だけ・反転なし」（v15）に使う。
+  //  向きの番号は下位2ビットが回転の回数、4以上が裏返し。形が左右対称なら、裏返しても回転と同じ形になるので、形（sig）で比べる
+  function rotationOf(key, t1, t2) {
+    const sig = ORIENT[key][t2].sig;
+    for (let r = 0; r < 4; r++) if (ORIENT[key][(t1 & 4) | r].sig === sig) return true;
+    return false;
+  }
   function cellsFor(key, t, r0, c0, N) {
     const o = ORIENT[key][t];
     if (r0 < 0 || c0 < 0 || r0 + o.h > N || c0 + o.w > N) return null;
@@ -262,6 +271,7 @@
         calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
+        warpUses: [],  // 相手がワープを使った時刻（v15。使ったことだけが分かる。どのキューブか・移動先は伏せられる）
       },
     };
   };
@@ -495,6 +505,18 @@
       res = { r: 'x' };
       this._log(pi, `${me.name}：${this.coord(c)}をコール → ×`, null, 'call');
       this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'x' });
+    } else if (p.warpPlan && c === p.warpPlan.trigger) {
+      // ワープのトリガーブロック（v15）：ここをコールされるとワープが発動する。
+      //  当たったブロックはワープレティクルになり（演出）、キューブは決めておいた移動先へ。移動先にもワープレティクルが出る（相手のヒント）
+      p.hitMask |= bit(c);
+      (p.hitOrder || (p.hitOrder = [])).push(c);
+      v.marks[c] = { r: 'wp', t };
+      me.kb.calls.push({ c, t, r: 'wp' });   // 移動前の位置へのヒット。すぐ後のワープ（kb.warps）で「もういない」と説明がつく
+      this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープ発動（トリガー）`, null, 'hit');
+      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp' });
+      const fire = this._warpFire(p, 'trigger', pi);
+      res = { r: 'wp', warp: true, reticle: fire.reticle };
+      if (fire.destroyed) res.destroyed = fire.destroyed;
     } else {
       const first = p.hitMask === 0;
       p.hitMask |= bit(c);
@@ -572,6 +594,15 @@
     const target = foe.pieces.find((p) => p.alive && p.mask === mask);
     const where = coordList(cells, this.N);
     const hidden = foe.pieces.filter((p) => p.alive && p.stealth);
+    if (target && target.warpPlan) {
+      // ワープを待っているキューブを当てた（v15）：撃破されずに、決めておいた移動先へ逃げる。移動先のヒント（レティクル）は出ない。
+      //  アンサーは正しいので失敗ではなく（差し出しなし）、手番も続く（アンサー成功と同じ）
+      this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true, escaped: true });
+      this._log(pi, `${me.name}：アンサー成功（${where}）→ ワープで逃げられた`, null, 'kill', null, { cells: cells.slice() });
+      this._warpFire(target, 'answer', pi);
+      this.lastAction = { kind: 'answer', pi, ok: true, escaped: true, cells };
+      return { ok: true, success: true, escaped: true, ended: false };
+    }
     if (target) {
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true });
       // 隠れているステルスのキューブをぴったり当てたら、ふつうに撃破。ほかのステルスのキューブも見破られる（v14）
@@ -610,6 +641,8 @@
     if (!p) return { ok: false, reason: '生きている自分のキューブを選んでください' };
     // 隠れているステルスのキューブを差し出したら、そのキューブだけ公開する（ほかのステルスはそのまま）
     if (p.stealth) this._revealStealth(pi, [p]);
+    // ワープを待っているキューブを差し出しても、ワープは発動しない（自分で差し出すので逃げられない。v15）
+    p.warpPlan = null;
     this._destroy(p, 'answerFail');
     this._log(pi, `${this.players[pi].name}：ペナルティで${pieceName(p)}を公開・撃破（${coordList(p.cells, this.N)}）`, null, 'penalty');
     this.pending = null;
@@ -765,6 +798,64 @@
     }
   };
 
+  // ワープの発動（v15）：決めておいた移動先へキューブを移す。by：'trigger'（トリガーブロックをコールされた）／'answer'（アンサーで当てられた）。
+  //  actor：コール・アンサーをした側（相手）。相手の記録（予想盤面と推論用の kb）を次のように直す：
+  //  ①相手の×はすべて、もう一度コールできるようにする（キューブが×のブロックへ動いてきたかもしれないため）
+  //  ②移動前の位置のうち、相手が知っているブロックだけを×（W付き）にする：
+  //     トリガー → 当たっていたブロック（◎・○とトリガー）だけ。当たっていないブロックは伏せたまま（v15 で少し強く。v14 までは全部公開）
+  //     アンサー → 宣言したブロック全部（相手はもう知っている）
+  //  ③トリガーのときは、移動後のキューブの「トリガーにあたるブロック」にワープレティクルを出す（コール済み・1発目のヒットとして数える）
+  //  ④トレジャーはキューブと一緒に動き、相手のトレジャーログはグレーになる（今までのワープと同じ）
+  Game.prototype._warpFire = function (p, by, actor) {
+    const owner = this.players[p.owner], A = this.players[actor];
+    const v = A.view, kb = A.kb, N = this.N;
+    const plan = p.warpPlan;
+    p.warpPlan = null;
+    const t = this._tick();
+    const oldCells = p.cells.slice();
+    const idx = oldCells.indexOf(plan.trigger);   // トリガーが、キューブの何番目のブロックか（向きを変えても番号は同じブロックを指す）
+    const shown = by === 'answer' ? oldCells.slice() : oldCells.filter((c) => p.hitMask & bit(c));
+    for (let c = 0; c < this.NN; c++) { const m = v.marks[c]; if (m && m.r === 'x') m.callable = true; }
+    for (const c of shown) v.marks[c] = { r: 'x', callable: false, t, warp: true };
+    // キューブを動かす（被弾はリセット）
+    p.t = plan.t; p.r0 = plan.r0; p.c0 = plan.c0;
+    p.cells = plan.cells.slice(); p.mask = plan.mask; p.hitMask = 0; p.hitOrder = [];
+    const hadT = !!(owner.treasure && owner.treasure.pieceId === p.id);
+    if (hadT) {
+      owner.treasure.cell = p.cells[owner.treasure.idx];
+      for (let c = 0; c < this.NN; c++) if (v.tlog[c]) v.tlog[c].gray = true;
+      kb.grays.push(t);
+    }
+    // 推論用の記録：移動前の位置で分かっているブロック（oldMask）。形（key）は、アンサーのとき（全ブロックが分かっている）だけ。
+    //  partial：移動前の位置の一部しか分からないワープ（トリガー）。trigger・reticle：移動前のトリガーと移動後のレティクルのブロック
+    const w = { t, oldCells: shown.slice(), oldMask: maskOf(shown), key: null, size: null, cat: null, treasure: hadT && !v.treasureFound, by };
+    if (by === 'answer') { w.key = p.shape; w.size = p.size; w.cat = p.cat; w.fullCells = oldCells.slice(); }
+    else { w.partial = true; w.trigger = plan.trigger; }
+    let reticle = -1;
+    if (by === 'trigger') {
+      reticle = p.cells[idx];
+      const t2 = this._tick();
+      p.hitMask = bit(reticle); p.hitOrder = [reticle];
+      v.marks[reticle] = { r: 'wp', t: t2 };
+      kb.calls.push({ c: reticle, t: t2, r: 'wp' });
+      w.reticle = reticle; w.reticleT = t2;
+    }
+    kb.warps.push(w);
+    this._emit({ type: 'warpfire', owner: p.owner, actor, by, from: shown.slice(), trigger: by === 'trigger' ? plan.trigger : null, reticle, treasureMoved: hadT, ownerPriv: { oldCells, newCells: p.cells.slice() } });
+    const tl = hadT ? '・トレジャーログがリセット' : '';
+    const pubTxt = `${owner.name}：ワープ発動（移動前 ${coordList(shown, N)}${reticle >= 0 ? `・ワープレティクル ${this.coord(reticle)}` : '・移動先は不明'}）${tl}`;
+    const privTxt = `${owner.name}：ワープ発動（移動前 ${coordList(oldCells, N)} → 移動後 ${coordList(p.cells, N)}）${tl}`;
+    this._log(p.owner, pubTxt, privTxt, 'item', 'warp');
+    // 1ブロックのキューブ（バズーカの破片）は、移動先のレティクルで全ブロックに当たったことになるので、そこで撃破
+    let destroyed = null;
+    if (p.hitMask === p.mask) {
+      this._destroy(p, 'destroy');
+      destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
+      this._log(actor, `${A.name}：${pieceName(p)}を撃破（${coordList(p.cells, N)}）`, null, 'kill');
+    }
+    return { shown, reticle, destroyed };
+  };
+
   Game.prototype._destroy = function (piece, cause) {
     piece.alive = false;
     piece.cause = cause;
@@ -814,6 +905,45 @@
     return { inPlay, have, canRebuy, usedUp, usable: inPlay && inPhase && !usedUp && (have > 0 || canRebuy), rebuyNeeded: have <= 0 };
   };
 
+  // ワープの移動先（v15）：キューブ p を、向き t・位置 (r0, c0) に置けるか。
+  //  ・向きは、いまの向きを回したものだけ（裏返し＝反転はしない。ユーザーの決定）
+  //  ・空きブロックだけ：ほかの生きているキューブ・撃破されたキューブのあったブロック・いまの自分の位置とは重ねない
+  //  ・ほかのキューブがワープを待っている移動先とも重ねない（発動したとき、必ずその場所が空いているように）
+  Game.prototype._warpDest = function (pi, p, t, r0, c0) {
+    const N = this.N;
+    if (!Number.isInteger(t) || t < 0 || t > 7) return { ok: false, reason: '向きが正しくありません' };
+    if (!rotationOf(p.shape, p.t, t)) return { ok: false, reason: 'ワープは回転だけで、裏返し（反転）はできません' };
+    // 左右対称な形は、裏返しの向きの番号でも回転と同じ形になる。形は同じでも、ブロックの順番（どのブロックがトリガーか）は
+    //  裏返しの対応になってしまうので、回転の向きの番号に直してから置く（移動後のレティクル・トレジャーの位置が、回転で正しく対応するように）
+    if ((t & 4) !== (p.t & 4)) { const sig = ORIENT[p.shape][t].sig; for (let r = 0; r < 4; r++) if (ORIENT[p.shape][(p.t & 4) | r].sig === sig) { t = (p.t & 4) | r; break; } }
+    const cells = cellsFor(p.shape, t, r0, c0, N);
+    if (!cells) return { ok: false, reason: '盤面からはみ出します' };
+    const m = maskOf(cells);
+    if (m & this.livingMask(pi, p.id)) return { ok: false, reason: 'ほかのキューブと重なります' };
+    if (m & p.mask) return { ok: false, reason: '移動前の位置とは重ねられません' };
+    if (m & this.deadMask(pi)) return { ok: false, reason: '撃破済みのキューブがあったブロックには置けません' };
+    for (const q of this.players[pi].pieces) if (q.alive && q !== p && q.warpPlan && (q.warpPlan.mask & m)) return { ok: false, reason: 'ほかのキューブのワープ先と重なります' };
+    return { ok: true, cells, mask: m, t };
+  };
+  // キューブ p の、いま選べるワープの移動先をすべて（向きと位置）。空なら、このキューブはワープできない
+  Game.prototype.warpOptions = function (pi, p) {
+    const out = [], N = this.N, seen = new Set();
+    for (let t = 0; t < 8; t++) {
+      const o = ORIENT[p.shape][t];
+      for (let r0 = 0; r0 + o.h <= N; r0++) for (let c0 = 0; c0 + o.w <= N; c0++) {
+        const d = this._warpDest(pi, p, t, r0, c0);
+        if (!d.ok || seen.has(d.mask)) continue;   // 同じ形が重なる向き（R型の2×2など）は1つにまとめる
+        seen.add(d.mask);
+        out.push({ t: d.t, r0, c0, cells: d.cells, mask: d.mask });
+      }
+    }
+    return out;
+  };
+  // いまワープを使えるキューブ（ステルス中・ワープ待ちでなく、まだ当たっていないブロックがあり、移動先が1つ以上ある）
+  Game.prototype.warpable = function (pi) {
+    return this.living(pi).filter((p) => !p.stealth && !p.warpPlan && p.hitMask !== p.mask && this.warpOptions(pi, p).length > 0);
+  };
+
   Game.prototype.validateItem = function (pi, key, params) {
     const N = this.N, NN = this.NN;
     const me = this.players[pi];
@@ -841,22 +971,25 @@
         if (v.dead[params.a] || v.dead[params.b]) return { ok: false, reason: '撃破済みのブロックは選べません' };
         return { ok: true };
       case 'warp': {
+        // ワープ（v15。ユーザーの案）：使うときは「どのキューブを・どのブロックをトリガーにして・どこへ移すか」を決めておくだけ。
+        //  キューブが動くのは、トリガーブロックをコールされたときか、アンサーで当てられたとき（_warpFire）
         const p = me.pieces.find((x) => x.id === params.pieceId && x.alive);
-        if (!p) return { ok: false, reason: '移動するキューブを選んでください' };
-        // ステルス中のキューブはワープできない（ワープは移動前の位置を公開するので、隠れている意味がなくなる。v14）
+        if (!p) return { ok: false, reason: 'ワープするキューブを選んでください' };
+        // ステルス中のキューブはワープできない（v14）。ワープを待っているキューブにも重ねては使えない（1つのキューブに1つまで）
         if (p.stealth) return { ok: false, reason: 'ステルス中のキューブはワープできません' };
-        const cells = cellsFor(p.shape, params.t, params.r0, params.c0, N);
-        if (!cells) return { ok: false, reason: '盤面からはみ出します' };
-        const m = maskOf(cells);
-        if (m & this.livingMask(pi, p.id)) return { ok: false, reason: 'ほかのキューブと重なります' };
-        if (m & p.mask) return { ok: false, reason: '移動前の位置とは重ねられません' };
-        if (m & this.deadMask(pi)) return { ok: false, reason: '撃破済みのキューブがあったブロックには置けません' };
-        return { ok: true, cells, mask: m, piece: p };
+        if (p.warpPlan) return { ok: false, reason: 'そのキューブはすでにワープを待っています' };
+        // トリガーブロック：そのキューブの、まだ当たっていない（コールされていない）ブロック
+        if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選んでください' };
+        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選んでください' };
+        const dest = this._warpDest(pi, p, params.t, params.r0, params.c0);
+        if (!dest.ok) return dest;
+        return { ok: true, cells: dest.cells, mask: dest.mask, t: dest.t, piece: p };
       }
       case 'stealth': {
         const p = me.pieces.find((x) => x.id === params.pieceId && x.alive);
         if (!p) return { ok: false, reason: 'ステルスにする自分のキューブを選んでください' };
         if (p.stealth) return { ok: false, reason: 'そのキューブはすでにステルス中です' };
+        if (p.warpPlan) return { ok: false, reason: 'ワープを待っているキューブにはステルスを使えません' };   // v15：1つのキューブに防御アイテムは1つまで
         if (p.stealthRevealed) return { ok: false, reason: '見破られたキューブには使えません' };
         // トリガーブロック（v14.2）：隠すキューブのブロックを1つ選ぶ。まだ当たっていないブロックに限る（当たったブロックは二度とコールされず、弱点にならないため）
         if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選んでください' };
@@ -976,26 +1109,13 @@
         break;
       }
       case 'warp': {
+        // ワープ（v15）：ここでは決めておくだけ（キューブはまだ動かない）。使ったことは相手にも伝わるが、
+        //  どのキューブか・トリガーブロック・移動先は伏せる。動くのは _warpFire（トリガーのコール・アンサーで当てられたとき）
         const p = val.piece;
-        const oldCells = p.cells.slice(), oldMask = p.mask;
-        const fv = foe.view;
-        for (let c = 0; c < this.NN; c++) { const m = fv.marks[c]; if (m && m.r === 'x') m.callable = true; }
-        for (const c of oldCells) fv.marks[c] = { r: 'x', callable: false, t, warp: true };
-        p.t = params.t; p.r0 = params.r0; p.c0 = params.c0;
-        p.cells = val.cells; p.mask = val.mask; p.hitMask = 0; p.hitOrder = [];
-        const hadT = !!(me.treasure && me.treasure.pieceId === p.id);
-        if (hadT) {
-          me.treasure.cell = p.cells[me.treasure.idx];
-          for (let c = 0; c < this.NN; c++) if (fv.tlog[c]) fv.tlog[c].gray = true;
-          foe.kb.grays.push(t);
-        }
-        foe.kb.warps.push({ t, oldCells, oldMask, key: p.shape, size: p.size, cat: p.cat, treasure: hadT && !fv.treasureFound });
-        result.oldCells = oldCells;
-        result.treasureMoved = hadT;
-        const from = coordList(oldCells, N);
-        const to = coordList(p.cells, N);
-        const tl = hadT ? '・トレジャーログがリセット' : '';
-        this._log(pi, `${me.name}：${name}${tag}（移動前 ${from}）${tl}`, `${me.name}：${name}${tag}（移動前 ${from} → 移動後 ${to}）${tl}`, 'item', key);
+        p.warpPlan = { at: t, trigger: params.cell, t: val.t, r0: params.r0, c0: params.c0, cells: val.cells.slice(), mask: val.mask };
+        foe.kb.warpUses.push({ t });
+        result.cells = p.cells.slice();
+        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → 移動先 ${coordList(val.cells, N)}）`, 'item', key);
         break;
       }
       case 'stealth': {
@@ -1021,7 +1141,8 @@
     if (key === 'shape') { pub.cell = params.cell; pub.cat = result.cat; }
     if (key === 'pair') { pub.a = params.a; pub.b = params.b; pub.same = result.same; }
     if (key === 'node') { pub.cell = params.cell; pub.k = result.k; }
-    if (key === 'warp') { pub.oldCells = result.oldCells; pub.treasureMoved = result.treasureMoved; pub.priv = { newCells: val.cells.slice() }; }
+    // ワープ（v15）：本人の演出用に、キューブ・トリガー・移動先（相手には送らない。net.js の redactFor が priv を消す）
+    if (key === 'warp') { pub.priv = { cells: result.cells, trigger: params.cell, dest: val.cells.slice() }; }
     if (key === 'stealth') { pub.priv = { cells: result.cells }; }
     if (!emitted) this._emit(pub);
     this.lastAction = { kind: 'item', pi, key, result };
@@ -1325,7 +1446,7 @@
 
   const api = {
     VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS,
-    bit, popcount, bitsOf, maskOf, cellsFor, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
+    bit, popcount, bitsOf, maskOf, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBEngine = api;

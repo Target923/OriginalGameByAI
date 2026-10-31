@@ -405,6 +405,23 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.stealth { filter: saturate(.55) brightness(1.08); box-shadow: inset 0 0 0 1px rgba(79, 227, 255, .45), inset 0 0 18px rgba(79, 227, 255, .45); }
 .stl { position: absolute; right: 5%; bottom: 5%; z-index: 3; width: 32%; height: 32%; color: var(--cyan); filter: drop-shadow(0 0 4px var(--cyan)); pointer-events: none; }
 .stl svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ワープ（v15）：ワープを待っているキューブのトリガーブロックの印（ワープのアイコン）と、移動先（薄いキューブの形・自分のフィールドの色） */
+.wtr { position: absolute; right: 5%; bottom: 5%; z-index: 3; width: 32%; height: 32%; color: var(--cyan); filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .9)) drop-shadow(0 0 4px var(--cyan)); pointer-events: none; }
+.wtr svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cell.wtsel { box-shadow: inset 0 0 0 2px var(--cyan), inset 0 0 16px rgba(79, 227, 255, .55); }
+.cell.wdest { background: repeating-linear-gradient(135deg, rgba(79, 227, 255, .13) 0 2px, transparent 2px 7px), rgba(79, 227, 255, .08); }
+.cell.wdest::before { content: ""; position: absolute; inset: 0; pointer-events: none; border: 0 dashed rgba(79, 227, 255, .75); }
+.cell.wdest.et::before { border-top-width: 2px; } .cell.wdest.eb::before { border-bottom-width: 2px; }
+.cell.wdest.el::before { border-left-width: 2px; } .cell.wdest.er::before { border-right-width: 2px; }
+/* 選んでいる途中の移動先（まだ決めていない）は少し明るく */
+.cell.wdest.wset { background: repeating-linear-gradient(135deg, rgba(79, 227, 255, .22) 0 2px, transparent 2px 7px), rgba(79, 227, 255, .14); }
+.cell.wdest.wset::before { border-color: var(--cyan); }
+/* ワープの発動：レティクルが現れる光（ラズベリー） */
+.fxo.wlock { display: grid; place-items: center; animation: wlock .9s ease-out forwards; }
+.fxo.wlock svg { width: 82%; height: 82%; fill: none; stroke: #B24962; stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 6px #B24962); overflow: visible; }
+.fxo.wlock svg .wx { stroke-width: 2; }
+@keyframes wlock { 0% { opacity: 0; transform: scale(1.8) rotate(-45deg); } 45% { opacity: 1; transform: scale(1) rotate(0deg); } 100% { opacity: 0; transform: scale(1); } }
+.fx-text.warp { color: #FF9BB8; text-shadow: 0 0 10px #B24962, 0 0 2px #000; }
 .fxo.cloak { background: repeating-linear-gradient(180deg, transparent 0 3px, rgba(79, 227, 255, .55) 3px 4px); animation: cloak 1.1s steps(8) forwards; }
 @keyframes cloak { 0% { opacity: 0; transform: translateY(-30%); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(30%); } }
 .fxb.cloakfield { background: repeating-linear-gradient(90deg, transparent 0 6px, rgba(255, 63, 143, .2) 6px 7px); animation: flash 1.2s ease-out forwards; }
