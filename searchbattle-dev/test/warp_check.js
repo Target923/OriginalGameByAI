@@ -12,7 +12,7 @@ const E = require('../src/engine.js');
 const AI = require('../src/ai.js');
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
 const N_GAMES = +(process.argv[2] || 120);
-const st = { games: 0, plans: 0, fireTrigger: 0, fireAnswer: 0, bad: 0, sound: 0, certainWrong: 0, missing: 0, replays: 0, replayBad: 0 };
+const st = { games: 0, plans: 0, fireTrigger: 0, fireAnswer: 0, full: 0, late: 0, lateFirst: 0, bad: 0, sound: 0, certainWrong: 0, missing: 0, replays: 0, replayBad: 0 };
 const bads = [];
 function bad(tag, info) { st.bad++; if (bads.length < 8) bads.push({ tag, info }); }
 
@@ -65,11 +65,31 @@ const origCall = E.Game.prototype.call, origAnswer = E.Game.prototype.answer;
 E.Game.prototype.call = function (pi, c) {
   const foe = this.players[1 - pi];
   const p = this.pieceAt(foe.idx, c);
-  const armed = p && p.warpPlan && p.warpPlan.trigger === c ? { p, plan: Object.assign({}, p.warpPlan), cells: p.cells.slice(), hit: p.hitMask | (1 << c) } : null;
+  const armed = p && p.warpPlan && p.warpPlan.trigger === c ? { p, plan: Object.assign({}, p.warpPlan), cells: p.cells.slice(), cellsMask: p.mask, hit: p.hitMask | (1 << c) } : null;
   const xBefore = [];
   if (armed) for (let k = 0; k < this.NN; k++) { const m = this.players[pi].view.marks[k]; if (m && m.r === 'x') xBefore.push(k); }
+  // v15.2：アンサーで逃げたキューブの、移動先のトリガーにあたるブロック（隠れたレティクル）
+  const late = p && p.warpHidden && p.warpTrig === c && !p.stealth && !p.stealthRevealed && !armed ? { first: p.hitMask === 0 } : null;
+  const logN = this.log.length;
   const r = origCall.call(this, pi, c);
+  if (late && r.ok) {
+    st.late++; if (late.first) st.lateFirst++;
+    const m = this.players[pi].view.marks[c];
+    if (!(m && m.r === 'wp') || !r.late) bad('late-mark', { c, m, r });
+    const k = this.players[pi].kb.calls[this.players[pi].kb.calls.length - 1];
+    if (k.r !== (late.first ? 'wp' : 'o')) bad('late-kb', { k });
+    if (late.first && !this.players[pi].kb.warps.some((w) => w.reticle === c && w.reticleT === k.t)) bad('late-link', {});
+  }
   if (armed && r.ok) {
+    // v15.2：トリガーが最後に残ったブロックなら「自動撃破後、ワープ発動」（通知・ログ・推論の記録）
+    const full = armed.hit === armed.p.mask || (armed.hit & armed.cellsMask) === armed.cellsMask;
+    if (full) {
+      st.full++;
+      if (!r.full) bad('full-flag', { r });
+      if (!this.log.slice(logN).some((e) => /自動撃破後、ワープ発動/.test(e.text))) bad('full-log', {});
+      const w = this.players[pi].kb.warps[this.players[pi].kb.warps.length - 1];
+      if (!w.full) bad('full-kb', {});
+    } else if (r.full) bad('full-wrong', {});
     st.fireTrigger++;
     const v = this.players[pi].view, p2 = armed.p;
     if (r.r !== 'wp') bad('trigger-result', { r });

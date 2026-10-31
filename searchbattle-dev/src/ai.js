@@ -356,26 +356,33 @@
   //   ステルスの後の×・NoData のブロックにも広がりうる（そのキューブへのコールは×に見えるため）。トリガー（まだコールされていないブロック）を含む
   function warpGroupCands(g, w, ctx, base, add, st) {
     const N = ctx.N;
-    const tr = Math.floor(w.trigger / N), tc = w.trigger % N;
     const rr = Math.floor(g.c / N), rc = g.c % N;
     const images = [];
-    for (let k = 0; k < 4; k++) {
-      let m = 0, ok = true;
-      for (const c of w.oldCells) {
-        let dr = Math.floor(c / N) - tr, dc = (c % N) - tc;
-        for (let j = 0; j < k; j++) { const tmp = dr; dr = dc; dc = -tmp; }   // engine の transform と同じ向きの回転
-        const r = rr + dr, cc = rc + dc;
-        if (r < 0 || cc < 0 || r >= N || cc >= N) { ok = false; break; }
-        m |= bit(r * N + cc);
+    // アンサーで逃げたワープ（v15.2：あとで見つけた隠れたレティクル）は、移動前のどのブロックがトリガーだったか分からないので、全部を試す
+    const anchors = w.anyTrigger ? w.oldCells : [w.trigger];
+    for (const a of anchors) {
+      const tr = Math.floor(a / N), tc = a % N;
+      for (let k = 0; k < 4; k++) {
+        let m = 0, ok = true;
+        for (const c of w.oldCells) {
+          let dr = Math.floor(c / N) - tr, dc = (c % N) - tc;
+          for (let j = 0; j < k; j++) { const tmp = dr; dr = dc; dc = -tmp; }   // engine の transform と同じ向きの回転
+          const r = rr + dr, cc = rc + dc;
+          if (r < 0 || cc < 0 || r >= N || cc >= N) { ok = false; break; }
+          m |= bit(r * N + cc);
+        }
+        if (ok && images.indexOf(m) < 0) images.push(m);
       }
-      if (ok) images.push(m);
     }
     if (!images.length) return;
     const xm = st ? ctx.xMaskBetween(w.t, st.ts) | st.after : ctx.xMaskAfter(w.t);
     const fb = base | xm | w.oldMask | ctx.oldMaskAfter(w.t) | ctx.occMaskBefore(w.t);
     const occs = st ? ctx.occs.filter((o) => o.t < st.ts) : ctx.occs;
     const minSize = Math.max(2, popcount(w.oldMask));
+    // 移動前の形が全部分かっている（全ブロックに当たってからのトリガー＝自動撃破後のワープ・アンサーで逃げた。v15.2）なら、ブロック数はそのまま
+    const exact = w.full || w.anyTrigger;
     for (const s of [2, 3, 4, 5]) {
+      if (exact && s !== popcount(w.oldMask)) continue;
       // ステルスのキューブは数（サーチキューブ）に入らないので、ステルスの枝では在庫だけを見る（ふつうの枝 s と同じ）
       if (s < minSize || !(st ? ctx.stockBound[s] > 0 : ctx.sizeAllowed(s))) continue;
       for (const key of SHAPES_BY_SIZE[s]) {

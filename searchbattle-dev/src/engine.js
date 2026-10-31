@@ -42,7 +42,8 @@
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
-  const VERSION = 28;
+  // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
+  const VERSION = 29;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -513,10 +514,13 @@
       (p.hitOrder || (p.hitOrder = [])).push(c);
       v.marks[c] = { r: 'wp', t };
       me.kb.calls.push({ c, t, r: 'wp' });   // 移動前の位置へのヒット。すぐ後のワープ（kb.warps）で「もういない」と説明がつく
-      this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープ発動（トリガー）`, null, 'hit');
-      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp' });
-      const fire = this._warpFire(p, 'trigger', pi);
-      res = { r: 'wp', warp: true, reticle: fire.reticle };
+      // full：トリガーが最後に残ったブロックだった（全ブロックに当たった）。撃破されるところでワープが発動したことを、通知とログで残す
+      //  （v15.2。ユーザーの希望。当たっていたブロックがキューブの全部だと相手に分かる＝アンサーで逃げたときと同じ）
+      const full = p.hitMask === p.mask;
+      this._log(pi, `${me.name}：${this.coord(c)}をコール → ${full ? `${pieceName(p)}を自動撃破後、ワープ発動` : 'ワープ発動（トリガー）'}`, null, full ? 'kill' : 'hit');
+      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp', full });
+      const fire = this._warpFire(p, 'trigger', pi, full);
+      res = { r: 'wp', warp: true, reticle: fire.reticle, full };
       if (fire.destroyed) res.destroyed = fire.destroyed;
     } else {
       const first = p.hitMask === 0;
@@ -543,6 +547,19 @@
         me.kb.calls.push({ c, t, r: 'q', num: p.stealthNo });
         res = { r: 'q', num: p.stealthNo };
         this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT ${p.stealthNo}`, null, 'hit');
+      } else if (p.warpHidden && c === p.warpTrig) {
+        // アンサーで逃げたキューブ（v15.2。ユーザーの希望）：移動先のトリガーにあたるブロックを見つけたら、ワープレティクルを出す
+        //  （トリガーで発動したときに移動先へすぐ出るのと同じ印）。はじめてのヒットならグループの印（◎の代わり。番号は使わない）、
+        //  もう◎があれば○の代わり（推論の記録は○）
+        p.warpHidden = false;
+        v.marks[c] = { r: 'wp', t };
+        if (first) {
+          me.kb.calls.push({ c, t, r: 'wp' });
+          const w = me.kb.warps.find((x) => x.by === 'answer' && x.t === p.warpAt);
+          if (w) { w.reticle = c; w.reticleT = t; }
+        } else me.kb.calls.push({ c, t, r: 'o' });
+        res = { r: 'wp', late: true };
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープレティクル（ワープで逃げたキューブ）`, null, 'hit');
       } else if (first) {
         v.oo += 1;
         p.oonums.push(v.oo);
@@ -808,7 +825,7 @@
   //     アンサー → 宣言したブロック全部（相手はもう知っている）
   //  ③トリガーのときは、移動後のキューブの「トリガーにあたるブロック」にワープレティクルを出す（コール済み・1発目のヒットとして数える）
   //  ④トレジャーはキューブと一緒に動き、相手のトレジャーログはグレーになる（今までのワープと同じ）
-  Game.prototype._warpFire = function (p, by, actor) {
+  Game.prototype._warpFire = function (p, by, actor, full) {
     const owner = this.players[p.owner], A = this.players[actor];
     const v = A.view, kb = A.kb, N = this.N;
     const plan = p.warpPlan;
@@ -835,8 +852,12 @@
     // 推論用の記録：移動前の位置で分かっているブロック（oldMask）。形（key）は、アンサーのとき（全ブロックが分かっている）だけ。
     //  partial：移動前の位置の一部しか分からないワープ（トリガー）。trigger・reticle：移動前のトリガーと移動後のレティクルのブロック
     const w = { t, oldCells: shown.slice(), oldMask: maskOf(shown), key: null, size: null, cat: null, treasure: hadT && !v.treasureFound, by };
-    if (by === 'answer') { w.key = p.shape; w.size = p.size; w.cat = p.cat; w.fullCells = oldCells.slice(); }
-    else { w.partial = true; w.trigger = plan.trigger; }
+    if (by === 'answer') { w.key = p.shape; w.size = p.size; w.cat = p.cat; w.fullCells = oldCells.slice(); w.anyTrigger = true; }
+    else { w.partial = true; w.trigger = plan.trigger; if (full) w.full = true; }
+    // warpHidden：アンサーで逃げて、移動先のレティクルがまだ出ていない（v15.2）。warpAt：そのワープの時刻（相手も知っている）で、
+    //  あとで隠れたレティクルを見つけたときに、相手の記録（kb.warps）のこのワープへつなぐ
+    p.warpHidden = by === 'answer';
+    p.warpAt = t;
     let reticle = -1;
     if (by === 'trigger') {
       reticle = p.cells[idx];
@@ -847,7 +868,7 @@
       w.reticle = reticle; w.reticleT = t2;
     }
     kb.warps.push(w);
-    this._emit({ type: 'warpfire', owner: p.owner, actor, by, from: shown.slice(), trigger: by === 'trigger' ? plan.trigger : null, reticle, treasureMoved: hadT, ownerPriv: { oldCells, newCells: p.cells.slice() } });
+    this._emit({ type: 'warpfire', owner: p.owner, actor, by, full: !!full, size: full ? p.size : null, from: shown.slice(), trigger: by === 'trigger' ? plan.trigger : null, reticle, treasureMoved: hadT, ownerPriv: { oldCells, newCells: p.cells.slice() } });
     const tl = hadT ? '・トレジャーログがリセット' : '';
     const pubTxt = `${owner.name}：ワープ発動（移動前 ${coordList(shown, N)}${reticle >= 0 ? `・ワープレティクル ${this.coord(reticle)}` : '・移動先は不明'}）${tl}`;
     const privTxt = `${owner.name}：ワープ発動（移動前 ${coordList(oldCells, N)} → 移動後 ${coordList(p.cells, N)}）${tl}`;

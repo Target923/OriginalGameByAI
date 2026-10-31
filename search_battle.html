@@ -1263,7 +1263,8 @@ body.replaying #app { display: none; }
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
-  const VERSION = 28;
+  // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
+  const VERSION = 29;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -1734,10 +1735,13 @@ body.replaying #app { display: none; }
       (p.hitOrder || (p.hitOrder = [])).push(c);
       v.marks[c] = { r: 'wp', t };
       me.kb.calls.push({ c, t, r: 'wp' });   // 移動前の位置へのヒット。すぐ後のワープ（kb.warps）で「もういない」と説明がつく
-      this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープ発動（トリガー）`, null, 'hit');
-      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp' });
-      const fire = this._warpFire(p, 'trigger', pi);
-      res = { r: 'wp', warp: true, reticle: fire.reticle };
+      // full：トリガーが最後に残ったブロックだった（全ブロックに当たった）。撃破されるところでワープが発動したことを、通知とログで残す
+      //  （v15.2。ユーザーの希望。当たっていたブロックがキューブの全部だと相手に分かる＝アンサーで逃げたときと同じ）
+      const full = p.hitMask === p.mask;
+      this._log(pi, `${me.name}：${this.coord(c)}をコール → ${full ? `${pieceName(p)}を自動撃破後、ワープ発動` : 'ワープ発動（トリガー）'}`, null, full ? 'kill' : 'hit');
+      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp', full });
+      const fire = this._warpFire(p, 'trigger', pi, full);
+      res = { r: 'wp', warp: true, reticle: fire.reticle, full };
       if (fire.destroyed) res.destroyed = fire.destroyed;
     } else {
       const first = p.hitMask === 0;
@@ -1764,6 +1768,19 @@ body.replaying #app { display: none; }
         me.kb.calls.push({ c, t, r: 'q', num: p.stealthNo });
         res = { r: 'q', num: p.stealthNo };
         this._log(pi, `${me.name}：${this.coord(c)}をコール → STEALTH HIT ${p.stealthNo}`, null, 'hit');
+      } else if (p.warpHidden && c === p.warpTrig) {
+        // アンサーで逃げたキューブ（v15.2。ユーザーの希望）：移動先のトリガーにあたるブロックを見つけたら、ワープレティクルを出す
+        //  （トリガーで発動したときに移動先へすぐ出るのと同じ印）。はじめてのヒットならグループの印（◎の代わり。番号は使わない）、
+        //  もう◎があれば○の代わり（推論の記録は○）
+        p.warpHidden = false;
+        v.marks[c] = { r: 'wp', t };
+        if (first) {
+          me.kb.calls.push({ c, t, r: 'wp' });
+          const w = me.kb.warps.find((x) => x.by === 'answer' && x.t === p.warpAt);
+          if (w) { w.reticle = c; w.reticleT = t; }
+        } else me.kb.calls.push({ c, t, r: 'o' });
+        res = { r: 'wp', late: true };
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープレティクル（ワープで逃げたキューブ）`, null, 'hit');
       } else if (first) {
         v.oo += 1;
         p.oonums.push(v.oo);
@@ -2029,7 +2046,7 @@ body.replaying #app { display: none; }
   //     アンサー → 宣言したブロック全部（相手はもう知っている）
   //  ③トリガーのときは、移動後のキューブの「トリガーにあたるブロック」にワープレティクルを出す（コール済み・1発目のヒットとして数える）
   //  ④トレジャーはキューブと一緒に動き、相手のトレジャーログはグレーになる（今までのワープと同じ）
-  Game.prototype._warpFire = function (p, by, actor) {
+  Game.prototype._warpFire = function (p, by, actor, full) {
     const owner = this.players[p.owner], A = this.players[actor];
     const v = A.view, kb = A.kb, N = this.N;
     const plan = p.warpPlan;
@@ -2056,8 +2073,12 @@ body.replaying #app { display: none; }
     // 推論用の記録：移動前の位置で分かっているブロック（oldMask）。形（key）は、アンサーのとき（全ブロックが分かっている）だけ。
     //  partial：移動前の位置の一部しか分からないワープ（トリガー）。trigger・reticle：移動前のトリガーと移動後のレティクルのブロック
     const w = { t, oldCells: shown.slice(), oldMask: maskOf(shown), key: null, size: null, cat: null, treasure: hadT && !v.treasureFound, by };
-    if (by === 'answer') { w.key = p.shape; w.size = p.size; w.cat = p.cat; w.fullCells = oldCells.slice(); }
-    else { w.partial = true; w.trigger = plan.trigger; }
+    if (by === 'answer') { w.key = p.shape; w.size = p.size; w.cat = p.cat; w.fullCells = oldCells.slice(); w.anyTrigger = true; }
+    else { w.partial = true; w.trigger = plan.trigger; if (full) w.full = true; }
+    // warpHidden：アンサーで逃げて、移動先のレティクルがまだ出ていない（v15.2）。warpAt：そのワープの時刻（相手も知っている）で、
+    //  あとで隠れたレティクルを見つけたときに、相手の記録（kb.warps）のこのワープへつなぐ
+    p.warpHidden = by === 'answer';
+    p.warpAt = t;
     let reticle = -1;
     if (by === 'trigger') {
       reticle = p.cells[idx];
@@ -2068,7 +2089,7 @@ body.replaying #app { display: none; }
       w.reticle = reticle; w.reticleT = t2;
     }
     kb.warps.push(w);
-    this._emit({ type: 'warpfire', owner: p.owner, actor, by, from: shown.slice(), trigger: by === 'trigger' ? plan.trigger : null, reticle, treasureMoved: hadT, ownerPriv: { oldCells, newCells: p.cells.slice() } });
+    this._emit({ type: 'warpfire', owner: p.owner, actor, by, full: !!full, size: full ? p.size : null, from: shown.slice(), trigger: by === 'trigger' ? plan.trigger : null, reticle, treasureMoved: hadT, ownerPriv: { oldCells, newCells: p.cells.slice() } });
     const tl = hadT ? '・トレジャーログがリセット' : '';
     const pubTxt = `${owner.name}：ワープ発動（移動前 ${coordList(shown, N)}${reticle >= 0 ? `・ワープレティクル ${this.coord(reticle)}` : '・移動先は不明'}）${tl}`;
     const privTxt = `${owner.name}：ワープ発動（移動前 ${coordList(oldCells, N)} → 移動後 ${coordList(p.cells, N)}）${tl}`;
@@ -2706,7 +2727,7 @@ body.replaying #app { display: none; }
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 4;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに
+  const NET_VERSION = 5;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';
@@ -3599,26 +3620,33 @@ body.replaying #app { display: none; }
   //   ステルスの後の×・NoData のブロックにも広がりうる（そのキューブへのコールは×に見えるため）。トリガー（まだコールされていないブロック）を含む
   function warpGroupCands(g, w, ctx, base, add, st) {
     const N = ctx.N;
-    const tr = Math.floor(w.trigger / N), tc = w.trigger % N;
     const rr = Math.floor(g.c / N), rc = g.c % N;
     const images = [];
-    for (let k = 0; k < 4; k++) {
-      let m = 0, ok = true;
-      for (const c of w.oldCells) {
-        let dr = Math.floor(c / N) - tr, dc = (c % N) - tc;
-        for (let j = 0; j < k; j++) { const tmp = dr; dr = dc; dc = -tmp; }   // engine の transform と同じ向きの回転
-        const r = rr + dr, cc = rc + dc;
-        if (r < 0 || cc < 0 || r >= N || cc >= N) { ok = false; break; }
-        m |= bit(r * N + cc);
+    // アンサーで逃げたワープ（v15.2：あとで見つけた隠れたレティクル）は、移動前のどのブロックがトリガーだったか分からないので、全部を試す
+    const anchors = w.anyTrigger ? w.oldCells : [w.trigger];
+    for (const a of anchors) {
+      const tr = Math.floor(a / N), tc = a % N;
+      for (let k = 0; k < 4; k++) {
+        let m = 0, ok = true;
+        for (const c of w.oldCells) {
+          let dr = Math.floor(c / N) - tr, dc = (c % N) - tc;
+          for (let j = 0; j < k; j++) { const tmp = dr; dr = dc; dc = -tmp; }   // engine の transform と同じ向きの回転
+          const r = rr + dr, cc = rc + dc;
+          if (r < 0 || cc < 0 || r >= N || cc >= N) { ok = false; break; }
+          m |= bit(r * N + cc);
+        }
+        if (ok && images.indexOf(m) < 0) images.push(m);
       }
-      if (ok) images.push(m);
     }
     if (!images.length) return;
     const xm = st ? ctx.xMaskBetween(w.t, st.ts) | st.after : ctx.xMaskAfter(w.t);
     const fb = base | xm | w.oldMask | ctx.oldMaskAfter(w.t) | ctx.occMaskBefore(w.t);
     const occs = st ? ctx.occs.filter((o) => o.t < st.ts) : ctx.occs;
     const minSize = Math.max(2, popcount(w.oldMask));
+    // 移動前の形が全部分かっている（全ブロックに当たってからのトリガー＝自動撃破後のワープ・アンサーで逃げた。v15.2）なら、ブロック数はそのまま
+    const exact = w.full || w.anyTrigger;
     for (const s of [2, 3, 4, 5]) {
+      if (exact && s !== popcount(w.oldMask)) continue;
       // ステルスのキューブは数（サーチキューブ）に入らないので、ステルスの枝では在庫だけを見る（ふつうの枝 s と同じ）
       if (s < minSize || !(st ? ctx.stockBound[s] > 0 : ctx.sizeAllowed(s))) continue;
       for (const key of SHAPES_BY_SIZE[s]) {
@@ -7472,7 +7500,7 @@ window.SBAudio = (function () {
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
         <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選んだブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られるのはばれたキューブだけで、ほかのステルスは隠れたまま。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない（ワープを待っているキューブにもステルスは使えない）。</p>
-        <p class="note"><b>ワープ</b>：①キューブの、まだ当たっていないブロックを1つ（トリガー）と、移動先（空きブロック。回転だけで、反転はできない）を決めておく。使ったことは相手に伝わるが、どのキューブか・移動先は伏せられる。②トリガーをコールされると発動：キューブは移動先へ移り、移動先のトリガーにあたるブロックにワープレティクルが出る（相手のヒント。1発目のヒットとして数える）。③トリガーをコールされる前にアンサーで当てられても発動して逃げる（撃破されない。移動先のヒントは出ない。アンサーは成功扱いで手番は続く）。④発動すると、移動前の当たっていたブロック（アンサーなら宣言したブロック）は×（W付き）になり、それ以外の×は薄くなって、もう一度コールできる。差し出したキューブでは発動しない。バズーカで分解されると取り消し。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
+        <p class="note"><b>ワープ</b>：①キューブの、まだ当たっていないブロックを1つ（トリガー）と、移動先（空きブロック。回転だけで、反転はできない）を決めておく。使ったことは相手に伝わるが、どのキューブか・移動先は伏せられる。②トリガーをコールされると発動：キューブは移動先へ移り、移動先のトリガーにあたるブロックにワープレティクルが出る（相手のヒント。1発目のヒットとして数える）。トリガーが最後に残ったブロックなら「自動撃破後、ワープ発動」と出る。③トリガーをコールされる前にアンサーで当てられても発動して逃げる（撃破されない。移動先のヒントは出ない。アンサーは成功扱いで手番は続く）。あとで移動先のトリガーにあたるブロックをコールすると、そこにワープレティクルが出る。④発動すると、移動前の当たっていたブロック（アンサーなら宣言したブロック）は×（W付き）になり、それ以外の×は薄くなって、もう一度コールできる。差し出したキューブでは発動しない。バズーカで分解されると取り消し。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
         <p class="note"><b>調べた結果の札</b>：ブロックの左上に R・L・T・Z（形）と数字（ブロック数）、左下のひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝分かれ目、0＝1ブロックのキューブ）。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
       </div>
@@ -8429,6 +8457,14 @@ window.SBAudio = (function () {
             text(p.x, p.y - p.h * 0.55, 'NO HIT', 'miss', 1200);
             return 650 * k;
           }
+          if (ev.r === 'wp' && ev.late) {
+            // アンサーで逃げたキューブの、隠れていたワープレティクルを見つけた（v15.2）：ワープは起きない。印が現れるだけ
+            over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900);
+            ring(p.x, p.y, WP, p.w * 0.1, p.w * 1.2, 700, 2.5);
+            sparks(p.x, p.y, WP, 12, 0.9, 0.3);
+            text(p.x, p.y - p.h * 0.62, 'WARP RETICLE', 'warp', 1300);
+            return 800 * k;
+          }
           if (ev.r === 'wp') {
             // ワープのトリガー（v15）：ワープレティクルが現れて、ワープが発動する（移動は次の warpfire の演出）
             over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900);
@@ -8548,7 +8584,12 @@ window.SBAudio = (function () {
           }
           if (n) ring(sx / n, sy / n, WP, 6, 80, 820, 3);
           const tx = n ? sx / n : null, ty = n ? sy / n : null;
-          if (tx != null) text(tx, ty, ev.by === 'answer' ? 'WARP ESCAPE' : 'WARP', 'warp', 1400);
+          if (tx != null && ev.full) {
+            // 最後のコールがトリガーだった（v15.2。ユーザーの希望）：撃破の通知を出してから、ワープで逃げる
+            SND.sfx('destroy', 0, { pan: panOf(ev.owner, v), big: (ev.size || 0) >= 4 });
+            text(tx, ty, 'DESTROYED', 'kill', 1500);
+            text(tx, ty + 34, '自動撃破後、ワープ発動', 'sub', 1700);
+          } else if (tx != null) text(tx, ty, ev.by === 'answer' ? 'WARP ESCAPE' : 'WARP', 'warp', 1400);
           setTimeout(() => {
             if (own && ev.ownerPriv) {
               for (const cc of ev.ownerPriv.newCells) {
