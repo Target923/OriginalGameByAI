@@ -41,6 +41,14 @@ async def play_game(page, rules, mode, log, shots=False, do_items=True, items='a
     await page.click('label[for=opt-speed-1]')
     if shots: await page.screenshot(path=f'{SHOTS}/v4_1_title.png', full_page=True)
     await page.click('[data-act=start]')
+    # ドラフト（v15.4：配置の前）
+    for _ in range(60):
+        s = await state(page)
+        if s['screen'] != 'draft': break
+        btn = await page.query_selector('[data-act=draft-pick]:not([disabled])')
+        if btn: await btn.click()
+        else: await page.wait_for_timeout(150)
+    await page.wait_for_selector('[data-act=random]')
     # 配置：手動で1個置いて外す→おまかせ
     await page.click('.cell[data-board=own][data-cell="5"]')
     await page.click('[data-act=rotate]')
@@ -50,13 +58,6 @@ async def play_game(page, rules, mode, log, shots=False, do_items=True, items='a
     await page.click('[data-act=setup-done]')
     if mode == 'pvp':
         await page.click('[data-act=random]'); await page.click('[data-act=setup-done]')
-    # ドラフト
-    for _ in range(40):
-        s = await state(page)
-        if s['screen'] != 'draft': break
-        btn = await page.query_selector('[data-act=draft-pick]:not([disabled])')
-        if btn: await btn.click()
-        else: await page.wait_for_timeout(150)
     used_items = set(); answered_fail = False; answered_ok = False
     for step in range(4000):
         s = await state(page)

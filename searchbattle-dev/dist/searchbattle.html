@@ -1277,8 +1277,9 @@ body.replaying #app { display: none; }
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 29;
+  const VERSION = 30;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -1483,6 +1484,8 @@ body.replaying #app { display: none; }
     this.players = [0, 1].map((i) => this._newPlayer(i, names[i], !!cpu[i], opts.wallet || 0, stocks[i], inv[i]));
     // 相手が置けるキューブの数（大会では公開情報）を推論に使う
     for (const i of [0, 1]) this.players[i].kb.stock = Object.assign({}, this.players[1 - i].stock);
+    // ドラフトがある試合は、配置の前にドラフトをする（v15.4。ユーザーの希望：取ったアイテムを見てから置ける。大会の決勝も同じ）
+    if (this.draftEach > 0) this._initDraft();
   }
 
   Game.prototype._newPlayer = function (i, name, isCPU, wallet, stock, inv) {
@@ -1569,7 +1572,7 @@ body.replaying #app { display: none; }
   };
   Game.prototype.placePiece = function (pi, key, t, r0, c0) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
+    if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     const sh = SHAPES[key];
     if (!sh || key === 'A1') return { ok: false, reason: '置けない形です' };
     if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'ブロックのキューブは残っていません' };
@@ -1600,19 +1603,19 @@ body.replaying #app { display: none; }
   };
   Game.prototype.removePiece = function (pi, id) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false };
+    if (!this._setupOpen() || P.setupDone) return { ok: false };
     P.pieces = P.pieces.filter((p) => p.id !== id);
     if (P.treasure && P.treasure.pieceId === id) P.treasure = null;
     return { ok: true };
   };
   Game.prototype.clearSetup = function (pi) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return;
+    if (!this._setupOpen() || P.setupDone) return;
     P.pieces = []; P.treasure = null;
   };
   Game.prototype.setTreasure = function (pi, cell) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false };
+    if (!this._setupOpen() || P.setupDone) return { ok: false };
     const p = this.pieceAt(pi, cell);
     if (!p) return { ok: false, reason: 'トレジャーはキューブのブロックに置きます' };
     P.treasure = { pieceId: p.id, idx: p.cells.indexOf(cell), cell };
@@ -1654,36 +1657,38 @@ body.replaying #app { display: none; }
   };
   Game.prototype.finishSetup = function (pi) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
+    if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     if (!P.pieces.length) return { ok: false, reason: '最低1キューブを置いてください' };
     if (!P.treasure) return { ok: false, reason: 'トレジャーをセットしてください' };
     P.setupDone = true;
-    if (this.players.every((q) => q.setupDone)) {
-      if (this.draftEach > 0) {
-        // ドラフト：使えるアイテムの中から1人 draftEach 個ずつ、後攻から取る（大会の決勝は9種類から4つずつ）
-        // 順番はトゥエ・モース順（i の2進数の1の個数が偶数なら後攻、奇数なら先攻：後先先後先後後先…）。
-        // 最初と最後を同じプレイヤーが取らないよう、そうなるときは最後の2つを入れ替える
-        // 4つずつ＝後先先後先後後先（v11.1で 後先先後後先後先 から変更。CPUどうしの先攻勝率 41.1%→50.1%）
-        // 3つずつ＝後先先後後先、2つずつ＝後先後先（これらは前と同じ）
-        const second = 1 - this.first;
-        const pool = (this.draftPool || this.itemKeys).slice();
-        const each = this.draftEach;
-        const order = [];
-        for (let i = 0; i < each * 2; i++) {
-          let odd = 0;
-          for (let x = i; x; x >>= 1) odd ^= x & 1;
-          order.push(odd ? this.first : second);
-        }
-        const n = order.length;
-        if (n >= 2 && order[n - 1] === order[0]) { const tmp = order[n - 1]; order[n - 1] = order[n - 2]; order[n - 2] = tmp; }
-        if (!order.length) { this._startPlay(); return { ok: true }; }
-        this.draft = { pool, order, step: 0, picks: [[], []], each };
-        this.phase = 'draft';
-      } else {
-        this._startPlay();
-      }
-    }
+    // ドラフトは配置の前（v15.4。ユーザーの希望）。ドラフト中に配置を済ませた側（CPU）は、ドラフトが終わるのを待つ
+    if (this.players.every((q) => q.setupDone) && this.phase === 'setup') this._startPlay();
     return { ok: true };
+  };
+
+  // 配置できる時期：配置フェーズと、その前のドラフトのあいだ（CPU やテストは、ドラフトの前や途中に配置を済ませてよい。人の画面はドラフトのあとに配置）
+  Game.prototype._setupOpen = function () { return this.phase === 'setup' || this.phase === 'draft'; };
+  // ドラフトを始める（v15.4：試合のはじめ。配置の前）
+  Game.prototype._initDraft = function () {
+    // ドラフト：使えるアイテムの中から1人 draftEach 個ずつ、後攻から取る（大会の決勝は9種類から4つずつ）
+    // 順番はトゥエ・モース順（i の2進数の1の個数が偶数なら後攻、奇数なら先攻：後先先後先後後先…）。
+    // 最初と最後を同じプレイヤーが取らないよう、そうなるときは最後の2つを入れ替える
+    // 4つずつ＝後先先後先後後先（v11.1で 後先先後後先後先 から変更。CPUどうしの先攻勝率 41.1%→50.1%）
+    // 3つずつ＝後先先後後先、2つずつ＝後先後先（これらは前と同じ）
+    const second = 1 - this.first;
+    const pool = (this.draftPool || this.itemKeys).slice();
+    const each = this.draftEach;
+    const order = [];
+    for (let i = 0; i < each * 2; i++) {
+      let odd = 0;
+      for (let x = i; x; x >>= 1) odd ^= x & 1;
+      order.push(odd ? this.first : second);
+    }
+    const n = order.length;
+    if (n >= 2 && order[n - 1] === order[0]) { const tmp = order[n - 1]; order[n - 1] = order[n - 2]; order[n - 2] = tmp; }
+    if (!order.length) return;
+    this.draft = { pool, order, step: 0, picks: [[], []], each };
+    this.phase = 'draft';
   };
 
   // ---------------- ドラフト ----------------
@@ -1699,7 +1704,11 @@ body.replaying #app { display: none; }
     this.players[pi].items[key] += 1;
     this._log(pi, `${this.players[pi].name}：ドラフトで${ITEMS[key].name}を獲得`, null, 'draft', key);
     d.step++;
-    if (d.step >= d.order.length || !d.pool.length) this._startPlay();
+    // ドラフトが終わったら配置へ（両方とも配置を済ませていれば、そのまま対戦。v15.4）
+    if (d.step >= d.order.length || !d.pool.length) {
+      if (this.players.every((q) => q.setupDone)) this._startPlay();
+      else this.phase = 'setup';
+    }
     return { ok: true };
   };
 
@@ -2745,7 +2754,7 @@ body.replaying #app { display: none; }
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 5;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）
+  const NET_VERSION = 6;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）／6：v15.4 ドラフトを配置の前に
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';
@@ -2827,7 +2836,8 @@ body.replaying #app { display: none; }
     H.splitPieces = [];    // バズーカで分解された元のキューブの形
     H.nextId = 0;          // 次のキューブの番号（置いた数が分かる）
     // ② 先攻・後攻は、配置が終わるまで伏せる（ふつうの試合でも、配置のあとの「試合開始」で分かる）
-    if (s.phase === 'setup') { s.first = null; s.cur = null; }
+    //    （ドラフトのある試合は、配置の前のドラフトの順番で先攻・後攻が分かるので伏せない。v15.4）
+    if (s.phase === 'setup' && !(s.draftEach > 0)) { s.first = null; s.cur = null; }
     // ③ 演出の記録：数と順番は変えない（ゲストの画面は「どこまで見せたか」を番号で覚えているため）
     for (const ev of s.events) {
       if (ev.actor === hide) delete ev.priv;          // 相手のワープのキューブ・トリガー・移動先、ステルスをかけたブロック
@@ -6842,8 +6852,14 @@ window.SBAudio = (function () {
     if (interactive) return `<button type="button" class="${cls}" data-act="item" data-key="${k}" aria-disabled="${usable ? 'false' : 'true'}" data-tip="${esc(tip)}" aria-label="${esc(tip)}">${ICON[k]}${badge}</button>`;
     return `<span class="${cls}" role="listitem" data-tip="${esc(tip)}" aria-label="${esc(tip)}">${ICON[k]}${badge}</span>`;
   }
+  // 1試合のバトルでは、その人が持っている（持っていた）アイテムだけを並べる（v15.4。ユーザーの希望。大会は全種類を並べる）
+  function owns(pi, k) {
+    if (app.tour) return true;
+    const P = G().players[pi];
+    return (P.items[k] | 0) > 0 || ((P.used && P.used[k]) | 0) > 0;
+  }
   function chipGroup(pi, keys, interactive, side, cap, tone) {
-    keys = keys.filter(inPlay);
+    keys = keys.filter(inPlay).filter((k) => owns(pi, k));
     if (!keys.length) return '';
     return `<div class="chipgrp ${side}"><span class="cap">${esc(cap)}</span><div class="chips ${tone || (interactive ? 'mine' : 'enemy')}" role="list">${keys.map((k) => chipHTML(pi, k, interactive)).join('')}</div></div>`;
   }
@@ -7218,6 +7234,7 @@ window.SBAudio = (function () {
               <li><span class="lg ink-o">${MARK.o}</span>ヒット</li>
               <li><span class="lg ink-x">${MARK.x}</span>ノットヒット</li>
               <li><span class="lg ink-q">${MARK.q}</span>ステルスヒット</li>
+              <li><span class="lg ink-wp">${MARK.wp}</span>ワープレティクル</li>
               <li><span class="tlg">N</span>トレジャーのニア</li>
             </ul>
           </div>
@@ -7302,7 +7319,8 @@ window.SBAudio = (function () {
       ? 'トレジャーを置くキューブのブロックをタップしてください。'
       : (S.key ? 'フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選んでください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
-    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.map((k) => {
+    // 1試合は持っているアイテムだけ（v15.4）。大会は0の種類も薄く並べる
+    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.filter((k) => app.tour || !P2 || (P2.items[k] | 0) > 0).map((k) => {
       const n = P2 ? (P2.items[k] || 0) : null;
       return `<li class="${n === 0 ? 'zero' : ''}" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}"><span class="ic">${ICON[k]}</span><b>${esc(ITEMS[k].name)}</b>${n != null ? `<em>×${n}</em>` : ''}</li>`;
     }).join('')}</ul>`;
@@ -7310,7 +7328,9 @@ window.SBAudio = (function () {
     const itemsHTML = app.tour
       ? `<h2 class="ptitle">${esc(who)}の残りアイテム<small>YOUR ITEMS</small></h2>${itemRows(P, false)}
          <h2 class="ptitle su-foe">${esc(foe.name)}の残りアイテム<small>RIVAL ITEMS</small></h2>${itemRows(foe, true)}`
-      : `<h2 class="ptitle">この試合のアイテム<small>ITEMS</small></h2>${itemRows(null, false)}`;
+      // 1試合：自分と相手のアイテム（v15.4。ユーザーの希望。ドラフトは配置の前なので、取ったアイテムが並ぶ）
+      : `<h2 class="ptitle">${esc(oneSide() ? 'あなた' : who)}のアイテム<small>YOUR ITEMS</small></h2>${itemRows(P, false)}
+         <h2 class="ptitle su-foe">${esc(foe.name)}のアイテム<small>RIVAL ITEMS</small></h2>${itemRows(foe, true)}`;
     root.innerHTML = `
       <div class="wrap">
         ${hudHTML(`<span class="stat">${esc(g.rules.label)}<b>${N}×${N}</b></span><span class="stat me">DEPLOY<b>${esc(who)}</b></span>`)}
@@ -9055,9 +9075,18 @@ self.onmessage = function (e) {
     app.fxSeen = 0;
     app.fxChain = Promise.resolve();
     if (isCPUMode()) { AI.setup(app.game, 1); app.game.finishSetup(1); }
+    // ドラフトのある試合は、配置の前にドラフト（v15.4。大会の決勝も同じ）
+    if (app.game.phase === 'draft') { app.screen = 'draft'; render(); window.scrollTo(0, 0); runDraftCPU(); return; }
     app.screen = 'setup';
     render();
     window.scrollTo(0, 0);
+  }
+  // ドラフトが終わったら配置へ（両方とも配置済みなら対戦へ）
+  function afterDraft() {
+    const g = G();
+    if (g.phase === 'play') { enterBattle(); return; }
+    if (g.phase === 'setup') { app.screen = 'setup'; render(); window.scrollTo(0, 0); return; }
+    render();
   }
 
   function enterAfterSetup() {
@@ -9089,8 +9118,7 @@ self.onmessage = function (e) {
     }
     app.busy = false;
     if (app.game !== g) return;
-    if (g.phase === 'play') { enterBattle(); return; }
-    render();
+    afterDraft();
   }
 
   // CPUの手番を、演出を見せながら段階的に進める
@@ -9438,7 +9466,7 @@ self.onmessage = function (e) {
       const r = act('draftPick', pi, el.dataset.key);
       if (!r.ok) { toast(r.reason || '選べません'); return; }
       if (r.sent) { render(); return; }   // ゲスト：結果はホストから届く
-      if (g.phase === 'play') { enterBattle(); return; }
+      if (g.phase !== 'draft') { afterDraft(); return; }
       render();
       runDraftCPU();
     },
@@ -10353,7 +10381,7 @@ self.onmessage = function (e) {
     const prev = app.game;
     app.game = g;
     if (app.screen === 'setup') { if (g.phase === 'setup') render(); else enterAfterSetup(); return; }
-    if (app.screen === 'draft') { if (g.phase === 'play') enterBattle(); else render(); return; }
+    if (app.screen === 'draft') { if (g.phase === 'draft') render(); else afterDraft(); return; }
     if (app.screen !== 'battle') { render(); return; }
     const me = app.net.seat;
     if (g.phase === 'play' && g.sub === 'sacrifice' && g.pending && g.pending.who === me && !(prev && prev.sub === 'sacrifice')) {
@@ -10366,7 +10394,7 @@ self.onmessage = function (e) {
     const g = app.game;
     if (!g) return;
     if (app.screen === 'setup') { if (g.phase === 'setup') render(); else enterAfterSetup(); return; }
-    if (app.screen === 'draft') { if (g.phase === 'play') enterBattle(); else render(); return; }
+    if (app.screen === 'draft') { if (g.phase === 'draft') render(); else afterDraft(); return; }
     if (app.screen === 'battle') afterHuman(); else render();
   }
   const BYE_TEXT = {

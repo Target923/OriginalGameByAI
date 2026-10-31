@@ -693,8 +693,14 @@
     if (interactive) return `<button type="button" class="${cls}" data-act="item" data-key="${k}" aria-disabled="${usable ? 'false' : 'true'}" data-tip="${esc(tip)}" aria-label="${esc(tip)}">${ICON[k]}${badge}</button>`;
     return `<span class="${cls}" role="listitem" data-tip="${esc(tip)}" aria-label="${esc(tip)}">${ICON[k]}${badge}</span>`;
   }
+  // 1試合のバトルでは、その人が持っている（持っていた）アイテムだけを並べる（v15.4。ユーザーの希望。大会は全種類を並べる）
+  function owns(pi, k) {
+    if (app.tour) return true;
+    const P = G().players[pi];
+    return (P.items[k] | 0) > 0 || ((P.used && P.used[k]) | 0) > 0;
+  }
   function chipGroup(pi, keys, interactive, side, cap, tone) {
-    keys = keys.filter(inPlay);
+    keys = keys.filter(inPlay).filter((k) => owns(pi, k));
     if (!keys.length) return '';
     return `<div class="chipgrp ${side}"><span class="cap">${esc(cap)}</span><div class="chips ${tone || (interactive ? 'mine' : 'enemy')}" role="list">${keys.map((k) => chipHTML(pi, k, interactive)).join('')}</div></div>`;
   }
@@ -1069,6 +1075,7 @@
               <li><span class="lg ink-o">${MARK.o}</span>ヒット</li>
               <li><span class="lg ink-x">${MARK.x}</span>ノットヒット</li>
               <li><span class="lg ink-q">${MARK.q}</span>ステルスヒット</li>
+              <li><span class="lg ink-wp">${MARK.wp}</span>ワープレティクル</li>
               <li><span class="tlg">N</span>トレジャーのニア</li>
             </ul>
           </div>
@@ -1153,7 +1160,8 @@
       ? 'トレジャーを置くキューブのブロックをタップしてください。'
       : (S.key ? 'フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選んでください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
-    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.map((k) => {
+    // 1試合は持っているアイテムだけ（v15.4）。大会は0の種類も薄く並べる
+    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.filter((k) => app.tour || !P2 || (P2.items[k] | 0) > 0).map((k) => {
       const n = P2 ? (P2.items[k] || 0) : null;
       return `<li class="${n === 0 ? 'zero' : ''}" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}"><span class="ic">${ICON[k]}</span><b>${esc(ITEMS[k].name)}</b>${n != null ? `<em>×${n}</em>` : ''}</li>`;
     }).join('')}</ul>`;
@@ -1161,7 +1169,9 @@
     const itemsHTML = app.tour
       ? `<h2 class="ptitle">${esc(who)}の残りアイテム<small>YOUR ITEMS</small></h2>${itemRows(P, false)}
          <h2 class="ptitle su-foe">${esc(foe.name)}の残りアイテム<small>RIVAL ITEMS</small></h2>${itemRows(foe, true)}`
-      : `<h2 class="ptitle">この試合のアイテム<small>ITEMS</small></h2>${itemRows(null, false)}`;
+      // 1試合：自分と相手のアイテム（v15.4。ユーザーの希望。ドラフトは配置の前なので、取ったアイテムが並ぶ）
+      : `<h2 class="ptitle">${esc(oneSide() ? 'あなた' : who)}のアイテム<small>YOUR ITEMS</small></h2>${itemRows(P, false)}
+         <h2 class="ptitle su-foe">${esc(foe.name)}のアイテム<small>RIVAL ITEMS</small></h2>${itemRows(foe, true)}`;
     root.innerHTML = `
       <div class="wrap">
         ${hudHTML(`<span class="stat">${esc(g.rules.label)}<b>${N}×${N}</b></span><span class="stat me">DEPLOY<b>${esc(who)}</b></span>`)}
@@ -2906,9 +2916,18 @@ self.onmessage = function (e) {
     app.fxSeen = 0;
     app.fxChain = Promise.resolve();
     if (isCPUMode()) { AI.setup(app.game, 1); app.game.finishSetup(1); }
+    // ドラフトのある試合は、配置の前にドラフト（v15.4。大会の決勝も同じ）
+    if (app.game.phase === 'draft') { app.screen = 'draft'; render(); window.scrollTo(0, 0); runDraftCPU(); return; }
     app.screen = 'setup';
     render();
     window.scrollTo(0, 0);
+  }
+  // ドラフトが終わったら配置へ（両方とも配置済みなら対戦へ）
+  function afterDraft() {
+    const g = G();
+    if (g.phase === 'play') { enterBattle(); return; }
+    if (g.phase === 'setup') { app.screen = 'setup'; render(); window.scrollTo(0, 0); return; }
+    render();
   }
 
   function enterAfterSetup() {
@@ -2940,8 +2959,7 @@ self.onmessage = function (e) {
     }
     app.busy = false;
     if (app.game !== g) return;
-    if (g.phase === 'play') { enterBattle(); return; }
-    render();
+    afterDraft();
   }
 
   // CPUの手番を、演出を見せながら段階的に進める
@@ -3289,7 +3307,7 @@ self.onmessage = function (e) {
       const r = act('draftPick', pi, el.dataset.key);
       if (!r.ok) { toast(r.reason || '選べません'); return; }
       if (r.sent) { render(); return; }   // ゲスト：結果はホストから届く
-      if (g.phase === 'play') { enterBattle(); return; }
+      if (g.phase !== 'draft') { afterDraft(); return; }
       render();
       runDraftCPU();
     },
@@ -4204,7 +4222,7 @@ self.onmessage = function (e) {
     const prev = app.game;
     app.game = g;
     if (app.screen === 'setup') { if (g.phase === 'setup') render(); else enterAfterSetup(); return; }
-    if (app.screen === 'draft') { if (g.phase === 'play') enterBattle(); else render(); return; }
+    if (app.screen === 'draft') { if (g.phase === 'draft') render(); else afterDraft(); return; }
     if (app.screen !== 'battle') { render(); return; }
     const me = app.net.seat;
     if (g.phase === 'play' && g.sub === 'sacrifice' && g.pending && g.pending.who === me && !(prev && prev.sub === 'sacrifice')) {
@@ -4217,7 +4235,7 @@ self.onmessage = function (e) {
     const g = app.game;
     if (!g) return;
     if (app.screen === 'setup') { if (g.phase === 'setup') render(); else enterAfterSetup(); return; }
-    if (app.screen === 'draft') { if (g.phase === 'play') enterBattle(); else render(); return; }
+    if (app.screen === 'draft') { if (g.phase === 'draft') render(); else afterDraft(); return; }
     if (app.screen === 'battle') afterHuman(); else render();
   }
   const BYE_TEXT = {

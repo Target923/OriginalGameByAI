@@ -214,8 +214,8 @@ async def main():
             await guest.fill('#net-code', code[:3].lower() + '-' + code[3:])
             await guest.screenshot(path=f'{SHOTS}/on_2_guest_lobby.png')
             await guest.press('#net-code', 'Enter')
-            await wait_for(guest, lambda s: s.get('screen') == 'setup', 20, 'ゲストが配置へ')
-            await wait_for(host, lambda s: s.get('screen') == 'setup', 5, 'ホストが配置へ')
+            await wait_for(guest, lambda s: s.get('screen') == 'draft', 20, 'ゲストがドラフトへ（はじめ）')
+            await wait_for(host, lambda s: s.get('screen') == 'draft', 5, 'ホストがドラフトへ（はじめ）')
             foe = await host.evaluate("() => window.__sb.app.net.foe")
             if '<' in foe or '>' in foe: fail('相手の名前に < > が残る: ' + foe)
             # 3人目：同じ部屋には入れない
@@ -232,15 +232,7 @@ async def main():
             s3 = await wait_for(third, lambda s: s.get('lobby') == 'idle' and s.get('err'), 20, '3人目が断られる')
             if '対戦中' not in (s3.get('err') or ''): fail('3人目の知らせ: ' + str(s3.get('err')))   # 「満員」か「入れませんでした（もう対戦中か…）」のどちらでも「対戦中」を含む
             await third.close()
-            # 配置：ゲストが先に送り、ホストの画面に「配置完了」が出るのを確かめる
-            await guest.click('[data-act=random]'); await guest.click('[data-act=setup-done]')
-            await wait_for(guest, lambda s: s.get('sent') or s.get('mineDone'), 5, 'ゲストの配置を送る')
-            await guest.screenshot(path=f'{SHOTS}/on_3_guest_setup_wait.png', full_page=True)
-            await host.wait_for_selector('.net-foe b', timeout=5000)
-            leak = await guest.evaluate(GUEST_SECRET)
-            if leak: fail('配置中に届いた: ' + leak)
-            await host.click('[data-act=random]'); await host.click('[data-act=setup-done]')
-            await wait_for(host, lambda s: s.get('screen') == 'draft', 10, 'ホストがドラフトへ')
+            await wait_for(host, lambda s: s.get('screen') == 'draft', 10, 'ホストがドラフトへ')   # v15.4：ドラフトは配置の前
             await wait_for(guest, lambda s: s.get('screen') == 'draft', 10, 'ゲストがドラフトへ')
             # ドラフト：自分の番の人だけが選べる
             for _ in range(200):
@@ -252,6 +244,16 @@ async def main():
                 btn = await pg.query_selector('[data-act=draft-pick]:not([disabled])')
                 if btn: await btn.click(); await settle(pg)
                 await asyncio.sleep(0.15)
+            await wait_for(host, lambda s: s.get('screen') == 'setup', 10, 'ホストが配置へ')
+            await wait_for(guest, lambda s: s.get('screen') == 'setup', 10, 'ゲストが配置へ')
+            # 配置：ゲストが先に送り、ホストの画面に「配置完了」が出るのを確かめる
+            await guest.click('[data-act=random]'); await guest.click('[data-act=setup-done]')
+            await wait_for(guest, lambda s: s.get('sent') or s.get('mineDone'), 5, 'ゲストの配置を送る')
+            await guest.screenshot(path=f'{SHOTS}/on_3_guest_setup_wait.png', full_page=True)
+            await host.wait_for_selector('.net-foe b', timeout=5000)
+            leak = await guest.evaluate(GUEST_SECRET)
+            if leak: fail('配置中に届いた: ' + leak)
+            await host.click('[data-act=random]'); await host.click('[data-act=setup-done]')
             await wait_for(host, lambda s: s.get('screen') == 'battle', 10, 'ホストが対戦へ')
             await wait_for(guest, lambda s: s.get('screen') == 'battle', 10, 'ゲストが対戦へ')
             await play_match(host, guest, 1)

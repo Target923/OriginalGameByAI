@@ -59,6 +59,13 @@ async def human_turn(p, log):
         await p.click('[data-act=end-turn]'); return
 
 async def play_match(p, tag, log):
+    # 決勝はドラフトが配置の前（v15.4）
+    for _ in range(200):
+        s = await settle(p)
+        if s['screen'] != 'draft': break
+        btn = await p.query_selector('[data-act=draft-pick]:not([disabled])')
+        if btn: await btn.click()
+        else: await p.wait_for_timeout(100)
     # 配置：おまかせ → 完了
     await p.wait_for_selector('[data-act=random]')
     await p.click('[data-act=random]')

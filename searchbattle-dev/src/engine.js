@@ -42,8 +42,9 @@
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 29;
+  const VERSION = 30;
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -248,6 +249,8 @@
     this.players = [0, 1].map((i) => this._newPlayer(i, names[i], !!cpu[i], opts.wallet || 0, stocks[i], inv[i]));
     // 相手が置けるキューブの数（大会では公開情報）を推論に使う
     for (const i of [0, 1]) this.players[i].kb.stock = Object.assign({}, this.players[1 - i].stock);
+    // ドラフトがある試合は、配置の前にドラフトをする（v15.4。ユーザーの希望：取ったアイテムを見てから置ける。大会の決勝も同じ）
+    if (this.draftEach > 0) this._initDraft();
   }
 
   Game.prototype._newPlayer = function (i, name, isCPU, wallet, stock, inv) {
@@ -334,7 +337,7 @@
   };
   Game.prototype.placePiece = function (pi, key, t, r0, c0) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
+    if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     const sh = SHAPES[key];
     if (!sh || key === 'A1') return { ok: false, reason: '置けない形です' };
     if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'ブロックのキューブは残っていません' };
@@ -365,19 +368,19 @@
   };
   Game.prototype.removePiece = function (pi, id) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false };
+    if (!this._setupOpen() || P.setupDone) return { ok: false };
     P.pieces = P.pieces.filter((p) => p.id !== id);
     if (P.treasure && P.treasure.pieceId === id) P.treasure = null;
     return { ok: true };
   };
   Game.prototype.clearSetup = function (pi) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return;
+    if (!this._setupOpen() || P.setupDone) return;
     P.pieces = []; P.treasure = null;
   };
   Game.prototype.setTreasure = function (pi, cell) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false };
+    if (!this._setupOpen() || P.setupDone) return { ok: false };
     const p = this.pieceAt(pi, cell);
     if (!p) return { ok: false, reason: 'トレジャーはキューブのブロックに置きます' };
     P.treasure = { pieceId: p.id, idx: p.cells.indexOf(cell), cell };
@@ -419,36 +422,38 @@
   };
   Game.prototype.finishSetup = function (pi) {
     const P = this.players[pi];
-    if (this.phase !== 'setup' || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
+    if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     if (!P.pieces.length) return { ok: false, reason: '最低1キューブを置いてください' };
     if (!P.treasure) return { ok: false, reason: 'トレジャーをセットしてください' };
     P.setupDone = true;
-    if (this.players.every((q) => q.setupDone)) {
-      if (this.draftEach > 0) {
-        // ドラフト：使えるアイテムの中から1人 draftEach 個ずつ、後攻から取る（大会の決勝は9種類から4つずつ）
-        // 順番はトゥエ・モース順（i の2進数の1の個数が偶数なら後攻、奇数なら先攻：後先先後先後後先…）。
-        // 最初と最後を同じプレイヤーが取らないよう、そうなるときは最後の2つを入れ替える
-        // 4つずつ＝後先先後先後後先（v11.1で 後先先後後先後先 から変更。CPUどうしの先攻勝率 41.1%→50.1%）
-        // 3つずつ＝後先先後後先、2つずつ＝後先後先（これらは前と同じ）
-        const second = 1 - this.first;
-        const pool = (this.draftPool || this.itemKeys).slice();
-        const each = this.draftEach;
-        const order = [];
-        for (let i = 0; i < each * 2; i++) {
-          let odd = 0;
-          for (let x = i; x; x >>= 1) odd ^= x & 1;
-          order.push(odd ? this.first : second);
-        }
-        const n = order.length;
-        if (n >= 2 && order[n - 1] === order[0]) { const tmp = order[n - 1]; order[n - 1] = order[n - 2]; order[n - 2] = tmp; }
-        if (!order.length) { this._startPlay(); return { ok: true }; }
-        this.draft = { pool, order, step: 0, picks: [[], []], each };
-        this.phase = 'draft';
-      } else {
-        this._startPlay();
-      }
-    }
+    // ドラフトは配置の前（v15.4。ユーザーの希望）。ドラフト中に配置を済ませた側（CPU）は、ドラフトが終わるのを待つ
+    if (this.players.every((q) => q.setupDone) && this.phase === 'setup') this._startPlay();
     return { ok: true };
+  };
+
+  // 配置できる時期：配置フェーズと、その前のドラフトのあいだ（CPU やテストは、ドラフトの前や途中に配置を済ませてよい。人の画面はドラフトのあとに配置）
+  Game.prototype._setupOpen = function () { return this.phase === 'setup' || this.phase === 'draft'; };
+  // ドラフトを始める（v15.4：試合のはじめ。配置の前）
+  Game.prototype._initDraft = function () {
+    // ドラフト：使えるアイテムの中から1人 draftEach 個ずつ、後攻から取る（大会の決勝は9種類から4つずつ）
+    // 順番はトゥエ・モース順（i の2進数の1の個数が偶数なら後攻、奇数なら先攻：後先先後先後後先…）。
+    // 最初と最後を同じプレイヤーが取らないよう、そうなるときは最後の2つを入れ替える
+    // 4つずつ＝後先先後先後後先（v11.1で 後先先後後先後先 から変更。CPUどうしの先攻勝率 41.1%→50.1%）
+    // 3つずつ＝後先先後後先、2つずつ＝後先後先（これらは前と同じ）
+    const second = 1 - this.first;
+    const pool = (this.draftPool || this.itemKeys).slice();
+    const each = this.draftEach;
+    const order = [];
+    for (let i = 0; i < each * 2; i++) {
+      let odd = 0;
+      for (let x = i; x; x >>= 1) odd ^= x & 1;
+      order.push(odd ? this.first : second);
+    }
+    const n = order.length;
+    if (n >= 2 && order[n - 1] === order[0]) { const tmp = order[n - 1]; order[n - 1] = order[n - 2]; order[n - 2] = tmp; }
+    if (!order.length) return;
+    this.draft = { pool, order, step: 0, picks: [[], []], each };
+    this.phase = 'draft';
   };
 
   // ---------------- ドラフト ----------------
@@ -464,7 +469,11 @@
     this.players[pi].items[key] += 1;
     this._log(pi, `${this.players[pi].name}：ドラフトで${ITEMS[key].name}を獲得`, null, 'draft', key);
     d.step++;
-    if (d.step >= d.order.length || !d.pool.length) this._startPlay();
+    // ドラフトが終わったら配置へ（両方とも配置を済ませていれば、そのまま対戦。v15.4）
+    if (d.step >= d.order.length || !d.pool.length) {
+      if (this.players.every((q) => q.setupDone)) this._startPlay();
+      else this.phase = 'setup';
+    }
     return { ok: true };
   };
 

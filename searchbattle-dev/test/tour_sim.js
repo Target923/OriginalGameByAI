@@ -37,7 +37,8 @@ for (let k = 0; k < n; k++) {
       if (e.type !== 'answer' || e.success) continue;
       const kb = g.players[e.actor].kb;
       const m = g.players[e.actor].view.marks[e.cells[0]];
-      const hunt = e.probe || (e.cells.length === 1 && (kb.stealths || []).length > 0 && m && m.r === 'x');
+      // ×のブロック1つへのステルスアンサーの外れ（あとでワープの再コールなどで印が変わることがあるので、×だったことは記録で見る）
+      const hunt = e.probe || (e.cells.length === 1 && (kb.stealths || []).length > 0 && ((m && m.r === 'x') || kb.calls.some((k) => k.c === e.cells[0] && k.r === 'x')));
       if (hunt) st.stealthHuntMiss = (st.stealthHuntMiss || 0) + 1; else err('CPU answer failed', kind);
     }
     st.msPerMatch += Date.now() - tm;
