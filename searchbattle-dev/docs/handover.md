@@ -67,7 +67,7 @@
 | もの | 場所・メモ |
 | --- | --- |
 | ゲーム本体（公開ページ） | https://claude.ai/artifact/3UbGw7pjqKEpw1Zb9qa6to 。別のチャットから更新するときは、先に read してから url を付けて publish |
-| ルールブック（Docs） | https://claude.ai/artifact/H8PsvKivxY1fXYnd5D6pfJ 。docs のツールで編集（doc 829a8622-d46e-45a1-8ac0-5435a3b5d4d1、本文 node 80d22682-fb23）。変えるところだけ find で書き換える |
+| ルールブック（Docs） | https://claude.ai/artifact/H8PsvKivxY1fXYnd5D6pfJ 。docs のツールで編集（doc 829a8622-d46e-45a1-8ac0-5435a3b5d4d1、本文 node 80d22682-fb23）。変えるところだけ find で書き換える（短い言葉は parentId で段落をしぼる。表の中の段落 id は text の id と取り違えやすい）。2026-10-31 に全体を今の用語（キューブ・ブロック・R型〜Z型・トリガーブロック）にそろえ、ステルスを v14、ワープを v15 の説明にした。図の埋め込み（形の一覧 3c394b2b-8607・手番の流れ 57cc509a-c9fe）は widget の draft-edit → publish で直す |
 | 旧シミュレーター（別ページ） | https://claude.ai/artifact/W54fL2qr9z9zauoT1kaJfG 。本体に組み込んだので不要。削除はユーザーの確認待ち |
 | 確定ルール・総括 | プロジェクトのドキュメント claude/サーチバトル_確定ルール.md・claude/サーチバトル_総括.md（docs/rules.md・docs/summary.md と同じ中身。project_write の local_path で上げる） |
 | オンライン対戦 | 遊べるのは GitHub Pages 版（https://target923.github.io/OriginalGameByAI/ のランチャー、または search_battle.html）だけ。claude.ai の公開ページは WebRTC とほかのサイトへの通信が止められているので使えず、ロビーで GitHub Pages 版へのリンクを出す |
