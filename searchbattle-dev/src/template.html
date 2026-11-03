@@ -650,6 +650,11 @@ h1, h2, h3 { text-wrap: balance; }
 .su-ilist.enemy .ic svg { stroke: var(--magenta); } .su-ilist.enemy .ic svg .f { fill: var(--magenta); }
 .su-ilist b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .su-ilist em { font: 700 .82rem var(--f-tech); font-style: normal; color: var(--cyan); }
+/* レアアイテムはゴールド（v15.9。ユーザーの希望）：自分・相手どちらの欄でも */
+.su-ilist li.rare, .su-ilist.enemy li.rare { border-color: rgba(242, 201, 76, .55); background: linear-gradient(90deg, rgba(242, 201, 76, .12), rgba(242, 201, 76, .03)); }
+.su-ilist li.rare b, .su-ilist li.rare em { color: #F2C94C; }
+.su-ilist li.rare .ic svg, .su-ilist.enemy li.rare .ic svg { stroke: #F2C94C; filter: drop-shadow(0 0 3px rgba(242, 201, 76, .5)); }
+.su-ilist li.rare .ic svg .f, .su-ilist.enemy li.rare .ic svg .f { fill: #F2C94C; }
 .su-ilist.enemy em { color: var(--magenta); }
 .su-ilist li.zero { opacity: .4; }
 

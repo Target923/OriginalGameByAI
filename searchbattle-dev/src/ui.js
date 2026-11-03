@@ -1219,7 +1219,7 @@
     // その人のアイテムだけ（v15.9。ユーザーの希望）：1試合は持っている種類、大会はベース8種類と持ちこんだレア（相手のレアは並べない）
     const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.filter((k) => !P2 || (app.tour ? owns(P2.idx, k) : (P2.items[k] | 0) > 0)).map((k) => {
       const n = P2 ? (P2.items[k] || 0) : null;
-      return `<li class="${n === 0 ? 'zero' : ''}" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}"><span class="ic">${ICON[k]}</span><b>${esc(ITEMS[k].name)}</b>${n != null ? `<em>×${n}</em>` : ''}</li>`;
+      return `<li class="${n === 0 ? 'zero' : ''}${isRare(k) ? ' rare' : ''}" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}"><span class="ic">${ICON[k]}</span><b>${esc(ITEMS[k].name)}</b>${n != null ? `<em>×${n}</em>` : ''}</li>`;
     }).join('')}</ul>`;
     const foe = g.players[1 - pi];
     const itemsHTML = app.tour
