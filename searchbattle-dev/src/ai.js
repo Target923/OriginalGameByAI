@@ -336,8 +336,27 @@
     return finishCands(g, out, ctx);
   }
   // 候補の一覧を仕上げる（ステルスの枝の印・Stealth hit の merge 候補）
+  // ホーミングミサイル（v15.5）：まだ使える「合計」の記録。その後のワープ・分解で古くなったもの、その合計のキューブを撃破済みのものは除く
+  //  （狙われたのは、そのとき生きていて隠れていないキューブのどれか1つ。どれかは分からない）
+  function homingSums(ctx) {
+    if (ctx._hs) return ctx._hs;
+    const kb = ctx.kb, out = [];
+    for (const q of kb.sums || []) {
+      if (q.nd) continue;
+      if (kb.warps.some((w) => w.t > q.t) || (kb.splits || []).some((sp) => sp.t > q.t)) continue;
+      if (kb.deads.some((d) => d.t > q.t && d.cells.reduce((a, x) => a + x + 1, 0) === q.sum)) continue;
+      out.push(q.sum);
+    }
+    ctx._hs = out;
+    return out;
+  }
+  const cellSum = (cells) => cells.reduce((a, x) => a + x + 1, 0);
+  // 合計が合う候補の重みを上げる（狙われたのがこのキューブなら、合計が合う置き方だけが残る。ほかのキューブだったかもしれないので、消しはしない）
+  const HOMING_BOOST = 6;
   function finishCands(g, out, ctx) {
     const list = Array.from(out.values());
+    const hs = homingSums(ctx);
+    if (hs.length) for (const cd of list) if (!cd.pureSt && hs.indexOf(cellSum(cd.cells)) >= 0) cd.w *= HOMING_BOOST;
     for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     // Stealth hit のグループ：「前に見つかったキューブの○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
     // 重みは、新しいキューブだった場合の重みの合計と同じ（どちらとも決めない）
@@ -919,6 +938,32 @@
       if (Z > 0) { for (let c = 0; c < NN; c++) p[c] /= Z; entP.push({ p, frag: sp }); }
     }
 
+    // ホーミングミサイル（v15.5）の合計：見つかったキューブの候補で説明がつかない分だけ、まだ見つけていないキューブとして、
+    //  その合計になる置き方（×・撃破済み・ヒットなどを避ける）のブロックに見込みを配る
+    for (const S of homingSums(ctx)) {
+      let pG = 0;
+      if (joint.total > 0) ctx.groups.forEach((g, i) => {
+        let w = 0;
+        g.cands.forEach((cd, k) => { if (!cd.merge && cd.cells.length && cellSum(cd.cells) === S) w += joint.candW[i][k]; });
+        pG = Math.max(pG, w / joint.total);
+      });
+      const pU = Math.max(0, 1 - pG);
+      if (pU < 0.05) continue;
+      const p = new Float64Array(NN);
+      let Z = 0;
+      for (const sh of prior) {
+        const T = PL[sh.key].length;
+        for (const Pl of PL[sh.key]) {
+          if ((Pl.mask & forbidA) || cellSum(Pl.cells) !== S) continue;
+          const w = sh.prior / T;
+          Z += w;
+          for (const c of Pl.cells) p[c] += w;
+        }
+      }
+      if (!(Z > 0)) continue;
+      for (let c = 0; c < NN; c++) p[c] = p[c] / Z * pU;
+      entP.push({ p, homing: S });
+    }
     const P = new Float64Array(NN);
     for (let c = 0; c < NN; c++) {
       let none = notOcc[c];
@@ -1488,6 +1533,20 @@
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
+      // ホーミングミサイル（v15.5）：狙われたキューブの候補の、合計の割れ方（エントロピー）。どのキューブが狙われるかは分からないので、
+      //  見つかったキューブと見つけていないキューブの数で割る（見つけていないキューブにも少し効く分を足す）
+      if (free('homing')) {
+        let hs = 0;
+        for (const i of uncertain) {
+          const g = ctx.groups[i];
+          const sw = {};
+          g.cands.forEach((cd, k) => { if (cd.merge || !cd.cells.length) return; const S = cellSum(cd.cells); sw[S] = (sw[S] || 0) + A.joint.candW[i][k]; });
+          hs += entropy(sw);
+        }
+        const nAll = ctx.groups.length + Math.max(0, A.hunt.Etotal || 0);
+        const hk = pol.homingK != null ? pol.homingK : 1.0;
+        if (nAll > 0) consider('homing', {}, hk * (hs + 2 * Math.max(0, A.hunt.Etotal || 0)) / nAll);
+      }
       // バズーカ：◎のブロックに撃ち込むと、そのキューブのヒット済みのブロックをその場で撃破できる。
       // 全ブロックに当たっているのに残っているキューブ（ステルス）はまるごと撃破できる。
       // ただし分解すると、まだ当たっていないブロックは1ブロックずつ当てないと撃破できなくなる（アンサー1回でまとめて撃破できなくなる）。
@@ -1567,6 +1626,8 @@
         if (cb && cb.v >= (pol.huntMin != null ? pol.huntMin : 0.3) && cb.v > (lineBest ? lineS : 0)) return { key: 'cube', params: cb.params };
       }
       if (lineBest) return { key: 'line', params: lineBest };
+      // ホーミングミサイル（v15.5）：まだ見つけていないキューブがいそうなら、コールの前に撃って合計から探す
+      if (stage === 'pre' && free('homing') && (A.hunt.Etotal || 0) >= (pol.homingHunt != null ? pol.homingHunt : 0.8)) return { key: 'homing', params: {} };
       // バズーカで角を探る（v12.6）：まだ分かっていない角にキューブがいそうなら、コールの前に撃ち込む。
       // 分解すると、角の破片はその場でアンサーでき、ほかの破片は角の隣（2つしかない）からたどれる（片方が×ならもう片方は確定）
       if (stage === 'pre' && free('bazooka') && pol.bzCorner !== false) {
@@ -1894,7 +1955,8 @@
   //  ワープは、CPUが盤を埋めるので逃げ場の空きがなく、ほとんど使えない（価値0。リワーク予定）。
   //  ステルスは決勝では価値0（ターンが長く、トリガーブロックを撃たれやすい）が、予選では−10.1と強いので、価値0の3つの中では先に取る。
   //  前の順（ワープ・サイズ・シェイプ・ノード・ライン・キューブ・ステルス・ペア・バズーカ）との対戦（tools/draft_duel.js）で勝率64.7%（300局）
-  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'stealth', 'bazooka', 'warp'];
+  // homing（v15.5）の位置は仮（測定で決める）
+  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'stealth', 'bazooka', 'warp'];
   // 手持ちにすでにある種類は、持っていない種類より後回しにする（大会の決勝は予選の残り＋ドラフト）
   function draftPick(game, pi) {
     const order = (policy[pi] && policy[pi].draft) || DRAFT_PRIORITY;

@@ -42,10 +42,15 @@
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 30;
-  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
+  const VERSION = 31;
+  // homing：ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）。レアはバズーカとホーミングミサイル（RARE_ITEMS）
+  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'warp', 'stealth'];
+  const RARE_ITEMS = ['bazooka', 'homing'];
+  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイルは、大会のレアの仕組みを作るまで1試合だけ）
+  const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '選んだ形かブロック数のキューブが、いくつ残っているか分かる' },
@@ -55,6 +60,7 @@
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
+    homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
     warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
     stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
   };
@@ -277,7 +283,7 @@
       // 推論用の事実ログ（相手盤面について自分が知り得たこと）
       kb: {
         N: this.N, stock: Object.assign({}, STOCK),
-        calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [],
+        calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [], sums: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
         warpUses: [],  // 相手がワープを使った時刻（v15。使ったことだけが分かる。どのキューブか・移動先は伏せられる）
@@ -991,6 +997,8 @@
     params = params || {};
     const inRange = (c) => Number.isInteger(c) && c >= 0 && c < NN;
     switch (key) {
+      case 'homing':
+        return { ok: true };   // 対象は選ばない（ランダムな1キューブ）
       case 'cube':
         if (params.kind === 'cat' && CATS.indexOf(params.value) >= 0) return { ok: true };
         if (params.kind === 'size' && [1, 2, 3, 4, 5].indexOf(params.value) >= 0) return { ok: true };
@@ -1062,6 +1070,28 @@
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
     let emitted = false;
     switch (key) {
+      case 'homing': {
+        // ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）：相手の生きていて隠れていないキューブ（バズーカの破片も含む）を
+        //  1つランダムに選び、そのブロックの番号（A-1から読み順に1〜NN）の合計を教える。どのキューブかは伏せる。
+        //  隠れていないキューブがなければ NoData。選んだキューブはリプレイ用に記録する（_recParams。相手には送らない）
+        let target = null;
+        if (livingFoe.length) {
+          const forced = params && params.target != null ? livingFoe.find((p) => p.id === params.target) : null;
+          target = forced || livingFoe[Math.floor(this.rng() * livingFoe.length)];
+        }
+        if (target) {
+          const sum = target.cells.reduce((a, c) => a + c + 1, 0);
+          me.kb.sums.push({ t, turn: this.turn, sum });
+          result.sum = sum;
+          if (this.actions) this._recParams = { target: target.id };
+          this._log(pi, `${me.name}：${name}${tag} → 合計 ${sum}`, null, 'item', key);
+        } else {
+          me.kb.sums.push({ t, turn: this.turn, nd: true });
+          result.nd = true;
+          this._log(pi, `${me.name}：${name}${tag} → NoData（狙えるキューブがない）`, null, 'item', key);
+        }
+        break;
+      }
       case 'cube': {
         const n = livingFoe.filter((p) => (params.kind === 'cat' ? p.cat === params.value : p.size === params.value)).length;
         me.kb.counts.push({ t, turn: this.turn, kind: params.kind, value: params.value, n });
@@ -1181,6 +1211,7 @@
     if (key === 'shape') { pub.cell = params.cell; pub.cat = result.cat; }
     if (key === 'pair') { pub.a = params.a; pub.b = params.b; pub.same = result.same; }
     if (key === 'node') { pub.cell = params.cell; pub.k = result.k; }
+    if (key === 'homing') { if (result.nd) pub.nd = true; else pub.sum = result.sum; }
     // ワープ（v15）：本人の演出用に、キューブ・トリガー・移動先（相手には送らない。net.js の redactFor が priv を消す）
     if (key === 'warp') { pub.priv = { cells: result.cells, trigger: params.cell, dest: val.cells.slice() }; }
     if (key === 'stealth') { pub.priv = { cells: result.cells }; }
@@ -1260,6 +1291,8 @@
         this.actions = this.actions.filter((a) => !(SETUP_METHODS[a[0]] && a[1] === args[0]));
         this.actions.push(['_setupState', args[0], pre]);
       }
+      // ホーミングミサイル：ランダムに選んだキューブを記録しておく（やり直しで同じキューブを選ぶため）
+      if (m === 'useItem' && this._recParams) { args[2] = Object.assign({}, args[2] || {}, this._recParams); delete this._recParams; }
       this.actions.push([m].concat(args));
       return r;
     };
@@ -1385,7 +1418,7 @@
       const each = opts.itemsEach != null ? opts.itemsEach : TOUR_ITEMS_EACH;
       const players = names.map((name, i) => {
         const inv = {};
-        for (const k of ITEM_KEYS) inv[k] = each;
+        for (const k of TOUR_ITEM_KEYS) inv[k] = each;
         return {
           id: i, name, cpu: !!cpu[i], char: i > 0 ? lineup[i - 1] : null, stock: Object.assign({}, STOCK), inv,
           // take＝撃破で奪った、taken＝撃破で奪われた、vicWon／vicLost＝勝利で奪った／奪われた。gems＝持っている宝石（1つ5点）
@@ -1405,7 +1438,7 @@
     total(p) { const q = p.pts; return q.start + q.take - q.taken + q.vicWon - q.vicLost + (q.spdWon | 0) - (q.spdLost | 0) + (p.gems | 0) * TOUR_GEM_PTS; },
     cubes(p) { return [2, 3, 4, 5].reduce((s, k) => s + (p.stock[k] || 0), 0); },
     cells(p) { return [2, 3, 4, 5].reduce((s, k) => s + k * (p.stock[k] || 0), 0); },
-    items(p) { return ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
+    items(p) { return TOUR_ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
     // 順位（持ち点の多い順。同点は勝ち数 → 撃破ブロック数 → 抽選）
     standings(T) {
       const list = T.players.map((p) => ({ id: p.id, total: Tour.total(p), wins: p.wins | 0, take: p.pts.take | 0, lotto: p.lotto }));
@@ -1430,7 +1463,7 @@
         names: [pa.name, pb.name], cpu: [pa.cpu, pb.cpu],
         stocks: [stockFor(pa), stockFor(pb)],
         inventory: [Object.assign({}, pa.inv), Object.assign({}, pb.inv)],
-        oncePerMatch: !fin, draftEach: fin ? Math.floor(ITEM_KEYS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
+        items: TOUR_ITEM_KEYS.slice(), oncePerMatch: !fin, draftEach: fin ? Math.floor(TOUR_ITEM_KEYS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
         victoryPts: victoryFor(kind, T.round), speedBonus: !fin,
       }, extra || {});
     },
@@ -1485,7 +1518,7 @@
   };
 
   const api = {
-    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS,
+    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, TOUR_ITEM_KEYS,
     bit, popcount, bitsOf, maskOf, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

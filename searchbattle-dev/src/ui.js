@@ -4,7 +4,9 @@
   const E = window.SBEngine, AI = window.SBAI, NET = window.SBNet;
   const { ITEMS, ITEM_KEYS, SHAPES, SHAPES_BY_SIZE, ORIENT, COLS, CATS, cellsFor, identifyShape, bit } = E;
   // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用
-  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka'];
+  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing'];
+  // レアアイテム（バズーカ・ホーミングミサイル）はアンバーで見せる
+  const isRare = (k) => (E.RARE_ITEMS || ['bazooka']).indexOf(k) >= 0;
   const DEF_ITEMS = ['warp', 'stealth'];
   const isDef = (k) => DEF_ITEMS.indexOf(k) >= 0;
   // この試合で使えるアイテムか
@@ -41,6 +43,9 @@
     if (['pick', 'draft', 'mirror', 'random'].indexOf(st.items) < 0) st.items = 'pick';
     st.itemCount = cleanCounts(st.itemCount || allOnes());
     if (!countTotal(st.itemCount)) st.itemCount = allOnes();
+    // v15.5：ホーミングミサイルが増えた。前の設定にはないので1つにしておく
+    if (st.itemCount && st.itemCount.homing == null) st.itemCount.homing = 1;
+    if (st.draftPool && st.draftPool.homing == null) st.draftPool.homing = 1;
     st.draftPool = cleanCounts(st.draftPool || allOnes());
     if (countTotal(st.draftPool) < 2) st.draftPool = allOnes();
     if (['prelim', 'final', 'tour'].indexOf(st.rules) < 0) st.rules = 'prelim';
@@ -177,6 +182,8 @@
     node: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.6" r="2.7" class="f"/><path d="M12 9.9V5.9M9.7 14l-3.5 2M14.3 14l3.5 2"/><circle cx="12" cy="4.2" r="1.8"/><circle cx="4.7" cy="16.9" r="1.8"/><circle cx="19.3" cy="16.9" r="1.8"/></svg>',
     warp: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="12.6" width="7.4" height="7.4" rx="1" stroke-dasharray="2.2 1.8"/><rect x="13.8" y="4" width="7.4" height="7.4" rx="1"/><path d="M6.6 11.2c.5-4.1 3.5-6 6.6-4.7"/><path d="M11.3 4.8l2 1.7-1.3 2.2"/></svg>',
     stealth: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 12s3.4-6.2 9.2-6.2 9.2 6.2 9.2 6.2-3.4 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.7"/><path d="M4.2 20.2 19.8 3.8"/></svg>',
+    // ホーミングミサイル（v15.5）：曲がった軌跡（点線）の先のミサイル
+    homing: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18.6" cy="5.4" r="2.6"/><path d="M7.6 13.4 12.6 8.4l3 3-5 5z"/><path d="M12.6 8.4l2.6-1.2-.6 2.6M7.6 13.4l-2.4.4 1.4 1.4M10.6 16.4l-.4 2.4-1.4-1.4"/><path d="M5.6 18.4 3 21" stroke-dasharray="1.4 1.8"/></svg>',
     bazooka: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.8 4.2c2.4-.6 4.4-.6 5 0s.6 2.6 0 5L12 17l-5-5z"/><circle cx="15.6" cy="8.4" r="1.4"/><path d="M8.2 13.2 4.6 14l2.4 2.4M10.8 15.8 10 19.4 7.6 17M3.4 20.6l3-3"/></svg>',
   };
   const MARK = {
@@ -369,6 +376,14 @@
       const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
       tags.push({ key: 'cube', label, pre: '残り', n, unit: 'キューブ', turn: q.turn, stale: split, rv: !!q.rv,
         tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック' : q.value}のキューブが、いくつ残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
+    }
+    // ホーミングミサイル（v15.5）：狙ったキューブのブロックの番号の合計。そのあと撃破したキューブの合計と同じなら「撃破済み」、
+    //  ワープ・分解のあとは目安（薄く）
+    for (const q of (kb.sums || [])) {
+      const stale = relocatedAfter(q.t) || (kb.splits || []).some((sp) => sp.t > q.t);
+      const gone = !q.nd && kb.deads.some((d) => d.t > q.t && d.cells.reduce((a, x) => a + x + 1, 0) === q.sum);
+      tags.push({ key: 'homing', label: '合計', n: q.nd ? 'NoData' : q.sum, unit: gone ? '（撃破済み）' : '', turn: q.turn, stale: stale || gone,
+        tip: `ホーミングミサイル（T${pad2(q.turn)}）：相手のキューブ1つ（どれかは分からない）の、ブロックの番号（A-1から読み順に1〜${N * N}）の合計。${gone ? 'その合計のキューブはもう撃破しました。' : ''}${stale ? 'その後ワープか分解があり、目安です。' : ''}` });
     }
     const cells = {};
     const put = (c, k, val) => { if (!view.dead[c]) cells[c] = Object.assign(cells[c] || {}, { [k]: val }); };
@@ -564,10 +579,11 @@
         cells.forEach((c, i) => wdest.set(c, { mask: mk, set: true, trig: i === ti }));
       }
     }
+    const nums = !inSetup && homingNums(1 - pi);
     let html = '';
     for (let c = 0; c < g.NN; c++) {
       let cls = cellBase(c, N);
-      let inner = '', style = '';
+      let inner = nums ? `<span class="cnum" aria-hidden="true">${c + 1}</span>` : '', style = '';
       const p = g.pieceAt(pi, c, true);
       const m = inSetup ? null : fv.marks[c];
       if (!p && wdest.has(c)) {
@@ -625,6 +641,13 @@
   }
 
   // 相手フィールド（予想盤面）
+  // ホーミングミサイル（v15.5）：attacker がホーミングミサイルを持っている（使った）試合は、相手のフィールドにブロックの番号を薄く出す
+  function homingNums(attacker) {
+    const g = G();
+    if (!g || g.phase === 'setup' || g.phase === 'draft') return false;
+    const P = g.players[attacker];
+    return (P.items.homing | 0) > 0 || !!(P.used && P.used.homing);
+  }
   function predBoard(pi, opts) {
     opts = opts || {};
     const g = G(), N = g.N, P = g.players[pi], v = P.view, foe = g.players[1 - pi];
@@ -633,10 +656,11 @@
     const deadMaskById = {};
     for (let c = 0; c < g.NN; c++) { const d = v.dead[c]; if (d) deadMaskById[d.pieceId] = (deadMaskById[d.pieceId] || 0) | bit(c); }
     const memo = memoOf(pi);
+    const nums = homingNums(pi);
     let html = '';
     for (let c = 0; c < g.NN; c++) {
       let cls = cellBase(c, N);
-      let inner = '', style = '';
+      let inner = nums ? `<span class="cnum" aria-hidden="true">${c + 1}</span>` : '', style = '';
       const d = v.dead[c];
       if (d) {
         cls += ' pc revealed' + edgeClasses(deadMaskById[d.pieceId], c, N);
@@ -678,7 +702,7 @@
     const g = G(), P = g.players[pi];
     const st = g.itemStatus(pi, k);
     const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy && !netWaiting();
-    let cls = k === 'bazooka' ? 'ichip bz' : 'ichip', bd = '', state;
+    let cls = isRare(k) ? 'ichip bz' : 'ichip', bd = '', state;
     if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = st.have > 0 ? `この試合では使用済み（次の試合用に残り${st.have}）` : 'この試合では使用済み'; }
     else if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
     else if (interactive && P.used[k] && P.wallet >= 3) { cls += ' rebuy'; bd = '3pt'; state = '使用済み・3ptで再購入できる'; }
@@ -796,6 +820,7 @@
       case 'number': return who + 'サーチサイズ：相手フィールドで調べるブロックを選んでください';
       case 'node': return who + 'ノードショット：相手フィールドで調べるブロックを選んでください';
       case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選んでください';
+      case 'homing': return who + 'ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います';
       case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選んでください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
       case 'wait':
@@ -809,7 +834,7 @@
   function itemHead(k, extra) {
     const g = G(), v = viewer();
     const rebuy = g.itemStatus(v, k).rebuyNeeded ? `<p class="note warn">手持ちがないため、3ptで再購入して使います（残り ${g.players[v].wallet}pt）。</p>` : '';
-    return `<div class="itemhead"><span class="ichip active${k === 'bazooka' ? ' bz' : ''}">${ICON[k]}</span><div><b>${esc(ITEMS[k].name)}</b><p class="note ih-desc">${esc(extra || ITEMS[k].desc)}</p>${rebuy}</div></div>`;
+    return `<div class="itemhead"><span class="ichip active${isRare(k) ? ' bz' : ''}">${ICON[k]}</span><div><b>${esc(ITEMS[k].name)}</b><p class="note ih-desc">${esc(extra || ITEMS[k].desc)}</p>${rebuy}</div></div>`;
   }
 
   // 進行表示ブロック：上の段に直前の出来事、下の段に説明（左）とボタン（右）。
@@ -863,6 +888,10 @@
       case 'node':
         main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
         acts = cancel;
+        break;
+      case 'homing':
+        main = itemHead('homing', '相手のキューブ（隠れているステルスを除く）を1つ自動で選び、そのブロックの番号の合計が分かります。番号は相手フィールドのA-1から読み順に1〜。どのキューブかは分かりません。');
+        acts = `<button class="btn primary" data-act="homing-fire">発射する</button>${cancel}`;
         break;
       case 'bazooka':
         main = itemHead('bazooka', '撃ち込むブロックを選んでください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。');
@@ -1613,9 +1642,9 @@
     return `<div class="st-cubes" aria-label="残りのキューブ">${[2, 3, 4, 5].map((s) => cubePips(s, { on: p.stock[s] || 0 })).join('')}</div>`;
   }
   function itemsHTML(p) {
-    return `<div class="st-items" aria-label="残りのアイテム">${ITEM_KEYS.map((k) => {
+    return `<div class="st-items" aria-label="残りのアイテム">${(E.TOUR_ITEM_KEYS || ITEM_KEYS).map((k) => {
       const n = p.inv[k] || 0;
-      return `<span class="si${n ? '' : ' none'}${k === 'bazooka' ? ' bz' : ''}" data-tip="${esc(ITEMS[k].name)}：${n ? `所持${n}` : '未所持'}">${ICON[k]}${n > 1 ? `<em>${n}</em>` : ''}</span>`;
+      return `<span class="si${n ? '' : ' none'}${isRare(k) ? ' bz' : ''}" data-tip="${esc(ITEMS[k].name)}：${n ? `所持${n}` : '未所持'}">${ICON[k]}${n > 1 ? `<em>${n}</em>` : ''}</span>`;
     }).join('')}</div>`;
   }
 
@@ -2238,6 +2267,16 @@
           ring(p.x, p.y, c, p.w * 0.2, p.w * 0.9, 640, 1.5, 200);
           setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.k == null ? 'NoData' : `つながり ${ev.k}`, ev.k == null ? 'miss' : 'count' + ecls, 1500), 560 * k);
           return 1300 * k;
+        }
+        case 'homing': {
+          // ホーミングミサイル（v15.5）：盤の中央へ光の輪が絞られ、合計の数字が出る（どのキューブかは見せない）
+          SND.sfx('i-target', 0, pan);
+          SND.sfx(ev.nd ? 'none' : 'found', 0.55 * k, pan);
+          if (!tb) return 0;
+          ring(tbc.x, tbc.y, c, tbc.w * 0.6, 10, 800, 3);
+          sparks(tbc.x, tbc.y, c, 16, 1.2, 0.3, 380 * k);
+          setTimeout(() => text(tbc.x, tbc.y, ev.nd ? 'NoData' : `合計 ${ev.sum}`, ev.nd ? 'miss' : 'count' + ecls, 1700), 560 * k);
+          return 1700 * k;
         }
         case 'bazooka': {
           // 発射 → 着弾 → ヒット済みのブロックが砕ける。持ち主には、分解された破片のひび割れも見せる
@@ -3121,7 +3160,7 @@ self.onmessage = function (e) {
     if (key === 'warp' && !g.warpable(v).length) { toast('ワープできるキューブがありません（移動先にできる空きブロックが足りません）', 'warn'); return; }
     resetMode();
     app.ui.item = key;
-    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', warp: 'warp-pick', stealth: 'stealth-pick' };
+    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', warp: 'warp-pick', stealth: 'stealth-pick' };
     app.ui.mode = modeOf[key];
     render();
     SND.sfx('select');
@@ -3299,6 +3338,10 @@ self.onmessage = function (e) {
       enterAfterSetup();
     },
 
+    'homing-fire'() {
+      if (!app.ui || app.ui.mode !== 'homing') return;
+      useItem('homing', {});
+    },
     'draft-pick'(el) {
       const g = G();
       const pi = g.draftTurn();

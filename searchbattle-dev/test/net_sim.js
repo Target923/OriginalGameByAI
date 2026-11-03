@@ -27,11 +27,11 @@ const EV_KEYS = {
   answer: ['cells', 'success', 'stealth', 'probe', 'escaped'], reveal: ['cells', 'fixed', 'counts'], tchance: ['left', 'max'], treasure: ['c', 'r'], tfail: [], over: ['result'],
   // ワープの発動（v15）：移動前の分かっているブロック（from）・トリガー・移動先のレティクル。移動前の全部と移動後は ownerPriv（持ち主だけ）
   warpfire: ['by', 'full', 'size', 'from', 'trigger', 'reticle', 'treasureMoved'],
-  item: ['key', 'rebuy', 'n', 'kind', 'value', 'line', 'index', 'k', 'cell', 'size', 'cat', 'a', 'b', 'same', 'oldCells', 'treasureMoved', 'hit', 'killed'],
+  item: ['key', 'rebuy', 'n', 'kind', 'value', 'line', 'index', 'k', 'cell', 'size', 'cat', 'a', 'b', 'same', 'oldCells', 'treasureMoved', 'hit', 'killed', 'sum', 'nd'],
 };
 const LOG_KEYS = ['id', 'turn', 'actor', 'text', 'priv', 'kind', 'key', 'cells'];
 const LA_KEYS = ['kind', 'pi', 'c', 'res', 'ok', 'cells', 'key', 'r', 'result', 'stealth', 'probe', 'escaped'];
-const LA_RESULT_KEYS = ['ok', 'key', 'n', 'k', 'size', 'cat', 'same', 'hit', 'killed', 'ended', 'oldCells', 'treasureMoved', 'r', 'num', 'destroyed', 'trigger', 'warp', 'reticle', 'full', 'late'];
+const LA_RESULT_KEYS = ['ok', 'key', 'n', 'k', 'size', 'cat', 'same', 'hit', 'killed', 'ended', 'oldCells', 'treasureMoved', 'r', 'num', 'destroyed', 'trigger', 'warp', 'reticle', 'full', 'late', 'sum', 'nd'];
 const only = (obj, allowed, where) => { for (const k of Object.keys(obj || {})) if (allowed.indexOf(k) < 0) fail(`${where}: 送ってはいけない項目 ${k}`); };
 
 function checkSnap(snap, hostGame, where) {
@@ -50,7 +50,8 @@ function checkSnap(snap, hostGame, where) {
   const sentCells = H.pieces.map((p) => p.cells.slice().sort((a, b) => a - b).join(',')).sort();
   if (realCells.join('|') !== sentCells.join('|')) fail(where + ': 撃破された個体のマス');
   for (const d of snap.players[1].view.dead) if (d && !(d.pieceId >= 1 && d.pieceId <= realDead.length)) fail(where + ': view.dead の番号');
-  if (snap.phase === 'setup' && (snap.first != null || snap.cur != null)) fail(where + ': 配置中に先攻が見える');
+  // ドラフトのある試合は、配置の前のドラフトの順番で先攻・後攻が分かるので伏せない（v15.4）
+  if (snap.phase === 'setup' && !(snap.draftEach > 0) && (snap.first != null || snap.cur != null)) fail(where + ': 配置中に先攻が見える');
   for (const ev of snap.events) {
     if (ev.actor !== 0 && ev.owner !== 0) continue;
     // ゲスト自身のワープ・ステルス（priv）、ゲストの盤で分解された個体（ownerPriv）は、ゲストが見てよい
@@ -115,7 +116,16 @@ function playOnline(gameOpts, i) {
   const P = makePair(gameOpts, { tag });
   const { host, guest } = P;
   guest.hello();
-  if (!host.game || !guest.game || guest.game.phase !== 'setup') { fail(tag + ': welcome'); return null; }
+  // ドラフトのある試合は、配置の前にドラフト（v15.4）
+  const first = gameOpts.draftEach ? 'draft' : 'setup';
+  if (!host.game || !guest.game || guest.game.phase !== first) { fail(tag + ': welcome'); return null; }
+  let guard = 0;
+  while (host.game.phase === 'draft' && guard++ < 40) {
+    const pi = host.game.draftTurn();
+    if (pi === 0) host.run('draftPick', [0, AI.draftPick(host.game, 0)]);
+    else guest.act('draftPick', [AI.draftPick(guest.game, 1)]);
+  }
+  if (host.game.phase !== 'setup' || guest.game.phase !== 'setup') { fail(tag + ': ドラフトのあとに配置へ進まない'); return null; }
   // 配置：ホストが先・ゲストが先を交互に
   const hostSetup = () => { if (!AI.setup(host.game, 0)) host.game.randomSetup(0); const r = host.run('finishSetup', [0]); if (!r.ok) fail(tag + ': host setup ' + r.reason); };
   const guestSetup = () => {
@@ -126,12 +136,6 @@ function playOnline(gameOpts, i) {
   if (i % 2) { hostSetup(); if (!guest.foeReady) fail(tag + ': 相手の配置完了が届かない'); guestSetup(); }
   else { guestSetup(); if (!host.game.players[1].setupDone) fail(tag + ': ゲストの配置が反映されない'); hostSetup(); }
   if (host.game.phase === 'setup' || guest.game.phase === 'setup') { fail(tag + ': 配置のあとに進まない'); return null; }
-  let guard = 0;
-  while (host.game.phase === 'draft' && guard++ < 40) {
-    const pi = host.game.draftTurn();
-    if (pi === 0) host.run('draftPick', [0, AI.draftPick(host.game, 0)]);
-    else guest.act('draftPick', [AI.draftPick(guest.game, 1)]);
-  }
   const hv = hostView(host), gv = guestView(guest);
   while (host.game.phase === 'play' && guard++ < 800) {
     const g = host.game, sig = `${g.clock}/${g.sub}/${g.turn}/${g.cur}`;
