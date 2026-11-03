@@ -6636,12 +6636,12 @@ window.SBAudio = (function () {
       tags.push({ key: 'cube', label, pre: '残り', n, unit: 'キューブ', turn: q.turn, stale: split, rv: !!q.rv,
         tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック' : q.value}のキューブが、いくつ残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
     }
-    // ホーミングミサイル（v15.5）：狙ったキューブのブロックの番号の合計。そのあと撃破したキューブの合計と同じなら「撃破済み」、
+    // ホーミングミサイル（v15.5）：狙ったキューブのブロックの番号の合計。そのあと撃破したキューブの合計と同じなら薄く（グレー）、
     //  ワープ・分解のあとは目安（薄く）
     for (const q of (kb.sums || [])) {
       const stale = relocatedAfter(q.t) || (kb.splits || []).some((sp) => sp.t > q.t);
       const gone = !q.nd && kb.deads.some((d) => d.t > q.t && d.cells.reduce((a, x) => a + x + 1, 0) === q.sum);
-      tags.push({ key: 'homing', label: '合計', n: q.nd ? 'NoData' : q.sum, unit: gone ? '（撃破済み）' : '', turn: q.turn, stale: stale || gone,
+      tags.push({ key: 'homing', label: '合計', n: q.nd ? 'NoData' : q.sum, unit: '', turn: q.turn, stale: stale || gone,   // 撃破したら薄くするだけ（文字は足さない。ユーザーの希望）
         tip: `ホーミングミサイル（T${pad2(q.turn)}）：相手のキューブ1つ（どれかは分からない）の、ブロックの番号（A-1から読み順に1〜${N * N}）の合計。${gone ? 'その合計のキューブはもう撃破しました。' : ''}${stale ? 'その後ワープか分解があり、目安です。' : ''}` });
     }
     const cells = {};
