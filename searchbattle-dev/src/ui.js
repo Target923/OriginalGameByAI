@@ -544,10 +544,15 @@
     return cls;
   }
   // ×：再コールできるものは薄く、ワープで空いたブロック（移動前の位置）は W を添える
-  // アシッド（v15.8）：酸がかかっているブロック（まだ溶けていないアシッドマーク）と、アシッドで溶かした（自動コールした）ブロックのしずく
+  // アシッド（v15.8。印は v15.10 でユーザーの指示どおりに）：酸をかけたブロックには、ステルス・ワープのトリガーと同じく右下にアシッドの印。
+  //  溶かした（自動コールした）ブロックは、縁取りとレティクルをヴェルデメーラ（#A7DD00）にする（セルの acidcell）
   function acidHTML(m, pending) {
-    if (pending) return `<span class="acidmk" aria-hidden="true">${ICON.acid}</span>`;
-    return m && m.acid ? '<span class="acidtag" aria-hidden="true"></span>' : '';
+    return pending || (m && m.acidSrc) ? `<span class="aci" aria-hidden="true">${ICON.acid}</span>` : '';
+  }
+  // 右下の印（ステルスの目・ワープ・アシッド）が同じブロックに重なったら、あとの印を左へずらして並べる（--k＝右から何番目か）
+  function stackCorner(inner) {
+    let k = 0;
+    return inner.replace(/<span class="(stl|wtr|aci)\b/g, (all) => `${all.replace('<span ', `<span style="--k:${k++}" `)}`);
   }
   function markHTML(m) {
     if (!m) return '';
@@ -629,6 +634,7 @@
         if (p.alive && p.warpPlan) cls += ' warping';
       }
       inner += cellMarkHTML(m, intel, c) + acidHTML(m, !!(foe.acid && foe.acid.cell === c && !m));
+      if (m && m.acid) cls += ' acidcell';
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
       const tl = inSetup ? null : fv.tlog[c];
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
@@ -637,7 +643,7 @@
       if (opts.sel && opts.sel.indexOf(c) >= 0) cls += ' sel';
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}${p.warpPlan ? '（ワープ待ち' + (p.warpPlan.trigger === c ? '・トリガー' : '') + '）' : ''}` : ' 撃破済み') : (wdest.has(c) ? (wdest.get(c).trig ? ' ワープの移動先（ワープ後のトリガー）' : ' ワープの移動先') : '')) + probeLabel(intel, c, m);
-      html += `<div class="${cls}" style="${style}" data-act="cell" data-board="${kind}" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${inner}</div>`;
+      html += `<div class="${cls}" style="${style}" data-act="cell" data-board="${kind}" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${stackCorner(inner)}</div>`;
     }
     return boardFrame(N, kind, html, opts.cls, { overlay: pairsSVG(intel, N) + (opts.overlay || '') });
   }
@@ -684,6 +690,7 @@
         if (tp) { const ci = colorIndex(foe, tp); cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${ci});`; inner += patHTML(ci, c); }
       }
       inner += cellMarkHTML(v.marks[c], intel, c) + acidHTML(v.marks[c], !!(P.acid && P.acid.cell === c && !v.marks[c] && !d));
+      if (v.marks[c] && v.marks[c].acid) cls += ' acidcell';
       // トリガーブロック（v14.2）：当てたトリガーブロックと、答え合わせのときの相手のトリガーブロックに目の印
       const tgp = opts.reveal ? g.pieceAt(foe.idx, c, true) : null;
       if ((v.marks[c] && v.marks[c].trigger) || (tgp && tgp.stealthTrigger === c)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
@@ -705,7 +712,7 @@
       label += probeLabel(intel, c, m);
       if (d) label += ' 撃破済み';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
-      html += `<div class="${cls}" style="${style}" data-act="cell" data-board="pred" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${inner}</div>`;
+      html += `<div class="${cls}" style="${style}" data-act="cell" data-board="pred" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${stackCorner(inner)}</div>`;
     }
     const overlay = pairsSVG(intel, N) + (opts.cubeMenu ? cubeMenuHTML() : '');
     return boardFrame(N, 'pred', html, opts.cls, { pickLine: opts.pickLine, overlay });
@@ -2054,7 +2061,7 @@
   // ---------------- 演出 ----------------
   const FX = (function () {
     const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF', AC = '#A6E22E';   // AC：アシッドの黄緑
+    const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF', AC = '#A7DD00';   // AC：アシッドのヴェルデメーラ（v15.10）
     const QT = '#48D1CC';   // Stealth hit（ミディアムターコイズ）
     const WP = '#B24962';   // ワープレティクル（ラズベリー。v15）
     const METAL = ['#F3F7FC', '#B8C3D4', '#6E7A8F', '#D3DCE8'];
@@ -2354,7 +2361,8 @@
           SND.sfx('i-bazooka', 0, Object.assign({ hit: !ev.miss, n: ev.kills || 0 }, pan));
           const els = (ev.area || []).map((x) => cellOf(target, x)).filter(Boolean);
           if (!els.length) return 0;
-          els.forEach((el, i) => { const p = ctr(el); over(el, 'flash', '', 520); sparks(p.x, p.y, AM, 8, 1.1, 0.4, i * 40); });
+          // 十字の範囲をはっきり示す（撃った側にも撃たれた側にも。v15.10。ユーザーの指摘：相手からはどこに撃たれたか分かりにくい）
+          els.forEach((el, i) => { const p = ctr(el); over(el, 'xzone', '', 1700 * k); over(el, 'flash', '', 520); sparks(p.x, p.y, AM, 8, 1.1, 0.4, i * 40); });
           const cel = cellOf(target, ev.cell);
           if (cel) {
             const p = ctr(cel);

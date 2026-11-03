@@ -798,11 +798,12 @@
       me.acid = null;
       return;
     }
+    const acidCell = me.acid.cell;   // コールで撃破・ワープすると me.acid が消えるので、先に覚えておく
     this._log(this.cur, `${me.name}：アシッドで自動コール`, null, 'call');
     this._acidCalling = true;
     try { this.call(this.cur, c); } finally { delete this._acidCalling; }
     const m = me.view.marks[c];
-    if (m) m.acid = true;
+    if (m) { m.acid = true; if (c === acidCell) m.acidSrc = true; }
     // 撃破・ワープで酸がなくなったとき
     if (!p.alive || !p.acid) { p.acid = false; me.acid = null; }
   };
@@ -1149,6 +1150,8 @@
         }
         p.acid = true;
         me.acid = { cell: params.cell, t };
+        // acidSrc：酸をかけたブロック（画面で右下にアシッドの印を出し続ける。すでに当たっているブロックならその印に付ける）
+        if (me.view.marks[params.cell]) me.view.marks[params.cell].acidSrc = true;
         me.kb.occs.push({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' });
         result.hit = true;
         this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドマーク（次の手番から自動コール）`, null, 'item', key);
