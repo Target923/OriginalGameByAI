@@ -19,11 +19,11 @@ const fail = (m) => { fails.push(m); if (fails.length <= 20) console.log('FAIL',
 
 // ---------------- 1. 秘密が入っていないか（送ってよい項目の一覧） ----------------
 const TOP_KEYS = ['rules', 'N', 'NN', 'mode', 'v', 'itemKeys', 'draftPool', 'draftEach', 'oncePerMatch', 'treasurePts', 'treasureSteal', 'victoryPts', 'speedBonus', 'clock', 'turn', 'first', 'cur', 'phase', 'sub', 'itemUsed', 'pending', 'draft', 'log', 'result', 'lastAction', 'events', 'players'];
-const PLAYER_KEYS = ['idx', 'name', 'isCPU', 'stock', 'pieces', 'nextId', 'treasure', 'setupDone', 'splitPieces', 'items', 'used', 'wallet', 'rebuys', 'score', 'view', 'kb', 'stealthCount'];
+const PLAYER_KEYS = ['idx', 'name', 'isCPU', 'stock', 'pieces', 'nextId', 'treasure', 'setupDone', 'splitPieces', 'items', 'used', 'wallet', 'rebuys', 'score', 'view', 'kb', 'stealthCount', 'acid'];
 // ホストにかかわる（ホストが操作した・ホストの盤で起きた）演出の記録で、送ってよい項目
 const EV_BASE = ['type', 'id', 'turn', 'actor', 'owner'];
 const EV_KEYS = {
-  start: ['first'], turn: ['cur'], call: ['c', 'r', 'num', 'full', 'late'], destroy: ['cells', 'size', 'isAdd', 'key', 'cause'],
+  start: ['first'], turn: ['cur'], call: ['c', 'r', 'num', 'full', 'late', 'acid'], destroy: ['cells', 'size', 'isAdd', 'key', 'cause'],
   answer: ['cells', 'success', 'stealth', 'probe', 'escaped'], reveal: ['cells', 'fixed', 'counts'], tchance: ['left', 'max'], treasure: ['c', 'r'], tfail: [], over: ['result'],
   // ワープの発動（v15）：移動前の分かっているブロック（from）・トリガー・移動先のレティクル。移動前の全部と移動後は ownerPriv（持ち主だけ）
   warpfire: ['by', 'full', 'size', 'from', 'trigger', 'reticle', 'treasureMoved'],

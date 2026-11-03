@@ -42,15 +42,17 @@
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 34：v15.8 レアアイテム「アシッド」（acid）
   // 33：v15.7 レアアイテム「クロスボム」（cross）
   // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 33;
+  const VERSION = 34;
   // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
-  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'warp', 'stealth'];
-  const RARE_ITEMS = ['bazooka', 'homing', 'cross'];
+  //  acid：アシッド（v15.8。レア。ユーザーの案）
+  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid', 'warp', 'stealth'];
+  const RARE_ITEMS = ['bazooka', 'homing', 'cross', 'acid'];
   // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイル・クロスボムは、大会のレアの仕組みを作るまで1試合だけ）
   const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
@@ -62,6 +64,7 @@
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
+    acid: { name: 'アシッド', desc: '選んだブロックのキューブに酸をかける。次の手番から、コールの代わりにそのキューブを1ブロックずつ自動でコールし、撃破まで溶かす' },
     cross: { name: 'クロスボム', desc: '選んだブロックと上下左右の十字（5ブロック）に、すっぽり収まるキューブを撃破する' },
     homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
     warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
@@ -550,7 +553,7 @@
       //  （v15.2。ユーザーの希望。当たっていたブロックがキューブの全部だと相手に分かる＝アンサーで逃げたときと同じ）
       const full = p.hitMask === p.mask;
       this._log(pi, `${me.name}：${this.coord(c)}をコール → ${full ? `${pieceName(p)}を自動撃破後、ワープ発動` : 'ワープ発動（トリガー）'}`, null, full ? 'kill' : 'hit');
-      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp', full });
+      this._emit(Object.assign({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp', full }, this._acidCalling ? { acid: true } : {}));
       const fire = this._warpFire(p, 'trigger', pi, full);
       res = { r: 'wp', warp: true, reticle: fire.reticle, full };
       if (fire.destroyed) res.destroyed = fire.destroyed;
@@ -605,7 +608,7 @@
         res = { r: 'o' };
         this._log(pi, `${me.name}：${this.coord(c)}をコール → ○`, null, 'hit');
       }
-      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num });
+      this._emit(Object.assign({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num }, this._acidCalling ? { acid: true } : {}));
       if (res.trigger) this._revealAll(foe.idx, [p], pi);
       // 全ブロックに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない。見破りで撃破済みなら何もしない）
       if (p.alive && p.hitMask === p.mask && !p.stealth) {
@@ -763,6 +766,41 @@
     this.itemUsed = false;
     this.pending = null;
     this._emit({ type: 'turn', cur: this.cur, turn: this.turn });
+    this._acidTick();
+  };
+
+  // アシッド（v15.8）：酸をかけた人の手番のはじめに、コールの代わりに自動でコールする（その手番は手でコールできない）。
+  //  まずアシッドマークのブロック、そのあとは同じキューブの、当たったブロックに隣り合うまだ当たっていないブロックを読み順に1つ。
+  //  キューブが撃破された・分解された・ワープした（洗い流された）・溶かすブロックがもうないときは、酸がなくなる（ふつうのコールに戻る）
+  Game.prototype._acidTick = function () {
+    if (this.phase !== 'play') return;
+    const me = this.players[this.cur], foe = this.players[1 - this.cur];
+    if (!me.acid) return;
+    const p = foe.pieces.find((x) => x.alive && x.acid);
+    const N = this.N;
+    let c = -1;
+    if (p) {
+      if ((p.mask & bit(me.acid.cell)) && !(p.hitMask & bit(me.acid.cell))) c = me.acid.cell;
+      else {
+        for (const x of p.cells.slice().sort((a, b) => a - b)) {
+          if (p.hitMask & bit(x)) continue;
+          const nb = p.cells.some((y) => (p.hitMask & bit(y)) && Math.abs(Math.floor(x / N) - Math.floor(y / N)) + Math.abs((x % N) - (y % N)) === 1);
+          if (nb) { c = x; break; }
+        }
+      }
+    }
+    if (c < 0 || !this.isCallable(this.cur, c)) {
+      if (p) p.acid = false;
+      me.acid = null;
+      return;
+    }
+    this._log(this.cur, `${me.name}：アシッドで自動コール`, null, 'call');
+    this._acidCalling = true;
+    try { this.call(this.cur, c); } finally { delete this._acidCalling; }
+    const m = me.view.marks[c];
+    if (m) m.acid = true;
+    // 撃破・ワープで酸がなくなったとき
+    if (!p.alive || !p.acid) { p.acid = false; me.acid = null; }
   };
 
   // ---------------- 撃破と終了 ----------------
@@ -862,6 +900,8 @@
     const v = A.view, kb = A.kb, N = this.N;
     const plan = p.warpPlan;
     p.warpPlan = null;
+    // アシッド（v15.8）：ワープすると酸は洗い流される
+    if (p.acid) { p.acid = false; A.acid = null; }
     const t = this._tick();
     const oldCells = p.cells.slice();
     const idx = oldCells.indexOf(plan.trigger);   // トリガーが、キューブの何番目のブロックか（向きを変えても番号は同じブロックを指す）
@@ -917,6 +957,7 @@
 
   Game.prototype._destroy = function (piece, cause) {
     piece.alive = false;
+    if (piece.acid) { piece.acid = false; this.players[1 - piece.owner].acid = null; }   // アシッド（v15.8）：撃破されたら酸もなくなる
     piece.cause = cause;
     piece.deadAt = this._tick();
     const viewer = this.players[1 - piece.owner];
@@ -1024,6 +1065,10 @@
       case 'node':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '調べるブロックを選んでください' };
+      case 'acid':
+        if (me.acid) return { ok: false, reason: 'アシッドが効いているあいだは、もう1つは使えません' };
+        if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
+        return { ok: false, reason: '酸をかけるブロックを選んでください（撃破済みのブロックは選べません）' };
       case 'cross':
         if (inRange(params.cell)) return { ok: true };
         return { ok: false, reason: '十字の中心のブロックを選んでください' };
@@ -1086,6 +1131,25 @@
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
     let emitted = false;
     switch (key) {
+      case 'acid': {
+        // アシッド（v15.8。レアアイテム。ユーザーの案）：選んだブロックにキューブ（隠れていない）があれば、そこにアシッドマークを付ける。
+        //  次の自分の手番から、コールの代わりに自動でコールする（_acidTick）：まずアシッドマークのブロック、そのあとは同じキューブの、
+        //  当たったブロックに隣り合う、まだ当たっていないブロックを読み順に1つずつ。撃破されるまで続く。ワープすると洗い流される。
+        //  空きブロック・隠れているステルスは NoData（アイテムはなくなる）。酸をかけたキューブの印（acid）はキューブに付ける（相手には送らない）
+        const p = this._seenAt(foe.idx, params.cell);
+        if (!p) {
+          me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'acid' });
+          result.nd = true;
+          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
+          break;
+        }
+        p.acid = true;
+        me.acid = { cell: params.cell, t };
+        me.kb.occs.push({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' });
+        result.hit = true;
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドマーク（次の手番から自動コール）`, null, 'item', key);
+        break;
+      }
       case 'cross': {
         // クロスボム（v15.7。レアアイテム。ユーザーの案）：選んだブロックと上下左右の十字（盤の端では3〜4ブロック）に
         //  全ブロックが収まる、生きていて隠れていないキューブ（バズーカの破片も）をすべて撃破する。収まるキューブがなければ「不発」
@@ -1265,6 +1329,7 @@
     if (key === 'pair') { pub.a = params.a; pub.b = params.b; pub.same = result.same; }
     if (key === 'node') { pub.cell = params.cell; pub.k = result.k; }
     if (key === 'homing') { if (result.nd) pub.nd = true; else pub.sum = result.sum; }
+    if (key === 'acid') { pub.cell = params.cell; if (result.nd) pub.nd = true; }
     // ワープ（v15）：本人の演出用に、キューブ・トリガー・移動先（相手には送らない。net.js の redactFor が priv を消す）
     if (key === 'warp') { pub.priv = { cells: result.cells, trigger: params.cell, dest: val.cells.slice() }; }
     if (key === 'stealth') { pub.priv = { cells: result.cells }; }
@@ -1281,6 +1346,7 @@
   // 分解はその試合だけ：元のキューブは splitPieces に残し、大会では次の試合で元の形に戻す
   Game.prototype._split = function (piece) {
     const P = this.players[piece.owner];
+    if (piece.acid) { piece.acid = false; this.players[1 - piece.owner].acid = null; }   // アシッド（v15.8）：分解されたら酸もなくなる
     const N = this.N;
     P.pieces.splice(P.pieces.indexOf(piece), 1);
     P.splitPieces.push({ id: piece.id, shape: piece.shape, size: piece.size, cells: piece.cells.slice(), turn: this.turn, t: this.clock, col: piece.col });

@@ -567,6 +567,13 @@ h1, h2, h3 { text-wrap: balance; }
 .item-count .ic-row:not(.on) output { color: var(--muted); }
 .item-count .note { grid-column: 1 / -1; }
 .item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
+/* アシッド（v15.8）：黄緑の酸。まだ溶けていないアシッドマークと、自動コールで溶かしたブロックのしずく */
+.cell .acidmk { position: absolute; inset: 18%; display: grid; place-items: center; color: #A6E22E; filter: drop-shadow(0 0 6px rgba(166, 226, 46, .7)); pointer-events: none; animation: acidpulse 1.6s ease-in-out infinite; }
+.cell .acidmk svg { width: 70%; height: 70%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.cell .acidmk svg .f { fill: currentColor; stroke: none; }
+@keyframes acidpulse { 50% { opacity: .55; } }
+.cell .acidtag { position: absolute; right: 3px; top: calc(50% - 5px); width: 7px; height: 9px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #A6E22E; box-shadow: 0 0 5px rgba(166, 226, 46, .8); pointer-events: none; }
+.fx-text.acid { color: #A6E22E; text-shadow: 0 0 12px rgba(166, 226, 46, .8); }
 /* クロスボム（v15.7）：十字の範囲の見本 */
 .cell.xarea { box-shadow: inset 0 0 0 2px var(--amber); background-color: rgba(255, 193, 74, .12); }
 /* ホーミングミサイル（v15.5）：ブロックの番号（A-1から読み順に1〜）。暗算の手がかりなので、目立たせない */
@@ -1281,15 +1288,17 @@ body.replaying #app { display: none; }
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 34：v15.8 レアアイテム「アシッド」（acid）
   // 33：v15.7 レアアイテム「クロスボム」（cross）
   // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 33;
+  const VERSION = 34;
   // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
-  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'warp', 'stealth'];
-  const RARE_ITEMS = ['bazooka', 'homing', 'cross'];
+  //  acid：アシッド（v15.8。レア。ユーザーの案）
+  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid', 'warp', 'stealth'];
+  const RARE_ITEMS = ['bazooka', 'homing', 'cross', 'acid'];
   // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイル・クロスボムは、大会のレアの仕組みを作るまで1試合だけ）
   const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
@@ -1301,6 +1310,7 @@ body.replaying #app { display: none; }
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
+    acid: { name: 'アシッド', desc: '選んだブロックのキューブに酸をかける。次の手番から、コールの代わりにそのキューブを1ブロックずつ自動でコールし、撃破まで溶かす' },
     cross: { name: 'クロスボム', desc: '選んだブロックと上下左右の十字（5ブロック）に、すっぽり収まるキューブを撃破する' },
     homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
     warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
@@ -1789,7 +1799,7 @@ body.replaying #app { display: none; }
       //  （v15.2。ユーザーの希望。当たっていたブロックがキューブの全部だと相手に分かる＝アンサーで逃げたときと同じ）
       const full = p.hitMask === p.mask;
       this._log(pi, `${me.name}：${this.coord(c)}をコール → ${full ? `${pieceName(p)}を自動撃破後、ワープ発動` : 'ワープ発動（トリガー）'}`, null, full ? 'kill' : 'hit');
-      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp', full });
+      this._emit(Object.assign({ type: 'call', actor: pi, owner: foe.idx, c, r: 'wp', full }, this._acidCalling ? { acid: true } : {}));
       const fire = this._warpFire(p, 'trigger', pi, full);
       res = { r: 'wp', warp: true, reticle: fire.reticle, full };
       if (fire.destroyed) res.destroyed = fire.destroyed;
@@ -1844,7 +1854,7 @@ body.replaying #app { display: none; }
         res = { r: 'o' };
         this._log(pi, `${me.name}：${this.coord(c)}をコール → ○`, null, 'hit');
       }
-      this._emit({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num });
+      this._emit(Object.assign({ type: 'call', actor: pi, owner: foe.idx, c, r: res.r, num: res.num }, this._acidCalling ? { acid: true } : {}));
       if (res.trigger) this._revealAll(foe.idx, [p], pi);
       // 全ブロックに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない。見破りで撃破済みなら何もしない）
       if (p.alive && p.hitMask === p.mask && !p.stealth) {
@@ -2002,6 +2012,41 @@ body.replaying #app { display: none; }
     this.itemUsed = false;
     this.pending = null;
     this._emit({ type: 'turn', cur: this.cur, turn: this.turn });
+    this._acidTick();
+  };
+
+  // アシッド（v15.8）：酸をかけた人の手番のはじめに、コールの代わりに自動でコールする（その手番は手でコールできない）。
+  //  まずアシッドマークのブロック、そのあとは同じキューブの、当たったブロックに隣り合うまだ当たっていないブロックを読み順に1つ。
+  //  キューブが撃破された・分解された・ワープした（洗い流された）・溶かすブロックがもうないときは、酸がなくなる（ふつうのコールに戻る）
+  Game.prototype._acidTick = function () {
+    if (this.phase !== 'play') return;
+    const me = this.players[this.cur], foe = this.players[1 - this.cur];
+    if (!me.acid) return;
+    const p = foe.pieces.find((x) => x.alive && x.acid);
+    const N = this.N;
+    let c = -1;
+    if (p) {
+      if ((p.mask & bit(me.acid.cell)) && !(p.hitMask & bit(me.acid.cell))) c = me.acid.cell;
+      else {
+        for (const x of p.cells.slice().sort((a, b) => a - b)) {
+          if (p.hitMask & bit(x)) continue;
+          const nb = p.cells.some((y) => (p.hitMask & bit(y)) && Math.abs(Math.floor(x / N) - Math.floor(y / N)) + Math.abs((x % N) - (y % N)) === 1);
+          if (nb) { c = x; break; }
+        }
+      }
+    }
+    if (c < 0 || !this.isCallable(this.cur, c)) {
+      if (p) p.acid = false;
+      me.acid = null;
+      return;
+    }
+    this._log(this.cur, `${me.name}：アシッドで自動コール`, null, 'call');
+    this._acidCalling = true;
+    try { this.call(this.cur, c); } finally { delete this._acidCalling; }
+    const m = me.view.marks[c];
+    if (m) m.acid = true;
+    // 撃破・ワープで酸がなくなったとき
+    if (!p.alive || !p.acid) { p.acid = false; me.acid = null; }
   };
 
   // ---------------- 撃破と終了 ----------------
@@ -2101,6 +2146,8 @@ body.replaying #app { display: none; }
     const v = A.view, kb = A.kb, N = this.N;
     const plan = p.warpPlan;
     p.warpPlan = null;
+    // アシッド（v15.8）：ワープすると酸は洗い流される
+    if (p.acid) { p.acid = false; A.acid = null; }
     const t = this._tick();
     const oldCells = p.cells.slice();
     const idx = oldCells.indexOf(plan.trigger);   // トリガーが、キューブの何番目のブロックか（向きを変えても番号は同じブロックを指す）
@@ -2156,6 +2203,7 @@ body.replaying #app { display: none; }
 
   Game.prototype._destroy = function (piece, cause) {
     piece.alive = false;
+    if (piece.acid) { piece.acid = false; this.players[1 - piece.owner].acid = null; }   // アシッド（v15.8）：撃破されたら酸もなくなる
     piece.cause = cause;
     piece.deadAt = this._tick();
     const viewer = this.players[1 - piece.owner];
@@ -2263,6 +2311,10 @@ body.replaying #app { display: none; }
       case 'node':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '調べるブロックを選んでください' };
+      case 'acid':
+        if (me.acid) return { ok: false, reason: 'アシッドが効いているあいだは、もう1つは使えません' };
+        if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
+        return { ok: false, reason: '酸をかけるブロックを選んでください（撃破済みのブロックは選べません）' };
       case 'cross':
         if (inRange(params.cell)) return { ok: true };
         return { ok: false, reason: '十字の中心のブロックを選んでください' };
@@ -2325,6 +2377,25 @@ body.replaying #app { display: none; }
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
     let emitted = false;
     switch (key) {
+      case 'acid': {
+        // アシッド（v15.8。レアアイテム。ユーザーの案）：選んだブロックにキューブ（隠れていない）があれば、そこにアシッドマークを付ける。
+        //  次の自分の手番から、コールの代わりに自動でコールする（_acidTick）：まずアシッドマークのブロック、そのあとは同じキューブの、
+        //  当たったブロックに隣り合う、まだ当たっていないブロックを読み順に1つずつ。撃破されるまで続く。ワープすると洗い流される。
+        //  空きブロック・隠れているステルスは NoData（アイテムはなくなる）。酸をかけたキューブの印（acid）はキューブに付ける（相手には送らない）
+        const p = this._seenAt(foe.idx, params.cell);
+        if (!p) {
+          me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'acid' });
+          result.nd = true;
+          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
+          break;
+        }
+        p.acid = true;
+        me.acid = { cell: params.cell, t };
+        me.kb.occs.push({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' });
+        result.hit = true;
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドマーク（次の手番から自動コール）`, null, 'item', key);
+        break;
+      }
       case 'cross': {
         // クロスボム（v15.7。レアアイテム。ユーザーの案）：選んだブロックと上下左右の十字（盤の端では3〜4ブロック）に
         //  全ブロックが収まる、生きていて隠れていないキューブ（バズーカの破片も）をすべて撃破する。収まるキューブがなければ「不発」
@@ -2504,6 +2575,7 @@ body.replaying #app { display: none; }
     if (key === 'pair') { pub.a = params.a; pub.b = params.b; pub.same = result.same; }
     if (key === 'node') { pub.cell = params.cell; pub.k = result.k; }
     if (key === 'homing') { if (result.nd) pub.nd = true; else pub.sum = result.sum; }
+    if (key === 'acid') { pub.cell = params.cell; if (result.nd) pub.nd = true; }
     // ワープ（v15）：本人の演出用に、キューブ・トリガー・移動先（相手には送らない。net.js の redactFor が priv を消す）
     if (key === 'warp') { pub.priv = { cells: result.cells, trigger: params.cell, dest: val.cells.slice() }; }
     if (key === 'stealth') { pub.priv = { cells: result.cells }; }
@@ -2520,6 +2592,7 @@ body.replaying #app { display: none; }
   // 分解はその試合だけ：元のキューブは splitPieces に残し、大会では次の試合で元の形に戻す
   Game.prototype._split = function (piece) {
     const P = this.players[piece.owner];
+    if (piece.acid) { piece.acid = false; this.players[1 - piece.owner].acid = null; }   // アシッド（v15.8）：分解されたら酸もなくなる
     const N = this.N;
     P.pieces.splice(P.pieces.indexOf(piece), 1);
     P.splitPieces.push({ id: piece.id, shape: piece.shape, size: piece.size, cells: piece.cells.slice(), turn: this.turn, t: this.clock, col: piece.col });
@@ -2844,7 +2917,7 @@ body.replaying #app { display: none; }
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 8;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）／6：v15.4 ドラフトを配置の前に／7：v15.5 ホーミングミサイル／8：v15.7 クロスボム
+  const NET_VERSION = 9;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）／6：v15.4 ドラフトを配置の前に／7：v15.5 ホーミングミサイル／8：v15.7 クロスボム／9：v15.8 アシッド
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';
@@ -2998,6 +3071,9 @@ body.replaying #app { display: none; }
             break;
           case 'homing':
             q = {};   // 対象は選ばない（v15.5）。target（リプレイ用の記録）は受け付けない
+            break;
+          case 'acid':
+            if (cell(p.cell)) q = { cell: p.cell };   // アシッド（v15.8）：酸をかけるブロック
             break;
           case 'cross':
             if (cell(p.cell)) q = { cell: p.cell };   // クロスボム（v15.7）：十字の中心
@@ -4937,6 +5013,22 @@ body.replaying #app { display: none; }
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
+      // アシッド（v15.8）：候補がいちばん割れている◎のキューブに酸をかける（撃破まで自動でコールしてくれる）。
+      //  候補の割れ方（エントロピー）が acidH（既定 2.5）以上のときだけ
+      //  4×4（予選）では使わない（policy.acidMinN、既定5）。測定：予選でも使うと、持たない側の勝率が58.6%（2000局。使わない方が強い：
+      //  コールを酸に取られて、ほかのキューブを探せなくなるため。しきい値を3.5に上げても55.2%）。決勝は持たない側30.0%（80局）でよく効く
+      if (free('acid') && !me.acid && N >= (pol.acidMinN != null ? pol.acidMinN : 5)) {
+        let ab = null;
+        for (const i of uncertain) {
+          const g = ctx.groups[i];
+          if (g.q || me.view.dead[g.c]) continue;
+          const w = {};
+          g.cands.forEach((cd, k) => { if (!cd.merge) w[k] = A.joint.candW[i][k]; });
+          const h = entropy(w);
+          if (!ab || h > ab.h) ab = { h, c: g.c };
+        }
+        if (ab && ab.h >= (pol.acidH != null ? pol.acidH : 2.5)) return { key: 'acid', params: { cell: ab.c } };
+      }
       // クロスボム（v15.7）：◎のキューブの候補が十字にすっぽり収まる見込み（撃破できるキューブの数の期待値）がいちばん大きい中心。
       //  アンサーでは決めきれない（候補が割れている）キューブを、外れの心配なく倒せる。見込みが crossMin（既定 0.7）以上なら使う
       if (free('cross')) {
@@ -5048,6 +5140,12 @@ body.replaying #app { display: none; }
         if (cb && cb.v >= (pol.huntMin != null ? pol.huntMin : 0.3) && cb.v > (lineBest ? lineS : 0)) return { key: 'cube', params: cb.params };
       }
       if (lineBest) return { key: 'line', params: lineBest };
+      // アシッド（v15.8）：キューブがいる見込みが acidHunt（既定 0.8）以上のブロックに、コールの前にかける
+      if (stage === 'pre' && free('acid') && !me.acid && cells.length && N >= (pol.acidMinN != null ? pol.acidMinN : 5)) {
+        let best = -1;
+        for (const c of cells) if (best < 0 || hp[c] > hp[best]) best = c;
+        if (best >= 0 && hp[best] >= (pol.acidHunt != null ? pol.acidHunt : 0.8)) return { key: 'acid', params: { cell: best } };
+      }
       // ホーミングミサイル（v15.5）：まだ見つけていないキューブがいそうなら、コールの前に撃って合計から探す
       if (stage === 'pre' && free('homing') && (A.hunt.Etotal || 0) >= (pol.homingHunt != null ? pol.homingHunt : 0.8)) return { key: 'homing', params: {} };
       // バズーカで角を探る（v12.6）：まだ分かっていない角にキューブがいそうなら、コールの前に撃ち込む。
@@ -5378,7 +5476,7 @@ body.replaying #app { display: none; }
   //  ステルスは決勝では価値0（ターンが長く、トリガーブロックを撃たれやすい）が、予選では−10.1と強いので、価値0の3つの中では先に取る。
   //  前の順（ワープ・サイズ・シェイプ・ノード・ライン・キューブ・ステルス・ペア・バズーカ）との対戦（tools/draft_duel.js）で勝率64.7%（300局）
   // homing（v15.5）の位置は仮（測定で決める）
-  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'cross', 'stealth', 'bazooka', 'warp'];
+  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'cross', 'acid', 'stealth', 'bazooka', 'warp'];
   // 手持ちにすでにある種類は、持っていない種類より後回しにする（大会の決勝は予選の残り＋ドラフト）
   function draftPick(game, pi) {
     const order = (policy[pi] && policy[pi].draft) || DRAFT_PRIORITY;
@@ -6355,7 +6453,7 @@ window.SBAudio = (function () {
   const E = window.SBEngine, AI = window.SBAI, NET = window.SBNet;
   const { ITEMS, ITEM_KEYS, SHAPES, SHAPES_BY_SIZE, ORIENT, COLS, CATS, cellsFor, identifyShape, bit } = E;
   // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用
-  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross'];
+  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid'];
   // レアアイテム（バズーカ・ホーミングミサイル）はアンバーで見せる
   const isRare = (k) => (E.RARE_ITEMS || ['bazooka']).indexOf(k) >= 0;
   const DEF_ITEMS = ['warp', 'stealth'];
@@ -6400,6 +6498,8 @@ window.SBAudio = (function () {
     // v15.7：クロスボムも同じく1つに
     if (st.itemCount && st.itemCount.cross == null) st.itemCount.cross = 1;
     if (st.draftPool && st.draftPool.cross == null) st.draftPool.cross = 1;
+    if (st.itemCount && st.itemCount.acid == null) st.itemCount.acid = 1;   // v15.8：アシッド
+    if (st.draftPool && st.draftPool.acid == null) st.draftPool.acid = 1;
     st.draftPool = cleanCounts(st.draftPool || allOnes());
     if (countTotal(st.draftPool) < 2) st.draftPool = allOnes();
     if (['prelim', 'final', 'tour'].indexOf(st.rules) < 0) st.rules = 'prelim';
@@ -6536,6 +6636,8 @@ window.SBAudio = (function () {
     node: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.6" r="2.7" class="f"/><path d="M12 9.9V5.9M9.7 14l-3.5 2M14.3 14l3.5 2"/><circle cx="12" cy="4.2" r="1.8"/><circle cx="4.7" cy="16.9" r="1.8"/><circle cx="19.3" cy="16.9" r="1.8"/></svg>',
     warp: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="12.6" width="7.4" height="7.4" rx="1" stroke-dasharray="2.2 1.8"/><rect x="13.8" y="4" width="7.4" height="7.4" rx="1"/><path d="M6.6 11.2c.5-4.1 3.5-6 6.6-4.7"/><path d="M11.3 4.8l2 1.7-1.3 2.2"/></svg>',
     stealth: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 12s3.4-6.2 9.2-6.2 9.2 6.2 9.2 6.2-3.4 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.7"/><path d="M4.2 20.2 19.8 3.8"/></svg>',
+    // アシッド（v15.8）：フラスコとしずく
+    acid: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 3.5h5M10.5 3.5v5.2L5.6 17.4a2 2 0 0 0 1.7 3.1h9.4a2 2 0 0 0 1.7-3.1l-4.9-8.7V3.5"/><path d="M7.6 14.5h8.8"/><circle class="f" cx="11" cy="17.5" r=".9"/><circle class="f" cx="13.6" cy="16.3" r=".7"/></svg>',
     // クロスボム（v15.7）：十字の5ブロックと、中心の爆発
     cross: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6v5.5h5.5v6H15v5.5H9V15H3.5V9H9z"/><path d="M12 9.6v4.8M9.6 12h4.8"/></svg>',
     // ホーミングミサイル（v15.5）：曲がった軌跡（点線）の先のミサイル
@@ -6891,6 +6993,11 @@ window.SBAudio = (function () {
     return cls;
   }
   // ×：再コールできるものは薄く、ワープで空いたブロック（移動前の位置）は W を添える
+  // アシッド（v15.8）：酸がかかっているブロック（まだ溶けていないアシッドマーク）と、アシッドで溶かした（自動コールした）ブロックのしずく
+  function acidHTML(m, pending) {
+    if (pending) return `<span class="acidmk" aria-hidden="true">${ICON.acid}</span>`;
+    return m && m.acid ? '<span class="acidtag" aria-hidden="true"></span>' : '';
+  }
   function markHTML(m) {
     if (!m) return '';
     if (m.r === 'x') {
@@ -6970,7 +7077,7 @@ window.SBAudio = (function () {
         if ((p.alive && c === wsTrig) || c === wt) { inner += `<span class="wtr" aria-hidden="true">${ICON.warp}</span>`; cls += ' wtrigger' + (c === wsTrig ? ' wtsel' : ''); }
         if (p.alive && p.warpPlan) cls += ' warping';
       }
-      inner += cellMarkHTML(m, intel, c);
+      inner += cellMarkHTML(m, intel, c) + acidHTML(m, !!(foe.acid && foe.acid.cell === c && !m));
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
       const tl = inSetup ? null : fv.tlog[c];
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
@@ -7025,7 +7132,7 @@ window.SBAudio = (function () {
         const tp = g.pieceAt(foe.idx, c);
         if (tp) { const ci = colorIndex(foe, tp); cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${ci});`; inner += patHTML(ci, c); }
       }
-      inner += cellMarkHTML(v.marks[c], intel, c);
+      inner += cellMarkHTML(v.marks[c], intel, c) + acidHTML(v.marks[c], !!(P.acid && P.acid.cell === c && !v.marks[c] && !d));
       // トリガーブロック（v14.2）：当てたトリガーブロックと、答え合わせのときの相手のトリガーブロックに目の印
       const tgp = opts.reveal ? g.pieceAt(foe.idx, c, true) : null;
       if ((v.marks[c] && v.marks[c].trigger) || (tgp && tgp.stealthTrigger === c)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
@@ -7178,6 +7285,7 @@ window.SBAudio = (function () {
       case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選んでください';
       case 'homing': return who + 'ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います';
       case 'cross': return who + 'クロスボム：相手フィールドで十字の中心のブロックを選んでください';
+      case 'acid': return who + 'アシッド：相手フィールドで酸をかけるブロックを選んでください';
       case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選んでください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
       case 'wait':
@@ -7244,6 +7352,10 @@ window.SBAudio = (function () {
         break;
       case 'node':
         main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
+        acts = cancel;
+        break;
+      case 'acid':
+        main = itemHead('acid', '酸をかけるブロックを選んでください。キューブがあればアシッドマークが付き、次の手番から、コールの代わりにそのキューブを1ブロックずつ自動でコールして撃破まで溶かします（ワープされると洗い流されます）。');
         acts = cancel;
         break;
       case 'cross':
@@ -7649,7 +7761,8 @@ window.SBAudio = (function () {
     else if (mode === 'treasure') predClick = (c) => g.isTreasureCallable(v, c);
     else if (mode === 'answer' || mode === 'shape' || mode === 'number' || mode === 'node' || mode === 'bazooka') predClick = (c) => !P.view.dead[c];
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
-    else if (mode === 'cross') predClick = () => true;   // クロスボム：どのブロックでも中心にできる
+    else if (mode === 'cross') predClick = () => true;
+    else if (mode === 'acid') predClick = (c) => !P.view.dead[c];   // クロスボム：どのブロックでも中心にできる
     // ワープ（v15）：トリガーにできるのは、ワープできるキューブ（ステルス中・ワープ待ちでなく、移動先があるもの）の、まだ当たっていないブロック
     const warpOK = (mode === 'warp-pick' || mode === 'warp-place') ? new Set(g.warpable(v).map((p) => p.id)) : null;
     const trigOK = (c) => { const p = g.pieceAt(v, c); return !!p && warpOK.has(p.id) && !(p.hitMask & (1 << c)); };
@@ -8347,7 +8460,7 @@ window.SBAudio = (function () {
   // ---------------- 演出 ----------------
   const FX = (function () {
     const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF';
+    const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF', AC = '#A6E22E';   // AC：アシッドの黄緑
     const QT = '#48D1CC';   // Stealth hit（ミディアムターコイズ）
     const WP = '#B24962';   // ワープレティクル（ラズベリー。v15）
     const METAL = ['#F3F7FC', '#B8C3D4', '#6E7A8F', '#D3DCE8'];
@@ -8630,6 +8743,18 @@ window.SBAudio = (function () {
           setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.k == null ? 'NoData' : `つながり ${ev.k}`, ev.k == null ? 'miss' : 'count' + ecls, 1500), 560 * k);
           return 1300 * k;
         }
+        case 'acid': {
+          // アシッド（v15.8）：しずくが落ちて、ブロックに酸がしみる（空きなら NoData）
+          SND.sfx('i-target', 0, pan);
+          SND.sfx(ev.nd ? 'none' : 'found', 0.45 * k, pan);
+          const el = cellOf(target, ev.cell);
+          if (!el) return 0;
+          const p = ctr(el);
+          ring(p.x, p.y, AC, p.w * 1.1, p.w * 0.2, 650, 3);
+          if (!ev.nd) sparks(p.x, p.y, AC, 14, 0.9, 0.2, 300 * k);
+          setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.nd ? 'NoData' : 'ACID', ev.nd ? 'miss' : 'acid', 1400), 420 * k);
+          return 1100 * k;
+        }
         case 'cross': {
           // クロスボム（v15.7）：十字の5ブロックが光って爆発。撃破は続く destroy の演出、逃げたキューブは warpfire の演出
           SND.sfx('i-bazooka', 0, Object.assign({ hit: !ev.miss, n: ev.kills || 0 }, pan));
@@ -8785,6 +8910,8 @@ window.SBAudio = (function () {
             text(p.x, p.y - p.h * 0.55, 'NO HIT', 'miss', 1200);
             return 650 * k;
           }
+          // アシッドの自動コール（v15.8）：酸のしずくを添える
+          if (ev.acid) { sparks(p.x, p.y, AC, 10, 0.8, 0.2); text(p.x, p.y + p.h * 0.62, 'ACID', 'acid', 1100); }
           if (ev.r === 'wp' && ev.late) {
             // アンサーで逃げたキューブの、隠れていたワープレティクルを見つけた（v15.2）：ワープは起きない。印が現れるだけ
             over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900);
@@ -9537,7 +9664,7 @@ self.onmessage = function (e) {
     if (key === 'warp' && !g.warpable(v).length) { toast('ワープできるキューブがありません（移動先にできる空きブロックが足りません）', 'warn'); return; }
     resetMode();
     app.ui.item = key;
-    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', cross: 'cross', warp: 'warp-pick', stealth: 'stealth-pick' };
+    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', cross: 'cross', acid: 'acid', warp: 'warp-pick', stealth: 'stealth-pick' };
     app.ui.mode = modeOf[key];
     render();
     SND.sfx('select');
@@ -9855,6 +9982,10 @@ self.onmessage = function (e) {
       }
       case 'shape': useItem('shape', { cell: c }); return;
       case 'cross': useItem('cross', { cell: c }); return;
+      case 'acid':
+        if (P.view.dead[c]) { toast('撃破済みのブロックには使えません'); return; }
+        useItem('acid', { cell: c });
+        return;
       case 'number': useItem('number', { cell: c }); return;
       case 'node':
       case 'bazooka':

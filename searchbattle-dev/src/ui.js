@@ -4,7 +4,7 @@
   const E = window.SBEngine, AI = window.SBAI, NET = window.SBNet;
   const { ITEMS, ITEM_KEYS, SHAPES, SHAPES_BY_SIZE, ORIENT, COLS, CATS, cellsFor, identifyShape, bit } = E;
   // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用
-  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross'];
+  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid'];
   // レアアイテム（バズーカ・ホーミングミサイル）はアンバーで見せる
   const isRare = (k) => (E.RARE_ITEMS || ['bazooka']).indexOf(k) >= 0;
   const DEF_ITEMS = ['warp', 'stealth'];
@@ -49,6 +49,8 @@
     // v15.7：クロスボムも同じく1つに
     if (st.itemCount && st.itemCount.cross == null) st.itemCount.cross = 1;
     if (st.draftPool && st.draftPool.cross == null) st.draftPool.cross = 1;
+    if (st.itemCount && st.itemCount.acid == null) st.itemCount.acid = 1;   // v15.8：アシッド
+    if (st.draftPool && st.draftPool.acid == null) st.draftPool.acid = 1;
     st.draftPool = cleanCounts(st.draftPool || allOnes());
     if (countTotal(st.draftPool) < 2) st.draftPool = allOnes();
     if (['prelim', 'final', 'tour'].indexOf(st.rules) < 0) st.rules = 'prelim';
@@ -185,6 +187,8 @@
     node: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.6" r="2.7" class="f"/><path d="M12 9.9V5.9M9.7 14l-3.5 2M14.3 14l3.5 2"/><circle cx="12" cy="4.2" r="1.8"/><circle cx="4.7" cy="16.9" r="1.8"/><circle cx="19.3" cy="16.9" r="1.8"/></svg>',
     warp: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="12.6" width="7.4" height="7.4" rx="1" stroke-dasharray="2.2 1.8"/><rect x="13.8" y="4" width="7.4" height="7.4" rx="1"/><path d="M6.6 11.2c.5-4.1 3.5-6 6.6-4.7"/><path d="M11.3 4.8l2 1.7-1.3 2.2"/></svg>',
     stealth: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 12s3.4-6.2 9.2-6.2 9.2 6.2 9.2 6.2-3.4 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.7"/><path d="M4.2 20.2 19.8 3.8"/></svg>',
+    // アシッド（v15.8）：フラスコとしずく
+    acid: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 3.5h5M10.5 3.5v5.2L5.6 17.4a2 2 0 0 0 1.7 3.1h9.4a2 2 0 0 0 1.7-3.1l-4.9-8.7V3.5"/><path d="M7.6 14.5h8.8"/><circle class="f" cx="11" cy="17.5" r=".9"/><circle class="f" cx="13.6" cy="16.3" r=".7"/></svg>',
     // クロスボム（v15.7）：十字の5ブロックと、中心の爆発
     cross: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6v5.5h5.5v6H15v5.5H9V15H3.5V9H9z"/><path d="M12 9.6v4.8M9.6 12h4.8"/></svg>',
     // ホーミングミサイル（v15.5）：曲がった軌跡（点線）の先のミサイル
@@ -540,6 +544,11 @@
     return cls;
   }
   // ×：再コールできるものは薄く、ワープで空いたブロック（移動前の位置）は W を添える
+  // アシッド（v15.8）：酸がかかっているブロック（まだ溶けていないアシッドマーク）と、アシッドで溶かした（自動コールした）ブロックのしずく
+  function acidHTML(m, pending) {
+    if (pending) return `<span class="acidmk" aria-hidden="true">${ICON.acid}</span>`;
+    return m && m.acid ? '<span class="acidtag" aria-hidden="true"></span>' : '';
+  }
   function markHTML(m) {
     if (!m) return '';
     if (m.r === 'x') {
@@ -619,7 +628,7 @@
         if ((p.alive && c === wsTrig) || c === wt) { inner += `<span class="wtr" aria-hidden="true">${ICON.warp}</span>`; cls += ' wtrigger' + (c === wsTrig ? ' wtsel' : ''); }
         if (p.alive && p.warpPlan) cls += ' warping';
       }
-      inner += cellMarkHTML(m, intel, c);
+      inner += cellMarkHTML(m, intel, c) + acidHTML(m, !!(foe.acid && foe.acid.cell === c && !m));
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
       const tl = inSetup ? null : fv.tlog[c];
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
@@ -674,7 +683,7 @@
         const tp = g.pieceAt(foe.idx, c);
         if (tp) { const ci = colorIndex(foe, tp); cls += ' ghost' + edgeClasses(tp.mask, c, N); style += `--pcc:var(--pc${ci});`; inner += patHTML(ci, c); }
       }
-      inner += cellMarkHTML(v.marks[c], intel, c);
+      inner += cellMarkHTML(v.marks[c], intel, c) + acidHTML(v.marks[c], !!(P.acid && P.acid.cell === c && !v.marks[c] && !d));
       // トリガーブロック（v14.2）：当てたトリガーブロックと、答え合わせのときの相手のトリガーブロックに目の印
       const tgp = opts.reveal ? g.pieceAt(foe.idx, c, true) : null;
       if ((v.marks[c] && v.marks[c].trigger) || (tgp && tgp.stealthTrigger === c)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
@@ -827,6 +836,7 @@
       case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選んでください';
       case 'homing': return who + 'ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います';
       case 'cross': return who + 'クロスボム：相手フィールドで十字の中心のブロックを選んでください';
+      case 'acid': return who + 'アシッド：相手フィールドで酸をかけるブロックを選んでください';
       case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選んでください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
       case 'wait':
@@ -893,6 +903,10 @@
         break;
       case 'node':
         main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
+        acts = cancel;
+        break;
+      case 'acid':
+        main = itemHead('acid', '酸をかけるブロックを選んでください。キューブがあればアシッドマークが付き、次の手番から、コールの代わりにそのキューブを1ブロックずつ自動でコールして撃破まで溶かします（ワープされると洗い流されます）。');
         acts = cancel;
         break;
       case 'cross':
@@ -1298,7 +1312,8 @@
     else if (mode === 'treasure') predClick = (c) => g.isTreasureCallable(v, c);
     else if (mode === 'answer' || mode === 'shape' || mode === 'number' || mode === 'node' || mode === 'bazooka') predClick = (c) => !P.view.dead[c];
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
-    else if (mode === 'cross') predClick = () => true;   // クロスボム：どのブロックでも中心にできる
+    else if (mode === 'cross') predClick = () => true;
+    else if (mode === 'acid') predClick = (c) => !P.view.dead[c];   // クロスボム：どのブロックでも中心にできる
     // ワープ（v15）：トリガーにできるのは、ワープできるキューブ（ステルス中・ワープ待ちでなく、移動先があるもの）の、まだ当たっていないブロック
     const warpOK = (mode === 'warp-pick' || mode === 'warp-place') ? new Set(g.warpable(v).map((p) => p.id)) : null;
     const trigOK = (c) => { const p = g.pieceAt(v, c); return !!p && warpOK.has(p.id) && !(p.hitMask & (1 << c)); };
@@ -1996,7 +2011,7 @@
   // ---------------- 演出 ----------------
   const FX = (function () {
     const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF';
+    const CY = '#4FE3FF', MG = '#FF3F8F', OR = '#FF7A3D', AM = '#FFC14A', ST = '#A3AEC0', WH = '#FFFFFF', AC = '#A6E22E';   // AC：アシッドの黄緑
     const QT = '#48D1CC';   // Stealth hit（ミディアムターコイズ）
     const WP = '#B24962';   // ワープレティクル（ラズベリー。v15）
     const METAL = ['#F3F7FC', '#B8C3D4', '#6E7A8F', '#D3DCE8'];
@@ -2279,6 +2294,18 @@
           setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.k == null ? 'NoData' : `つながり ${ev.k}`, ev.k == null ? 'miss' : 'count' + ecls, 1500), 560 * k);
           return 1300 * k;
         }
+        case 'acid': {
+          // アシッド（v15.8）：しずくが落ちて、ブロックに酸がしみる（空きなら NoData）
+          SND.sfx('i-target', 0, pan);
+          SND.sfx(ev.nd ? 'none' : 'found', 0.45 * k, pan);
+          const el = cellOf(target, ev.cell);
+          if (!el) return 0;
+          const p = ctr(el);
+          ring(p.x, p.y, AC, p.w * 1.1, p.w * 0.2, 650, 3);
+          if (!ev.nd) sparks(p.x, p.y, AC, 14, 0.9, 0.2, 300 * k);
+          setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.nd ? 'NoData' : 'ACID', ev.nd ? 'miss' : 'acid', 1400), 420 * k);
+          return 1100 * k;
+        }
         case 'cross': {
           // クロスボム（v15.7）：十字の5ブロックが光って爆発。撃破は続く destroy の演出、逃げたキューブは warpfire の演出
           SND.sfx('i-bazooka', 0, Object.assign({ hit: !ev.miss, n: ev.kills || 0 }, pan));
@@ -2434,6 +2461,8 @@
             text(p.x, p.y - p.h * 0.55, 'NO HIT', 'miss', 1200);
             return 650 * k;
           }
+          // アシッドの自動コール（v15.8）：酸のしずくを添える
+          if (ev.acid) { sparks(p.x, p.y, AC, 10, 0.8, 0.2); text(p.x, p.y + p.h * 0.62, 'ACID', 'acid', 1100); }
           if (ev.r === 'wp' && ev.late) {
             // アンサーで逃げたキューブの、隠れていたワープレティクルを見つけた（v15.2）：ワープは起きない。印が現れるだけ
             over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900);
@@ -3186,7 +3215,7 @@ self.onmessage = function (e) {
     if (key === 'warp' && !g.warpable(v).length) { toast('ワープできるキューブがありません（移動先にできる空きブロックが足りません）', 'warn'); return; }
     resetMode();
     app.ui.item = key;
-    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', cross: 'cross', warp: 'warp-pick', stealth: 'stealth-pick' };
+    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', cross: 'cross', acid: 'acid', warp: 'warp-pick', stealth: 'stealth-pick' };
     app.ui.mode = modeOf[key];
     render();
     SND.sfx('select');
@@ -3504,6 +3533,10 @@ self.onmessage = function (e) {
       }
       case 'shape': useItem('shape', { cell: c }); return;
       case 'cross': useItem('cross', { cell: c }); return;
+      case 'acid':
+        if (P.view.dead[c]) { toast('撃破済みのブロックには使えません'); return; }
+        useItem('acid', { cell: c });
+        return;
       case 'number': useItem('number', { cell: c }); return;
       case 'node':
       case 'bazooka':

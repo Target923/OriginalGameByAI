@@ -1549,6 +1549,22 @@
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
+      // アシッド（v15.8）：候補がいちばん割れている◎のキューブに酸をかける（撃破まで自動でコールしてくれる）。
+      //  候補の割れ方（エントロピー）が acidH（既定 2.5）以上のときだけ
+      //  4×4（予選）では使わない（policy.acidMinN、既定5）。測定：予選でも使うと、持たない側の勝率が58.6%（2000局。使わない方が強い：
+      //  コールを酸に取られて、ほかのキューブを探せなくなるため。しきい値を3.5に上げても55.2%）。決勝は持たない側30.0%（80局）でよく効く
+      if (free('acid') && !me.acid && N >= (pol.acidMinN != null ? pol.acidMinN : 5)) {
+        let ab = null;
+        for (const i of uncertain) {
+          const g = ctx.groups[i];
+          if (g.q || me.view.dead[g.c]) continue;
+          const w = {};
+          g.cands.forEach((cd, k) => { if (!cd.merge) w[k] = A.joint.candW[i][k]; });
+          const h = entropy(w);
+          if (!ab || h > ab.h) ab = { h, c: g.c };
+        }
+        if (ab && ab.h >= (pol.acidH != null ? pol.acidH : 2.5)) return { key: 'acid', params: { cell: ab.c } };
+      }
       // クロスボム（v15.7）：◎のキューブの候補が十字にすっぽり収まる見込み（撃破できるキューブの数の期待値）がいちばん大きい中心。
       //  アンサーでは決めきれない（候補が割れている）キューブを、外れの心配なく倒せる。見込みが crossMin（既定 0.7）以上なら使う
       if (free('cross')) {
@@ -1660,6 +1676,12 @@
         if (cb && cb.v >= (pol.huntMin != null ? pol.huntMin : 0.3) && cb.v > (lineBest ? lineS : 0)) return { key: 'cube', params: cb.params };
       }
       if (lineBest) return { key: 'line', params: lineBest };
+      // アシッド（v15.8）：キューブがいる見込みが acidHunt（既定 0.8）以上のブロックに、コールの前にかける
+      if (stage === 'pre' && free('acid') && !me.acid && cells.length && N >= (pol.acidMinN != null ? pol.acidMinN : 5)) {
+        let best = -1;
+        for (const c of cells) if (best < 0 || hp[c] > hp[best]) best = c;
+        if (best >= 0 && hp[best] >= (pol.acidHunt != null ? pol.acidHunt : 0.8)) return { key: 'acid', params: { cell: best } };
+      }
       // ホーミングミサイル（v15.5）：まだ見つけていないキューブがいそうなら、コールの前に撃って合計から探す
       if (stage === 'pre' && free('homing') && (A.hunt.Etotal || 0) >= (pol.homingHunt != null ? pol.homingHunt : 0.8)) return { key: 'homing', params: {} };
       // バズーカで角を探る（v12.6）：まだ分かっていない角にキューブがいそうなら、コールの前に撃ち込む。
@@ -1990,7 +2012,7 @@
   //  ステルスは決勝では価値0（ターンが長く、トリガーブロックを撃たれやすい）が、予選では−10.1と強いので、価値0の3つの中では先に取る。
   //  前の順（ワープ・サイズ・シェイプ・ノード・ライン・キューブ・ステルス・ペア・バズーカ）との対戦（tools/draft_duel.js）で勝率64.7%（300局）
   // homing（v15.5）の位置は仮（測定で決める）
-  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'cross', 'stealth', 'bazooka', 'warp'];
+  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'cross', 'acid', 'stealth', 'bazooka', 'warp'];
   // 手持ちにすでにある種類は、持っていない種類より後回しにする（大会の決勝は予選の残り＋ドラフト）
   function draftPick(game, pi) {
     const order = (policy[pi] && policy[pi].draft) || DRAFT_PRIORITY;

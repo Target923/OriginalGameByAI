@@ -3,7 +3,8 @@
 新しいチャットで続きをするための資料。最初にこれを読み、ルールの細部が要るときだけ「確定ルール」「総括」の該当箇所を読む（全部は読まない）。
 
 ## いまの状態
-- ルール v15.2（v15 ワープの作り直し＋v15.1 ステルスの見破りをキューブごとに＋v15.2 ワープの通知と隠れたレティクル）、エンジンのバージョン33（src/engine.js の `VERSION`）、通信の版8（src/net.js の `NET_VERSION`）。
+- ルール v15.2（v15 ワープの作り直し＋v15.1 ステルスの見破りをキューブごとに＋v15.2 ワープの通知と隠れたレティクル）、エンジンのバージョン34（src/engine.js の `VERSION`）、通信の版9（src/net.js の `NET_VERSION`）。
+  - **アシッド v15.8（2026-11-03。ユーザーの案。レアアイテム。予定のレア4つがそろった）**：engine の acid・_acidTick（_advance の最後）・call の acid 印・ワープ・撃破・分解で酸を消す。ai：attackItem で使う（5×5だけ。acidMinN）。ui：アイコン・アシッドマーク（.acidmk）・しずく（.acidtag）・演出。テスト test/acid_check.js。
   - **クロスボム v15.7（2026-11-03。ユーザーの案。レアアイテム）**：engine の cross・crossMask・kb.crossMiss（大会は9種類のまま）。ai：crossMisses（finishCands で候補を除く・huntModel の置き方を除く）・attackItem の使い方（crossMin）。ui：アイコン・十字の枠の見本（crossPreview・.xarea）・演出。テスト test/cross_check.js。
   - **ホーミングミサイル v15.5（2026-11-03。ユーザーの案。レアアイテム）**：engine の homing（ITEM_KEYS・RARE_ITEMS。大会は TOUR_ITEM_KEYS の9種類のまま）。kb.sums に合計。ランダムに選んだキューブは _recParams で操作の記録に足す。ai：homingSums・HOMING_BOOST（finishCands）・huntModel の見込み・attackItem の使い方・DRAFT_PRIORITY（仮の位置）。ui：アイコン・発射のボタン（homing-fire）・番号の表示（homingNums・.cnum）・「合計」の札・演出。テスト test/homing_check.js。
   - **ドラフトを配置の前に v15.4（2026-10-31。ユーザーの希望）**：Game を作るとすぐドラフト（phase 'draft'）→終わると 'setup'。配置の関数はドラフト中も受け付ける（_setupOpen）。ui：beginMatchUI がドラフト画面へ、afterDraft で配置へ。1試合の配置画面に両者のアイテム、バトル画面は持っているアイテムだけ（owns）。テスト（e2e・online_e2e・tour_e2e）の順番も直した。
@@ -113,6 +114,7 @@
 | リプレイの再現 | `node test/replay_check.js` | 約4.5分 |
 | 大会（CPU だけ。アンサー失敗・点の合計も厳しく） | `node test/tour_sim.js 20` | 約1分 |
 | 画面 | `python3 test/vis129.py`（リプレイ）・`test/vis_sim.py`（シミュレーター）・`test/tour_e2e.py`（大会を画面で通す）・`test/e2e.py`（1試合モード：CPU戦・プレイヤーバトル） | 各2〜4分 |
+| アシッド（v15.8） | `node test/acid_check.js 30`（自動コールの順番・酸がなくなる・推理の正しさ・リプレイ） | 約4分 |
 | クロスボム（v15.7） | `node test/cross_check.js 30`（十字に収まるキューブだけ倒れる・推理の正しさ・リプレイ） | 約4分 |
 | ホーミングミサイル（v15.5） | `node test/homing_check.js 30`（合計が正しい・推理の正しさ・リプレイ） | 約3分 |
 | ステルス（v15.1） | `node test/stealth_check.js 60`（見破りがキューブごと・推理の正しさ・リプレイ） | 約6分 |

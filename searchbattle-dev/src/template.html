@@ -567,6 +567,13 @@ h1, h2, h3 { text-wrap: balance; }
 .item-count .ic-row:not(.on) output { color: var(--muted); }
 .item-count .note { grid-column: 1 / -1; }
 .item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
+/* アシッド（v15.8）：黄緑の酸。まだ溶けていないアシッドマークと、自動コールで溶かしたブロックのしずく */
+.cell .acidmk { position: absolute; inset: 18%; display: grid; place-items: center; color: #A6E22E; filter: drop-shadow(0 0 6px rgba(166, 226, 46, .7)); pointer-events: none; animation: acidpulse 1.6s ease-in-out infinite; }
+.cell .acidmk svg { width: 70%; height: 70%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.cell .acidmk svg .f { fill: currentColor; stroke: none; }
+@keyframes acidpulse { 50% { opacity: .55; } }
+.cell .acidtag { position: absolute; right: 3px; top: calc(50% - 5px); width: 7px; height: 9px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #A6E22E; box-shadow: 0 0 5px rgba(166, 226, 46, .8); pointer-events: none; }
+.fx-text.acid { color: #A6E22E; text-shadow: 0 0 12px rgba(166, 226, 46, .8); }
 /* クロスボム（v15.7）：十字の範囲の見本 */
 .cell.xarea { box-shadow: inset 0 0 0 2px var(--amber); background-color: rgba(255, 193, 74, .12); }
 /* ホーミングミサイル（v15.5）：ブロックの番号（A-1から読み順に1〜）。暗算の手がかりなので、目立たせない */

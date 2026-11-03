@@ -25,6 +25,7 @@ for (let g=0; g<400; g++) {
           if (k==='cube') params = Math.random()<.5?{kind:'cat',value:E.CATS[rnd(3)]}:{kind:'size',value:1+rnd(5)};
           if (k==='line') params={line:Math.random()<.5?'row':'col',index:rnd(N)};
           if (k==='cross') params={cell:rnd(NN)};
+          if (k==='acid') { const cs=[...Array(NN).keys()].filter(c=>!me.view.dead[c]); params={cell:cs[rnd(cs.length)]}; }
           if (k==='shape'||k==='number'||k==='node'||k==='bazooka') { const cs=[...Array(NN).keys()].filter(c=>!me.view.dead[c]); params={cell:cs[rnd(cs.length)]}; }
           if (k==='pair') { const cs=[...Array(NN).keys()].filter(c=>!me.view.dead[c]); if(cs.length<2) continue; const a=cs[rnd(cs.length)]; const rest=cs.filter(c=>c!==a); params={a, b:rest[rnd(rest.length)]}; }
           if (k==='warp') { const ps=G.living(pi); const p=ps[rnd(ps.length)]; const open=p.cells.filter((c)=>!(p.hitMask&(1<<c))); let ok=false; for(let i=0;i<50&&!ok&&open.length;i++){ params={pieceId:p.id,cell:open[rnd(open.length)],t:rnd(8),r0:rnd(N),c0:rnd(N)}; ok=G.validateItem(pi,'warp',params).ok;} if(!ok) continue; }   // v15：トリガー（cell）も決める
