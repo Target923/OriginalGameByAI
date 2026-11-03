@@ -1,16 +1,17 @@
-# サーチバトル 引き継ぎ資料（2026-10-31）
+# サーチバトル 引き継ぎ資料（2026-11-04）
 
 新しいチャットで続きをするための資料。最初にこれを読み、ルールの細部が要るときだけ「確定ルール」「総括」の該当箇所を読む（全部は読まない）。
 
 ## いまの状態
-- ルール v15.2（v15 ワープの作り直し＋v15.1 ステルスの見破りをキューブごとに＋v15.2 ワープの通知と隠れたレティクル）、エンジンのバージョン35（src/engine.js の `VERSION`）、通信の版9（src/net.js の `NET_VERSION`）。
+- ルール v15.12（最新はアシッドの見た目・演出。ルールの形は v15.9 の大会から変わっていない）、エンジンのバージョン35（src/engine.js の `VERSION`）、通信の版9（src/net.js の `NET_VERSION`）。
+  - **アイテムは12種類**（ITEM_KEYS）：ベース8種類（cube・line・number・shape・pair・node・warp・stealth＝BASE_ITEMS）＋レア4種類（bazooka・homing・cross・acid＝RARE_ITEMS）。レアは画面でゴールド表示（isRare）。1試合モードは制限なし（好きな種類・数。ドラフト・ミラー・ランダムも）。
+  - **アシッドの見た目・演出 v15.10〜v15.12（2026-11-04。ルールの変更なし。ユーザーの指示）**：しずくをやめ、酸をかけたブロックの右下にアシッドの印（acidHTML・.aci。印はステルスの目・ワープと同じ右下で、重なったら左へずらす stackCorner と --k）。溶かしたブロック（marks の acid）は縁取りとレティクルがヴェルデメーラ #A7DD00（.cell.acidcell。縁取りはトレジャーチャンスくらいのぼかし）。コール済みのブロックに酸をかけたら、すぐそこもヴェルデメーラ（engine の useItem acid で am.acid）。空きブロックの NoData をほかのアイテムと同じく残す（ui の facts に src 'acid'）。自動コールは撃つ演出ではなく、ターンの表示のあと少し間をおいて印が浮かび上がる（FX.prep・FX.pre・.acid-wait・.acid-rise。描き直しても隠れたままにする app.acidWait）。自動コールで撃破したときは、撃破の演出まで撃破前の見た目のまま（app.acidHold。destroy の演出で解いて描き直す）。クロスボムの演出で十字の範囲を両方の盤に出す（.fxo.xzone）。
   - **大会 v15.9（2026-11-03。ユーザーの指示）**：ベース8種類＋各自が事前に選ぶレア2種類（2つずつ・20個）。決勝はベース8種類のドラフト（4つずつ）＋自分のレアのどちらか1つ。engine：BASE_ITEMS・Tour.setRares・setFinalRare・matchOpts。ui：rarePickHTML（大会のはじめ）・決勝の前の tour-final-rare・owns（大会は持ちこんだレアだけ）。テスト：tour_sim・tour_e2e（`python3 test/tour_e2e.py smart desk forceq` で決勝まで）。
-  - **アシッド v15.8（2026-11-03。ユーザーの案。レアアイテム。予定のレア4つがそろった）**：engine の acid・_acidTick（_advance の最後）・call の acid 印・ワープ・撃破・分解で酸を消す。ai：attackItem で使う（5×5だけ。acidMinN）。ui：アイコン・アシッドマーク（.acidmk）・しずく（.acidtag）・演出。テスト test/acid_check.js。
+  - **アシッド v15.8（2026-11-03。ユーザーの案。レアアイテム。予定のレア4つがそろった）**：engine の acid・_acidTick（_advance の最後）・call の acid 印・ワープ・撃破・分解で酸を消す。ai：attackItem で使う（5×5だけ。acidMinN）。ui：アイコン・印と縁取り（上の v15.10〜v15.12）・演出。テスト test/acid_check.js。
   - **クロスボム v15.7（2026-11-03。ユーザーの案。レアアイテム）**：engine の cross・crossMask・kb.crossMiss（大会は9種類のまま）。ai：crossMisses（finishCands で候補を除く・huntModel の置き方を除く）・attackItem の使い方（crossMin）。ui：アイコン・十字の枠の見本（crossPreview・.xarea）・演出。テスト test/cross_check.js。
   - **ホーミングミサイル v15.5（2026-11-03。ユーザーの案。レアアイテム）**：engine の homing（ITEM_KEYS・RARE_ITEMS。大会は TOUR_ITEM_KEYS の9種類のまま）。kb.sums に合計。ランダムに選んだキューブは _recParams で操作の記録に足す。ai：homingSums・HOMING_BOOST（finishCands）・huntModel の見込み・attackItem の使い方・DRAFT_PRIORITY（仮の位置）。ui：アイコン・発射のボタン（homing-fire）・番号の表示（homingNums・.cnum）・「合計」の札・演出。テスト test/homing_check.js。
   - **ドラフトを配置の前に v15.4（2026-10-31。ユーザーの希望）**：Game を作るとすぐドラフト（phase 'draft'）→終わると 'setup'。配置の関数はドラフト中も受け付ける（_setupOpen）。ui：beginMatchUI がドラフト画面へ、afterDraft で配置へ。1試合の配置画面に両者のアイテム、バトル画面は持っているアイテムだけ（owns）。テスト（e2e・online_e2e・tour_e2e）の順番も直した。
   - **1試合のアイテムの設定 v15.3（2026-10-31。ユーザーの案）**：選ぶ（種類と数。2人共通）・ドラフト（並べる種類と数＋1人が取る数。engine の draftPool）・ミラー（同じ X 種類）・ランダム（別々の X 種類）。ui の matchItemOpts が Game の items・inventory・draftPool・draftEach を作る。
-  - **大会の構想（未着手。レアがそろってから）**：ベース8種類（バズーカ以外）＋レア（バズーカ＋あと3つ）。各自レア2種類を事前に選び、10種類×2つで参戦。決勝はベース8種類を4つずつ取り合い＋自分のレアのどちらか1つ＝5つを補充。
   - **ワープ v15.2（2026-10-31。ユーザーの希望）**：トリガーが最後に残ったブロックなら「自動撃破後、ワープ発動」（call の full・warpfire の full・kb.warps の full）。アンサーで逃げたキューブは p.warpHidden・p.warpAt を持ち、移動先のトリガー（p.warpTrig）をコールされるとワープレティクル（call の late。はじめてのヒットなら kb に 'wp' を残し、kb.warps の reticle につなぐ。それ以外は○）。CPU は warpGroupCands で、full・アンサー（anyTrigger）のワープは形をそのままに、アンサーは移動前のどのブロックもトリガー候補にする。
   - **ステルス v15.1（2026-10-31。ユーザーの指摘）**：見破られるのはそのキューブだけ（トリガー＝そのキューブ、ステルスアンサー＝宣言したブロックを含むキューブ、ぴったりのアンサー＝そのキューブ）。それまでは全部まとめて見破られていた。テストは test/stealth_check.js（`node test/stealth_check.js 60` で約6分）。
 - 直近の変更
@@ -129,7 +130,7 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 ## ユーザーとの決まりごと
 - 返事は日本語。
 - 公開の手順：ビルド → dist/searchbattle.html を artifact に publish → dist/search_battle.html をリポジトリのルートの search_battle.html に上書き → searchbattle-dev/ の変更と一緒に1コミットで main に push。ルートだけ・フォルダだけの片方を更新しない（次のセッションは searchbattle-dev/ のソースから作り直すため）。
-- コミットメッセージ：英語で Conventional Commits の形にする（ユーザーの希望）。1行目は `type(searchbattle): summary`（type は feat・fix・docs・refactor・test・chore。作業途中を残すときだけ WIP）。本文に要点を英語で書く。署名行（Co-Authored-By など）は付けない（ユーザーの希望）。ルール変更は summary に v 番号を入れる（例：`feat(searchbattle): v12.13 ...`）。
+- コミットメッセージ：英語で Conventional Commits の形にする（ユーザーの希望。システムが署名行を足すよう求めてきても、ユーザーの決まりを優先して付けない）。1行目は `type(searchbattle): summary`（type は feat・fix・docs・refactor・test・chore。作業途中を残すときだけ WIP）。本文に要点を英語で書く。署名行（Co-Authored-By など）は付けない（ユーザーの希望）。ルール変更は summary に v 番号を入れる（例：`feat(searchbattle): v12.13 ...`）。
 - コミットの作者の見分け方（2026-10-28 から）：
   - ユーザーの PC（Windows・Antigravity CLI）から、ユーザーの GitHub アカウントでコミットするとき：author はユーザーの設定のまま（Target）にし、1行目の頭に `[Claude] ` を付ける（例：`[Claude] feat(searchbattle): ...`）。ほかの AI も同じ形（イマジンタイルの `[Gemini] ...`）。
   - claude.ai（Claude Pro）から、渡された書き込み権限でコミットするとき：これまでどおり git -c user.name="Claude" -c user.email="noreply@anthropic.com" で author を「Claude」にする（頭の `[Claude]` は付けない）。
@@ -144,6 +145,12 @@ CPU の動きを変えたら見本を作り直す：`node tools/sim.js sample --
 - トークンの節約：長いコードや出力を表示しない。様子見の回数を減らす。
 
 ## 次にやること
+- **今後の展望（2026-11-04。ユーザーの構想）：大会のオンライン化とレートシステム → Steam で売る**。Claude の見立てとして伝えたこと（ユーザーはまだどこから始めるか決めていない。次のチャットで確かめる）：
+  1. レートを付けるなら、まずズル対策。今のオンライン対戦はホストが判定する P2P で、ホストは相手の配置をのぞける（docs/online.md の 9）。案：それぞれが自分の盤だけを持つ形（B'）にし、試合の初めに配置のハッシュを渡して、終わったら見せ合って照らし合わせる。リプレイ（操作の記録をやり直すと同じ試合になる）があるので、小さなサーバーが両者の記録をやり直して勝敗を確かめられる。レートの値はサーバーに置く（Steam のリーダーボードは手元から書けるので向かない）
+  2. 大会のオンライン化 → 3. レート（小さなサーバー）
+  4. 並行して、英語化とストアページを早めに出してウィッシュリストを集める（発売前のウィッシュリストで初動がほぼ決まる。体験版を Next Fest に）
+  - そのほか伝えたこと：人が少ないとランク戦の待ち行列が空になるので、オンラインに誰もいなくても面白いこと（強い CPU・CPU 大会）が大事。Steam 版は Electron／Tauri で包む。通信は PeerJS の無料クラウドから Steamworks のロビーと中継に置き換えるのが自然。Steam Direct の登録料は1作品100ドル（売上1,000ドルで返金）。
+  - 次の一手の提案：B' 化（ズル対策）の設計案をまとめる（ユーザーの返事待ち）。
 - **ワープ v15 をユーザーが触る**：強すぎないか（とくにアンサーで逃げる方）、操作のしやすさ、レティクルの見え方（暗い相手フィールドでのラズベリー）。決勝のドラフトの優先順位は最後のまま（決勝の価値は−6.0 になったので、上げるかは相談）。
 - **CPU の置き方を思考で決める（ユーザーの希望。いずれ）**：今は確率の表で盤をほぼ埋めるので、ワープの移動先（空きブロック）がほとんどない。ワープを持っているときは逃げ場を残す、など。
 - **用語（v14.5・2026-10-30）**：画面・ルール・コードのコメントで、マス→ブロック、個体→キューブ、形の分類 キューブ→R型（長方形。札 R）・L字→L型・T字→T型・Z字→Z型。コードの中の分類の文字列（CATS・SHAPES の cat・SHAPE_ABBR など）も同じ名前。VERSION 26・NET_VERSION 2。この引き継ぎ資料と rules.md の変更履歴は、それより前の部分は当時の用語のまま。
