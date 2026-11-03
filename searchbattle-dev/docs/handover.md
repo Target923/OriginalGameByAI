@@ -3,7 +3,7 @@
 新しいチャットで続きをするための資料。最初にこれを読み、ルールの細部が要るときだけ「確定ルール」「総括」の該当箇所を読む（全部は読まない）。
 
 ## いまの状態
-- ルール v15.2（v15 ワープの作り直し＋v15.1 ステルスの見破りをキューブごとに＋v15.2 ワープの通知と隠れたレティクル）、エンジンのバージョン31（src/engine.js の `VERSION`）、通信の版7（src/net.js の `NET_VERSION`）。
+- ルール v15.2（v15 ワープの作り直し＋v15.1 ステルスの見破りをキューブごとに＋v15.2 ワープの通知と隠れたレティクル）、エンジンのバージョン32（src/engine.js の `VERSION`）、通信の版7（src/net.js の `NET_VERSION`）。
   - **ホーミングミサイル v15.5（2026-11-03。ユーザーの案。レアアイテム）**：engine の homing（ITEM_KEYS・RARE_ITEMS。大会は TOUR_ITEM_KEYS の9種類のまま）。kb.sums に合計。ランダムに選んだキューブは _recParams で操作の記録に足す。ai：homingSums・HOMING_BOOST（finishCands）・huntModel の見込み・attackItem の使い方・DRAFT_PRIORITY（仮の位置）。ui：アイコン・発射のボタン（homing-fire）・番号の表示（homingNums・.cnum）・「合計」の札・演出。テスト test/homing_check.js。
   - **ドラフトを配置の前に v15.4（2026-10-31。ユーザーの希望）**：Game を作るとすぐドラフト（phase 'draft'）→終わると 'setup'。配置の関数はドラフト中も受け付ける（_setupOpen）。ui：beginMatchUI がドラフト画面へ、afterDraft で配置へ。1試合の配置画面に両者のアイテム、バトル画面は持っているアイテムだけ（owns）。テスト（e2e・online_e2e・tour_e2e）の順番も直した。
   - **1試合のアイテムの設定 v15.3（2026-10-31。ユーザーの案）**：選ぶ（種類と数。2人共通）・ドラフト（並べる種類と数＋1人が取る数。engine の draftPool）・ミラー（同じ X 種類）・ランダム（別々の X 種類）。ui の matchItemOpts が Game の items・inventory・draftPool・draftEach を作る。

@@ -1279,10 +1279,11 @@ body.replaying #app { display: none; }
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 31;
+  const VERSION = 32;
   // homing：ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）。レアはバズーカとホーミングミサイル（RARE_ITEMS）
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'warp', 'stealth'];
   const RARE_ITEMS = ['bazooka', 'homing'];
@@ -2311,10 +2312,15 @@ body.replaying #app { display: none; }
         // ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）：相手の生きていて隠れていないキューブ（バズーカの破片も含む）を
         //  1つランダムに選び、そのブロックの番号（A-1から読み順に1〜NN）の合計を教える。どのキューブかは伏せる。
         //  隠れていないキューブがなければ NoData。選んだキューブはリプレイ用に記録する（_recParams。相手には送らない）
+        //  同じキューブは、狙えるキューブを一通り狙い終わるまで選ばない（v15.6。ユーザーの希望）。印（homed）はキューブに付ける
+        //  （相手に送る記録には入らない）。一通り狙ったら印を消して、また全部から選ぶ
         let target = null;
         if (livingFoe.length) {
+          let pool = livingFoe.filter((p) => !p.homed);
+          if (!pool.length) { for (const p of livingFoe) p.homed = false; pool = livingFoe; }
           const forced = params && params.target != null ? livingFoe.find((p) => p.id === params.target) : null;
-          target = forced || livingFoe[Math.floor(this.rng() * livingFoe.length)];
+          target = forced || pool[Math.floor(this.rng() * pool.length)];
+          target.homed = true;
         }
         if (target) {
           const sum = target.cells.reduce((a, c) => a + c + 1, 0);

@@ -18,9 +18,15 @@ E.Game.prototype.useItem = function (pi, key, params) {
   if (key !== 'homing') return origUse.call(this, pi, key, params);
   const foe = this.players[1 - pi];
   const vis = foe.pieces.filter((p) => p.alive && !p.stealth).map((p) => sumOf(p.cells));
+  const before = foe.pieces.filter((p) => p.alive && !p.stealth && !p.homed).map((p) => p.id);
   const r = origUse.call(this, pi, key, params);
   if (r.ok && this.actions) {
     st.uses++;
+    // v15.6：一通り狙うまで同じキューブを選ばない（まだ狙っていないキューブがあれば、その中から）
+    const last = this.actions[this.actions.length - 1];
+    const tid = last && last[3] && last[3].target;
+    if (tid != null && before.length && before.indexOf(tid) < 0) bad('repeat-target', { tid, before });
+    if (tid != null && !before.length) st.resets = (st.resets || 0) + 1;
     if (r.nd) { st.nd++; if (vis.length) bad('nd-but-visible', { vis }); }
     else if (vis.indexOf(r.sum) < 0) bad('sum-not-a-cube', { sum: r.sum, vis });
   }
