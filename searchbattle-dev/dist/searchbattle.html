@@ -2341,7 +2341,7 @@ body.replaying #app { display: none; }
           this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
           break;
         }
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${hit.length}キューブに命中`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 命中`   /* 数は出さない（命中か不発かだけ。ユーザーの希望） */, null, 'item', key);
         result.kills = 0; result.escaped = 0;
         for (const p of hit) {
           if (p.warpPlan) {
@@ -8641,7 +8641,7 @@ window.SBAudio = (function () {
             const p = ctr(cel);
             ring(p.x, p.y, AM, p.w * 0.2, p.w * 1.8, 700, 3);
             shake(ev.miss ? 0 : 1);
-            setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.miss ? '不発' : `CROSS BOMB ×${(ev.kills || 0) + (ev.escaped || 0)}`, ev.miss ? 'miss' : 'kill', 1400), 360 * k);
+            setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.miss ? '不発' : '命中', ev.miss ? 'miss' : 'kill', 1400), 360 * k);
           }
           return 1000 * k;
         }

@@ -2290,7 +2290,7 @@
             const p = ctr(cel);
             ring(p.x, p.y, AM, p.w * 0.2, p.w * 1.8, 700, 3);
             shake(ev.miss ? 0 : 1);
-            setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.miss ? '不発' : `CROSS BOMB ×${(ev.kills || 0) + (ev.escaped || 0)}`, ev.miss ? 'miss' : 'kill', 1400), 360 * k);
+            setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.miss ? '不発' : '命中', ev.miss ? 'miss' : 'kill', 1400), 360 * k);
           }
           return 1000 * k;
         }

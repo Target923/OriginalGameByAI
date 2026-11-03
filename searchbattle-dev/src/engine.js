@@ -1102,7 +1102,7 @@
           this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
           break;
         }
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${hit.length}キューブに命中`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 命中`   /* 数は出さない（命中か不発かだけ。ユーザーの希望） */, null, 'item', key);
         result.kills = 0; result.escaped = 0;
         for (const p of hit) {
           if (p.warpPlan) {
