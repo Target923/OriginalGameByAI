@@ -614,7 +614,8 @@
         cls += ' pc' + edgeClasses(p.mask, c, N);
         if (p.isAdd) cls += ' addpc';
         if (p.frag) cls += ' frag';
-        if (!p.alive) cls += ' dead';
+        const held = !!(app.acidHold && app.acidHold.has(pi + ':' + c));   // 撃破の演出まで撃破前の見た目にしておく（v15.12）
+        if (!p.alive && !held) cls += ' dead';
         else if (m && m.r !== 'x') cls += ' hitc';
         const ci = colorIndex(P, p);
         style += `--pcc:var(--pc${ci});`;
@@ -682,7 +683,8 @@
     for (let c = 0; c < g.NN; c++) {
       let cls = cellBase(c, N);
       let inner = nums ? `<span class="cnum" aria-hidden="true">${c + 1}</span>` : '', style = '';
-      const d = v.dead[c];
+      const held = !!(app.acidHold && app.acidHold.has((1 - pi) + ':' + c));   // 撃破の演出まで撃破前の見た目にしておく（v15.12）
+      const d = held ? null : v.dead[c];
       if (d) {
         cls += ' pc revealed' + edgeClasses(deadMaskById[d.pieceId], c, N);
         if (d.cause === 'bazooka') cls += ' bz';
@@ -2574,6 +2576,8 @@
         case 'destroy': {
           // バズーカで砕けたヒット済みのブロックは、バズーカの演出でまとめて見せる
           if (ev.cause === 'bazooka') return 0;
+          // アシッドの自動コールで撃破（v15.12）：印が浮かび上がるまで撃破前の見た目にしてあったので、ここで撃破した盤に描き直す
+          if (app.acidHold && ev.cells.some((c) => app.acidHold.has(ev.owner + ':' + c))) { for (const c of ev.cells) app.acidHold.delete(ev.owner + ':' + c); render(); }
           SND.sfx('destroy', 0, { pan: panOf(ev.owner, v), big: ev.size >= 4, penalty: ev.cause === 'answerFail' });
           const els = ev.cells.map((c) => cellOf(ev.owner, c)).filter(Boolean);
           if (!els.length) return 0;
@@ -2701,6 +2705,19 @@
         const el = cellOf(ev.owner, ev.c);
         if (el) el.classList.add('acid-wait');
       }
+      // 自動コールで撃破したキューブは、印が浮かび上がるまで撃破前の見た目にしておく（撃破の演出が先に見えないように。v15.12）
+      let hold = false;
+      evs.forEach((ev, i) => {
+        if (ev.type !== 'call' || !ev.acid) return;
+        for (let j = i + 1; j < evs.length && evs[j].type !== 'call' && evs[j].type !== 'turn'; j++) {
+          const x = evs[j];
+          if (x.type === 'destroy' && x.owner === ev.owner && x.cells.indexOf(ev.c) >= 0) {
+            for (const c of x.cells) (app.acidHold || (app.acidHold = new Set())).add(x.owner + ':' + c);
+            hold = true;
+          }
+        }
+      });
+      if (hold) render();
     }
     function pre(ev) { return ev.type === 'call' && ev.acid ? 520 * speedK() : 0; }
     return { play, prep, pre };
@@ -2722,6 +2739,7 @@
         if (d) await sleep(d);
       }
       // 演出が流れなかった（画面を離れたなど）ときも、隠した印を必ず戻す
+      if (app.acidHold && app.acidHold.size) { app.acidHold.clear(); render(); }
       if (app.acidWait && app.acidWait.size) { app.acidWait.clear(); document.querySelectorAll('.cell.acid-wait').forEach((el) => el.classList.remove('acid-wait')); }
     }).catch(() => {});
     return app.fxChain;
