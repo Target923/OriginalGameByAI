@@ -567,6 +567,19 @@ h1, h2, h3 { text-wrap: balance; }
 .item-count .ic-row:not(.on) output { color: var(--muted); }
 .item-count .note { grid-column: 1 / -1; }
 .item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
+/* 大会のレア選び（v15.9） */
+.rare-pick { margin: 18px 0 6px; }
+.rare-pick h3 { font-size: 1rem; margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.rare-pick h3 small { font: 600 .72rem var(--f-tech); letter-spacing: .12em; color: var(--amber); }
+.rare-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 8px; }
+.item-card.rare { text-align: left; cursor: pointer; }
+.item-card.rare.on { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber), 0 0 18px rgba(255, 193, 74, .25); background: rgba(255, 193, 74, .08); }
+.ent .ent-rares { display: flex; gap: 4px; margin-top: 4px; }
+.choice b svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; color: var(--amber); }
+.choice b svg .f { fill: currentColor; stroke: none; }
+.ent .ent-rares i { display: inline-grid; place-items: center; width: 22px; height: 22px; color: var(--amber); }
+.ent .ent-rares svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ent .ent-rares svg .f { fill: currentColor; stroke: none; }
 /* アシッド（v15.8）：黄緑の酸。まだ溶けていないアシッドマークと、自動コールで溶かしたブロックのしずく */
 .cell .acidmk { position: absolute; inset: 18%; display: grid; place-items: center; color: #A6E22E; filter: drop-shadow(0 0 6px rgba(166, 226, 46, .7)); pointer-events: none; animation: acidpulse 1.6s ease-in-out infinite; }
 .cell .acidmk svg { width: 70%; height: 70%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -1288,19 +1301,21 @@ body.replaying #app { display: none; }
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 35：v15.9 大会はベース8種類＋各自が選ぶレア2種類（決勝はベースのドラフト＋レア1つ）
   // 34：v15.8 レアアイテム「アシッド」（acid）
   // 33：v15.7 レアアイテム「クロスボム」（cross）
   // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 34;
+  const VERSION = 35;
   // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
   //  acid：アシッド（v15.8。レア。ユーザーの案）
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid', 'warp', 'stealth'];
   const RARE_ITEMS = ['bazooka', 'homing', 'cross', 'acid'];
-  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイル・クロスボムは、大会のレアの仕組みを作るまで1試合だけ）
-  const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
+  // ベースアイテム（レア以外の8種類）。大会（v15.9。ユーザーの案）は、ベース8種類＋各自が事前に選ぶレア2種類を2つずつ（20個）
+  const BASE_ITEMS = ITEM_KEYS.filter((k) => RARE_ITEMS.indexOf(k) < 0);
+  const TOUR_RARES = 2;
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '選んだ形かブロック数のキューブが、いくつ残っているか分かる' },
@@ -1485,6 +1500,8 @@ body.replaying #app { display: none; }
     this.draftPool = dpool && dpool.length ? dpool : null;
     this.draftEach = Math.max(0, Math.min(Math.floor((this.draftPool || this.itemKeys).length / 2), opts.draftEach | 0));
     this.oncePerMatch = !!opts.oncePerMatch;
+    // 大会の各席のレア（v15.9。画面で、その人が持ちこんだレアだけを並べるため）
+    this.rares = Array.isArray(opts.rares) ? opts.rares.map((r) => (Array.isArray(r) ? r.slice() : [])) : null;
     // CPUの配置の方針（[席0, 席1]。大会で、CPUが順位・残りのキューブ・試合の残りから決めたもの。中身はCPUだけが読む）
     this.setupPlan = Array.isArray(opts.setupPlan) ? opts.setupPlan : null;
     // CPUがこの試合で使わずに残しておくアイテムの数（[席0, 席1]、種類ごと。大会の予選で使う。中身はCPUだけが読む）
@@ -2781,11 +2798,15 @@ body.replaying #app { display: none; }
       const names = opts.names || ['あなた'].concat(lineup.map((k) => charOf(k).name));
       const cpu = opts.cpu || [false, true, true, true];
       const each = opts.itemsEach != null ? opts.itemsEach : TOUR_ITEMS_EACH;
+      // レア（v15.9）：CPU はランダムに2種類。人は大会のはじめの画面で選ぶ（Tour.setRares。選ぶまでは null）。opts.rares で指定もできる
+      const pickRares = () => { const pool = RARE_ITEMS.slice(), out = []; while (out.length < TOUR_RARES && pool.length) out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]); return ITEM_KEYS.filter((k) => out.indexOf(k) >= 0); };
       const players = names.map((name, i) => {
         const inv = {};
-        for (const k of TOUR_ITEM_KEYS) inv[k] = each;
+        for (const k of BASE_ITEMS) inv[k] = each;
+        const rares = opts.rares && opts.rares[i] ? opts.rares[i].slice() : cpu[i] ? pickRares() : null;
+        if (rares) for (const k of rares) inv[k] = each;
         return {
-          id: i, name, cpu: !!cpu[i], char: i > 0 ? lineup[i - 1] : null, stock: Object.assign({}, STOCK), inv,
+          id: i, name, cpu: !!cpu[i], char: i > 0 ? lineup[i - 1] : null, stock: Object.assign({}, STOCK), inv, rares, finalRare: null,
           // take＝撃破で奪った、taken＝撃破で奪われた、vicWon／vicLost＝勝利で奪った／奪われた。gems＝持っている宝石（1つ5点）
           pts: { start: TOUR_START, take: 0, taken: 0, vicWon: 0, vicLost: 0, spdWon: 0, spdLost: 0 }, gems: TOUR_GEMS, gemsWon: 0, gemsLost: 0, wins: 0, losses: 0, draws: 0,
           lotto: rng(),
@@ -2797,13 +2818,32 @@ body.replaying #app { display: none; }
       const rounds = others.map((o) => [[0, o], [1, 2, 3].filter((x) => x !== o)]);
       // CPUの性格：出場するCPUの性格（opts.personas に null を渡すと性格なし＝CPUはみな標準の置き方）
       const personas = opts.personas !== undefined ? opts.personas : { 1: charOf(lineup[0]).persona, 2: charOf(lineup[1]).persona, 3: charOf(lineup[2]).persona };
-      return { v: VERSION, players, rounds, round: 0, results: [], stage: 'intro', finalists: null, finalFirstBy: null, champion: null, log: [], personas };
+      return { v: VERSION, players, rounds, round: 0, results: [], stage: 'intro', finalists: null, finalFirstBy: null, champion: null, log: [], personas, itemsEach: each };
     },
+    // 持っていくレアアイテムを決める（v15.9。違う2種類）。手持ちは2つずつ
+    setRares(T, id, list) {
+      const ok = Array.isArray(list) && list.length === TOUR_RARES && new Set(list).size === TOUR_RARES && list.every((k) => RARE_ITEMS.indexOf(k) >= 0);
+      if (!ok) return false;
+      const p = T.players[id];
+      const each = T.itemsEach != null ? T.itemsEach : TOUR_ITEMS_EACH;
+      for (const k of RARE_ITEMS) delete p.inv[k];
+      p.rares = ITEM_KEYS.filter((k) => list.indexOf(k) >= 0);
+      for (const k of p.rares) p.inv[k] = each;
+      return true;
+    },
+    // 決勝で補充するレア（自分のレア2種類のどちらか1つ。v15.9）
+    setFinalRare(T, id, key) {
+      const p = T.players[id];
+      if (!p.rares || p.rares.indexOf(key) < 0) return false;
+      p.finalRare = key;
+      return true;
+    },
+    BASE_ITEMS, RARE_ITEMS, TOUR_RARES,
     // 持ち点の合計＝はじめ50＋撃破で奪った−奪われた＋勝利で奪った−奪われた＋宝石×5
     total(p) { const q = p.pts; return q.start + q.take - q.taken + q.vicWon - q.vicLost + (q.spdWon | 0) - (q.spdLost | 0) + (p.gems | 0) * TOUR_GEM_PTS; },
     cubes(p) { return [2, 3, 4, 5].reduce((s, k) => s + (p.stock[k] || 0), 0); },
     cells(p) { return [2, 3, 4, 5].reduce((s, k) => s + k * (p.stock[k] || 0), 0); },
-    items(p) { return TOUR_ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
+    items(p) { return ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
     // 順位（持ち点の多い順。同点は勝ち数 → 撃破ブロック数 → 抽選）
     standings(T) {
       const list = T.players.map((p) => ({ id: p.id, total: Tour.total(p), wins: p.wins | 0, take: p.pts.take | 0, lotto: p.lotto }));
@@ -2822,13 +2862,23 @@ body.replaying #app { display: none; }
         if (fin && Tour.cubes(p) === 0) st[2] = 1;
         return st;
       };
+      // 決勝（v15.9）：予選の残り＋ベース8種類のドラフト（4つずつ）＋自分のレア2種類のどちらか1つ（finalRare。決めていなければ1つ目）
+      const invFor = (p) => {
+        const inv = Object.assign({}, p.inv);
+        const fr = fin && p.rares ? (p.finalRare && p.rares.indexOf(p.finalRare) >= 0 ? p.finalRare : p.rares[0]) : null;
+        if (fr) inv[fr] = (inv[fr] || 0) + 1;
+        return inv;
+      };
+      const rares = [pa.rares || [], pb.rares || []];
       return Object.assign({
         rules: fin ? 'final' : 'prelim',
         label: fin ? '決勝' : `予選 第${T.round + 1}試合`,
         names: [pa.name, pb.name], cpu: [pa.cpu, pb.cpu],
         stocks: [stockFor(pa), stockFor(pb)],
-        inventory: [Object.assign({}, pa.inv), Object.assign({}, pb.inv)],
-        items: TOUR_ITEM_KEYS.slice(), oncePerMatch: !fin, draftEach: fin ? Math.floor(TOUR_ITEM_KEYS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
+        inventory: [invFor(pa), invFor(pb)],
+        items: ITEM_KEYS.filter((k) => BASE_ITEMS.indexOf(k) >= 0 || rares[0].indexOf(k) >= 0 || rares[1].indexOf(k) >= 0), rares,
+        draftPool: fin ? BASE_ITEMS.slice() : undefined,
+        oncePerMatch: !fin, draftEach: fin ? Math.floor(BASE_ITEMS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
         victoryPts: victoryFor(kind, T.round), speedBonus: !fin,
       }, extra || {});
     },
@@ -2883,7 +2933,7 @@ body.replaying #app { display: none; }
   };
 
   const api = {
-    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, TOUR_ITEM_KEYS,
+    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, BASE_ITEMS,
     bit, popcount, bitsOf, maskOf, crossMask, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -5509,6 +5559,13 @@ body.replaying #app { display: none; }
     if (o.mode === 'pace' && o.budget && o.budget[T.round] != null) keep._budget = o.budget[T.round];
     return keep;
   }
+  // 決勝で補充するレア（v15.9）：自分のレア2種類のうち、決勝（5×5）で強かった順（測定の価値：アシッド−20・クロスボム−16・ホーミング−11・バズーカ）
+  const FINAL_RARE_ORDER = ['acid', 'cross', 'homing', 'bazooka'];
+  function tourChooseFinalRare(T, id) {
+    const p = T.players[id];
+    const own = p.rares || [];
+    return FINAL_RARE_ORDER.find((k) => own.indexOf(k) >= 0) || own[0] || null;
+  }
   // 予選1位の選択：'first'（先攻）か 'draft'（ドラフト先行権＝後攻）。CPUどうしの決勝では先攻の勝率が51.5%
   function tourChooseFirst(T, id) { return (policy.tour && policy.tour[id] && policy.tour[id].choose) || 'first'; }
 
@@ -5576,7 +5633,7 @@ body.replaying #app { display: none; }
   // 画面用：自分が知り得た相手の現在のキューブ数（サーチオール未使用なら null）
   function knownCounts(kb, N) { return currentCounts(kb, N); }
 
-  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpDest, chooseWarp, bestAddCell, policy, _cubeOptions: cubeOptions };
+  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourChooseFinalRare, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpDest, chooseWarp, bestAddCell, policy, _cubeOptions: cubeOptions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBAI = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -7182,8 +7239,10 @@ window.SBAudio = (function () {
   }
   // 1試合のバトルでは、その人が持っている（持っていた）アイテムだけを並べる（v15.4。ユーザーの希望。大会は全種類を並べる）
   function owns(pi, k) {
-    if (app.tour) return true;
-    const P = G().players[pi];
+    const g = G();
+    // 大会（v15.9）：ベース8種類はいつも並べ（使い切っても薄く残す）、レアはその人が持ちこんだ2種類だけ
+    if (app.tour) return !isRare(k) || !g.rares || (g.rares[pi] || []).indexOf(k) >= 0;
+    const P = g.players[pi];
     return (P.items[k] | 0) > 0 || ((P.used && P.used[k]) | 0) > 0;
   }
   function chipGroup(pi, keys, interactive, side, cap, tone) {
@@ -7593,7 +7652,7 @@ window.SBAudio = (function () {
             : seg('mode', s.mode, [['cpu', 'CPU戦', '最強CPUが相手'], ['pvp', 'プレイヤーバトル', '1台で2人が交代'], ['online', 'オンライン対戦', '別の端末の人と']])}</div>
           <div class="set-row"><h2>ルール</h2>${seg('rules', s.rules, [['prelim', '4×4', 'トレジャー4回'], ['final', '5×5', 'トレジャー5回'], ['tour', '大会', '予選3試合＋決勝']])}</div>
           <div class="set-row"><h2>使えるアイテム</h2>${tour
-            ? `<p class="set-fixed">9種を<b>2つずつ（18個）</b>持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ドラフト（4つずつ）。持ち点<b>${E.Tour.START}</b>から、撃破と勝利で相手の点を奪い合います。</p>`
+            ? `<p class="set-fixed">ベース8種＋選んだレア2種を<b>2つずつ（20個）</b>持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点<b>${E.Tour.START}</b>から、撃破と勝利で相手の点を奪い合います。</p>`
             : seg('items', s.items, [['pick', '選ぶ', countTotal(s.itemCount) + '個を指定'], ['draft', 'ドラフト', `1人${Math.min(s.draftN, draftMax(s))}個ずつ`], ['mirror', 'ミラー', `同じ${s.randomN}種`], ['random', 'ランダム', `別々の${s.randomN}種`]])}</div>
           ${!tour && s.items === 'pick' ? `<div class="set-row"><span aria-hidden="true"></span>${itemCountHTML('itemCount')}</div>` : ''}
           ${!tour && (s.items === 'mirror' || s.items === 'random') ? `<div class="set-row"><span aria-hidden="true"></span>${stepperHTML('randomN', s.randomN, 1, ITEM_KEYS.length, '種', s.items === 'mirror' ? `${ITEM_KEYS.length}種類の中から試合ごとにランダムに選び、2人とも同じ種類を1つずつ持ちます` : `${ITEM_KEYS.length}種類の中から試合ごとに、2人それぞれ別々にランダムに選びます（1つずつ）`)}</div>` : ''}
@@ -7909,7 +7968,7 @@ window.SBAudio = (function () {
         <p><b>回答</b>：◎＝そのキューブへの最初のヒット（番号付き）、○＝2回目以降のヒット、×＝何もない、ターコイズの記号＝STEALTH HIT（見破ったステルスのキューブへのヒット。ステルスの番号つき）、ラズベリーの記号（斜めの線と中央の×）＝ワープレティクル（ワープのトリガーに当たった。移動先のブロックにも出る）。全ブロックをコールされたキューブは撃破されます。</p>
         <p><b>キューブの形</b>：R型（長方形：まっすぐな形と2×2）・L型・T型・Z型（段違い）の4種類。</p>
         <p><b>勝敗</b>：相手を全滅させたら勝ち（単発の試合は勝ち負けだけで、点数はありません）。<b>トレジャーチャンス</b>は4×4で4回・5×5で5回まで。</p>
-        <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2ブロック×5・3ブロック×4・4ブロック×3・5ブロック×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは9種を2つずつ（18個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで。アイテムの購入はありません）。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破したキューブのブロック数を相手から奪います（アンサー失敗で差し出したキューブも）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2ブロック1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
+        <p><b>大会</b>：あなた＋CPU3人の総当たりで予選3試合（4×4）、持ち点の上位2名が決勝（5×5）。キューブ（2ブロック×5・3ブロック×4・4ブロック×3・5ブロック×2）は大会を通して持ち越し、撃破されたものは失います。アイテムは、ベース8種類と、大会のはじめに選ぶレア2種類（バズーカ・ホーミングミサイル・クロスボム・アシッドから）を2つずつ（20個）持って始め、予選3試合と決勝で使い分けます（予選は1試合で同じ種類は1回まで）。決勝は予選の残り＋ベース8種類のドラフト（4つずつ）＋自分のレアのどちらか1つ。<b>持ち点</b>は${E.Tour.START + E.Tour.GEMS * E.Tour.GEM_PTS}点（${E.Tour.START}点と宝石${E.Tour.GEMS}つ。1つ${E.Tour.GEM_PTS}点）から始め、撃破したキューブのブロック数を相手から奪います（アンサー失敗で差し出したキューブも）。勝者はさらに勝利点（予選1試合目から ${vicText()}）を奪います。予選では、早いターンで負けると<b>スピードペナルティ</b>で持ち点が減ります（${speedText()}。2ブロック1個だけ置いて即負けし、キューブを温存する動きを防ぎます。減った点は勝った側に渡らない自滅点なので、わざと負けて特定の相手に点を与えることはできません。アンサー失敗で負けても同じ）。宝石は各試合1つをトレジャーとして置き、見つけられると相手に奪われます。決勝は予選の残り＋ドラフト（4つずつ）で、全滅させた側が優勝。賞金は優勝者の持ち点×1万円です。CPUは4人（${E.Tour.CHARS.map((c) => `${c.name}＝${E.Tour.PERSONAS[c.persona].name}：${E.Tour.PERSONAS[c.persona].desc}`).join('、')}）の中から、毎回3人が出場します。アイテム浪費型以外のCPUは、アイテムを試合ごとにバランスよく使います（1・2試合目は各種類1つ目まで、攻撃アイテムは1試合3〜5個まで）。</p>
         <p class="note">空きブロックには、どのアイテムも NoData になります。</p>
         <h3 class="legend-h">攻撃アイテム（相手フィールドに作用）</h3>
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
@@ -7969,7 +8028,19 @@ window.SBAudio = (function () {
     return AI.tourSetupPlan(T, id, kind);
   }
 
+  // 大会のはじめに選んでいるレア（v15.9）
+  function rarePick(T) {
+    if (T.players[0].rares) return T.players[0].rares;
+    return (app.tourRarePick || []).filter((k) => isRare(k));
+  }
+  function rarePickHTML(T) {
+    const on = rarePick(T);
+    return `<div class="rare-pick"><h3>持ちこむレアアイテムを2つ選んでください<small>RARE ITEMS（${on.length}/2）</small></h3>
+      <p class="note">ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。</p>
+      <div class="rare-cards">${(E.RARE_ITEMS || []).map((k) => `<button type="button" class="item-card rare${on.indexOf(k) >= 0 ? ' on' : ''}" data-act="tour-rare" data-key="${k}" aria-pressed="${on.indexOf(k) >= 0}">${ICON[k]}<b>${esc(ITEMS[k].name)}</b><span>${esc(ITEMS[k].desc)}</span></button>`).join('')}</div></div>`;
+  }
   function startTour() {
+    app.tourRarePick = [];
     app.tour = TourE.create({});
     app.tourFx = { kind: 'intro' };
     app.game = null; app.ui = null; app.modal = null; app.busy = false;
@@ -7988,6 +8059,8 @@ window.SBAudio = (function () {
       const opp = f1 === 0 ? f2 : f1;
       // 予選1位が「先攻」なら1位が先攻、「ドラフト先行権」なら1位が後攻（ドラフトは後攻から）
       const firstId = T.finalChoice === 'first' ? f1 : f2;
+      if (!T.players[0].finalRare) { toast('決勝で補充するレアを選んでください', 'warn'); return; }
+      TourE.setFinalRare(T, opp, AI.tourChooseFinalRare(T, opp));
       T.stage = 'final';
       tourMakePlans(T, 'final');
       app.game = new E.Game(TourE.matchOpts(T, 0, opp, 'final', { mode: 'cpu', first: firstId === 0 ? 0 : 1, setupPlan: [null, tourPlanOf(T, opp, 'final')] }));
@@ -8021,6 +8094,7 @@ window.SBAudio = (function () {
   async function tourSimFinal(T, onTurn) {
     const [f1, f2] = T.finalists;
     T.finalChoice = AI.tourChooseFirst(T, f1);
+    for (const id of [f1, f2]) TourE.setFinalRare(T, id, AI.tourChooseFinalRare(T, id));
     const g = new E.Game(TourE.matchOpts(T, f1, f2, 'final', { first: T.finalChoice === 'first' ? 0 : 1, setupPlan: [tourPlanOf(T, f1, 'final'), tourPlanOf(T, f2, 'final')] }));
     for (const pi of [0, 1]) if (!g.players[pi].setupDone) { AI.setup(g, pi); g.finishSetup(pi); }
     while (g.phase === 'draft') { const pi = g.draftTurn(); g.draftPick(pi, AI.draftPick(g, pi)); }
@@ -8117,7 +8191,7 @@ window.SBAudio = (function () {
     return `<div class="st-cubes" aria-label="残りのキューブ">${[2, 3, 4, 5].map((s) => cubePips(s, { on: p.stock[s] || 0 })).join('')}</div>`;
   }
   function itemsHTML(p) {
-    return `<div class="st-items" aria-label="残りのアイテム">${(E.TOUR_ITEM_KEYS || ITEM_KEYS).map((k) => {
+    return `<div class="st-items" aria-label="残りのアイテム">${ITEM_KEYS.filter((k) => !isRare(k) || (p.rares || []).indexOf(k) >= 0).map((k) => {
       const n = p.inv[k] || 0;
       return `<span class="si${n ? '' : ' none'}${isRare(k) ? ' bz' : ''}" data-tip="${esc(ITEMS[k].name)}：${n ? `所持${n}` : '未所持'}">${ICON[k]}${n > 1 ? `<em>${n}</em>` : ''}</span>`;
     }).join('')}</div>`;
@@ -8213,10 +8287,12 @@ window.SBAudio = (function () {
         <p class="tour-lede">4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は<b>${TourE.START + TourE.GEMS * TourE.GEM_PTS}点</b>（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに <b>${vicText()}点</b>を奪います。予選で${TourE.SPEED.length - 1}ターン目までに負けると（トレジャーチャンスを使い切る前）、<b>スピードペナルティ</b>（1ターン目${TourE.SPEED[1]}点〜${TourE.SPEED.length - 1}ターン目${TourE.SPEED[TourE.SPEED.length - 1]}点）で持ち点が減ります（相手には渡りません）。トレジャーを見つけると相手の宝石を1つ奪えます。</p>
         <div class="entrants">${T.players.map((p, i) => {
           const pk = TourE.persona(T, p.id), ps = pk && TourE.PERSONAS[pk];
-          return `<div class="ent" style="--i:${i}">${avatar(p.id)}<b>${esc(p.name)}</b>${ps ? `<em class="persona">${esc(ps.name)}</em><small>${esc(ps.desc)}</small>` : `<small>${p.cpu ? 'CPU' : 'プレイヤー'}</small>`}</div>`;
+          const rr = p.cpu && p.rares ? `<span class="ent-rares" aria-label="持ちこむレア">${p.rares.map((k) => `<i data-tip="${esc(ITEMS[k].name)}">${ICON[k]}</i>`).join('')}</span>` : '';
+          return `<div class="ent" style="--i:${i}">${avatar(p.id)}<b>${esc(p.name)}</b>${ps ? `<em class="persona">${esc(ps.name)}</em><small>${esc(ps.desc)}</small>` : `<small>${p.cpu ? 'CPU' : 'プレイヤー'}</small>`}${rr}</div>`;
         }).join('')}</div>
+        ${rarePickHTML(T)}
         <ol class="schedule">${T.rounds.map((m, r) => `<li><b>第${r + 1}試合</b><span>${m.map(([a, b]) => `${tname(a)} vs ${tname(b)}`).join('　／　')}</span></li>`).join('')}</ol>`;
-      next = `<button class="btn primary big" data-act="tour-next">第1試合へ（vs ${tname(tourOpponent(T))}）</button>`;
+      next = `<button class="btn primary big" data-act="tour-next" ${rarePick(T).length === 2 ? '' : 'disabled'}>第1試合へ（vs ${tname(tourOpponent(T))}）</button>`;
     } else if (T.stage === 'hub') {
       hero = `<p class="eyebrow">PRELIMINARY ${T.round} / ${ROUNDS} CLEAR</p>
         <h2 class="tour-title">予選 第${T.round}試合 終了</h2>
@@ -8248,10 +8324,13 @@ window.SBAudio = (function () {
       } else {
         choice = `<p class="tour-lede">${tname(f1)}（予選1位）は<b>${T.finalChoice === 'first' ? '先攻' : 'ドラフト先行権'}</b>を選びました。あなたは${T.finalChoice === 'first' ? '後攻で、ドラフトを先に取ります' : '先攻です'}。</p>`;
       }
+      const me0 = T.players[0];
+      const rareChoice = `<p class="tour-lede">決勝で補充するレアを1つ選んでください。</p><div class="choice-btns" role="radiogroup" aria-label="決勝で補充するレア">${(me0.rares || []).map((k) =>
+        `<button type="button" class="choice${me0.finalRare === k ? ' on' : ''}" data-act="tour-final-rare" data-key="${k}" aria-pressed="${me0.finalRare === k}"><b>${ICON[k]} ${esc(ITEMS[k].name)}</b><small>${esc(ITEMS[k].desc)}</small></button>`).join('')}</div>`;
       hero = `<p class="eyebrow">GRAND FINAL</p><h2 class="tour-title">決勝 ${avatar(0)} あなた vs ${avatar(opp)} ${tname(opp)}</h2>
-        <p class="tour-lede">5×5。予選の残りのアイテム＋ドラフト（9種類から4つずつ、後攻から）。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。</p>
-        ${choice}`;
-      next = `<button class="btn primary big" data-act="tour-next" ${T.finalChoice ? '' : 'disabled'}>決勝を始める</button>`;
+        <p class="tour-lede">5×5。予選の残りのアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。</p>
+        ${choice}${rareChoice}`;
+      next = `<button class="btn primary big" data-act="tour-next" ${T.finalChoice && me0.finalRare ? '' : 'disabled'}>決勝を始める</button>`;
     } else if (T.stage === 'done') {
       const won = T.champion === 0;
       const inFinal = T.finalists.indexOf(0) >= 0;
@@ -9685,7 +9764,7 @@ self.onmessage = function (e) {
     'show-result': 'open', 'replay-open': 'open', reveal: 'ui', shape: 'ui', rotate: 'rotate', flip: 'rotate', 'treasure-mode': 'ui',
     random: 'shuffle', clear: 'remove', 'setup-done': 'confirm', 'draft-pick': 'pick', cancel: 'cancel',
     'answer-start': 'select', 'end-turn': 'ui', 'skip-call': 'ui', 'warp-rotate': 'rotate', 'warp-done': 'confirm',
-    step: 'tick', 'memo-type': 'ui', 'memo-clear': 'remove', 'tour-next': 'confirm', 'tour-choose': 'select', 'tour-end': 'ui', 'tour-back': 'confirm', 'quit-tour': 'cancel',
+    step: 'tick', 'tour-rare': 'select', 'tour-final-rare': 'select', 'memo-type': 'ui', 'memo-clear': 'remove', 'tour-next': 'confirm', 'tour-choose': 'select', 'tour-end': 'ui', 'tour-back': 'confirm', 'quit-tour': 'cancel',
     'net-create': 'confirm', 'net-join': 'confirm', 'net-cancel': 'cancel', 'net-copy': 'ui', 'net-quit': 'cancel',
     'sim-open': 'open', 'sim-back': 'cancel', 'sim-run': 'confirm', 'sim-stop': 'cancel', 'sim-refinal': 'confirm', 'sim-pin': 'pick', 'sim-reset': 'ui', 'sim-rm': 'remove',
   };
@@ -9755,9 +9834,29 @@ self.onmessage = function (e) {
     'tour-next'() {
       const T = app.tour;
       if (!T || app.busy) return;
+      if (T.stage === 'intro' && !T.players[0].rares) { toast('持ちこむレアアイテムを2つ選んでください', 'warn'); return; }
       if (T.stage === 'intro' || T.stage === 'hub' || T.stage === 'final-hub') tourStartMatch();
       else if (T.stage === 'qualify' && T.finalists.indexOf(0) >= 0) tourEnterFinalHub();
       else if (T.stage === 'qualify') tourWatchFinal();
+    },
+    // 大会のはじめ：持ちこむレアを2つ選ぶ（v15.9）。3つ目を押したら、いちばん前に選んだものと入れ替える
+    'tour-rare'(el) {
+      const T = app.tour;
+      if (!T || T.stage !== 'intro') return;
+      const k = el.dataset.key;
+      let list = rarePick(T).slice();
+      if (list.indexOf(k) >= 0) list = list.filter((x) => x !== k);
+      else { list.push(k); if (list.length > 2) list.shift(); }
+      app.tourRarePick = list;
+      if (list.length === 2) TourE.setRares(T, 0, list);
+      else T.players[0].rares = null;
+      render();
+    },
+    'tour-final-rare'(el) {
+      const T = app.tour;
+      if (!T || T.stage !== 'final-hub') return;
+      TourE.setFinalRare(T, 0, el.dataset.key);
+      render();
     },
     'tour-choose'(el) {
       const T = app.tour;

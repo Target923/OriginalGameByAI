@@ -2045,6 +2045,13 @@
     if (o.mode === 'pace' && o.budget && o.budget[T.round] != null) keep._budget = o.budget[T.round];
     return keep;
   }
+  // 決勝で補充するレア（v15.9）：自分のレア2種類のうち、決勝（5×5）で強かった順（測定の価値：アシッド−20・クロスボム−16・ホーミング−11・バズーカ）
+  const FINAL_RARE_ORDER = ['acid', 'cross', 'homing', 'bazooka'];
+  function tourChooseFinalRare(T, id) {
+    const p = T.players[id];
+    const own = p.rares || [];
+    return FINAL_RARE_ORDER.find((k) => own.indexOf(k) >= 0) || own[0] || null;
+  }
   // 予選1位の選択：'first'（先攻）か 'draft'（ドラフト先行権＝後攻）。CPUどうしの決勝では先攻の勝率が51.5%
   function tourChooseFirst(T, id) { return (policy.tour && policy.tour[id] && policy.tour[id].choose) || 'first'; }
 
@@ -2112,7 +2119,7 @@
   // 画面用：自分が知り得た相手の現在のキューブ数（サーチオール未使用なら null）
   function knownCounts(kb, N) { return currentCounts(kb, N); }
 
-  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpDest, chooseWarp, bestAddCell, policy, _cubeOptions: cubeOptions };
+  const api = { knownCounts, analyze, chooseCall, chooseAnswer, chooseTreasure, chooseItem, chooseSacrifice, setup, setupSizes, draftPick, playTurn, autoMatch, tourItemKeep, tourChooseFirst, tourChooseFinalRare, tourSetupPlan, SETUP_PROB, SETUP_CAP, drawSizes, setupSpec, exposure, bestWarpDest, chooseWarp, bestAddCell, policy, _cubeOptions: cubeOptions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBAI = api;
 })(typeof window !== 'undefined' ? window : globalThis);

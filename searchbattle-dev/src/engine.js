@@ -42,19 +42,21 @@
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 35：v15.9 大会はベース8種類＋各自が選ぶレア2種類（決勝はベースのドラフト＋レア1つ）
   // 34：v15.8 レアアイテム「アシッド」（acid）
   // 33：v15.7 レアアイテム「クロスボム」（cross）
   // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 34;
+  const VERSION = 35;
   // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
   //  acid：アシッド（v15.8。レア。ユーザーの案）
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid', 'warp', 'stealth'];
   const RARE_ITEMS = ['bazooka', 'homing', 'cross', 'acid'];
-  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイル・クロスボムは、大会のレアの仕組みを作るまで1試合だけ）
-  const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
+  // ベースアイテム（レア以外の8種類）。大会（v15.9。ユーザーの案）は、ベース8種類＋各自が事前に選ぶレア2種類を2つずつ（20個）
+  const BASE_ITEMS = ITEM_KEYS.filter((k) => RARE_ITEMS.indexOf(k) < 0);
+  const TOUR_RARES = 2;
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
     cube: { name: 'サーチキューブ', desc: '選んだ形かブロック数のキューブが、いくつ残っているか分かる' },
@@ -239,6 +241,8 @@
     this.draftPool = dpool && dpool.length ? dpool : null;
     this.draftEach = Math.max(0, Math.min(Math.floor((this.draftPool || this.itemKeys).length / 2), opts.draftEach | 0));
     this.oncePerMatch = !!opts.oncePerMatch;
+    // 大会の各席のレア（v15.9。画面で、その人が持ちこんだレアだけを並べるため）
+    this.rares = Array.isArray(opts.rares) ? opts.rares.map((r) => (Array.isArray(r) ? r.slice() : [])) : null;
     // CPUの配置の方針（[席0, 席1]。大会で、CPUが順位・残りのキューブ・試合の残りから決めたもの。中身はCPUだけが読む）
     this.setupPlan = Array.isArray(opts.setupPlan) ? opts.setupPlan : null;
     // CPUがこの試合で使わずに残しておくアイテムの数（[席0, 席1]、種類ごと。大会の予選で使う。中身はCPUだけが読む）
@@ -1535,11 +1539,15 @@
       const names = opts.names || ['あなた'].concat(lineup.map((k) => charOf(k).name));
       const cpu = opts.cpu || [false, true, true, true];
       const each = opts.itemsEach != null ? opts.itemsEach : TOUR_ITEMS_EACH;
+      // レア（v15.9）：CPU はランダムに2種類。人は大会のはじめの画面で選ぶ（Tour.setRares。選ぶまでは null）。opts.rares で指定もできる
+      const pickRares = () => { const pool = RARE_ITEMS.slice(), out = []; while (out.length < TOUR_RARES && pool.length) out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]); return ITEM_KEYS.filter((k) => out.indexOf(k) >= 0); };
       const players = names.map((name, i) => {
         const inv = {};
-        for (const k of TOUR_ITEM_KEYS) inv[k] = each;
+        for (const k of BASE_ITEMS) inv[k] = each;
+        const rares = opts.rares && opts.rares[i] ? opts.rares[i].slice() : cpu[i] ? pickRares() : null;
+        if (rares) for (const k of rares) inv[k] = each;
         return {
-          id: i, name, cpu: !!cpu[i], char: i > 0 ? lineup[i - 1] : null, stock: Object.assign({}, STOCK), inv,
+          id: i, name, cpu: !!cpu[i], char: i > 0 ? lineup[i - 1] : null, stock: Object.assign({}, STOCK), inv, rares, finalRare: null,
           // take＝撃破で奪った、taken＝撃破で奪われた、vicWon／vicLost＝勝利で奪った／奪われた。gems＝持っている宝石（1つ5点）
           pts: { start: TOUR_START, take: 0, taken: 0, vicWon: 0, vicLost: 0, spdWon: 0, spdLost: 0 }, gems: TOUR_GEMS, gemsWon: 0, gemsLost: 0, wins: 0, losses: 0, draws: 0,
           lotto: rng(),
@@ -1551,13 +1559,32 @@
       const rounds = others.map((o) => [[0, o], [1, 2, 3].filter((x) => x !== o)]);
       // CPUの性格：出場するCPUの性格（opts.personas に null を渡すと性格なし＝CPUはみな標準の置き方）
       const personas = opts.personas !== undefined ? opts.personas : { 1: charOf(lineup[0]).persona, 2: charOf(lineup[1]).persona, 3: charOf(lineup[2]).persona };
-      return { v: VERSION, players, rounds, round: 0, results: [], stage: 'intro', finalists: null, finalFirstBy: null, champion: null, log: [], personas };
+      return { v: VERSION, players, rounds, round: 0, results: [], stage: 'intro', finalists: null, finalFirstBy: null, champion: null, log: [], personas, itemsEach: each };
     },
+    // 持っていくレアアイテムを決める（v15.9。違う2種類）。手持ちは2つずつ
+    setRares(T, id, list) {
+      const ok = Array.isArray(list) && list.length === TOUR_RARES && new Set(list).size === TOUR_RARES && list.every((k) => RARE_ITEMS.indexOf(k) >= 0);
+      if (!ok) return false;
+      const p = T.players[id];
+      const each = T.itemsEach != null ? T.itemsEach : TOUR_ITEMS_EACH;
+      for (const k of RARE_ITEMS) delete p.inv[k];
+      p.rares = ITEM_KEYS.filter((k) => list.indexOf(k) >= 0);
+      for (const k of p.rares) p.inv[k] = each;
+      return true;
+    },
+    // 決勝で補充するレア（自分のレア2種類のどちらか1つ。v15.9）
+    setFinalRare(T, id, key) {
+      const p = T.players[id];
+      if (!p.rares || p.rares.indexOf(key) < 0) return false;
+      p.finalRare = key;
+      return true;
+    },
+    BASE_ITEMS, RARE_ITEMS, TOUR_RARES,
     // 持ち点の合計＝はじめ50＋撃破で奪った−奪われた＋勝利で奪った−奪われた＋宝石×5
     total(p) { const q = p.pts; return q.start + q.take - q.taken + q.vicWon - q.vicLost + (q.spdWon | 0) - (q.spdLost | 0) + (p.gems | 0) * TOUR_GEM_PTS; },
     cubes(p) { return [2, 3, 4, 5].reduce((s, k) => s + (p.stock[k] || 0), 0); },
     cells(p) { return [2, 3, 4, 5].reduce((s, k) => s + k * (p.stock[k] || 0), 0); },
-    items(p) { return TOUR_ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
+    items(p) { return ITEM_KEYS.reduce((s, k) => s + (p.inv[k] || 0), 0); },
     // 順位（持ち点の多い順。同点は勝ち数 → 撃破ブロック数 → 抽選）
     standings(T) {
       const list = T.players.map((p) => ({ id: p.id, total: Tour.total(p), wins: p.wins | 0, take: p.pts.take | 0, lotto: p.lotto }));
@@ -1576,13 +1603,23 @@
         if (fin && Tour.cubes(p) === 0) st[2] = 1;
         return st;
       };
+      // 決勝（v15.9）：予選の残り＋ベース8種類のドラフト（4つずつ）＋自分のレア2種類のどちらか1つ（finalRare。決めていなければ1つ目）
+      const invFor = (p) => {
+        const inv = Object.assign({}, p.inv);
+        const fr = fin && p.rares ? (p.finalRare && p.rares.indexOf(p.finalRare) >= 0 ? p.finalRare : p.rares[0]) : null;
+        if (fr) inv[fr] = (inv[fr] || 0) + 1;
+        return inv;
+      };
+      const rares = [pa.rares || [], pb.rares || []];
       return Object.assign({
         rules: fin ? 'final' : 'prelim',
         label: fin ? '決勝' : `予選 第${T.round + 1}試合`,
         names: [pa.name, pb.name], cpu: [pa.cpu, pb.cpu],
         stocks: [stockFor(pa), stockFor(pb)],
-        inventory: [Object.assign({}, pa.inv), Object.assign({}, pb.inv)],
-        items: TOUR_ITEM_KEYS.slice(), oncePerMatch: !fin, draftEach: fin ? Math.floor(TOUR_ITEM_KEYS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
+        inventory: [invFor(pa), invFor(pb)],
+        items: ITEM_KEYS.filter((k) => BASE_ITEMS.indexOf(k) >= 0 || rares[0].indexOf(k) >= 0 || rares[1].indexOf(k) >= 0), rares,
+        draftPool: fin ? BASE_ITEMS.slice() : undefined,
+        oncePerMatch: !fin, draftEach: fin ? Math.floor(BASE_ITEMS.length / 2) : 0, treasurePts: TOUR_TREASURE, treasureSteal: true,
         victoryPts: victoryFor(kind, T.round), speedBonus: !fin,
       }, extra || {});
     },
@@ -1637,7 +1674,7 @@
   };
 
   const api = {
-    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, TOUR_ITEM_KEYS,
+    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, BASE_ITEMS,
     bit, popcount, bitsOf, maskOf, crossMask, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -19,7 +19,11 @@ for (let k = 0; k < n; k++) {
     [a, b].forEach((id, i) => {
       const P = g.players[i], p = T.players[id];
       for (const s of [2, 3, 4, 5]) if (P.stock[s] !== (kind === 'final' && Tour.cubes(p) === 0 ? (s === 2 ? 1 : 0) : p.stock[s])) err('stock mismatch', kind, s);
-      for (const key of ITEM_KEYS) if (P.items[key] !== p.inv[key]) err('inventory mismatch', key);
+      // 決勝は、選んだレア1つを足して始める（v15.9）
+      const bonus = (key) => (kind === 'final' && p.rares && key === (p.finalRare || p.rares[0]) ? 1 : 0);
+      for (const key of ITEM_KEYS) if ((P.items[key] || 0) !== (p.inv[key] || 0) + bonus(key)) err('inventory mismatch', key);
+      if (!p.rares || p.rares.length !== 2) err('rares not chosen', id);
+      for (const key of ITEM_KEYS) if (P.items[key] > 0 && g.itemKeys.indexOf(key) < 0) err('item not in play', key);
       if (kind === 'final' && Tour.cubes(p) === 0) st.supplied++;
     });
     const usedCount = [{}, {}];
@@ -47,7 +51,8 @@ for (let k = 0; k < n; k++) {
     if (kind !== 'final') for (const u of usedCount) for (const key in u) if (u[key] > 1) err('item used twice in a prelim match', key);
     for (let i = 0; i < 2; i++) for (const key in usedCount[i]) {
       const drafted = g.draft ? g.draft.picks[i].filter((x) => x === key).length : 0;
-      if (usedCount[i][key] > before[i].inv[key] + drafted) err('used more than held', key);
+      const fb = kind === 'final' && before[i].rares && key === (before[i].finalRare || before[i].rares[0]) ? 1 : 0;   // 決勝で補充したレア
+      if (usedCount[i][key] > (before[i].inv[key] || 0) + drafted + fb) err('used more than held', key);
     }
     // 置いた個体はすべて大会の手持ちから
     for (let i = 0; i < 2; i++) {
@@ -79,10 +84,11 @@ for (let k = 0; k < n; k++) {
         if (p.stock[s] < 0) err('negative stock');
       }
       for (const key of ITEM_KEYS) {
-        if (p.inv[key] < 0) err('negative inventory');
+        if ((p.inv[key] || 0) < 0) err('negative inventory');
         const usedN = usedCount[i][key] || 0;
         const drafted = g.draft ? g.draft.picks[i].filter((x) => x === key).length : 0;
-        if (p.inv[key] !== was.inv[key] - usedN + drafted) err('inventory not updated', key, was.inv[key], usedN, drafted, p.inv[key]);
+        const bonusW = kind === 'final' && was.rares && key === (was.finalRare || was.rares[0]) ? 1 : 0;
+        if ((p.inv[key] || 0) !== (was.inv[key] || 0) + bonusW - usedN + drafted) err('inventory not updated', key, was.inv[key], usedN, drafted, p.inv[key]);
       }
       const gain = res.pts[i].total;
       if (Tour.total(p) !== Tour.total(was) + gain) err('points not added');

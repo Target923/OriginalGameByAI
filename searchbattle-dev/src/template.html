@@ -567,6 +567,19 @@ h1, h2, h3 { text-wrap: balance; }
 .item-count .ic-row:not(.on) output { color: var(--muted); }
 .item-count .note { grid-column: 1 / -1; }
 .item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
+/* 大会のレア選び（v15.9） */
+.rare-pick { margin: 18px 0 6px; }
+.rare-pick h3 { font-size: 1rem; margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.rare-pick h3 small { font: 600 .72rem var(--f-tech); letter-spacing: .12em; color: var(--amber); }
+.rare-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 8px; }
+.item-card.rare { text-align: left; cursor: pointer; }
+.item-card.rare.on { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber), 0 0 18px rgba(255, 193, 74, .25); background: rgba(255, 193, 74, .08); }
+.ent .ent-rares { display: flex; gap: 4px; margin-top: 4px; }
+.choice b svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; color: var(--amber); }
+.choice b svg .f { fill: currentColor; stroke: none; }
+.ent .ent-rares i { display: inline-grid; place-items: center; width: 22px; height: 22px; color: var(--amber); }
+.ent .ent-rares svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ent .ent-rares svg .f { fill: currentColor; stroke: none; }
 /* アシッド（v15.8）：黄緑の酸。まだ溶けていないアシッドマークと、自動コールで溶かしたブロックのしずく */
 .cell .acidmk { position: absolute; inset: 18%; display: grid; place-items: center; color: #A6E22E; filter: drop-shadow(0 0 6px rgba(166, 226, 46, .7)); pointer-events: none; animation: acidpulse 1.6s ease-in-out infinite; }
 .cell .acidmk svg { width: 70%; height: 70%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }

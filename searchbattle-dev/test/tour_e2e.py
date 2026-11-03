@@ -132,6 +132,13 @@ async def main():
                     if FORCEQ: await p.evaluate("() => { window.__sb.app.tour.players[0].pts.vicWon += 60; window.__sb.render(); }")
                     await p.wait_for_timeout(2600)
                     await p.screenshot(path=f'{SHOTS}/tour_{VIEW}_r{s["round"]}_hub.png', full_page=True)
+                if s['stage'] == 'intro':
+                    # v15.9：持ちこむレアを2つ選ぶ（3つ押して、3つ目で1つ目と入れ替わるのも確かめる）
+                    for k in ['bazooka', 'cross', 'acid']:
+                        await p.click(f'[data-act=tour-rare][data-key={k}]')
+                    rr = await p.evaluate("() => window.__sb.app.tour.players[0].rares")
+                    if rr != ['cross', 'acid']: log.append(f'RARES-{rr}')
+                    await p.screenshot(path=f'{SHOTS}/tour_{VIEW}_rares.png', full_page=True)
                 await p.click('[data-act=tour-next]')
                 await play_match(p, f'r{s["round"]}', log)
                 continue
@@ -152,6 +159,7 @@ async def main():
                 if await p.query_selector('.shop, [data-act=tour-buy]'): log.append('SHOP-IN-FINAL-HUB')
                 if await p.query_selector('[data-act=tour-choose]'):
                     await p.click('[data-act=tour-choose][data-v=draft]')
+                await p.click('[data-act=tour-final-rare][data-key=acid]')
                 await p.screenshot(path=f'{SHOTS}/tour_{VIEW}_final_hub.png', full_page=True)
                 await p.click('[data-act=tour-next]')
                 await play_match(p, 'final', log)
