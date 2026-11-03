@@ -1216,7 +1216,8 @@
       : (S.key ? 'フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選んでください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
     // 1試合は持っているアイテムだけ（v15.4）。大会は0の種類も薄く並べる
-    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.filter((k) => app.tour || !P2 || (P2.items[k] | 0) > 0).map((k) => {
+    // その人のアイテムだけ（v15.9。ユーザーの希望）：1試合は持っている種類、大会はベース8種類と持ちこんだレア（相手のレアは並べない）
+    const itemRows = (P2, enemy) => `<ul class="su-ilist${enemy ? ' enemy' : ''}">${g.itemKeys.filter((k) => !P2 || (app.tour ? owns(P2.idx, k) : (P2.items[k] | 0) > 0)).map((k) => {
       const n = P2 ? (P2.items[k] || 0) : null;
       return `<li class="${n === 0 ? 'zero' : ''}" data-tip="${esc(ITEMS[k].name + '：' + ITEMS[k].desc)}"><span class="ic">${ICON[k]}</span><b>${esc(ITEMS[k].name)}</b>${n != null ? `<em>×${n}</em>` : ''}</li>`;
     }).join('')}</ul>`;
@@ -1522,6 +1523,26 @@
     return AI.tourSetupPlan(T, id, kind);
   }
 
+  // 大会の画面の選択（レア・先攻か後攻・決勝のレア）は、画面全体を描き直さずにボタンの見た目だけ変える
+  //  （描き直すと、上の出場者のアイコンの登場の動きがもう一度始まってしまう。ユーザーの指摘）
+  function refreshTourChoices() {
+    const T = app.tour;
+    if (!T) return;
+    const me = T.players[0];
+    const set = (el, on) => { el.classList.toggle('on', on); el.setAttribute('aria-pressed', String(on)); };
+    const picks = rarePick(T);
+    for (const el of root.querySelectorAll('[data-act="tour-rare"]')) set(el, picks.indexOf(el.dataset.key) >= 0);
+    const cnt = root.querySelector('.rare-pick .rp-count');
+    if (cnt) cnt.textContent = `RARE ITEMS（${picks.length}/2）`;
+    for (const el of root.querySelectorAll('[data-act="tour-choose"]')) set(el, el.dataset.v === T.finalChoice);
+    for (const el of root.querySelectorAll('[data-act="tour-final-rare"]')) set(el, el.dataset.key === me.finalRare);
+    const nb = root.querySelector('[data-act="tour-next"]');
+    if (nb && T.stage === 'intro') nb.disabled = picks.length !== 2;
+    if (nb && T.stage === 'final-hub') nb.disabled = !(T.finalChoice && me.finalRare);
+    // 順位表の自分の行のアイテム欄（持ちこむレア）だけ差し替える（行の登場の動きは起こさない）
+    const si = root.querySelector('.standings .st-row[data-id="0"] .st-items');
+    if (si) si.outerHTML = itemsHTML(me);
+  }
   // 大会のはじめに選んでいるレア（v15.9）
   function rarePick(T) {
     if (T.players[0].rares) return T.players[0].rares;
@@ -1529,7 +1550,7 @@
   }
   function rarePickHTML(T) {
     const on = rarePick(T);
-    return `<div class="rare-pick"><h3>持ちこむレアアイテムを2つ選んでください<small>RARE ITEMS（${on.length}/2）</small></h3>
+    return `<div class="rare-pick"><h3>持ちこむレアアイテムを2つ選んでください<small class="rp-count">RARE ITEMS（${on.length}/2）</small></h3>
       <p class="note">ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。</p>
       <div class="rare-cards">${(E.RARE_ITEMS || []).map((k) => `<button type="button" class="item-card rare${on.indexOf(k) >= 0 ? ' on' : ''}" data-act="tour-rare" data-key="${k}" aria-pressed="${on.indexOf(k) >= 0}">${ICON[k]}<b>${esc(ITEMS[k].name)}</b><span>${esc(ITEMS[k].desc)}</span></button>`).join('')}</div></div>`;
   }
@@ -3344,19 +3365,19 @@ self.onmessage = function (e) {
       app.tourRarePick = list;
       if (list.length === 2) TourE.setRares(T, 0, list);
       else T.players[0].rares = null;
-      render();
+      refreshTourChoices();
     },
     'tour-final-rare'(el) {
       const T = app.tour;
       if (!T || T.stage !== 'final-hub') return;
       TourE.setFinalRare(T, 0, el.dataset.key);
-      render();
+      refreshTourChoices();
     },
     'tour-choose'(el) {
       const T = app.tour;
       if (!T || T.stage !== 'final-hub' || T.finalists[0] !== 0) return;
       T.finalChoice = el.dataset.v === 'draft' ? 'draft' : 'first';
-      render();
+      refreshTourChoices();
     },
     'tour-back'() { tourAfterMatch(); },
     'memo-type'(el) {
