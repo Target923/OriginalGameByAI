@@ -590,6 +590,12 @@ h1, h2, h3 { text-wrap: balance; }
 /* 縁取りはトレジャーチャンスのブロックと同じくらいのぼかし（v15.10。ユーザーの指示） */
 .cell.acidcell { box-shadow: inset 0 0 0 1.5px rgba(167, 221, 0, .75), 0 0 8px rgba(167, 221, 0, .35); z-index: 1; }
 .cell.acidcell .mkw { color: #A7DD00 !important; filter: var(--mk-shadow) drop-shadow(0 0 4px #A7DD00) !important; }
+/* アシッドの自動コール（v15.11）：演出までは印と縁取りを隠し、少し間をおいてから浮かび上がらせる */
+.cell.acid-wait { box-shadow: none !important; }
+.cell.acid-wait > .mkw, .cell.acid-wait > .nbadge { opacity: 0; }
+.cell.acid-rise { transition: box-shadow .9s ease-out; }
+.cell.acid-rise > .mkw { animation: acidRise 1.1s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes acidRise { 0% { opacity: 0; transform: translateY(18%) scale(.82); } 55% { opacity: .9; } 100% { opacity: 1; transform: none; } }
 .fx-text.acid { color: #A7DD00; text-shadow: 0 0 12px rgba(167, 221, 0, .8); }
 /* クロスボム（v15.10）：撃った十字の範囲（撃った側・撃たれた側の両方の盤に出す） */
 .fxo.xzone { box-shadow: inset 0 0 0 3px var(--amber); background: rgba(255, 193, 74, .22); animation: xzone 1.7s ease-out forwards; }

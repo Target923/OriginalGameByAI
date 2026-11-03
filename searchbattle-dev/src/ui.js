@@ -400,7 +400,7 @@
     // 空きブロックだったとき（NoData）は、ディスタンスショットの NoData と同じ表示にする
     const facts = [];
     for (const o of kb.occs) if (o.src === 'shape' || o.src === 'number') facts.push({ c: o.c, t: o.t, turn: o.turn, src: o.src, v: o.src === 'shape' ? o.cat : o.size, stale: warpedAfter(o.t), rv: !!o.rv });
-    for (const e of kb.empties) if (e.src === 'shape' || e.src === 'number' || e.src === 'node' || e.src === 'bazooka') facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src, nd: true, stale: relocatedAfter(e.t) });
+    for (const e of kb.empties) if (e.src === 'shape' || e.src === 'number' || e.src === 'node' || e.src === 'bazooka' || e.src === 'acid') facts.push({ c: e.c, t: e.t, turn: e.turn, src: e.src, nd: true, stale: relocatedAfter(e.t) });
     // バズーカで分解した：撃ち込んだブロックがヒット済みでなければ、そこには1ブロックのキューブ（C1）が残る
     for (const sp of (kb.splits || [])) {
       if (sp.killed.indexOf(sp.c) >= 0) continue;
@@ -453,7 +453,7 @@
   // ノードショット・NoData の表示。NoData（サーチサイズ・サーチシェイプ・ノードショット・バズーカで空きブロックだった）は
   // ブロックの中央に出す。ノードショットの数字は、まだ印のないブロックなら中央のひし形、ヒットしたブロックなら左下の小さな札
   const NODATA_HTML = (stale) => `<span class="mkw nodata${stale ? ' stale' : ''}"><b>NoData</b></span>`;
-  const ND_NAME = { number: 'サーチサイズ', shape: 'サーチシェイプ', node: 'ノードショット', bazooka: 'バズーカ' };
+  const ND_NAME = { number: 'サーチサイズ', shape: 'サーチシェイプ', node: 'ノードショット', bazooka: 'バズーカ', acid: 'アシッド' };   // アシッドの NoData も残す（v15.11）
   const ndAt = (intel, c) => (intel && intel.cells[c] && intel.cells[c].nd) || null;
   const nodeAt = (intel, c) => { const a = intel && intel.cells[c]; return a && a.node && !a.node.left ? a.node : null; };
   function cellMarkHTML(m, intel, c) {
@@ -635,6 +635,7 @@
       }
       inner += cellMarkHTML(m, intel, c) + acidHTML(m, !!(foe.acid && foe.acid.cell === c && !m));
       if (m && m.acid) cls += ' acidcell';
+      if (app.acidWait && app.acidWait.has(pi + ':' + c)) cls += ' acid-wait';   // 浮かび上がる演出の前（v15.11）
       if (P.treasure && P.treasure.cell === c) inner += MARK.gem;
       const tl = inSetup ? null : fv.tlog[c];
       if (tl) inner += `<span class="tl tl-${tl.r}${tl.gray ? ' gray' : ''}"><i>${TL[tl.r]}</i></span>`;
@@ -691,6 +692,7 @@
       }
       inner += cellMarkHTML(v.marks[c], intel, c) + acidHTML(v.marks[c], !!(P.acid && P.acid.cell === c && !v.marks[c] && !d));
       if (v.marks[c] && v.marks[c].acid) cls += ' acidcell';
+      if (app.acidWait && app.acidWait.has((1 - pi) + ':' + c)) cls += ' acid-wait';
       // トリガーブロック（v14.2）：当てたトリガーブロックと、答え合わせのときの相手のトリガーブロックに目の印
       const tgp = opts.reveal ? g.pieceAt(foe.idx, c, true) : null;
       if ((v.marks[c] && v.marks[c].trigger) || (tgp && tgp.stealthTrigger === c)) inner += `<span class="stl" aria-hidden="true">${ICON.stealth}</span>`;
@@ -2512,8 +2514,21 @@
             text(p.x, p.y - p.h * 0.55, 'NO HIT', 'miss', 1200);
             return 650 * k;
           }
-          // アシッドの自動コール（v15.8）：酸のしずくを添える
-          if (ev.acid) { sparks(p.x, p.y, AC, 10, 0.8, 0.2); text(p.x, p.y + p.h * 0.62, 'ACID', 'acid', 1100); }
+          // アシッドの自動コール（v15.11。ユーザーの指示）：撃つのではなく、酸で溶けて印がじわっと浮かび上がる（揺れ・衝撃なし）。
+          //  印はターンの開始から隠しておき（prep の acid-wait）、少し間をおいてから浮かび上がらせる。ワープのトリガーはふつうの演出
+          if (ev.acid && app.acidWait) app.acidWait.delete(ev.owner + ':' + ev.c);
+          if (ev.acid && ev.r !== 'wp') {
+            el.classList.remove('acid-wait');
+            void el.offsetWidth;
+            el.classList.add('acid-rise');
+            setTimeout(() => el.classList.remove('acid-rise'), 1400);
+            pixels(p.r, AC, 14);
+            ring(p.x, p.y, AC, p.w * 0.5, p.w * 0.12, 900, 2);
+            const label = ev.r === 'q' ? (ev.num != null ? `STEALTH HIT ${ev.num}` : 'STEALTH HIT') : ev.r === 'o' ? 'HIT' : `FIRST HIT ◎${ev.num}`;
+            setTimeout(() => text(p.x, p.y - p.h * 0.62, `ACID ${label}`, 'acid', 1500), 380 * k);
+            return 1150 * k;
+          }
+          if (ev.acid) el.classList.remove('acid-wait');
           if (ev.r === 'wp' && ev.late) {
             // アンサーで逃げたキューブの、隠れていたワープレティクルを見つけた（v15.2）：ワープは起きない。印が現れるだけ
             over(el, 'wlock', MARK.wp.replace('class="mk"', ''), 900);
@@ -2678,7 +2693,17 @@
       }
       return 0;
     }
-    return { play };
+    // アシッドの自動コール（v15.11）：盤はイベントより先に描き直されるので、演出の前に溶かすブロックの印を隠しておく。
+    //  ターンの表示のあと、少し間をおいて（pre が返す時間）から浮かび上がらせる。描き直しても隠れたままになるよう、app.acidWait に覚える
+    function prep(evs) {
+      for (const ev of evs) if (ev.type === 'call' && ev.acid) {
+        (app.acidWait || (app.acidWait = new Set())).add(ev.owner + ':' + ev.c);
+        const el = cellOf(ev.owner, ev.c);
+        if (el) el.classList.add('acid-wait');
+      }
+    }
+    function pre(ev) { return ev.type === 'call' && ev.acid ? 520 * speedK() : 0; }
+    return { play, prep, pre };
   })();
 
   // 新しいイベントの演出を順番に再生する
@@ -2688,11 +2713,16 @@
       if (!g) return;
       const evs = g.events.slice(app.fxSeen);
       app.fxSeen = g.events.length;
+      try { FX.prep(evs); } catch (e) { /* 演出だけの準備。失敗しても試合は進む */ }
       for (const ev of evs) {
         let d = 0;
+        const w = FX.pre(ev);
+        if (w) await sleep(w);
         try { d = FX.play(ev); } catch (e) { d = 0; }
         if (d) await sleep(d);
       }
+      // 演出が流れなかった（画面を離れたなど）ときも、隠した印を必ず戻す
+      if (app.acidWait && app.acidWait.size) { app.acidWait.clear(); document.querySelectorAll('.cell.acid-wait').forEach((el) => el.classList.remove('acid-wait')); }
     }).catch(() => {});
     return app.fxChain;
   }
