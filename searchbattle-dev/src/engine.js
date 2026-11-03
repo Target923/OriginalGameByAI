@@ -42,15 +42,16 @@
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 33：v15.7 レアアイテム「クロスボム」（cross）
   // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 32;
-  // homing：ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）。レアはバズーカとホーミングミサイル（RARE_ITEMS）
-  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'warp', 'stealth'];
-  const RARE_ITEMS = ['bazooka', 'homing'];
-  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイルは、大会のレアの仕組みを作るまで1試合だけ）
+  const VERSION = 33;
+  // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
+  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'warp', 'stealth'];
+  const RARE_ITEMS = ['bazooka', 'homing', 'cross'];
+  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイル・クロスボムは、大会のレアの仕組みを作るまで1試合だけ）
   const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -61,6 +62,7 @@
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
+    cross: { name: 'クロスボム', desc: '選んだブロックと上下左右の十字（5ブロック）に、すっぽり収まるキューブを撃破する' },
     homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
     warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
     stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
@@ -170,6 +172,16 @@
   function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
   // ログ用：ブロックを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
   function coordList(cells, N) { return cells.slice().sort((a, b) => a - b).map((c) => coord(c, N)).join('・'); }
+  // 十字（クロスボム）：中心と上下左右（盤の外は除く）
+  function crossMask(c, N) {
+    const r = Math.floor(c / N), col = c % N;
+    let m = bit(c);
+    if (r > 0) m |= bit(c - N);
+    if (r < N - 1) m |= bit(c + N);
+    if (col > 0) m |= bit(c - 1);
+    if (col < N - 1) m |= bit(c + 1);
+    return m;
+  }
   function lineMask(line, index, N) {
     let m = 0;
     for (let k = 0; k < N; k++) m |= bit(line === 'row' ? index * N + k : k * N + index);
@@ -284,7 +296,7 @@
       // 推論用の事実ログ（相手盤面について自分が知り得たこと）
       kb: {
         N: this.N, stock: Object.assign({}, STOCK),
-        calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [], sums: [],
+        calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [], sums: [], crossMiss: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
         warpUses: [],  // 相手がワープを使った時刻（v15。使ったことだけが分かる。どのキューブか・移動先は伏せられる）
@@ -1012,6 +1024,9 @@
       case 'node':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '調べるブロックを選んでください' };
+      case 'cross':
+        if (inRange(params.cell)) return { ok: true };
+        return { ok: false, reason: '十字の中心のブロックを選んでください' };
       case 'bazooka':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '撃ち込むブロックを選んでください（撃破済みのブロックは選べません）' };
@@ -1071,6 +1086,38 @@
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
     let emitted = false;
     switch (key) {
+      case 'cross': {
+        // クロスボム（v15.7。レアアイテム。ユーザーの案）：選んだブロックと上下左右の十字（盤の端では3〜4ブロック）に
+        //  全ブロックが収まる、生きていて隠れていないキューブ（バズーカの破片も）をすべて撃破する。収まるキューブがなければ「不発」
+        //  （一部だけかかっていても何も伝えない）。ワープを待っているキューブは、アンサーで当てたときと同じく撃破されずに逃げる
+        //  （「自動撃破後、ワープ発動」。移動前のブロックは全部 W付きの×）。隠れているステルスのキューブには効かない
+        const area = crossMask(params.cell, N);
+        const hit = livingFoe.filter((p) => (p.mask & ~area) === 0);
+        const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, area: bitsOf(area), miss: !hit.length, kills: hit.filter((p) => !p.warpPlan).length, escaped: hit.filter((p) => p.warpPlan).length };
+        this._emit(ev);
+        emitted = true;
+        if (!hit.length) {
+          me.kb.crossMiss.push({ t, turn: this.turn, c: params.cell, mask: area });
+          result.miss = true;
+          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
+          break;
+        }
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${hit.length}キューブに命中`, null, 'item', key);
+        result.kills = 0; result.escaped = 0;
+        for (const p of hit) {
+          if (p.warpPlan) {
+            this._log(pi, `${me.name}：${pieceName(p)}を自動撃破後、ワープ発動`, null, 'kill');
+            this._warpFire(p, 'answer', pi, true);
+            result.escaped++;
+            continue;
+          }
+          this._destroy(p, 'destroy');
+          this._log(pi, `${me.name}：${pieceName(p)}を撃破（${coordList(p.cells, N)}）`, null, 'kill');
+          result.kills++;
+        }
+        result.ended = this._checkEnd();
+        break;
+      }
       case 'homing': {
         // ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）：相手の生きていて隠れていないキューブ（バズーカの破片も含む）を
         //  1つランダムに選び、そのブロックの番号（A-1から読み順に1〜NN）の合計を教える。どのキューブかは伏せる。
@@ -1525,7 +1572,7 @@
 
   const api = {
     VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, TOUR_ITEM_KEYS,
-    bit, popcount, bitsOf, maskOf, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
+    bit, popcount, bitsOf, maskOf, crossMask, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBEngine = api;

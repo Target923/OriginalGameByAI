@@ -351,12 +351,26 @@
     return out;
   }
   const cellSum = (cells) => cells.reduce((a, x) => a + x + 1, 0);
+  // クロスボム（v15.7）の不発：そのとき生きていて隠れていないキューブは、その十字にすっぽり収まってはいない。
+  //  その後にワープ・分解があった記録は使わない（動いた・形が変わったかもしれない）
+  function crossMisses(ctx) {
+    if (ctx._cm) return ctx._cm;
+    const kb = ctx.kb;
+    ctx._cm = (kb.crossMiss || []).filter((q) => !kb.warps.some((w) => w.t > q.t) && !(kb.splits || []).some((sp) => sp.t > q.t)).map((q) => q.mask);
+    return ctx._cm;
+  }
   // 合計が合う候補の重みを上げる（狙われたのがこのキューブなら、合計が合う置き方だけが残る。ほかのキューブだったかもしれないので、消しはしない）
   const HOMING_BOOST = 6;
   function finishCands(g, out, ctx) {
     const list = Array.from(out.values());
     const hs = homingSums(ctx);
     if (hs.length) for (const cd of list) if (!cd.pureSt && hs.indexOf(cellSum(cd.cells)) >= 0) cd.w *= HOMING_BOOST;
+    // クロスボムの不発の十字にすっぽり収まる候補は、ありえない（ステルスで隠れていたかもしれない候補と、Stealth hit のグループは除く）
+    const cm = crossMisses(ctx);
+    if (cm.length && !g.q) {
+      const keep = list.filter((cd) => cd.st || !cd.cells.length || !cm.some((m) => (cd.mask & ~m) === 0));
+      if (keep.length) return keep;
+    }
     for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     // Stealth hit のグループ：「前に見つかったキューブの○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
     // 重みは、新しいキューブだった場合の重みの合計と同じ（どちらとも決めない）
@@ -733,6 +747,7 @@
   function huntModel(ctx, prior, joint, certainCover, anyCover, opt, priorByKey) {
     const N = ctx.N, NN = ctx.NN, PL = ctx.PL;
     const forbidA = ctx.xMaskAll | ctx.deadMask | ctx.oldMaskAll | ctx.hitMask | ctx.lineZeroMask | certainCover;
+    const cmiss = crossMisses(ctx);
 
     // 形ごとの「証拠を避けられた割合」と被覆密度
     // calib 2 以上：見つかったキューブ・撃破済みのキューブのブロックとは最初から重ならない（キューブは重ねて置けない）ので、
@@ -749,6 +764,7 @@
       const cov = new Float64Array(NN);
       for (const P of PL[sh.key]) {
         if (P.mask & forbidA) continue;
+        if (cmiss.length && cmiss.some((m) => (P.mask & ~m) === 0)) continue;   // クロスボムの不発の十字に収まる置き方はない
         V++;
         for (const c of P.cells) cov[c] += 1;
       }
@@ -1533,6 +1549,24 @@
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
+      // クロスボム（v15.7）：◎のキューブの候補が十字にすっぽり収まる見込み（撃破できるキューブの数の期待値）がいちばん大きい中心。
+      //  アンサーでは決めきれない（候補が割れている）キューブを、外れの心配なく倒せる。見込みが crossMin（既定 0.7）以上なら使う
+      if (free('cross')) {
+        let cb = null;
+        for (let c = 0; c < NN; c++) {
+          const m = E.crossMask(c, N);
+          let ek = 0;
+          for (const i of uncertain) {
+            const g = ctx.groups[i];
+            let w = 0, tot = 0;
+            g.cands.forEach((cd, k) => { const x = A.joint.candW[i][k]; tot += x; if (!cd.merge && !cd.pureSt && cd.cells.length && (cd.mask & ~m) === 0) w += x; });
+            if (tot > 0) ek += w / tot;
+          }
+          ek += popcount(ctx.fragMask & m);
+          if (!cb || ek > cb.ek) cb = { ek, c };
+        }
+        if (cb && cb.ek >= (pol.crossMin != null ? pol.crossMin : 0.7)) return { key: 'cross', params: { cell: cb.c } };
+      }
       // ホーミングミサイル（v15.5）：狙われたキューブの候補の、合計の割れ方（エントロピー）。どのキューブが狙われるかは分からないので、
       //  見つかったキューブと見つけていないキューブの数で割る（見つけていないキューブにも少し効く分を足す）
       if (free('homing')) {
@@ -1956,7 +1990,7 @@
   //  ステルスは決勝では価値0（ターンが長く、トリガーブロックを撃たれやすい）が、予選では−10.1と強いので、価値0の3つの中では先に取る。
   //  前の順（ワープ・サイズ・シェイプ・ノード・ライン・キューブ・ステルス・ペア・バズーカ）との対戦（tools/draft_duel.js）で勝率64.7%（300局）
   // homing（v15.5）の位置は仮（測定で決める）
-  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'stealth', 'bazooka', 'warp'];
+  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'cross', 'stealth', 'bazooka', 'warp'];
   // 手持ちにすでにある種類は、持っていない種類より後回しにする（大会の決勝は予選の残り＋ドラフト）
   function draftPick(game, pi) {
     const order = (policy[pi] && policy[pi].draft) || DRAFT_PRIORITY;

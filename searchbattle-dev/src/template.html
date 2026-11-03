@@ -567,6 +567,8 @@ h1, h2, h3 { text-wrap: balance; }
 .item-count .ic-row:not(.on) output { color: var(--muted); }
 .item-count .note { grid-column: 1 / -1; }
 .item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
+/* クロスボム（v15.7）：十字の範囲の見本 */
+.cell.xarea { box-shadow: inset 0 0 0 2px var(--amber); background-color: rgba(255, 193, 74, .12); }
 /* ホーミングミサイル（v15.5）：ブロックの番号（A-1から読み順に1〜）。暗算の手がかりなので、目立たせない */
 .cell .cnum { position: absolute; left: 50%; top: 2px; transform: translateX(-50%); font: 600 clamp(8px, 1.6vw, 10px)/1 var(--f-tech); letter-spacing: .02em; color: rgba(170, 200, 230, .38); pointer-events: none; z-index: 1; }
 .match-items { display: grid; gap: 6px; border-top: 1px solid rgba(96, 196, 255, .14); padding-top: 10px; }

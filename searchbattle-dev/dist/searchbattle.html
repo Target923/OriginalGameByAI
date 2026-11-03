@@ -567,6 +567,8 @@ h1, h2, h3 { text-wrap: balance; }
 .item-count .ic-row:not(.on) output { color: var(--muted); }
 .item-count .note { grid-column: 1 / -1; }
 .item-card .dn { font-style: normal; color: var(--cyan); font-size: .85em; }
+/* クロスボム（v15.7）：十字の範囲の見本 */
+.cell.xarea { box-shadow: inset 0 0 0 2px var(--amber); background-color: rgba(255, 193, 74, .12); }
 /* ホーミングミサイル（v15.5）：ブロックの番号（A-1から読み順に1〜）。暗算の手がかりなので、目立たせない */
 .cell .cnum { position: absolute; left: 50%; top: 2px; transform: translateX(-50%); font: 600 clamp(8px, 1.6vw, 10px)/1 var(--f-tech); letter-spacing: .02em; color: rgba(170, 200, 230, .38); pointer-events: none; z-index: 1; }
 .match-items { display: grid; gap: 6px; border-top: 1px solid rgba(96, 196, 255, .14); padding-top: 10px; }
@@ -1279,15 +1281,16 @@ body.replaying #app { display: none; }
   // 26：v14.5 用語の変更（形の分類の名前が R型・L型・T型・Z型に）
   // 27：v15 ワープを作り直し（トリガーと移動先を決めておき、トリガーをコールされるかアンサーで当てられると移動する）
   // 28：v15.1 ステルスの見破りをキューブごとに（トリガー・ぴったりのアンサー・ステルスアンサーで見破られるのは、そのキューブだけ）
+  // 33：v15.7 レアアイテム「クロスボム」（cross）
   // 32：v15.6 ホーミングミサイルは、一通り狙うまで同じキューブを選ばない
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 32;
-  // homing：ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）。レアはバズーカとホーミングミサイル（RARE_ITEMS）
-  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'warp', 'stealth'];
-  const RARE_ITEMS = ['bazooka', 'homing'];
-  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイルは、大会のレアの仕組みを作るまで1試合だけ）
+  const VERSION = 33;
+  // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
+  const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'warp', 'stealth'];
+  const RARE_ITEMS = ['bazooka', 'homing', 'cross'];
+  // 大会で使うアイテム（ベース8種類＋バズーカ。ホーミングミサイル・クロスボムは、大会のレアの仕組みを作るまで1試合だけ）
   const TOUR_ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'warp', 'stealth'];
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
@@ -1298,6 +1301,7 @@ body.replaying #app { display: none; }
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
+    cross: { name: 'クロスボム', desc: '選んだブロックと上下左右の十字（5ブロック）に、すっぽり収まるキューブを撃破する' },
     homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
     warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
     stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
@@ -1407,6 +1411,16 @@ body.replaying #app { display: none; }
   function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
   // ログ用：ブロックを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
   function coordList(cells, N) { return cells.slice().sort((a, b) => a - b).map((c) => coord(c, N)).join('・'); }
+  // 十字（クロスボム）：中心と上下左右（盤の外は除く）
+  function crossMask(c, N) {
+    const r = Math.floor(c / N), col = c % N;
+    let m = bit(c);
+    if (r > 0) m |= bit(c - N);
+    if (r < N - 1) m |= bit(c + N);
+    if (col > 0) m |= bit(c - 1);
+    if (col < N - 1) m |= bit(c + 1);
+    return m;
+  }
   function lineMask(line, index, N) {
     let m = 0;
     for (let k = 0; k < N; k++) m |= bit(line === 'row' ? index * N + k : k * N + index);
@@ -1521,7 +1535,7 @@ body.replaying #app { display: none; }
       // 推論用の事実ログ（相手盤面について自分が知り得たこと）
       kb: {
         N: this.N, stock: Object.assign({}, STOCK),
-        calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [], sums: [],
+        calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [], sums: [], crossMiss: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
         warpUses: [],  // 相手がワープを使った時刻（v15。使ったことだけが分かる。どのキューブか・移動先は伏せられる）
@@ -2249,6 +2263,9 @@ body.replaying #app { display: none; }
       case 'node':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '調べるブロックを選んでください' };
+      case 'cross':
+        if (inRange(params.cell)) return { ok: true };
+        return { ok: false, reason: '十字の中心のブロックを選んでください' };
       case 'bazooka':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '撃ち込むブロックを選んでください（撃破済みのブロックは選べません）' };
@@ -2308,6 +2325,38 @@ body.replaying #app { display: none; }
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
     let emitted = false;
     switch (key) {
+      case 'cross': {
+        // クロスボム（v15.7。レアアイテム。ユーザーの案）：選んだブロックと上下左右の十字（盤の端では3〜4ブロック）に
+        //  全ブロックが収まる、生きていて隠れていないキューブ（バズーカの破片も）をすべて撃破する。収まるキューブがなければ「不発」
+        //  （一部だけかかっていても何も伝えない）。ワープを待っているキューブは、アンサーで当てたときと同じく撃破されずに逃げる
+        //  （「自動撃破後、ワープ発動」。移動前のブロックは全部 W付きの×）。隠れているステルスのキューブには効かない
+        const area = crossMask(params.cell, N);
+        const hit = livingFoe.filter((p) => (p.mask & ~area) === 0);
+        const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, area: bitsOf(area), miss: !hit.length, kills: hit.filter((p) => !p.warpPlan).length, escaped: hit.filter((p) => p.warpPlan).length };
+        this._emit(ev);
+        emitted = true;
+        if (!hit.length) {
+          me.kb.crossMiss.push({ t, turn: this.turn, c: params.cell, mask: area });
+          result.miss = true;
+          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
+          break;
+        }
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${hit.length}キューブに命中`, null, 'item', key);
+        result.kills = 0; result.escaped = 0;
+        for (const p of hit) {
+          if (p.warpPlan) {
+            this._log(pi, `${me.name}：${pieceName(p)}を自動撃破後、ワープ発動`, null, 'kill');
+            this._warpFire(p, 'answer', pi, true);
+            result.escaped++;
+            continue;
+          }
+          this._destroy(p, 'destroy');
+          this._log(pi, `${me.name}：${pieceName(p)}を撃破（${coordList(p.cells, N)}）`, null, 'kill');
+          result.kills++;
+        }
+        result.ended = this._checkEnd();
+        break;
+      }
       case 'homing': {
         // ホーミングミサイル（v15.5。レアアイテム。ユーザーの案）：相手の生きていて隠れていないキューブ（バズーカの破片も含む）を
         //  1つランダムに選び、そのブロックの番号（A-1から読み順に1〜NN）の合計を教える。どのキューブかは伏せる。
@@ -2762,7 +2811,7 @@ body.replaying #app { display: none; }
 
   const api = {
     VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, TOUR_ITEM_KEYS,
-    bit, popcount, bitsOf, maskOf, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
+    bit, popcount, bitsOf, maskOf, crossMask, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SBEngine = api;
@@ -2795,7 +2844,7 @@ body.replaying #app { display: none; }
   // ---------------- 定数 ----------------
   const APP = 'searchbattle';
   // 通信の約束ごと（メッセージの形）の版。形を変えたら上げる。ゲームの版（E.VERSION）と両方が同じ相手とだけ遊べる
-  const NET_VERSION = 7;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）／6：v15.4 ドラフトを配置の前に／7：v15.5 ホーミングミサイル
+  const NET_VERSION = 8;   // 2：v14.5 形の分類の名前が変わった（R型・L型・T型・Z型）／3：v15 ワープの作り直し（トリガーを送る・発動の演出 warpfire）／4：v15.1 ステルスの見破りがキューブごとに／5：v15.2 ワープの通知（full）と隠れたレティクル（late）／6：v15.4 ドラフトを配置の前に／7：v15.5 ホーミングミサイル／8：v15.7 クロスボム
   const HOST_SEAT = 0, GUEST_SEAT = 1;   // ホストは0番の席、ゲストは1番の席
   // PeerJS のクラウドはみんなで使う場所なので、ほかのアプリの ID とぶつからないよう頭に付ける
   const PEER_PREFIX = 'searchbattle-';
@@ -2949,6 +2998,9 @@ body.replaying #app { display: none; }
             break;
           case 'homing':
             q = {};   // 対象は選ばない（v15.5）。target（リプレイ用の記録）は受け付けない
+            break;
+          case 'cross':
+            if (cell(p.cell)) q = { cell: p.cell };   // クロスボム（v15.7）：十字の中心
             break;
           case 'number': case 'shape': case 'node': case 'bazooka':
             if (cell(p.cell)) q = { cell: p.cell };
@@ -3687,12 +3739,26 @@ body.replaying #app { display: none; }
     return out;
   }
   const cellSum = (cells) => cells.reduce((a, x) => a + x + 1, 0);
+  // クロスボム（v15.7）の不発：そのとき生きていて隠れていないキューブは、その十字にすっぽり収まってはいない。
+  //  その後にワープ・分解があった記録は使わない（動いた・形が変わったかもしれない）
+  function crossMisses(ctx) {
+    if (ctx._cm) return ctx._cm;
+    const kb = ctx.kb;
+    ctx._cm = (kb.crossMiss || []).filter((q) => !kb.warps.some((w) => w.t > q.t) && !(kb.splits || []).some((sp) => sp.t > q.t)).map((q) => q.mask);
+    return ctx._cm;
+  }
   // 合計が合う候補の重みを上げる（狙われたのがこのキューブなら、合計が合う置き方だけが残る。ほかのキューブだったかもしれないので、消しはしない）
   const HOMING_BOOST = 6;
   function finishCands(g, out, ctx) {
     const list = Array.from(out.values());
     const hs = homingSums(ctx);
     if (hs.length) for (const cd of list) if (!cd.pureSt && hs.indexOf(cellSum(cd.cells)) >= 0) cd.w *= HOMING_BOOST;
+    // クロスボムの不発の十字にすっぽり収まる候補は、ありえない（ステルスで隠れていたかもしれない候補と、Stealth hit のグループは除く）
+    const cm = crossMisses(ctx);
+    if (cm.length && !g.q) {
+      const keep = list.filter((cd) => cd.st || !cd.cells.length || !cm.some((m) => (cd.mask & ~m) === 0));
+      if (keep.length) return keep;
+    }
     for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     // Stealth hit のグループ：「前に見つかったキューブの○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
     // 重みは、新しいキューブだった場合の重みの合計と同じ（どちらとも決めない）
@@ -4069,6 +4135,7 @@ body.replaying #app { display: none; }
   function huntModel(ctx, prior, joint, certainCover, anyCover, opt, priorByKey) {
     const N = ctx.N, NN = ctx.NN, PL = ctx.PL;
     const forbidA = ctx.xMaskAll | ctx.deadMask | ctx.oldMaskAll | ctx.hitMask | ctx.lineZeroMask | certainCover;
+    const cmiss = crossMisses(ctx);
 
     // 形ごとの「証拠を避けられた割合」と被覆密度
     // calib 2 以上：見つかったキューブ・撃破済みのキューブのブロックとは最初から重ならない（キューブは重ねて置けない）ので、
@@ -4085,6 +4152,7 @@ body.replaying #app { display: none; }
       const cov = new Float64Array(NN);
       for (const P of PL[sh.key]) {
         if (P.mask & forbidA) continue;
+        if (cmiss.length && cmiss.some((m) => (P.mask & ~m) === 0)) continue;   // クロスボムの不発の十字に収まる置き方はない
         V++;
         for (const c of P.cells) cov[c] += 1;
       }
@@ -4869,6 +4937,24 @@ body.replaying #app { display: none; }
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
+      // クロスボム（v15.7）：◎のキューブの候補が十字にすっぽり収まる見込み（撃破できるキューブの数の期待値）がいちばん大きい中心。
+      //  アンサーでは決めきれない（候補が割れている）キューブを、外れの心配なく倒せる。見込みが crossMin（既定 0.7）以上なら使う
+      if (free('cross')) {
+        let cb = null;
+        for (let c = 0; c < NN; c++) {
+          const m = E.crossMask(c, N);
+          let ek = 0;
+          for (const i of uncertain) {
+            const g = ctx.groups[i];
+            let w = 0, tot = 0;
+            g.cands.forEach((cd, k) => { const x = A.joint.candW[i][k]; tot += x; if (!cd.merge && !cd.pureSt && cd.cells.length && (cd.mask & ~m) === 0) w += x; });
+            if (tot > 0) ek += w / tot;
+          }
+          ek += popcount(ctx.fragMask & m);
+          if (!cb || ek > cb.ek) cb = { ek, c };
+        }
+        if (cb && cb.ek >= (pol.crossMin != null ? pol.crossMin : 0.7)) return { key: 'cross', params: { cell: cb.c } };
+      }
       // ホーミングミサイル（v15.5）：狙われたキューブの候補の、合計の割れ方（エントロピー）。どのキューブが狙われるかは分からないので、
       //  見つかったキューブと見つけていないキューブの数で割る（見つけていないキューブにも少し効く分を足す）
       if (free('homing')) {
@@ -5292,7 +5378,7 @@ body.replaying #app { display: none; }
   //  ステルスは決勝では価値0（ターンが長く、トリガーブロックを撃たれやすい）が、予選では−10.1と強いので、価値0の3つの中では先に取る。
   //  前の順（ワープ・サイズ・シェイプ・ノード・ライン・キューブ・ステルス・ペア・バズーカ）との対戦（tools/draft_duel.js）で勝率64.7%（300局）
   // homing（v15.5）の位置は仮（測定で決める）
-  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'stealth', 'bazooka', 'warp'];
+  const DRAFT_PRIORITY = ['number', 'shape', 'line', 'pair', 'node', 'cube', 'homing', 'cross', 'stealth', 'bazooka', 'warp'];
   // 手持ちにすでにある種類は、持っていない種類より後回しにする（大会の決勝は予選の残り＋ドラフト）
   function draftPick(game, pi) {
     const order = (policy[pi] && policy[pi].draft) || DRAFT_PRIORITY;
@@ -6269,7 +6355,7 @@ window.SBAudio = (function () {
   const E = window.SBEngine, AI = window.SBAI, NET = window.SBNet;
   const { ITEMS, ITEM_KEYS, SHAPES, SHAPES_BY_SIZE, ORIENT, COLS, CATS, cellsFor, identifyShape, bit } = E;
   // 攻撃アイテム＝相手フィールドに作用、防御アイテム＝自分フィールドに作用
-  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing'];
+  const ATK_ITEMS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross'];
   // レアアイテム（バズーカ・ホーミングミサイル）はアンバーで見せる
   const isRare = (k) => (E.RARE_ITEMS || ['bazooka']).indexOf(k) >= 0;
   const DEF_ITEMS = ['warp', 'stealth'];
@@ -6311,6 +6397,9 @@ window.SBAudio = (function () {
     // v15.5：ホーミングミサイルが増えた。前の設定にはないので1つにしておく
     if (st.itemCount && st.itemCount.homing == null) st.itemCount.homing = 1;
     if (st.draftPool && st.draftPool.homing == null) st.draftPool.homing = 1;
+    // v15.7：クロスボムも同じく1つに
+    if (st.itemCount && st.itemCount.cross == null) st.itemCount.cross = 1;
+    if (st.draftPool && st.draftPool.cross == null) st.draftPool.cross = 1;
     st.draftPool = cleanCounts(st.draftPool || allOnes());
     if (countTotal(st.draftPool) < 2) st.draftPool = allOnes();
     if (['prelim', 'final', 'tour'].indexOf(st.rules) < 0) st.rules = 'prelim';
@@ -6447,6 +6536,8 @@ window.SBAudio = (function () {
     node: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.6" r="2.7" class="f"/><path d="M12 9.9V5.9M9.7 14l-3.5 2M14.3 14l3.5 2"/><circle cx="12" cy="4.2" r="1.8"/><circle cx="4.7" cy="16.9" r="1.8"/><circle cx="19.3" cy="16.9" r="1.8"/></svg>',
     warp: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.8" y="12.6" width="7.4" height="7.4" rx="1" stroke-dasharray="2.2 1.8"/><rect x="13.8" y="4" width="7.4" height="7.4" rx="1"/><path d="M6.6 11.2c.5-4.1 3.5-6 6.6-4.7"/><path d="M11.3 4.8l2 1.7-1.3 2.2"/></svg>',
     stealth: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.8 12s3.4-6.2 9.2-6.2 9.2 6.2 9.2 6.2-3.4 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.7"/><path d="M4.2 20.2 19.8 3.8"/></svg>',
+    // クロスボム（v15.7）：十字の5ブロックと、中心の爆発
+    cross: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6v5.5h5.5v6H15v5.5H9V15H3.5V9H9z"/><path d="M12 9.6v4.8M9.6 12h4.8"/></svg>',
     // ホーミングミサイル（v15.5）：曲がった軌跡（点線）の先のミサイル
     homing: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18.6" cy="5.4" r="2.6"/><path d="M7.6 13.4 12.6 8.4l3 3-5 5z"/><path d="M12.6 8.4l2.6-1.2-.6 2.6M7.6 13.4l-2.4.4 1.4 1.4M10.6 16.4l-.4 2.4-1.4-1.4"/><path d="M5.6 18.4 3 21" stroke-dasharray="1.4 1.8"/></svg>',
     bazooka: '<svg class="ic-bz" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.8 4.2c2.4-.6 4.4-.6 5 0s.6 2.6 0 5L12 17l-5-5z"/><circle cx="15.6" cy="8.4" r="1.4"/><path d="M8.2 13.2 4.6 14l2.4 2.4M10.8 15.8 10 19.4 7.6 17M3.4 20.6l3-3"/></svg>',
@@ -7086,6 +7177,7 @@ window.SBAudio = (function () {
       case 'node': return who + 'ノードショット：相手フィールドで調べるブロックを選んでください';
       case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選んでください';
       case 'homing': return who + 'ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います';
+      case 'cross': return who + 'クロスボム：相手フィールドで十字の中心のブロックを選んでください';
       case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選んでください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
       case 'wait':
@@ -7152,6 +7244,10 @@ window.SBAudio = (function () {
         break;
       case 'node':
         main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
+        acts = cancel;
+        break;
+      case 'cross':
+        main = itemHead('cross', '十字の中心のブロックを選んでください。中心と上下左右の5ブロックに、すっぽり収まるキューブをすべて撃破します（一部だけかかっていても何も分かりません）。');
         acts = cancel;
         break;
       case 'homing':
@@ -7553,6 +7649,7 @@ window.SBAudio = (function () {
     else if (mode === 'treasure') predClick = (c) => g.isTreasureCallable(v, c);
     else if (mode === 'answer' || mode === 'shape' || mode === 'number' || mode === 'node' || mode === 'bazooka') predClick = (c) => !P.view.dead[c];
     else if (mode === 'pair') predClick = (c) => !P.view.dead[c];
+    else if (mode === 'cross') predClick = () => true;   // クロスボム：どのブロックでも中心にできる
     // ワープ（v15）：トリガーにできるのは、ワープできるキューブ（ステルス中・ワープ待ちでなく、移動先があるもの）の、まだ当たっていないブロック
     const warpOK = (mode === 'warp-pick' || mode === 'warp-place') ? new Set(g.warpable(v).map((p) => p.id)) : null;
     const trigOK = (c) => { const p = g.pieceAt(v, c); return !!p && warpOK.has(p.id) && !(p.hitMask & (1 << c)); };
@@ -8533,6 +8630,21 @@ window.SBAudio = (function () {
           setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.k == null ? 'NoData' : `つながり ${ev.k}`, ev.k == null ? 'miss' : 'count' + ecls, 1500), 560 * k);
           return 1300 * k;
         }
+        case 'cross': {
+          // クロスボム（v15.7）：十字の5ブロックが光って爆発。撃破は続く destroy の演出、逃げたキューブは warpfire の演出
+          SND.sfx('i-bazooka', 0, Object.assign({ hit: !ev.miss, n: ev.kills || 0 }, pan));
+          const els = (ev.area || []).map((x) => cellOf(target, x)).filter(Boolean);
+          if (!els.length) return 0;
+          els.forEach((el, i) => { const p = ctr(el); over(el, 'flash', '', 520); sparks(p.x, p.y, AM, 8, 1.1, 0.4, i * 40); });
+          const cel = cellOf(target, ev.cell);
+          if (cel) {
+            const p = ctr(cel);
+            ring(p.x, p.y, AM, p.w * 0.2, p.w * 1.8, 700, 3);
+            shake(ev.miss ? 0 : 1);
+            setTimeout(() => text(p.x, p.y - p.h * 0.62, ev.miss ? '不発' : `CROSS BOMB ×${(ev.kills || 0) + (ev.escaped || 0)}`, ev.miss ? 'miss' : 'kill', 1400), 360 * k);
+          }
+          return 1000 * k;
+        }
         case 'homing': {
           // ホーミングミサイル（v15.5）：盤の中央へ光の輪が絞られ、合計の数字が出る（どのキューブかは見せない）
           SND.sfx('i-target', 0, pan);
@@ -9425,7 +9537,7 @@ self.onmessage = function (e) {
     if (key === 'warp' && !g.warpable(v).length) { toast('ワープできるキューブがありません（移動先にできる空きブロックが足りません）', 'warn'); return; }
     resetMode();
     app.ui.item = key;
-    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', warp: 'warp-pick', stealth: 'stealth-pick' };
+    const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', cross: 'cross', warp: 'warp-pick', stealth: 'stealth-pick' };
     app.ui.mode = modeOf[key];
     render();
     SND.sfx('select');
@@ -9742,6 +9854,7 @@ self.onmessage = function (e) {
         return;
       }
       case 'shape': useItem('shape', { cell: c }); return;
+      case 'cross': useItem('cross', { cell: c }); return;
       case 'number': useItem('number', { cell: c }); return;
       case 'node':
       case 'bazooka':
@@ -9855,12 +9968,20 @@ self.onmessage = function (e) {
     const el = ev.target.closest('.cell[data-board="own"]');
     const c = el ? +el.dataset.cell : -1;
     if (c !== app.hover) { app.hover = c; applyPreview(); }
+    crossPreview(ev.target.closest('.board[data-board="pred"] .cell'));
   });
   root.addEventListener('pointerout', (ev) => {
     const tipT = ev.target.closest('[data-tip]');
     if (tipT && !(ev.relatedTarget && tipT.contains(ev.relatedTarget)) && ev.pointerType !== 'touch') hideTip();
   });
-  root.addEventListener('pointerleave', () => { app.hover = -1; applyPreview(); hideTip(); }, true);
+  root.addEventListener('pointerleave', () => { app.hover = -1; applyPreview(); hideTip(); crossPreview(null); }, true);
+  // クロスボム（v15.7）：中心にしようとしているブロックの十字（5ブロック）を枠で示す
+  function crossPreview(el) {
+    for (const x of root.querySelectorAll('.cell.xarea')) x.classList.remove('xarea');
+    if (!el || !app.ui || app.ui.mode !== 'cross' || !G()) return;
+    const board = el.closest('.board');
+    for (const c of E.bitsOf(E.crossMask(+el.dataset.cell, G().N))) { const t = board.querySelector(`.cell[data-cell="${c}"]`); if (t) t.classList.add('xarea'); }
+  }
 
   // アンサー時のブロック選択：クリックに加え、ドラッグ（なぞり操作）でも選択・解除できるようにする
   let answerDrag = null;
