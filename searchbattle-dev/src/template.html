@@ -587,7 +587,8 @@ h1, h2, h3 { text-wrap: balance; }
 .aci svg .f { fill: currentColor; stroke: none; }
 /* 右下の印が重なったら左へ並べる（--k＝右から何番目か） */
 .stl, .wtr, .aci { right: calc(5% + var(--k, 0) * 33%); }
-.cell.acidcell { box-shadow: inset 0 0 0 2px #A7DD00, inset 0 0 12px rgba(167, 221, 0, .35); }
+/* 縁取りはトレジャーチャンスのブロックと同じくらいのぼかし（v15.10。ユーザーの指示） */
+.cell.acidcell { box-shadow: inset 0 0 0 1.5px rgba(167, 221, 0, .75), 0 0 8px rgba(167, 221, 0, .35); z-index: 1; }
 .cell.acidcell .mkw { color: #A7DD00 !important; filter: var(--mk-shadow) drop-shadow(0 0 4px #A7DD00) !important; }
 .fx-text.acid { color: #A7DD00; text-shadow: 0 0 12px rgba(167, 221, 0, .8); }
 /* クロスボム（v15.10）：撃った十字の範囲（撃った側・撃たれた側の両方の盤に出す） */

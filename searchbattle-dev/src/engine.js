@@ -1151,7 +1151,9 @@
         p.acid = true;
         me.acid = { cell: params.cell, t };
         // acidSrc：酸をかけたブロック（画面で右下にアシッドの印を出し続ける。すでに当たっているブロックならその印に付ける）
-        if (me.view.marks[params.cell]) me.view.marks[params.cell].acidSrc = true;
+        //  すでにコールして当たっているブロックなら、そこも酸で溶かしたブロックと同じ色（ヴェルデメーラ）にする（v15.10。ユーザーの指示）
+        const am = me.view.marks[params.cell];
+        if (am) { am.acidSrc = true; if (am.r !== 'x') am.acid = true; }
         me.kb.occs.push({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' });
         result.hit = true;
         this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドマーク（次の手番から自動コール）`, null, 'item', key);
