@@ -38,257 +38,257 @@
     "id": "engine.js:17534",
     "line": 374,
     "where": "placePiece › reason",
-    "text": "キューブリソースが枯渇しています",
-    "around": "…キューブリソースが枯渇しています",
-    "h": "18dfa9bc"
+    "text": "ブロックのリソースが枯渇しています",
+    "around": "…ブロックのリソースが枯渇しています",
+    "h": "d51a4b0e"
    },
    {
-    "id": "engine.js:19348",
+    "id": "engine.js:19349",
     "line": 416,
     "where": "setTreasure › reason",
     "text": "トレジャーはキューブのブロックに置きます",
-    "h": "04a79d37"
+    "h": "1ac00f7a"
    },
    {
-    "id": "engine.js:21067",
+    "id": "engine.js:21068",
     "line": 456,
     "where": "finishSetup › reason",
     "text": "配置フェーズではありません",
-    "h": "fddc408c"
+    "h": "11d83996"
    },
    {
-    "id": "engine.js:21140",
+    "id": "engine.js:21141",
     "line": 457,
     "where": "finishSetup › reason",
     "text": "最低1キューブを置いてください",
-    "h": "95411f98"
+    "h": "b287c4f1"
    },
    {
-    "id": "engine.js:21210",
+    "id": "engine.js:21211",
     "line": 458,
     "where": "finishSetup › reason",
     "text": "トレジャーをセットしてください",
-    "h": "5364d225"
+    "h": "bfafa785"
    },
    {
-    "id": "engine.js:22917",
+    "id": "engine.js:22918",
     "line": 495,
     "where": "draftPick › reason",
     "text": "相手の番です",
-    "h": "d1009e12"
+    "h": "a863810b"
    },
    {
-    "id": "engine.js:23007",
+    "id": "engine.js:23008",
     "line": 497,
     "where": "draftPick › reason",
     "text": "そのアイテムは残っていません",
-    "h": "fd111fd4"
+    "h": "2248d9a4"
    },
    {
-    "id": "engine.js:23159",
+    "id": "engine.js:23160",
     "line": 501,
     "where": "draftPick",
     "text": "：ドラフトで{{1}}を獲得",
     "vars": [
      "ITEMS[key].name"
     ],
-    "h": "593ec173"
+    "h": "e9297aae"
    },
    {
-    "id": "engine.js:51657",
+    "id": "engine.js:51658",
     "line": 1057,
     "where": "_warpDest › reason",
     "text": "向きが正しくありません",
-    "h": "4e71f3c3"
+    "h": "8ab1f631"
    },
    {
-    "id": "engine.js:51740",
+    "id": "engine.js:51741",
     "line": 1058,
     "where": "_warpDest › reason",
     "text": "ワープは回転だけで、裏返し（反転）はできません",
-    "h": "d7ab6dc2"
+    "h": "f400b7f8"
    },
    {
-    "id": "engine.js:52183",
+    "id": "engine.js:52184",
     "line": 1063,
     "where": "_warpDest › reason",
     "text": "盤面からはみ出します",
-    "h": "09326126"
+    "h": "0a20b667"
    },
    {
-    "id": "engine.js:52295",
+    "id": "engine.js:52296",
     "line": 1065,
     "where": "_warpDest › reason",
     "text": "ほかのキューブと重なります",
-    "h": "76f7a9fc"
+    "h": "b7a5eae8"
    },
    {
-    "id": "engine.js:52362",
+    "id": "engine.js:52363",
     "line": 1066,
     "where": "_warpDest › reason",
     "text": "移動前の位置とは重ねられません",
-    "h": "d6fb0f80"
+    "h": "c58b4974"
    },
    {
-    "id": "engine.js:52442",
+    "id": "engine.js:52443",
     "line": 1067,
     "where": "_warpDest › reason",
     "text": "撃破済みのキューブがあったブロックには置けません",
-    "h": "8d9edd35"
+    "h": "62021549"
    },
    {
-    "id": "engine.js:52608",
+    "id": "engine.js:52609",
     "line": 1068,
     "where": "_warpDest › reason",
     "text": "ほかのキューブのワープ先と重なります",
-    "h": "bf9b06ff"
+    "h": "ae5335db"
    },
    {
-    "id": "engine.js:54090",
+    "id": "engine.js:54091",
     "line": 1102,
     "where": "validateItem › case cube › reason",
     "text": "形状かブロック数を選択してください",
-    "h": "075705a3"
+    "h": "e5cc3c72"
    },
    {
-    "id": "engine.js:54326",
+    "id": "engine.js:54327",
     "line": 1105,
     "where": "validateItem › case line › reason",
     "text": "列か行を選択してください",
-    "h": "154557c6"
+    "h": "43ee69ba"
    },
    {
-    "id": "engine.js:54519",
+    "id": "engine.js:54520",
     "line": 1110,
     "where": "validateItem › case node › reason",
     "text": "調べるブロックを選択してください",
-    "h": "29219f74"
+    "h": "183dc916"
    },
    {
-    "id": "engine.js:54609",
+    "id": "engine.js:54610",
     "line": 1112,
     "where": "validateItem › case acid › reason",
     "text": "アシッドが効いているあいだは、もう1つは使えません",
-    "h": "33a31332"
+    "h": "f134d915"
    },
    {
-    "id": "engine.js:54755",
+    "id": "engine.js:54756",
     "line": 1114,
     "where": "validateItem › case acid › reason",
     "text": "酸をかけるブロックを選択してください（撃破済みのブロックは選べません）",
-    "h": "1aff0af0"
+    "h": "fd9e04cf"
    },
    {
-    "id": "engine.js:54907",
+    "id": "engine.js:54908",
     "line": 1117,
     "where": "validateItem › case cross › reason",
     "text": "十字の中心のブロックを選択してください",
-    "h": "aab8e54f"
+    "h": "cc635767"
    },
    {
-    "id": "engine.js:55069",
+    "id": "engine.js:55070",
     "line": 1120,
     "where": "validateItem › case bazooka › reason",
     "text": "撃ち込むブロックを選択してください（撃破済みのブロックは選べません）",
-    "h": "e66b6248"
+    "h": "a5eddfa4"
    },
    {
-    "id": "engine.js:55235",
+    "id": "engine.js:55236",
     "line": 1122,
     "where": "validateItem › case pair › reason",
     "text": "違うブロックを2つ選択してください",
-    "h": "6f14bc09"
+    "h": "84e54cb1"
    },
    {
-    "id": "engine.js:55336",
+    "id": "engine.js:55337",
     "line": 1123,
     "where": "validateItem › case pair › reason",
     "text": "撃破済みのブロックは選べません",
-    "h": "3f9bcde5"
+    "h": "727fda35"
    },
    {
-    "id": "engine.js:55666",
+    "id": "engine.js:55667",
     "line": 1129,
     "where": "validateItem › case warp › reason",
     "text": "ワープするキューブを選択してください",
-    "h": "22d67651"
+    "h": "29de7631"
    },
    {
-    "id": "engine.js:55814",
+    "id": "engine.js:55815",
     "line": 1131,
     "where": "validateItem › case warp › reason",
     "text": "ステルス中のキューブはワープできません",
-    "h": "c477b2d6"
+    "h": "c1c3f40f"
    },
    {
-    "id": "engine.js:55891",
+    "id": "engine.js:55892",
     "line": 1132,
     "where": "validateItem › case warp › reason",
     "text": "そのキューブはすでにワープを待っています",
-    "h": "50fe9797"
+    "h": "dccb753a"
    },
    {
-    "id": "engine.js:56074",
+    "id": "engine.js:56075",
     "line": 1134,
     "where": "validateItem › case warp › reason",
     "text": "トリガーブロックにする、そのキューブのブロックを選択してください",
-    "h": "a4e690c2"
+    "h": "50988733"
    },
    {
-    "id": "engine.js:56182",
+    "id": "engine.js:56183",
     "line": 1135,
     "where": "validateItem › case warp › reason",
     "text": "トリガーブロックは、まだ当たっていないブロックから選択してください",
-    "h": "ee1e2d1a"
+    "h": "c97a6761"
    },
    {
-    "id": "engine.js:56571",
+    "id": "engine.js:56572",
     "line": 1142,
     "where": "validateItem › case stealth › reason",
     "text": "ステルスにする自分のキューブを選択してください",
-    "h": "8a9637ba"
+    "h": "ba3f9e94"
    },
    {
-    "id": "engine.js:56651",
+    "id": "engine.js:56652",
     "line": 1143,
     "where": "validateItem › case stealth › reason",
     "text": "そのキューブはすでにステルス中です",
-    "h": "665df9b0"
+    "h": "64b05261"
    },
    {
-    "id": "engine.js:56726",
+    "id": "engine.js:56727",
     "line": 1144,
     "where": "validateItem › case stealth › reason",
     "text": "ワープを待っているキューブにはステルスを使えません",
-    "h": "0e2872e2"
+    "h": "d831ed6b"
    },
    {
-    "id": "engine.js:56845",
+    "id": "engine.js:56846",
     "line": 1145,
     "where": "validateItem › case stealth › reason",
     "text": "見破られたキューブには使えません",
-    "h": "ff9e5fdb"
+    "h": "659c510d"
    },
    {
-    "id": "engine.js:57062",
+    "id": "engine.js:57063",
     "line": 1147,
     "where": "validateItem › case stealth › reason",
     "text": "トリガーブロックにする、そのキューブのブロックを選択してください",
-    "h": "827975d3"
+    "h": "2ece1327"
    },
    {
-    "id": "engine.js:57170",
+    "id": "engine.js:57171",
     "line": 1148,
     "where": "validateItem › case stealth › reason",
     "text": "トリガーブロックは、まだ当たっていないブロックから選択してください",
-    "h": "1aa591e1"
+    "h": "ff57a491"
    },
    {
-    "id": "engine.js:57294",
+    "id": "engine.js:57295",
     "line": 1152,
     "where": "validateItem › reason",
     "text": "不明なアイテムです",
-    "h": "bd077151"
+    "h": "50b961d2"
    }
   ],
   "src/ui.js": [
@@ -3694,30 +3694,30 @@
     "id": "ui.js:210795",
     "line": 3925,
     "where": "setupDragEnd",
-    "text": "キューブリソースが枯渇しています",
-    "around": "…キューブリソースが枯渇しています",
-    "h": "137a9eb6"
+    "text": "ブロックのリソースが枯渇しています",
+    "around": "…ブロックのリソースが枯渇しています",
+    "h": "0bea6e51"
    },
    {
-    "id": "ui.js:211127",
+    "id": "ui.js:211128",
     "line": 3931,
     "where": "setupDragEnd",
     "text": "◆トレジャーのセットを行ってください",
-    "h": "84164e5b"
+    "h": "d3ef4f7f"
    },
    {
-    "id": "ui.js:249650",
+    "id": "ui.js:249651",
     "line": 4598,
     "where": "restore",
     "text": "ルールが更新されたため、大会を最初からやり直してください",
-    "h": "b093ec49"
+    "h": "68fcfdc2"
    },
    {
-    "id": "ui.js:250050",
+    "id": "ui.js:250051",
     "line": 4608,
     "where": "restore",
     "text": "ルールが更新されたため、対戦を最初からやり直してください",
-    "h": "ef983105"
+    "h": "80becdb9"
    }
   ]
  }

@@ -371,7 +371,7 @@
     if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     const sh = SHAPES[key];
     if (!sh || key === 'A1') return { ok: false, reason: '置けない形です' };
-    if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'キューブリソースが枯渇しています' };
+    if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'ブロックのリソースが枯渇しています' };
     const chk = this.checkPlacement(pi, key, t, r0, c0);
     if (!chk.ok) return chk;
     const piece = this._makePiece(P, key, t, r0, c0, chk.cells);

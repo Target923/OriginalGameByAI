@@ -3922,7 +3922,7 @@ self.onmessage = function (e) {
     const m = E.matchPlacement(cells, g.N);
     if (!m) { toast('置けない形です（R型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
     const size = SHAPES[m.key].size;
-    if (g.stockLeft(pi, size) <= 0) { toast(size + 'キューブリソースが枯渇しています', 'warn'); render(); return; }
+    if (g.stockLeft(pi, size) <= 0) { toast(size + 'ブロックのリソースが枯渇しています', 'warn'); render(); return; }
     const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);
     if (!r.ok) { toast(r.reason, 'warn'); render(); return; }
     // ドラッグ配置後はキューブ選択を解除したままにし、ドラッグのみの表示・操作感を維持
