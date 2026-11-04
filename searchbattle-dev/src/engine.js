@@ -63,18 +63,18 @@
   const TOUR_RARES = 2;
   // アイテムの説明（v14.5 で短くした。空きブロックにはどのアイテムも NoData、とルール画面の見出しに1回だけ書く）
   const ITEMS = {
-    cube: { name: 'サーチキューブ', desc: '選んだ形かブロック数のキューブが、いくつ残っているか分かる' },
-    line: { name: 'サーチライン', desc: '選んだ1列（1行）にかかるキューブの数とブロックの数が分かる（例：2キューブ / 3ブロック）' },
-    number: { name: 'サーチサイズ', desc: '選んだブロックのキューブが何ブロックか分かる' },
-    shape: { name: 'サーチシェイプ', desc: '選んだブロックのキューブの形が分かる' },
-    pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
-    node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
-    bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
-    acid: { name: 'アシッド', desc: '選んだブロックのキューブに酸をかける。次の手番から、コールの代わりに、そのキューブのブロックをランダムに1つずつ自動でコールし、撃破まで溶かす（サーチサイズでブロック数が分かっていれば、早くアンサーできる）' },
-    cross: { name: 'クロスボム', desc: '選んだブロックと上下左右の十字（5ブロック）に、すっぽり収まるキューブを撃破する' },
-    homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
-    warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
-    stealth: { name: 'ステルス', desc: '自分のキューブを1つ隠す（コールは×、アイテムは効かない）。選んだ1ブロックが弱点で、撃たれるか、×のブロックでアンサーされるとばれる' },
+    cube: { name: 'サーチキューブ', desc: '選択した形状かブロック数のキューブの残数が分かる' },
+    line: { name: 'サーチライン', desc: '選択した1列/1行に存在するキューブ数とブロック数が分かる' },
+    number: { name: 'サーチサイズ', desc: '選択したブロックのブロック数が分かる' },
+    shape: { name: 'サーチシェイプ', desc: '選択したブロックのキューブ形状が分かる' },
+    pair: { name: 'ペアショット', desc: '選択した2ブロックが同じキューブか分かる' },
+    node: { name: 'ノードショット', desc: '選択したブロックから、同じキューブへの上下左右のつながりの数が分かる' },
+    bazooka: { name: 'バズーカ', desc: '選択したブロックのキューブを1ブロックずつに分解する。コール済のブロックはその時点で撃破される' },
+    acid: { name: 'アシッド', desc: '選択したブロックのキューブにアシッドアイコンを付ける。次のターン以降キューブの撃破までコールできなくなるが、そのキューブのランダムなブロックが自動でコールされる' },
+    cross: { name: 'クロスボム', desc: '選択したブロックと上下左右の5ブロックに収まるキューブを撃破する' },
+    homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号の合計が分かる' },
+    warp: { name: 'ワープ', desc: 'キューブにトリガーとワープ先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
+    stealth: { name: 'ステルス', desc: 'キューブにトリガーを決めることでステルス状態にする。ステルス中はすべてのコール/アイテムを無効化できるが、トリガーをコールされるか、ステルスブロックのみでアンサーされると解除される' },
   };
 
   function bit(c) { return 1 << c; }
@@ -371,7 +371,7 @@
     if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     const sh = SHAPES[key];
     if (!sh || key === 'A1') return { ok: false, reason: '置けない形です' };
-    if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'ブロックのキューブは残っていません' };
+    if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'キューブリソースが枯渇しています' };
     const chk = this.checkPlacement(pi, key, t, r0, c0);
     if (!chk.ok) return chk;
     const piece = this._makePiece(P, key, t, r0, c0, chk.cells);
@@ -1099,53 +1099,53 @@
       case 'cube':
         if (params.kind === 'cat' && CATS.indexOf(params.value) >= 0) return { ok: true };
         if (params.kind === 'size' && [1, 2, 3, 4, 5].indexOf(params.value) >= 0) return { ok: true };
-        return { ok: false, reason: '形状かブロック数を選んでください' };
+        return { ok: false, reason: '形状かブロック数を選択してください' };
       case 'line':
         if ((params.line === 'row' || params.line === 'col') && Number.isInteger(params.index) && params.index >= 0 && params.index < N) return { ok: true };
-        return { ok: false, reason: '列か行を選んでください' };
+        return { ok: false, reason: '列か行を選択してください' };
       case 'number':
       case 'shape':
       case 'node':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
-        return { ok: false, reason: '調べるブロックを選んでください' };
+        return { ok: false, reason: '調べるブロックを選択してください' };
       case 'acid':
         if (me.acid) return { ok: false, reason: 'アシッドが効いているあいだは、もう1つは使えません' };
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
-        return { ok: false, reason: '酸をかけるブロックを選んでください（撃破済みのブロックは選べません）' };
+        return { ok: false, reason: '酸をかけるブロックを選択してください（撃破済みのブロックは選べません）' };
       case 'cross':
         if (inRange(params.cell)) return { ok: true };
-        return { ok: false, reason: '十字の中心のブロックを選んでください' };
+        return { ok: false, reason: '十字の中心のブロックを選択してください' };
       case 'bazooka':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
-        return { ok: false, reason: '撃ち込むブロックを選んでください（撃破済みのブロックは選べません）' };
+        return { ok: false, reason: '撃ち込むブロックを選択してください（撃破済みのブロックは選べません）' };
       case 'pair':
-        if (!inRange(params.a) || !inRange(params.b) || params.a === params.b) return { ok: false, reason: '違うブロックを2つ選んでください' };
+        if (!inRange(params.a) || !inRange(params.b) || params.a === params.b) return { ok: false, reason: '違うブロックを2つ選択してください' };
         if (v.dead[params.a] || v.dead[params.b]) return { ok: false, reason: '撃破済みのブロックは選べません' };
         return { ok: true };
       case 'warp': {
         // ワープ（v15。ユーザーの案）：使うときは「どのキューブを・どのブロックをトリガーにして・どこへ移すか」を決めておくだけ。
         //  キューブが動くのは、トリガーブロックをコールされたときか、アンサーで当てられたとき（_warpFire）
         const p = me.pieces.find((x) => x.id === params.pieceId && x.alive);
-        if (!p) return { ok: false, reason: 'ワープするキューブを選んでください' };
+        if (!p) return { ok: false, reason: 'ワープするキューブを選択してください' };
         // ステルス中のキューブはワープできない（v14）。ワープを待っているキューブにも重ねては使えない（1つのキューブに1つまで）
         if (p.stealth) return { ok: false, reason: 'ステルス中のキューブはワープできません' };
         if (p.warpPlan) return { ok: false, reason: 'そのキューブはすでにワープを待っています' };
         // トリガーブロック：そのキューブの、まだ当たっていない（コールされていない）ブロック
-        if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選んでください' };
-        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選んでください' };
+        if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選択してください' };
+        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選択してください' };
         const dest = this._warpDest(pi, p, params.t, params.r0, params.c0);
         if (!dest.ok) return dest;
         return { ok: true, cells: dest.cells, mask: dest.mask, t: dest.t, piece: p };
       }
       case 'stealth': {
         const p = me.pieces.find((x) => x.id === params.pieceId && x.alive);
-        if (!p) return { ok: false, reason: 'ステルスにする自分のキューブを選んでください' };
+        if (!p) return { ok: false, reason: 'ステルスにする自分のキューブを選択してください' };
         if (p.stealth) return { ok: false, reason: 'そのキューブはすでにステルス中です' };
         if (p.warpPlan) return { ok: false, reason: 'ワープを待っているキューブにはステルスを使えません' };   // v15：1つのキューブに防御アイテムは1つまで
         if (p.stealthRevealed) return { ok: false, reason: '見破られたキューブには使えません' };
         // トリガーブロック（v14.2）：隠すキューブのブロックを1つ選ぶ。まだ当たっていないブロックに限る（当たったブロックは二度とコールされず、弱点にならないため）
-        if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選んでください' };
-        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選んでください' };
+        if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選択してください' };
+        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選択してください' };
         return { ok: true, piece: p };
       }
     }

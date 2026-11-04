@@ -4,7 +4,7 @@
 //   日本語を含む文言と、大文字の英語の表示（ACID・STEALTH HIT など）を抜き出して JSON にする。コメントは抜き出さない。
 //   HTML の入った文字列は、タグの外の文だけを1つずつ抜き出す（タグは書き換えの対象にしない）。
 //   テンプレート文字列の ${…}（名前や数などの差し込み）は {{1}}・{{2}} の札にして、vars に元の式を添える。
-//   札は文の中で動かしてよい（順番を変えてよい）が、消したり増やしたりはできない。
+//   札は文の中で動かしてよい（順番を変えてよい）。消してもよい（その情報が出なくなる）が、増やしたり同じ札を2回使ったりはできない。
 //  apply：編集した JSON を読み、text が書き出したときと変わったものだけをソースに書き戻す。
 //   書き出したあとにソースが変わって、その文言の場所が合わなくなったものは書き戻さずに知らせる。
 //  使い方:
@@ -136,7 +136,22 @@ function extractJS(file) {
       const chars = [];
       for (let i = 0; i < raw.length; i++) chars.push({ ch: raw[i], a: node.start + 1 + i, b: node.start + 2 + i });
       const runs = raw.indexOf('<') >= 0 ? splitRuns(chars) : [chars];
-      for (const r of runs) { const e = runEntry(r); if (e && !e.split) push(Object.assign(e, { quote: q, inHtml: raw.indexOf('<') >= 0 }), anc, 'string'); }
+      // 文字列を + でつないでいるとき（size + 'ブロックの…'）、つながる式は差し込みの札にならないので、around でまわりを見せる（… が式）
+      let top = null;
+      for (let k = anc.length - 2; k >= 0 && anc[k].type === 'BinaryExpression' && anc[k].operator === '+'; k--) top = anc[k];
+      let joined = null;
+      if (top) {
+        const leaves = [];
+        const flat = (n) => { if (n.type === 'BinaryExpression' && n.operator === '+') { flat(n.left); flat(n.right); } else leaves.push(n); };
+        flat(top);
+        joined = leaves.map((n) => (n.type === 'Literal' && typeof n.value === 'string' ? n.value : '…')).join('').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      for (const r of runs) {
+        const e = runEntry(r);
+        if (!e || e.split) continue;
+        if (joined && joined !== e.text) e.around = joined.length > 160 ? joined.slice(0, 160) + '…' : joined;
+        push(Object.assign(e, { quote: q, inHtml: raw.indexOf('<') >= 0 }), anc, 'string');
+      }
     } else if (node.type === 'TemplateLiteral') {
       const chars = [];
       node.quasis.forEach((q, k) => {
@@ -254,9 +269,10 @@ if (args[0] === 'extract') {
       if (!e || hash(e.file + '\0' + e.a + '\0' + e.text) !== x.h) { if (!e || e.text !== x.text) { stale++; console.error(`場所が合いません（書き出したあとにソースが変わった）：${x.id} 「${x.text.slice(0, 30)}」`); } continue; }
       if (x.text === e.text) continue;
       // 差し込みの札が同じだけあるか
-      const want = (e.text.match(/\{\{\d+\}\}/g) || []).sort().join();
-      const got = (x.text.match(/\{\{\d+\}\}/g) || []).sort().join();
-      if (want !== got) { bad++; console.error(`差し込みの札が合いません：${x.id}（元 ${want || 'なし'}・編集後 ${got || 'なし'}）`); continue; }
+      // 差し込みの札：消すのはよい（その情報を出さなくなるだけ）。元にない札や、同じ札を2回使うのは断る
+      const want = new Set(e.text.match(/\{\{\d+\}\}/g) || []);
+      const gotList = x.text.match(/\{\{\d+\}\}/g) || [];
+      if (gotList.some((t) => !want.has(t)) || new Set(gotList).size !== gotList.length) { bad++; console.error(`差し込みの札が合いません：${x.id}（元 ${[...want].join() || 'なし'}・編集後 ${gotList.join() || 'なし'}）`); continue; }
       let out = x.text;
       if (e.kind === 'string') out = out.replace(/\\/g, '\\\\').split(e.quote).join('\\' + e.quote).replace(/\n/g, '\\n').replace(/\t/g, '\\t');
       if (e.kind === 'template') out = out.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');

@@ -728,16 +728,16 @@
     const st = g.itemStatus(pi, k);
     const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy && !netWaiting();
     let cls = isRare(k) ? 'ichip bz' : 'ichip', bd = '', state;
-    if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = st.have > 0 ? `この試合では使用済み（次の試合用に残り${st.have}）` : 'この試合では使用済み'; }
+    if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = st.have > 0 ? `この試合では使用済` : 'この試合では使用済'; }
     else if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
-    else if (interactive && P.used[k] && P.wallet >= 3) { cls += ' rebuy'; bd = '3pt'; state = '使用済み・3ptで再購入できる'; }
-    else { cls += ' spent'; state = P.used[k] ? (P.wallet >= 3 ? '使用済み（3ptで再購入できる）' : '使用済み') : 'なし'; }
+    else if (interactive && P.used[k] && P.wallet >= 3) { cls += ' rebuy'; bd = '3pt'; state = '使用済・3ptで再購入できる'; }
+    else { cls += ' spent'; state = P.used[k] ? (P.wallet >= 3 ? '使用済（3ptで再購入できる）' : '使用済') : 'なし'; }
     const usable = phaseOK && st.usable;
     if (usable) cls += ' usable';
     if (interactive && app.ui && app.ui.item === k) cls += ' active';
     const who = !app.replay && oneSide() ? (pi === viewer() ? 'あなた' : P.name) : P.name;
     const active = interactive && app.ui && app.ui.item === k;
-    const tip = `${who}の${isDef(k) ? '防御' : '攻撃'}アイテム「${ITEMS[k].name}」：${ITEMS[k].desc}（${active ? '選択中。もう一度押すとやめる' : state}）`;
+    const tip = `${who}の${isDef(k) ? '防御' : '攻撃'}アイテム「${ITEMS[k].name}」：${ITEMS[k].desc}（${active ? '選択中。もう一度押すと解除' : state}）`;
     const badge = bd ? `<span class="bd">${esc(bd)}</span>` : '';
     if (interactive) return `<button type="button" class="${cls}" data-act="item" data-key="${k}" aria-disabled="${usable ? 'false' : 'true'}" data-tip="${esc(tip)}" aria-label="${esc(tip)}">${ICON[k]}${badge}</button>`;
     return `<span class="${cls}" role="listitem" data-tip="${esc(tip)}" aria-label="${esc(tip)}">${ICON[k]}${badge}</span>`;
@@ -836,27 +836,27 @@
     switch (mode) {
       case 'item': return who + (g.hasCallable(v) ? 'アイテムを使うか、相手フィールドをタップしてコール' : 'コールできるブロックがありません。コールを飛ばしてください');
       case 'call': return who + '相手フィールドをタップしてコール';
-      case 'answer-phase': return who + (g.itemUsed ? 'アンサーするか、ターンエンドしてください' : 'アンサー・アイテム・ターンエンドから選んでください');
-      case 'answer': return who + '相手フィールドで、キューブの全ブロックを選んでください';
-      case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのブロックを1つ選んでください`;
-      case 'stealth-pick': return who + 'ステルス：隠すキューブのブロックを1つ選んでください（そのブロックがトリガーブロック）';
-      case 'warp-pick': return who + 'ワープ：キューブの、まだ当たっていないブロックを1つ選んでください（そのブロックがトリガーブロック）';
+      case 'answer-phase': return who + (g.itemUsed ? 'アンサーするか、ターンエンドしてください' : 'アンサー・アイテム・ターンエンドから選択してください');
+      case 'answer': return who + '相手フィールドで、キューブの全ブロックを選択してください';
+      case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのブロックを1つ選択してください`;
+      case 'stealth-pick': return who + 'ステルス：隠すキューブのブロックを1つ選択してください（そのブロックがトリガーブロック）';
+      case 'warp-pick': return who + 'ワープ：キューブの、まだ当たっていないブロックを1つ選択してください（そのブロックがトリガーブロック）';
       case 'warp-place': return who + 'ワープ：移動先をタップして、向きを回し、「完了」で決めてください';
-      case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選んでください';
+      case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選択してください';
       case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
-      case 'number': return who + 'サーチサイズ：相手フィールドで調べるブロックを選んでください';
-      case 'node': return who + 'ノードショット：相手フィールドで調べるブロックを選んでください';
-      case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選んでください';
+      case 'number': return who + 'サーチサイズ：相手フィールドで調べるブロックを選択してください';
+      case 'node': return who + 'ノードショット：相手フィールドで調べるブロックを選択してください';
+      case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選択してください';
       case 'homing': return who + 'ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います';
-      case 'cross': return who + 'クロスボム：相手フィールドで十字の中心のブロックを選んでください';
-      case 'acid': return who + 'アシッド：相手フィールドで酸をかけるブロックを選んでください';
-      case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選んでください';
-      case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選んでください';
+      case 'cross': return who + 'クロスボム：相手フィールドで十字の中心のブロックを選択してください';
+      case 'acid': return who + 'アシッド：相手フィールドで酸をかけるブロックを選択してください';
+      case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選択してください';
+      case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選択してください';
       case 'wait':
         if (app.net) return netWaiting() ? '送信しています…' : `${g.players[g.cur].name}の番です。相手の操作を待っています…`;
         return isCPUMode() ? `${foeName()}が解析しています…` : '';
       case 'over': return '試合終了';
-      default: return who + (ITEMS[app.ui.item] ? ITEMS[app.ui.item].name + 'の対象を選んでください' : '');
+      default: return who + (ITEMS[app.ui.item] ? ITEMS[app.ui.item].name + 'の対象を選択してください' : '');
     }
   }
 
@@ -890,40 +890,40 @@
       case 'answer': {
         const key = ui.sel.length ? identifyShape(ui.sel, g.N) : null;
         const shapeTxt = !ui.sel.length ? 'ブロックを選択' : key ? `${SHAPES[key].cat}（${SHAPES[key].size}ブロック）` : '形になっていません';
-        main = '<p class="dock-msg">キューブの<b>全ブロック</b>を選んで宣言します。失敗すると自分のキューブを1つ差し出し、<b>手番が終了</b>します。</p>';
+        main = '<p class="dock-msg">キューブの<b>全ブロック</b>を選択して宣言します。失敗すると自分のキューブを1つ差し出し、<b>手番が終了</b>します。</p>';
         acts = `<span class="chip ${key ? 'ok' : ''}">${esc(shapeTxt)}</span><button class="btn primary" data-act="answer-submit" ${key ? '' : 'disabled'}>宣言する</button>${cancel}`;
         break;
       }
       case 'cube':
-        main = itemHead('cube', '相手フィールドのメニューから、調べる形かブロック数を選んでください。');
+        main = itemHead('cube', '相手フィールドのメニューから、調べる形かブロック数を選択してください。');
         acts = cancel;
         break;
       case 'line':
-        main = itemHead('line', '調べる列（A〜）か行（1〜）のラベルを選んでください。かかっているキューブの数とブロックの数が分かります。');
+        main = itemHead('line', '調べる列（A〜）か行（1〜）のラベルを選択してください。かかっているキューブの数とブロックの数が分かります。');
         acts = cancel;
         break;
       case 'number':
-        main = itemHead('number', '調べるブロックを選んでください。そのキューブが何ブロックか分かります。');
+        main = itemHead('number', '調べるブロックを選択してください。そのキューブが何ブロックか分かります。');
         acts = cancel;
         break;
       case 'shape':
-        main = itemHead('shape', '調べるブロックを選んでください。そのキューブの形が分かります。');
+        main = itemHead('shape', '調べるブロックを選択してください。そのキューブの形が分かります。');
         acts = cancel;
         break;
       case 'pair':
-        main = itemHead('pair', `調べるブロックを2つ選んでください（${ui.sel.length}/2）。同じキューブか分かります。`);
+        main = itemHead('pair', `調べるブロックを2つ選択してください（${ui.sel.length}/2）。同じキューブか分かります。`);
         acts = cancel;
         break;
       case 'node':
-        main = itemHead('node', '調べるブロックを選んでください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
+        main = itemHead('node', '調べるブロックを選択してください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
         acts = cancel;
         break;
       case 'acid':
-        main = itemHead('acid', '酸をかけるブロックを選んでください。キューブがあればアシッドマークが付き、次の手番から、コールの代わりにそのキューブのブロックをランダムに1つずつ自動でコールして、撃破まで溶かします。サーチサイズでブロック数が分かっていれば、早くアンサーできます（ワープされると洗い流されます）。');
+        main = itemHead('acid', '酸をかけるブロックを選択してください。キューブがあればアシッドマークが付き、次の手番から、コールの代わりにそのキューブのブロックをランダムに1つずつ自動でコールして、撃破まで溶かします。サーチサイズでブロック数が分かっていれば、早くアンサーできます（ワープされると洗い流されます）。');
         acts = cancel;
         break;
       case 'cross':
-        main = itemHead('cross', '十字の中心のブロックを選んでください。中心と上下左右の5ブロックに、すっぽり収まるキューブをすべて撃破します（一部だけかかっていても何も分かりません）。');
+        main = itemHead('cross', '十字の中心のブロックを選択してください。中心と上下左右の5ブロックに、すっぽり収まるキューブをすべて撃破します（一部だけかかっていても何も分かりません）。');
         acts = cancel;
         break;
       case 'homing':
@@ -931,11 +931,11 @@
         acts = `<button class="btn primary" data-act="homing-fire">発射する</button>${cancel}`;
         break;
       case 'bazooka':
-        main = itemHead('bazooka', '撃ち込むブロックを選んでください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。');
+        main = itemHead('bazooka', '撃ち込むブロックを選択してください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。');
         acts = cancel;
         break;
       case 'warp-pick':
-        main = itemHead('warp', 'ワープするキューブの、まだ当たっていないブロックを1つ選んでください。そこがトリガー（撃たれると発動）になります。');
+        main = itemHead('warp', 'ワープするキューブの、まだ当たっていないブロックを1つ選択してください。そこがトリガー（撃たれると発動）になります。');
         acts = cancel;
         break;
       case 'warp-place': {
@@ -946,7 +946,7 @@
         break;
       }
       case 'stealth-pick':
-        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選んでください。そこが弱点（トリガー）になり、撃たれるとばれます。');
+        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選択してください。そこが弱点（トリガー）になり、撃たれるとばれます。');
         acts = cancel;
         break;
       case 'treasure':
@@ -1224,7 +1224,7 @@
       ? '配置を送りました。相手の配置が終わると対戦が始まります。'
       : S.treasureMode
       ? 'トレジャーを置くキューブのブロックをタップしてください。'
-      : (S.key ? 'フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選んでください。');
+      : (S.key ? 'フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選択してください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
     // 1試合は持っているアイテムだけ（v15.4）。大会は0の種類も薄く並べる
     // その人のアイテムだけ（v15.9。ユーザーの希望）：1試合は持っている種類、大会はベース8種類と持ちこんだレア（相手のレアは並べない）
@@ -1300,7 +1300,7 @@
         <section class="panel draft">
           <h2 class="ptitle">アイテムドラフト<small>ITEM DRAFT</small></h2>
           <p class="note">${g.draftPool ? `並べた${g.draftPool.length}個` : `この試合の${g.itemKeys.length}種類`}から、${d.each || Math.floor(g.itemKeys.length / 2)}つずつ取ります。順番は ${d.order.map((p) => (p === g.first ? '先' : '後')).join('')}（後＝${esc(g.players[second].name)}）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。</p>
-          <p class="prompt">${esc(g.players[turn].name)}の番です${humanTurn ? '。アイテムを選んでください' : '…'}</p>
+          <p class="prompt">${esc(g.players[turn].name)}の番です${humanTurn ? '。アイテムを選択してください' : '…'}</p>
           <div class="draft-pool">
             ${ITEM_KEYS.filter((k) => d.pool.indexOf(k) >= 0).map((k) => { const n = d.pool.filter((x) => x === k).length; return `<button class="item-card" data-act="draft-pick" data-key="${k}" ${humanTurn && !app.busy ? '' : 'disabled'}>${ICON[k]}<b>${esc(ITEMS[k].name)}${n > 1 ? ` <i class="dn">×${n}</i>` : ''}</b><span>${esc(ITEMS[k].desc)}</span></button>`; }).join('')}
           </div>
@@ -1480,7 +1480,7 @@
         <ul class="icon-legend">${ATK_ITEMS.map(li).join('')}</ul>
         <h3 class="legend-h">防御アイテム（自分フィールドに作用）</h3>
         <ul class="icon-legend">${DEF_ITEMS.map(li).join('')}</ul>
-        <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選んだブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られるのはばれたキューブだけで、ほかのステルスは隠れたまま。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない（ワープを待っているキューブにもステルスは使えない）。</p>
+        <p class="note"><b>ステルス</b>：①隠すキューブのブロックを1つ選んで使う。隠れたキューブは、コールしても×、アイテムも効かず、サーチキューブ・サーチラインの数にも入らない。②選択したブロックが弱点（トリガー）で、撃たれるとばれる。③×のブロックでアンサーすると「ステルスアンサー」。当たれば見破れて、外れたらふつうの失敗と同じく差し出し。見破られるのはばれたキューブだけで、ほかのステルスは隠れたまま。見破られると、×や前の◎・○がステルスの番号つきの STEALTH HIT に変わり、アイテムの結果も本当の値になる（全ブロック当たっていたキューブはそこで撃破）。ステルス中のキューブはワープできない（ワープを待っているキューブにもステルスは使えない）。</p>
         <p class="note"><b>ワープ</b>：①キューブの、まだ当たっていないブロックを1つ（トリガー）と、移動先（空きブロック。回転だけで、反転はできない）を決めておく。使ったことは相手に伝わるが、どのキューブか・移動先は伏せられる。②トリガーをコールされると発動：キューブは移動先へ移り、移動先のトリガーにあたるブロックにワープレティクルが出る（相手のヒント。1発目のヒットとして数える）。トリガーが最後に残ったブロックなら「自動撃破後、ワープ発動」と出る。③トリガーをコールされる前にアンサーで当てられても発動して逃げる（撃破されない。移動先のヒントは出ない。アンサーは成功扱いで手番は続く）。あとで移動先のトリガーにあたるブロックをコールすると、そこにワープレティクルが出る。④発動すると、移動前の当たっていたブロック（アンサーなら宣言したブロック）は×（W付き）になり、それ以外の×は薄くなって、もう一度コールできる。差し出したキューブでは発動しない。バズーカで分解されると取り消し。<b>バズーカ</b>：分解されたキューブは、その試合のあいだ1ブロックのキューブ（1ブロック1pt）になり、1回のヒットで撃破される。分解されたキューブにトレジャーがあれば、ニアの「同じキューブ」はそのブロックだけになる。</p>
         <p class="note"><b>調べた結果の札</b>：ブロックの左上に R・L・T・Z（形）と数字（ブロック数）、左下のひし形の数字＝ノードショットのつながりの数（1＝端、2＝途中か角、3＝分かれ目、0＝1ブロックのキューブ）。</p>
         <div class="row"><button class="btn primary" data-act="close-modal">閉じる</button></div>
@@ -2478,7 +2478,7 @@
           if (g.phase !== 'play') return 0;
           SND.sfx('tchance');
           const cnt = ev.max ? `（残り${ev.left}回／全${ev.max}回）` : '';
-          const sub = mine && !app.replay ? `相手フィールドのブロックを1つ選んでください${cnt}` : `${g.players[ev.actor].name}のトレジャーチャンス${cnt}`;
+          const sub = mine && !app.replay ? `相手フィールドのブロックを1つ選択してください${cnt}` : `${g.players[ev.actor].name}のトレジャーチャンス${cnt}`;
           banner('TREASURE CHANCE', sub, 'treasure', 1250);
           return 900 * k;
         }
@@ -3547,7 +3547,7 @@ self.onmessage = function (e) {
       if (!r.ok) { toast(r.reason || 'アンサーできません', 'warn'); return; }
       resetMode();
       // ゲストは結果がまだ分からない（失敗のときは、届いた state を見て知らせる）
-      if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
+      if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選択してください', 'warn', true);
       if (!r.sent && r.stealth) toast('ステルスアンサー成功！隠れていたキューブを見破りました');
       afterHuman();
     },
@@ -3594,7 +3594,7 @@ self.onmessage = function (e) {
       return;
     }
     if (p) { act('removePiece', pi, p.id); render(); SND.sfx('remove'); return; }
-    if (!S.key) { toast('先に形を選んでください'); return; }
+    if (!S.key) { toast('先に形を選択してください'); return; }
     const a = anchorFor(S.key, S.t, c, g.N);
     if (!a) { toast('このフィールドには入らない形です', 'warn'); return; }
     const r = act('placePiece', pi, S.key, S.t, a.r0, a.c0);
@@ -3639,7 +3639,7 @@ self.onmessage = function (e) {
         const i = ui.sel.indexOf(c);
         if (i >= 0) { ui.sel.splice(i, 1); SND.sfx('desel', 0, { n: ui.sel.length, pan: 0.35 }); }
         else if (ui.sel.length < 5) { ui.sel.push(c); SND.sfx('sel', 0, { n: ui.sel.length, pan: 0.35 }); }
-        else toast('選べるのは5ブロックまでです');
+        else toast('選択できるのは5ブロックまでです');
         render();
         return;
       }
@@ -3689,10 +3689,10 @@ self.onmessage = function (e) {
         //  ②空きブロックを押す → そこに移動先を置く（回転で向きを変えられる）。「完了」で決める
         const p = g.pieceAt(v, c);
         if (p || mode === 'warp-pick') {
-          if (!p) { toast('ワープする自分のキューブの、まだ当たっていないブロックを選んでください'); return; }
+          if (!p) { toast('ワープする自分のキューブの、まだ当たっていないブロックを選択してください'); return; }
           if (p.stealth) { toast('ステルス中のキューブはワープできません'); return; }
           if (p.warpPlan) { toast('そのキューブはすでにワープを待っています'); return; }
-          if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選んでください'); return; }
+          if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選択してください'); return; }
           if (!g.warpOptions(v, p).length) { toast('このキューブには、移動先にできる空きブロックがありません', 'warn'); return; }
           // 同じキューブのトリガーを選び直したときは、向きと置いた場所をそのまま残す
           const same = ui.warp && ui.warp.pieceId === p.id;
@@ -3713,16 +3713,16 @@ self.onmessage = function (e) {
       }
       case 'stealth-pick': {
         const p = g.pieceAt(v, c);
-        if (!p) { toast('ステルスにする自分のキューブを選んでください'); return; }
+        if (!p) { toast('ステルスにする自分のキューブを選択してください'); return; }
         if (p.stealth) { toast('そのキューブはすでにステルス中です'); return; }
         if (p.stealthRevealed) { toast('見破られたキューブには使えません'); return; }
-        if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選んでください'); return; }
+        if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選択してください'); return; }
         useItem('stealth', { pieceId: p.id, cell: c });   // 押したブロックがトリガーブロック（v14.2）
         return;
       }
       case 'sacrifice': {
         const p = g.pieceAt(v, c);
-        if (!p) { toast('差し出す自分のキューブを選んでください'); return; }
+        if (!p) { toast('差し出す自分のキューブを選択してください'); return; }
         act('sacrifice', v, p.id);
         afterHuman();
         return;
@@ -3806,7 +3806,7 @@ self.onmessage = function (e) {
         SND.sfx('sel', 0, { n: ui.sel.length, pan: 0.35 });
         render();
       } else {
-        toast('選べるのは5ブロックまでです');
+        toast('選択できるのは5ブロックまでです');
       }
     } else {
       ui.sel.splice(idx, 1);
@@ -3842,7 +3842,7 @@ self.onmessage = function (e) {
           SND.sfx('sel', 0, { n: ui.sel.length, pan: 0.35 });
           render();
         } else {
-          toast('選べるのは5ブロックまでです');
+          toast('選択できるのは5ブロックまでです');
         }
       }
     } else {
@@ -3922,13 +3922,13 @@ self.onmessage = function (e) {
     const m = E.matchPlacement(cells, g.N);
     if (!m) { toast('置けない形です（R型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
     const size = SHAPES[m.key].size;
-    if (g.stockLeft(pi, size) <= 0) { toast(size + 'ブロックのキューブはもう残っていません（上限）', 'warn'); render(); return; }
+    if (g.stockLeft(pi, size) <= 0) { toast(size + 'キューブリソースが枯渇しています', 'warn'); render(); return; }
     const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);
     if (!r.ok) { toast(r.reason, 'warn'); render(); return; }
     // ドラッグ配置後はキューブ選択を解除したままにし、ドラッグのみの表示・操作感を維持
     S.key = null; S.t = 0; S.treasureMode = false;
     SND.sfx('place');
-    if (!g.players[pi].treasure) toast('◆トレジャーのセットも忘れずに', 'note');
+    if (!g.players[pi].treasure) toast('◆トレジャーのセットを行ってください', 'note');
     render();
   }
 
