@@ -263,7 +263,7 @@
     const memo = memoOf(v);
     if (memo[c]) { delete memo[c]; SND.sfx('desel', 0, { n: 0, pan: 0.35 }); }
     else {
-      if (P.view.marks[c] || P.view.dead[c]) { toast('コール済みのブロックにはメモできません'); return; }
+      if (P.view.marks[c] || P.view.dead[c]) { toast('コール済ブロックにはメモできません'); return; }
       memo[c] = app.ui.memoType || 'x';
       SND.sfx('sel', 0, { n: 1, pan: 0.35 });
     }
@@ -273,11 +273,11 @@
     const ui = app.ui;
     const t = ui.memoType || 'x';
     const n = Object.keys(memoOf(v)).length;
-    const btn = (k, sym) => `<button type="button" class="mb-btn mb-${k}${t === k ? ' cur' : ''}${t === k && ui.memoMode ? ' on' : ''}" data-act="memo-type" data-type="${k}" aria-pressed="${t === k && ui.memoMode}" data-tip="${esc(`メモ：${MEMO_NAME[k]}。右クリックで付けるしるしを${MEMO_NAME[k].slice(0, 1)}にします。押すと、タップでメモする状態になります（もう一度押すと戻る）`)}">${MEMO[k]}</button>`;
+    const btn = (k, sym) => `<button type="button" class="mb-btn mb-${k}${t === k ? ' cur' : ''}${t === k && ui.memoMode ? ' on' : ''}" data-act="memo-type" data-type="${k}" aria-pressed="${t === k && ui.memoMode}" data-tip="${esc(`メモ：${MEMO_NAME[k]}。右クリックで付ける印を${MEMO_NAME[k].slice(0, 1)}に設定。押すとタップでメモ入力（再度押すと解除）`)}">${MEMO[k]}</button>`;
     return `<div class="memobar${ui.memoMode ? ' active' : ''}" role="group" aria-label="メモ">
       <span class="mb-cap">メモ</span>${btn('x')}${btn('o')}${btn('t')}
       <button type="button" class="mb-clear" data-act="memo-clear" ${n ? '' : 'disabled'}>全部消す</button>
-      <span class="mb-hint">${ui.memoMode ? 'タップでメモ中（同じボタンでもどる）' : TOUCH ? 'しるしのボタンを押してから、ブロックをタップ' : '右クリックでメモ'}</span>
+      <span class="mb-hint">${ui.memoMode ? 'タップでメモ入力中（同じボタンで解除）' : TOUCH ? '印のボタンを押してからブロックをタップ' : '右クリックでメモ'}</span>
     </div>`;
   }
 
@@ -324,7 +324,7 @@
       const p = g.players[v].pieces.find((x) => x.id === w.pieceId);
       const pos = p ? warpPos(g, v, p, w.t, w.at) : { ok: false };
       w.pos = pos.ok ? { r0: pos.r0, c0: pos.c0 } : null;
-      if (!pos.ok) toast('この向きでは、そこに置けません。置き直してください');
+      if (!pos.ok) toast('この向きでは配置できません。再配置してください');
     }
     render();
   }
@@ -370,7 +370,7 @@
         const kApx = k != null && split && !stale;
         // サーチラインの札は場所をとるので短く（v14.5）：C＝キューブ、B＝ブロック。くわしくはチップで説明する
         tags.push({ key: 'line', label, pre: '残り', n, unit: 'B', k, kApx, turn: q.turn, stale, rv: !!q.rv,
-          tip: `サーチライン（T${pad2(q.turn)}）：${label}にかかっている（撃破されていない）キューブの数（C）/ そのブロックの数（B）。◎・○のブロックも数に入ります。${stale ? 'その後ワープがあったため、今は変わっているかもしれません' : kApx ? '撃破されると自動で減ります。その後バズーカで分解したキューブがあり、破片は1つずつ数えるため、キューブの数は目安です（ブロックの数は正しい）' : '撃破されると自動で減ります'}` });
+          tip: `サーチライン（T${pad2(q.turn)}）：${label}に存在する未撃破のキューブ数（C）/ ブロック数（B）。◎・○のブロックも含みます。${stale ? 'その後ワープが発生したため、現在は変化している可能性があります' : kApx ? '撃破で自動更新。その後バズーカで分解されたキューブがあり、破片は1つずつ数えるため、キューブ数は目安です（ブロック数は正確）' : '撃破で自動更新'}` });
         continue;
       }
       if (q.kind !== 'size' && q.kind !== 'cat') continue;
@@ -384,7 +384,7 @@
       // サーチキューブは言葉のまま（「3ブロック 残り 2キューブ」。v14.5 で「体」を「キューブ」に）。短い C・B はサーチラインだけ
       const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
       tags.push({ key: 'cube', label, pre: '残り', n, unit: 'キューブ', turn: q.turn, stale: split, rv: !!q.rv,
-        tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック' : q.value}のキューブが、いくつ残っているか。撃破で自動更新。${split ? 'その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です' : ''}` });
+        tip: `サーチキューブ（T${pad2(q.turn)}）：${q.kind === 'size' ? q.value + 'ブロック' : q.value}のキューブの残数。撃破で自動更新。${split ? 'その後バズーカで分解されたキューブがあり、集計に含まれていたか不明のため目安です' : ''}` });
     }
     // ホーミングミサイル（v15.5）：狙ったキューブのブロックの番号の合計。そのあと撃破したキューブの合計と同じなら薄く（グレー）、
     //  ワープ・分解のあとは目安（薄く）
@@ -392,7 +392,7 @@
       const stale = relocatedAfter(q.t) || (kb.splits || []).some((sp) => sp.t > q.t);
       const gone = !q.nd && kb.deads.some((d) => d.t > q.t && d.cells.reduce((a, x) => a + x + 1, 0) === q.sum);
       tags.push({ key: 'homing', label: '合計', n: q.nd ? 'NoData' : q.sum, unit: '', turn: q.turn, stale: stale || gone,   // 撃破したら薄くするだけ（文字は足さない。ユーザーの希望）
-        tip: `ホーミングミサイル（T${pad2(q.turn)}）：相手のキューブ1つ（どれかは分からない）の、ブロックの番号（A-1から読み順に1〜${N * N}）の合計。${gone ? 'その合計のキューブはもう撃破しました。' : ''}${stale ? 'その後ワープか分解があり、目安です。' : ''}` });
+        tip: `ホーミングミサイル（T${pad2(q.turn)}）：相手のキューブ1つ（対象は非公開）のブロック番号（A-1から読み順に1〜${N * N}）の合計。${gone ? 'この合計のキューブは撃破済です。' : ''}${stale ? 'その後ワープ/分解が発生したため目安です。' : ''}` });
     }
     const cells = {};
     const put = (c, k, val) => { if (!view.dead[c]) cells[c] = Object.assign(cells[c] || {}, { [k]: val }); };
@@ -434,7 +434,7 @@
   function intelTagsHTML(intel, mine) {
     if (!intel || !intel.tags.length) return '';
     return `<div class="intel ${mine ? 'mine' : 'enemy'}" aria-label="調査の記録">` + intel.tags.map((t) =>
-      `<span class="itag${t.stale ? ' stale' : ''}${t.rv ? ' rv' : ''}" data-tip="${esc(t.tip + (t.rv ? '（ステルスを見破って直った数）' : ''))}">${ICON[t.key]}${esc(t.label)}${t.pre ? `<i>${esc(t.pre)}</i>` : ''}${t.k != null ? `<b class="${t.kApx ? 'apx' : ''}">${t.k}</b>C<em class="sl">/</em>` : ''}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
+      `<span class="itag${t.stale ? ' stale' : ''}${t.rv ? ' rv' : ''}" data-tip="${esc(t.tip + (t.rv ? '（ステルス解除で修正された数）' : ''))}">${ICON[t.key]}${esc(t.label)}${t.pre ? `<i>${esc(t.pre)}</i>` : ''}${t.k != null ? `<b class="${t.kApx ? 'apx' : ''}">${t.k}</b>C<em class="sl">/</em>` : ''}<b>${t.n}</b>${t.unit}<small>T${pad2(t.turn)}</small></span>`
     ).join('') + '</div>';
   }
   // ブロックの左上に「形状＋ブロック数」（例：L4、R3、#2）。空きブロックだったときは、ブロックの中央に NoData を出す（cellMarkHTML）
@@ -447,7 +447,7 @@
     if (a.size) s += (a.shape ? '' : '#') + a.size.v;
     const stale = (a.shape && a.shape.stale) || (a.size && a.size.stale);
     const rv = (a.shape && a.shape.rv) || (a.size && a.size.rv);   // ステルスを見破って直った結果はゴールド
-    const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチサイズ：${a.size.v}ブロック` : ''].filter(Boolean).join(' / ') + (rv ? '（ステルスを見破って直った結果）' : '');
+    const title = [a.shape ? `サーチシェイプ：${a.shape.v}` : '', a.size ? `サーチサイズ：${a.size.v}ブロック` : ''].filter(Boolean).join(' / ') + (rv ? '（ステルス解除で修正された結果）' : '');
     return `<span class="ctag${stale ? ' stale' : ''}${rv ? ' rv' : ''}" title="${esc(title)}"><i>${esc(s)}</i></span>`;
   }
   // ノードショット・NoData の表示。NoData（サーチサイズ・サーチシェイプ・ノードショット・バズーカで空きブロックだった）は
@@ -644,7 +644,7 @@
       if (!inSetup && fv.lastCall === c && opts.flash) cls += ' last';
       if (opts.sel && opts.sel.indexOf(c) >= 0) cls += ' sel';
       if (opts.clickable && opts.clickable(c)) cls += ' click';
-      const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}${p.warpPlan ? '（ワープ待ち' + (p.warpPlan.trigger === c ? '・トリガー' : '') + '）' : ''}` : ' 撃破済み') : (wdest.has(c) ? (wdest.get(c).trig ? ' ワープの移動先（ワープ後のトリガー）' : ' ワープの移動先') : '')) + probeLabel(intel, c, m);
+      const label = coord(c) + (p ? (p.alive ? ` ${p.size}ブロックのキューブ${p.stealth ? '（ステルス）' : ''}${p.warpPlan ? '（ワープ待ち' + (p.warpPlan.trigger === c ? '・トリガー' : '') + '）' : ''}` : ' 撃破済') : (wdest.has(c) ? (wdest.get(c).trig ? ' ワープ先（ワープ後のトリガー）' : ' ワープ先') : '')) + probeLabel(intel, c, m);
       html += `<div class="${cls}" style="${style}" data-act="cell" data-board="${kind}" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${stackCorner(inner)}</div>`;
     }
     return boardFrame(N, kind, html, opts.cls, { overlay: pairsSVG(intel, N) + (opts.overlay || '') });
@@ -712,9 +712,9 @@
       if (opts.clickable && opts.clickable(c)) cls += ' click';
       const m = v.marks[c];
       let label = coord(c);
-      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コールできる）' : m.warp ? (m.wtrig ? ' ×（ワープ前の位置・トリガー）' : ' ×（ワープ前の位置）') : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : m.r === 'wp' ? ' ワープレティクル' : ' ○';
+      if (m) label += m.r === 'x' ? (m.callable ? ' ×（再コール可能）' : m.warp ? (m.wtrig ? ' ×（ワープ前の位置・トリガー）' : ' ×（ワープ前の位置）') : ' ×') : m.r === 'oo' ? ` ◎${m.num}` : m.r === 'q' ? ` STEALTH HIT${m.num != null ? ' ' + m.num : ''}` : m.r === 'wp' ? ' ワープレティクル' : ' ○';
       label += probeLabel(intel, c, m);
-      if (d) label += ' 撃破済み';
+      if (d) label += ' 撃破済';
       if (mo && !m && !d) label += `（メモ：${MEMO_NAME[mo]}）`;
       html += `<div class="${cls}" style="${style}" data-act="cell" data-board="pred" data-cell="${c}" role="gridcell" aria-label="${esc(label)}">${stackCorner(inner)}</div>`;
     }
@@ -834,27 +834,27 @@
     const g = G(), v = viewer();
     const who = oneSide() ? '' : g.players[v].name + '：';
     switch (mode) {
-      case 'item': return who + (g.hasCallable(v) ? 'アイテムを使うか、相手フィールドをタップしてコール' : 'コールできるブロックがありません。コールを飛ばしてください');
+      case 'item': return who + (g.hasCallable(v) ? 'アイテムを使用するか、相手フィールドをタップしてコール' : 'コール可能なブロックがありません。コールをスキップしてください');
       case 'call': return who + '相手フィールドをタップしてコール';
       case 'answer-phase': return who + (g.itemUsed ? 'アンサーするか、ターンエンドしてください' : 'アンサー・アイテム・ターンエンドから選択してください');
       case 'answer': return who + '相手フィールドで、キューブの全ブロックを選択してください';
       case 'treasure': return who + `トレジャーコール（残り${g.treasureLeft(v)}回）：相手フィールドのブロックを1つ選択してください`;
       case 'stealth-pick': return who + 'ステルス：隠すキューブのブロックを1つ選択してください（そのブロックがトリガーブロック）';
       case 'warp-pick': return who + 'ワープ：キューブの、まだ当たっていないブロックを1つ選択してください（そのブロックがトリガーブロック）';
-      case 'warp-place': return who + 'ワープ：移動先をタップして、向きを回し、「完了」で決めてください';
+      case 'warp-place': return who + 'ワープ：ワープ先をタップして向きを回転し、「完了」で確定してください';
       case 'sacrifice': return who + 'アンサー失敗！手番が終了します。差し出す自分のキューブを選択してください';
-      case 'line': return who + 'サーチライン：相手フィールドの列か行のラベルをタップ';
+      case 'line': return who + 'サーチライン：相手フィールドの列/行のラベルをタップ';
       case 'number': return who + 'サーチサイズ：相手フィールドで調べるブロックを選択してください';
       case 'node': return who + 'ノードショット：相手フィールドで調べるブロックを選択してください';
       case 'bazooka': return who + 'バズーカ：相手フィールドで撃ち込むブロックを選択してください';
-      case 'homing': return who + 'ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います';
+      case 'homing': return who + 'ホーミングミサイル：発射すると相手のキューブを1つ自動で狙います';
       case 'cross': return who + 'クロスボム：相手フィールドで十字の中心のブロックを選択してください';
       case 'acid': return who + 'アシッド：相手フィールドで酸をかけるブロックを選択してください';
       case 'pair': return who + 'ペアショット：相手フィールドでブロックを2つ選択してください';
       case 'cube': return who + 'サーチキューブ：相手フィールドのメニューから選択してください';
       case 'wait':
-        if (app.net) return netWaiting() ? '送信しています…' : `${g.players[g.cur].name}の番です。相手の操作を待っています…`;
-        return isCPUMode() ? `${foeName()}が解析しています…` : '';
+        if (app.net) return netWaiting() ? '送信中…' : `${g.players[g.cur].name}の手番です。相手の操作を待機中…`;
+        return isCPUMode() ? `${foeName()}が解析中…` : '';
       case 'over': return '試合終了';
       default: return who + (ITEMS[app.ui.item] ? ITEMS[app.ui.item].name + 'の対象を選択してください' : '');
     }
@@ -874,40 +874,40 @@
     let main = '', acts = '';
     switch (mode) {
       case 'item':
-        if (g.hasCallable(v)) main = '<p class="note">アイテムはコールの前か後のどちらかで、1ターンに1つまで。選んだアイコンをもう一度押すとやめられます。</p>';
+        if (g.hasCallable(v)) main = '<p class="note">アイテムはコールの前後どちらかで1ターンに1つまで。選択したアイコンを再度押すと解除できます。</p>';
         else {
-          main = '<p class="dock-msg">コールできるブロックが残っていません。コールを飛ばして、アンサーかターンエンドに進みます。</p>';
-          acts = '<button class="btn primary" data-act="skip-call">コールを飛ばす</button>';
+          main = '<p class="dock-msg">コール可能なブロックがありません。コールをスキップして、アンサー/ターンエンドに進みます。</p>';
+          acts = '<button class="btn primary" data-act="skip-call">コールをスキップ</button>';
         }
         break;
       case 'call':
         main = '<p class="note">相手フィールドのブロックをタップしてコールします。</p>';
         break;
       case 'answer-phase':
-        main = `<p class="note">${g.itemUsed ? 'アンサーでキューブの全ブロックを宣言するか、ターンエンドします。' : 'このターンはまだアイテムを使えます（フィールド上部のアイコン）。'}</p>`;
+        main = `<p class="note">${g.itemUsed ? 'アンサーでキューブの全ブロックを宣言するか、ターンエンドします。' : 'このターンはまだアイテムを使用できます（フィールド上部のアイコン）。'}</p>`;
         acts = '<button class="btn primary" data-act="answer-start">アンサー</button><button class="btn" data-act="end-turn">ターンエンド</button>';
         break;
       case 'answer': {
         const key = ui.sel.length ? identifyShape(ui.sel, g.N) : null;
-        const shapeTxt = !ui.sel.length ? 'ブロックを選択' : key ? `${SHAPES[key].cat}（${SHAPES[key].size}ブロック）` : '形になっていません';
+        const shapeTxt = !ui.sel.length ? 'ブロックを選択' : key ? `${SHAPES[key].cat}（${SHAPES[key].size}ブロック）` : '有効な形状ではありません';
         main = '<p class="dock-msg">キューブの<b>全ブロック</b>を選択して宣言します。失敗すると自分のキューブを1つ差し出し、<b>手番が終了</b>します。</p>';
         acts = `<span class="chip ${key ? 'ok' : ''}">${esc(shapeTxt)}</span><button class="btn primary" data-act="answer-submit" ${key ? '' : 'disabled'}>宣言する</button>${cancel}`;
         break;
       }
       case 'cube':
-        main = itemHead('cube', '相手フィールドのメニューから、調べる形かブロック数を選択してください。');
+        main = itemHead('cube', '相手フィールドのメニューから、調べる形状/ブロック数を選択してください。');
         acts = cancel;
         break;
       case 'line':
-        main = itemHead('line', '調べる列（A〜）か行（1〜）のラベルを選択してください。かかっているキューブの数とブロックの数が分かります。');
+        main = itemHead('line', '調べる列（A〜）/行（1〜）のラベルを選択してください。存在するキューブ数とブロック数が分かります。');
         acts = cancel;
         break;
       case 'number':
-        main = itemHead('number', '調べるブロックを選択してください。そのキューブが何ブロックか分かります。');
+        main = itemHead('number', '調べるブロックを選択してください。そのキューブのブロック数が分かります。');
         acts = cancel;
         break;
       case 'shape':
-        main = itemHead('shape', '調べるブロックを選択してください。そのキューブの形が分かります。');
+        main = itemHead('shape', '調べるブロックを選択してください。そのキューブの形状が分かります。');
         acts = cancel;
         break;
       case 'pair':
@@ -915,42 +915,42 @@
         acts = cancel;
         break;
       case 'node':
-        main = itemHead('node', '調べるブロックを選択してください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。');
+        main = itemHead('node', '調べるブロックを選択してください。同じキューブへの上下左右のつながりの数が分かります（1＝端、2＝途中/角、3＝分岐）。');
         acts = cancel;
         break;
       case 'acid':
-        main = itemHead('acid', '酸をかけるブロックを選択してください。キューブがあればアシッドマークが付き、次の手番から、コールの代わりにそのキューブのブロックをランダムに1つずつ自動でコールして、撃破まで溶かします。サーチサイズでブロック数が分かっていれば、早くアンサーできます（ワープされると洗い流されます）。');
+        main = itemHead('acid', '酸をかけるブロックを選択してください。キューブがあればアシッドアイコンが付き、次のターン以降キューブの撃破までコールできなくなりますが、そのキューブのランダムなブロックが自動でコールされます。サーチサイズでブロック数が分かっていれば早くアンサーできます（ワープされると解除）。');
         acts = cancel;
         break;
       case 'cross':
-        main = itemHead('cross', '十字の中心のブロックを選択してください。中心と上下左右の5ブロックに、すっぽり収まるキューブをすべて撃破します（一部だけかかっていても何も分かりません）。');
+        main = itemHead('cross', '十字の中心のブロックを選択してください。中心と上下左右の5ブロックに収まるキューブをすべて撃破します（一部のみ重なる場合は何も分かりません）。');
         acts = cancel;
         break;
       case 'homing':
-        main = itemHead('homing', '相手のキューブ（隠れているステルスを除く）を1つ自動で選び、そのブロックの番号の合計が分かります。番号は相手フィールドのA-1から読み順に1〜。どのキューブかは分かりません。');
+        main = itemHead('homing', '相手のキューブ（ステルス中を除く）を1つ自動で選び、そのブロック番号の合計が分かります。番号は相手フィールドのA-1から読み順に1〜。対象のキューブは非公開です。');
         acts = `<button class="btn primary" data-act="homing-fire">発射する</button>${cancel}`;
         break;
       case 'bazooka':
-        main = itemHead('bazooka', '撃ち込むブロックを選択してください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。');
+        main = itemHead('bazooka', '撃ち込むブロックを選択してください。そのキューブを1ブロックずつに分解し、コール済のブロックはその時点で撃破されます。');
         acts = cancel;
         break;
       case 'warp-pick':
-        main = itemHead('warp', 'ワープするキューブの、まだ当たっていないブロックを1つ選択してください。そこがトリガー（撃たれると発動）になります。');
+        main = itemHead('warp', 'ワープするキューブの、未コールのブロックを1つ選択してください。そこがトリガー（コールされると発動）になります。');
         acts = cancel;
         break;
       case 'warp-place': {
         // v15：移動先をタップして置き、回転で向きを合わせ、「完了」で決める（反転はなし）。自分のキューブのブロックをタップすると、トリガーを選び直せる
         const w = ui.warp, ok = !!(w && w.pos);
-        main = itemHead('warp', '移動先の空きブロックをタップして置き、回転で向きを合わせて「完了」。移動先の印のブロックが、ワープ後のトリガー（トリガーで発動したとき、ワープレティクルが出るブロック）です。トリガーは、自分のキューブのまだ当たっていないブロックをタップすると選び直せます。');
+        main = itemHead('warp', 'ワープ先の空きブロックをタップして配置し、回転で向きを合わせて「完了」。ワープ先の印のブロックが、ワープ後のトリガー（トリガーで発動したときワープレティクルが出るブロック）です。トリガーは、自分のキューブの未コールのブロックをタップすると再選択できます。');
         acts = `<button class="btn" data-act="warp-rotate" title="R キー">↻ 回転</button><button class="btn primary" data-act="warp-done" ${ok ? '' : 'disabled'}>完了</button>${cancel}`;
         break;
       }
       case 'stealth-pick':
-        main = itemHead('stealth', '隠すキューブの、まだ当たっていないブロックを1つ選択してください。そこが弱点（トリガー）になり、撃たれるとばれます。');
+        main = itemHead('stealth', '隠すキューブの、未コールのブロックを1つ選択してください。そこがトリガーになり、コールされるとステルス解除されます。');
         acts = cancel;
         break;
       case 'treasure':
-        main = `<p class="dock-msg">トレジャーコール（残り${g.treasureLeft(v)}回／全${g.rules.treasureMax}回）：相手フィールドのブロックを1つ。H＝的中、N＝上下左右か同じキューブ、X＝外れ。</p>`;
+        main = `<p class="dock-msg">トレジャーコール（残り${g.treasureLeft(v)}回／全${g.rules.treasureMax}回）：相手フィールドのブロックを1つ。H＝的中、N＝上下左右/同じキューブ、X＝外れ。</p>`;
         break;
       case 'sacrifice':
         main = `<p class="dock-msg warn">${esc(phaseText(mode))}</p>`;
@@ -993,7 +993,7 @@
     const row = (P, left) => `<tr><th scope="row">${esc(P.name)}${g.first === P.idx ? '<small>先攻</small>' : ''}</th>
       ${T ? `<td class="live">${live(P)}</td>` : ''}<td>${P.score.attack}<small>ブロック</small></td><td>${tre(P)}</td><td>${left}</td>${T ? `<td class="held-td">${heldCubes(P, hideSplitOf(P))}</td>` : ''}</tr>
       ${T ? `<tr class="held-row"><td colspan="5"><span class="hr-cap">所持キューブ</span>${heldCubes(P, hideSplitOf(P))}</td></tr>` : ''}`;
-    const tourNote = T ? '持ち点は、この試合の前の点に、ここまでの撃破（奪った・奪われたブロック数）とトレジャーを足したもの（勝利点は試合の終わりに）。所持キューブは大会の持ち数（◆持っている・◇失った）。相手のキューブをバズーカで分解したときは、そのキューブを失ったかどうかは試合終了まで非公開。' : '';
+    const tourNote = T ? '持ち点＝この試合前の点＋ここまでの撃破（奪取/喪失したブロック数）とトレジャー（勝利点は試合終了時に加算）。所持キューブは大会での所持数（◆所持・◇喪失）。相手のキューブをバズーカで分解した場合、そのキューブの喪失有無は試合終了まで非公開。' : '';
     return `<section class="panel scorebar${T ? ' tour' : ''}" aria-label="スコア">
       <table>
         <thead><tr><th></th>${T ? '<th>持ち点</th>' : ''}<th>撃破</th><th>トレジャー</th><th>残りキューブ</th>${T ? '<th>所持キューブ</th>' : ''}</tr></thead>
@@ -1002,13 +1002,13 @@
           ${row(foe, foeLeft)}
         </tbody>
       </table>
-      <p class="note">相手の残りキューブ数は分かりません。${tourNote}</p>
+      <p class="note">相手の残りキューブ数は非公開です。${tourNote}</p>
     </section>`;
   }
 
   // サウンドの切り替え（BGMと効果音 → 効果音だけ → 音なし）
   const SND_ORDER = ['all', 'sfx', 'off'];
-  const SND_TEXT = { all: ['BGM・SE', 'BGMと効果音'], sfx: ['SEのみ', '効果音だけ'], off: ['OFF', '音なし'] };
+  const SND_TEXT = { all: ['BGM・SE', 'BGMと効果音'], sfx: ['SEのみ', '効果音のみ'], off: ['OFF', '音なし'] };
   const SPEAKER = '<path class="spk" d="M3.5 9.4h3.6L12 5.5v13l-4.9-3.9H3.5z"/>';
   const SND_ICON = {
     all: `<svg viewBox="0 0 24 24" aria-hidden="true">${SPEAKER}<path d="M15.6 9.3a3.8 3.8 0 0 1 0 5.4M18.4 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>`,
@@ -1025,7 +1025,7 @@
     store.set('settings', app.settings);
     SND.setMode(m, true);
     if (m !== 'off') SND.sfx('tick');
-    toast(m === 'all' ? 'BGMと効果音をオンにしました' : m === 'sfx' ? 'BGMを止めました（効果音だけ鳴ります）' : '音をすべてオフにしました', 'note');
+    toast(m === 'all' ? 'BGMと効果音をオンにしました' : m === 'sfx' ? 'BGMをオフにしました（効果音のみ）' : '音をすべてオフにしました', 'note');
   }
 
   function hudHTML(stats, back) {
@@ -1102,13 +1102,13 @@
   // 種類ごとの数の指定（選ぶ＝持つ数、ドラフト＝並べる数）
   function itemCountHTML(set) {
     const o = app.settings[set];
-    return `<div class="item-count" role="group" aria-label="${set === 'draftPool' ? 'ドラフトに並べるアイテムの数' : '持つアイテムの数（2人共通）'}">${ITEM_KEYS.map((k) => {
+    return `<div class="item-count" role="group" aria-label="${set === 'draftPool' ? 'ドラフトに並べるアイテム数' : '所持アイテム数（2人共通）'}">${ITEM_KEYS.map((k) => {
       const n = o[k] | 0;
       return `<div class="ic-row${n ? ' on' : ''}" title="${esc(ITEMS[k].desc)}">${ICON[k]}<span class="ic-name">${esc(ITEMS[k].name)}</span>
         <button type="button" class="btn ghost sq" data-act="icnt" data-set="${set}" data-key="${k}" data-d="-1" ${n <= 0 ? 'disabled' : ''} aria-label="${esc(ITEMS[k].name)}を減らす">−</button>
         <output>${n}</output>
         <button type="button" class="btn ghost sq" data-act="icnt" data-set="${set}" data-key="${k}" data-d="1" ${n >= COUNT_MAX ? 'disabled' : ''} aria-label="${esc(ITEMS[k].name)}を増やす">＋</button></div>`;
-    }).join('')}<p class="note">${set === 'draftPool' ? `合わせて${countTotal(o)}個を並べます。` : `2人とも合わせて${countTotal(o)}個を持って始めます。`}</p></div>`;
+    }).join('')}<p class="note">${set === 'draftPool' ? `計${countTotal(o)}個を並べます。` : `2人とも計${countTotal(o)}個を所持して開始します。`}</p></div>`;
   }
   // 個数の指定（ランダム＝何種類使うか、ドラフト＝1人が何個取るか）
   function stepperHTML(key, value, min, max, unit, note) {
@@ -1155,16 +1155,16 @@
             : seg('mode', s.mode, [['cpu', 'CPU戦', '最強CPUが相手'], ['pvp', 'プレイヤーバトル', '1台で2人が交代'], ['online', 'オンライン対戦', '別の端末の人と']])}</div>
           <div class="set-row"><h2>ルール</h2>${seg('rules', s.rules, [['prelim', '4×4', 'トレジャー4回'], ['final', '5×5', 'トレジャー5回'], ['tour', '大会', '予選3試合＋決勝']])}</div>
           <div class="set-row"><h2>使えるアイテム</h2>${tour
-            ? `<p class="set-fixed">ベース8種＋選んだレア2種を<b>2つずつ（20個）</b>持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点<b>${E.Tour.START}</b>から、撃破と勝利で相手の点を奪い合います。</p>`
+            ? `<p class="set-fixed">ベース8種＋選択したレア2種を<b>2つずつ（20個）</b>所持して開始し、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点<b>${E.Tour.START}</b>から、撃破と勝利で相手の点を奪い合います。</p>`
             : seg('items', s.items, [['pick', '選ぶ', countTotal(s.itemCount) + '個を指定'], ['draft', 'ドラフト', `1人${Math.min(s.draftN, draftMax(s))}個ずつ`], ['mirror', 'ミラー', `同じ${s.randomN}種`], ['random', 'ランダム', `別々の${s.randomN}種`]])}</div>
           ${!tour && s.items === 'pick' ? `<div class="set-row"><span aria-hidden="true"></span>${itemCountHTML('itemCount')}</div>` : ''}
-          ${!tour && (s.items === 'mirror' || s.items === 'random') ? `<div class="set-row"><span aria-hidden="true"></span>${stepperHTML('randomN', s.randomN, 1, ITEM_KEYS.length, '種', s.items === 'mirror' ? `${ITEM_KEYS.length}種類の中から試合ごとにランダムに選び、2人とも同じ種類を1つずつ持ちます` : `${ITEM_KEYS.length}種類の中から試合ごとに、2人それぞれ別々にランダムに選びます（1つずつ）`)}</div>` : ''}
-          ${!tour && s.items === 'draft' ? `<div class="set-row"><span aria-hidden="true"></span>${itemCountHTML('draftPool')}</div><div class="set-row"><span aria-hidden="true"></span>${stepperHTML('draftN', Math.min(s.draftN, draftMax(s)), 1, draftMax(s), '個', '並べたアイテムから、1人がこの数ずつドラフトで取ります（後攻から）')}</div>` : ''}
-          <div class="set-row"><h2>演出とCPUの速さ</h2>${seg('speed', s.speed, [['normal', 'ふつう', ''], ['fast', 'はやい', '']])}</div>
-          <div class="set-row"><h2>サウンド</h2>${seg('sound', soundMode(), [['all', 'BGMと効果音', ''], ['sfx', '効果音だけ', ''], ['off', 'なし', '']])}</div>
+          ${!tour && (s.items === 'mirror' || s.items === 'random') ? `<div class="set-row"><span aria-hidden="true"></span>${stepperHTML('randomN', s.randomN, 1, ITEM_KEYS.length, '種', s.items === 'mirror' ? `${ITEM_KEYS.length}種類から試合ごとにランダムに選択し、2人とも同じ種類を1つずつ所持します` : `${ITEM_KEYS.length}種類から試合ごとに、2人それぞれ別々にランダムに選択します（1つずつ）`)}</div>` : ''}
+          ${!tour && s.items === 'draft' ? `<div class="set-row"><span aria-hidden="true"></span>${itemCountHTML('draftPool')}</div><div class="set-row"><span aria-hidden="true"></span>${stepperHTML('draftN', Math.min(s.draftN, draftMax(s)), 1, draftMax(s), '個', '並べたアイテムから1人この数ずつドラフトで獲得します（後攻から）')}</div>` : ''}
+          <div class="set-row"><h2>演出とCPUの速さ</h2>${seg('speed', s.speed, [['normal', '標準', ''], ['fast', '高速', '']])}</div>
+          <div class="set-row"><h2>サウンド</h2>${seg('sound', soundMode(), [['all', 'BGMと効果音', ''], ['sfx', '効果音のみ', ''], ['off', 'なし', '']])}</div>
           <div class="start-row">
             <button class="btn primary big" data-act="start">${tour ? '大会を始める' : online ? 'オンライン対戦の部屋へ' : '対戦を始める'}</button>
-            <p class="note">${tour ? '総当たりの予選3試合（4×4）の上位2名が、決勝（5×5）に進みます。' : online ? (NET.supported() ? '部屋を作った人のルールとアイテムの設定で対戦します。部屋に入る人の設定は使いません。' : 'このページではオンライン対戦を使えません（次の画面に、遊べるページへのリンクがあります）。') : '先攻・後攻はランダムで決まります。'}音は最初に画面を操作したときから鳴ります。</p>
+            <p class="note">${tour ? '総当たりの予選3試合（4×4）の上位2名が決勝（5×5）へ進出。' : online ? (NET.supported() ? '部屋の作成者のルール/アイテム設定で対戦します。参加者の設定は使用しません。' : 'このページではオンライン対戦は使用できません（次の画面に対応ページへのリンクがあります）。') : '先攻/後攻はランダムで決定します。'}音は最初の画面操作から再生されます。</p>
           </div>
         </section>
       </div>`;
@@ -1182,7 +1182,7 @@
       pips += `<i class="${k}"></i>`;
     }
     const lost = Math.max(0, full - on - placed - gone);
-    const tip = `${size}ブロックのキューブ：${n.label || '残り'}${on}${placed ? `・置いた${placed}` : ''}${gone ? `・この試合で失った${gone}` : ''}${lost ? `・大会で失った${lost}` : ''}（大会の最初は${full}）`;
+    const tip = `${size}ブロックのキューブ：${n.label || '残り'}${on}${placed ? `・配置${placed}` : ''}${gone ? `・この試合で喪失${gone}` : ''}${lost ? `・大会で喪失${lost}` : ''}（大会開始時は${full}）`;
     return `<span class="cb" data-tip="${esc(tip)}" aria-label="${esc(tip)}"><b>${size}</b>${pips}</span>`;
   }
   // 試合中の「所持キューブ」：大会の持ち数から、この試合で失った分（撃破・差し出し。分解は全部撃破されたとき）を引く
@@ -1192,7 +1192,7 @@
     const lostNow = { 2: 0, 3: 0, 4: 0, 5: 0 };
     for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lostNow[p.size]++;
     if (!hideSplit) for (const sp of P.splitPieces || []) if (!P.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)) lostNow[sp.size]++;
-    return `<div class="st-cubes held">${[2, 3, 4, 5].map((s) => cubePips(s, { on: Math.max(0, (P.stock[s] || 0) - lostNow[s]), gone: lostNow[s], label: '持っている' })).join('')}</div>`;
+    return `<div class="st-cubes held">${[2, 3, 4, 5].map((s) => cubePips(s, { on: Math.max(0, (P.stock[s] || 0) - lostNow[s]), gone: lostNow[s], label: '所持' })).join('')}</div>`;
   }
 
   // ---------------- 画面：配置 ----------------
@@ -1208,7 +1208,7 @@
     for (const size of [2, 3, 4, 5]) {
       const left = g.stockLeft(pi, size);
       const placed = Math.max(0, (P.stock[size] || 0) - left);
-      palette += `<div class="pal-row"><div class="pal-h"><b>${size}ブロック</b>${cubePips(size, { on: left, placed, label: '置ける' })}</div><div class="pal-shapes">`;
+      palette += `<div class="pal-row"><div class="pal-h"><b>${size}ブロック</b>${cubePips(size, { on: left, placed, label: '配置可能' })}</div><div class="pal-shapes">`;
       for (const k of SHAPES_BY_SIZE[size]) {
         const fits = PL[k].length > 0;
         const dis = left <= 0 || !fits;
@@ -1219,10 +1219,10 @@
     }
     const ready = P.pieces.length > 0 && !!P.treasure;
     const hint = locked
-      ? '配置を送りました。相手の配置が終わると対戦が始まります。'
+      ? '配置を送信しました。相手の配置完了後に対戦を開始します。'
       : S.treasureMode
-      ? 'トレジャーを置くキューブのブロックをタップしてください。'
-      : (S.key ? 'フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選択してください。');
+      ? 'トレジャーをセットするキューブのブロックをタップしてください。'
+      : (S.key ? 'フィールドをタップして配置。空きブロックをなぞってもその形状で配置できます。配置したキューブをタップすると解除。R：回転 / F：反転' : '空きブロックをなぞって形を描くか、キューブの一覧から形を選択してください。');
     // 左：単発の試合は「この試合のアイテム」、大会は自分と相手の残りアイテム（個数つき）
     // 1試合は持っているアイテムだけ（v15.4）。大会は0の種類も薄く並べる
     // その人のアイテムだけ（v15.9。ユーザーの希望）：1試合は持っている種類、大会はベース8種類と持ちこんだレア（相手のレアは並べない）
@@ -1261,15 +1261,15 @@
           </section>
           <section class="panel su-done">
             ${locked
-              ? '<p class="prompt net-wait">相手の配置を待っています</p>'
+              ? '<p class="prompt net-wait">相手の配置を待機中</p>'
               : `<button class="btn primary big su-donebtn" data-act="setup-done" ${ready ? '' : 'disabled'}>配置完了</button>
-            <span class="note su-donenote">${ready ? '準備ができました' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを置いてください')}</span>`}
+            <span class="note su-donenote">${ready ? '準備完了' : (P.pieces.length ? 'トレジャーをセットしてください' : 'キューブを配置してください')}</span>`}
             ${app.net ? `<span class="note net-foe">${esc(app.net.foe || '相手')}：${netFoeReady() ? '<b>配置完了</b>' : '配置中…'}</span>` : ''}
           </section>
           <section class="panel su-parts">
             <h2 class="ptitle">キューブ<small>CUBES</small></h2>
             <div class="palette">${palette}</div>
-            <p class="note">最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。${app.tour ? '大会では、撃破されるとキューブのブロック数ぶんの点を相手に奪われます。' : ''}配置したら、どれか1ブロックにトレジャーをセットします。${app.tour ? '<b class="warn-t">大会：撃破された（アンサー失敗で差し出した）キューブは、次の試合から使えません。</b>' : ''}</p>
+            <p class="note">最低1キューブ。詰め込みも1キューブのみの配置も可能です。${app.tour ? '大会では、撃破されたキューブのブロック数分の点を相手に奪取されます。' : ''}配置後、いずれか1ブロックにトレジャーをセットします。${app.tour ? '<b class="warn-t">大会：撃破された（アンサー失敗で差し出した）キューブは次の試合から使用できません。</b>' : ''}</p>
           </section>
         </div>
       </div>`;
@@ -1290,15 +1290,15 @@
       const base = {};
       for (const k of ITEM_KEYS) base[k] = (P.items[k] || 0) - d.picks[pi].filter((x) => x === k).length;
       const list = ITEM_KEYS.filter((k) => base[k] > 0).map((k) => `${esc(ITEMS[k].name)}${base[k] > 1 ? '×' + base[k] : ''}`);
-      return `<p class="note held">手持ち（予選の残り）：${list.length ? list.join('・') : 'なし'}</p>`;
+      return `<p class="note held">所持（予選の残り）：${list.length ? list.join('・') : 'なし'}</p>`;
     };
     root.innerHTML = `
       <div class="wrap">
         ${hudHTML(`<span class="stat">${app.tour ? "決勝" : "バトル"}<b>DRAFT</b></span><span class="stat me">PICK<b>${esc(g.players[turn].name)}</b></span>`)}
         <section class="panel draft">
           <h2 class="ptitle">アイテムドラフト<small>ITEM DRAFT</small></h2>
-          <p class="note">${g.draftPool ? `並べた${g.draftPool.length}個` : `この試合の${g.itemKeys.length}種類`}から、${d.each || Math.floor(g.itemKeys.length / 2)}つずつ取ります。順番は ${d.order.map((p) => (p === g.first ? '先' : '後')).join('')}（後＝${esc(g.players[second].name)}）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。</p>
-          <p class="prompt">${esc(g.players[turn].name)}の番です${humanTurn ? '。アイテムを選択してください' : '…'}</p>
+          <p class="note">${g.draftPool ? `並べた${g.draftPool.length}個` : `この試合の${g.itemKeys.length}種類`}から${d.each || Math.floor(g.itemKeys.length / 2)}つずつ獲得します。順番は ${d.order.map((p) => (p === g.first ? '先' : '後')).join('')}（後＝${esc(g.players[second].name)}）。偏りの少ない「トゥエ・モース順」で、最初と最後は別の人が獲得します。獲得したアイテムは所持数に1回分追加されます。</p>
+          <p class="prompt">${esc(g.players[turn].name)}の手番です${humanTurn ? '。アイテムを選択してください' : '…'}</p>
           <div class="draft-pool">
             ${ITEM_KEYS.filter((k) => d.pool.indexOf(k) >= 0).map((k) => { const n = d.pool.filter((x) => x === k).length; return `<button class="item-card" data-act="draft-pick" data-key="${k}" ${humanTurn && !app.busy ? '' : 'disabled'}>${ICON[k]}<b>${esc(ITEMS[k].name)}${n > 1 ? ` <i class="dn">×${n}</i>` : ''}</b><span>${esc(ITEMS[k].desc)}</span></button>`; }).join('')}
           </div>
@@ -1371,12 +1371,12 @@
           </section>
           <div class="logs">
             <aside class="logcol col-def" aria-label="自分フィールドの記録">
-              <section class="panel itemlog"><h2 class="ptitle">自分フィールドのアイテム<small>MY FIELD</small></h2>${itemLogHTML(L.myItems, v, 'まだ使われていません')}</section>
-              <section class="panel calllog"><h2 class="ptitle">防御ログ<small>DEFENSE</small></h2>${callLogHTML(L.defCalls, v, 'まだ攻撃を受けていません')}</section>
+              <section class="panel itemlog"><h2 class="ptitle">自分フィールドのアイテム<small>MY FIELD</small></h2>${itemLogHTML(L.myItems, v, '未使用')}</section>
+              <section class="panel calllog"><h2 class="ptitle">防御ログ<small>DEFENSE</small></h2>${callLogHTML(L.defCalls, v, '攻撃履歴なし')}</section>
             </aside>
             <aside class="logcol col-atk" aria-label="相手フィールドの記録">
-              <section class="panel enemy itemlog"><h2 class="ptitle">相手フィールドのアイテム<small>ENEMY FIELD</small></h2>${itemLogHTML(L.foeItems, v, 'まだ使われていません')}</section>
-              <section class="panel enemy calllog"><h2 class="ptitle">攻撃ログ<small>ATTACK</small></h2>${callLogHTML(L.atkCalls, v, 'まだコールしていません')}</section>
+              <section class="panel enemy itemlog"><h2 class="ptitle">相手フィールドのアイテム<small>ENEMY FIELD</small></h2>${itemLogHTML(L.foeItems, v, '未使用')}</section>
+              <section class="panel enemy calllog"><h2 class="ptitle">攻撃ログ<small>ATTACK</small></h2>${callLogHTML(L.atkCalls, v, 'コール履歴なし')}</section>
             </aside>
           </div>
         </div>
@@ -1451,7 +1451,7 @@
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="quit-h">
       <div class="panel dialog">
         <h2 id="quit-h" class="verdict-sub">大会をやめますか？</h2>
-        <p class="note">ここまでの成績は残りません。</p>
+        <p class="note">ここまでの成績は保存されません。</p>
         <div class="row"><button class="btn fire" data-act="quit-tour">やめる</button><button class="btn" data-act="close-modal">続ける</button></div>
       </div>
     </div>`;
@@ -1771,7 +1771,7 @@
       const win = r.winner === id;
       const pt = r.pts[k];
       const sg = (n) => (n > 0 ? '+' + n : n < 0 ? '−' + -n : '±0');
-      return `<div class="mc-p${win ? ' win' : ''}${id === 0 ? ' me' : ''}">${avatar(id)}<b>${tname(id)}</b><span class="mc-pt${pt.total < 0 ? ' minus' : ''}" data-tip="${esc(`撃破で奪った${sg(pt.take)}・奪われた${sg(-pt.taken)}・勝利${sg(pt.victory)}${pt.speed ? `・スピード${sg(pt.speed)}` : ''}・宝石${pt.gems ? sg(pt.gems) + 'つ' : '±0'}`)}">${sg(pt.total)}<small>pt</small></span>${win ? `<em>WIN${pt.victory ? ` +${pt.victory}` : ''}</em>` : ''}</div>`;
+      return `<div class="mc-p${win ? ' win' : ''}${id === 0 ? ' me' : ''}">${avatar(id)}<b>${tname(id)}</b><span class="mc-pt${pt.total < 0 ? ' minus' : ''}" data-tip="${esc(`撃破奪取${sg(pt.take)}・喪失${sg(-pt.taken)}・勝利${sg(pt.victory)}${pt.speed ? `・スピード${sg(pt.speed)}` : ''}・宝石${pt.gems ? sg(pt.gems) + 'つ' : '±0'}`)}">${sg(pt.total)}<small>pt</small></span>${win ? `<em>WIN${pt.victory ? ` +${pt.victory}` : ''}</em>` : ''}</div>`;
     };
     const label = r.kind === 'final' ? '決勝' : `予選 第${r.round + 1}試合`;
     const lost = (k) => r.lost[k].length ? `${r.lost[k].join('・')}ブロック喪失` : '喪失キューブなし';
@@ -2282,7 +2282,7 @@
           // 面の距離（立方体の半分）は CSS のコンテナ単位で決める（画面全体を拡大・縮小していても面がずれない）
           bover(tb, 'holo' + ecls, '<div class="holo-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>', 1550);
           const what = ev.kind === 'cat' ? ev.value : ev.value + 'ブロック';
-          setTimeout(() => text(tbc.x, tbc.y + tbc.h * 0.32, `${what}：残り ${ev.n} 体`, 'count' + ecls, 1600), 700 * k);
+          setTimeout(() => text(tbc.x, tbc.y + tbc.h * 0.32, `${what}：残り ${ev.n} キューブ`, 'count' + ecls, 1600), 700 * k);
           return 1650 * k;
         }
         case 'line': {
@@ -2407,7 +2407,7 @@
               over(ce, 'flash', '', 520);
               shards(q.x, q.y, [METAL[0], METAL[1], METAL[2], AM], 10, q.w * 0.3);
             }
-            if (ev.killed && ev.killed.length) setTimeout(() => text(p.x, p.y + p.h * 0.1, `ヒット済み ${ev.killed.length}ブロック撃破`, 'sub', 1500), 200);
+            if (ev.killed && ev.killed.length) setTimeout(() => text(p.x, p.y + p.h * 0.1, `コール済 ${ev.killed.length}ブロック撃破`, 'sub', 1500), 200);
             if (ev.owner === v && ev.ownerPriv) for (const cc of ev.ownerPriv.frags) { const ce = cellOf(target, cc); if (ce) over(ce, 'crack', '', 900); }
           }, 560 * k);
           return 1650 * k;
@@ -3272,11 +3272,11 @@ self.onmessage = function (e) {
   function guestPrecheck(g, name, args) {
     const v = args[0];
     if (name === 'useItem') {
-      if (!g.itemStatus(v, args[1]).usable) return { ok: false, reason: 'いまはアイテムを使えません' };
+      if (!g.itemStatus(v, args[1]).usable) return { ok: false, reason: '現在アイテムは使用できません' };
       return g.validateItem(v, args[1], args[2]);
     }
     if (name === 'answer' && !E.identifyShape(Array.from(new Set(args[1])).sort((a, b) => a - b), g.N)) {
-      return { ok: false, reason: 'R型・L型・T型・Z型のいずれかの形で宣言してください' };
+      return { ok: false, reason: 'R型・L型・T型・Z型のいずれかの形状で宣言してください' };
     }
     return { ok: true };
   }
@@ -3300,16 +3300,16 @@ self.onmessage = function (e) {
     const st = g.itemStatus(v, key);
     const m = effMode();
     const inItemWindow = m === 'item' || m === 'answer-phase' || m === 'answer' || (app.ui.mode && app.ui.item);
-    if (!inItemWindow || g.cur !== v) { toast('アイテムは自分のターンの、コールの前か後に使えます'); return; }
-    if (g.itemUsed) { toast('このターンはもうアイテムを使いました'); return; }
+    if (!inItemWindow || g.cur !== v) { toast('アイテムは自分のターンのコール前後に使用できます'); return; }
+    if (g.itemUsed) { toast('このターンはアイテム使用済です'); return; }
     if (!st.usable) {
       if (st.usedUp) toast('予選では、同じ種類のアイテムは1試合1回までです');
-      else if (st.have <= 0 && g.players[v].used[key]) toast('このアイテムは使い切りました');
-      else toast('このアイテムは持っていません');
+      else if (st.have <= 0 && g.players[v].used[key]) toast('このアイテムの残数がありません');
+      else toast('このアイテムは未所持です');
       return;
     }
     // ワープ（v15）：移動先にできる空きブロックがなければ使えない（ステルス中・ワープ待ちのキューブも選べない）
-    if (key === 'warp' && !g.warpable(v).length) { toast('ワープできるキューブがありません（移動先にできる空きブロックが足りません）', 'warn'); return; }
+    if (key === 'warp' && !g.warpable(v).length) { toast('ワープ可能なキューブがありません（ワープ先の空きブロックが不足しています）', 'warn'); return; }
     resetMode();
     app.ui.item = key;
     const modeOf = { cube: 'cube', line: 'line', number: 'number', shape: 'shape', pair: 'pair', node: 'node', bazooka: 'bazooka', homing: 'homing', cross: 'cross', acid: 'acid', warp: 'warp-pick', stealth: 'stealth-pick' };
@@ -3321,7 +3321,7 @@ self.onmessage = function (e) {
   function useItem(key, params) {
     const v = viewer();
     const r = act('useItem', v, key, params);
-    if (!r.ok) { toast(r.reason || '使えません', 'warn'); return r; }
+    if (!r.ok) { toast(r.reason || '使用できません', 'warn'); return r; }
     resetMode();
     afterHuman();
     return r;
@@ -3390,7 +3390,7 @@ self.onmessage = function (e) {
       const set = el.dataset.set, k = el.dataset.key, d = +el.dataset.d;
       const o = app.settings[set];
       const next = Math.max(0, Math.min(COUNT_MAX, (o[k] | 0) + d));
-      if (d < 0 && countTotal(o) - 1 < (set === 'draftPool' ? 2 : 1)) { toast(set === 'draftPool' ? 'ドラフトには2個以上並べてください' : 'アイテムは1個以上にしてください'); return; }
+      if (d < 0 && countTotal(o) - 1 < (set === 'draftPool' ? 2 : 1)) { toast(set === 'draftPool' ? 'ドラフトには2個以上並べてください' : 'アイテムは1個以上に設定してください'); return; }
       o[k] = next;
       if (set === 'draftPool') app.settings.draftN = Math.min(app.settings.draftN, draftMax());
       SND.sfx('tick');
@@ -3485,10 +3485,10 @@ self.onmessage = function (e) {
       if (app.tour) {
         // 大会：CPUと同じ考え方（残りのキューブ・予選か決勝か）で置く。トレジャーもCPUと同じ選び方
         const plan = AI.tourSetupPlan(app.tour, 0, g.rules.kind === 'final' ? 'final' : 'prelim', null, Math.random);
-        if (!AI.setup(g, pi, plan)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
+        if (!AI.setup(g, pi, plan)) { denied = true; toast('自動配置に失敗しました。手動で配置してください', 'warn'); return; }
         const ps = g.players[pi].pieces;
-        toast(`CPUと同じ考え方で置きました（${ps.length}キューブ・${ps.reduce((a, q) => a + q.size, 0)}ブロック）`, 'note');
-      } else if (!act('randomSetup', pi, AI.setupSizes(g, pi)) && !act('randomSetup', pi)) { denied = true; toast('自動配置で置けませんでした。手で置いてください', 'warn'); return; }
+        toast(`CPUと同じ思考で配置しました（${ps.length}キューブ・${ps.reduce((a, q) => a + q.size, 0)}ブロック）`, 'note');
+      } else if (!act('randomSetup', pi, AI.setupSizes(g, pi)) && !act('randomSetup', pi)) { denied = true; toast('自動配置に失敗しました。手動で配置してください', 'warn'); return; }
       app.setup.treasureMode = false; render();
     },
     clear() { if (netSetupLocked()) return; act('clearSetup', app.setup.pi); render(); },
@@ -3520,7 +3520,7 @@ self.onmessage = function (e) {
       if (isCPUMode() && pi === 1) return;
       if (app.net && (pi !== app.net.seat || netWaiting())) return;
       const r = act('draftPick', pi, el.dataset.key);
-      if (!r.ok) { toast(r.reason || '選べません'); return; }
+      if (!r.ok) { toast(r.reason || '選択できません'); return; }
       if (r.sent) { render(); return; }   // ゲスト：結果はホストから届く
       if (g.phase !== 'draft') { afterDraft(); return; }
       render();
@@ -3546,13 +3546,13 @@ self.onmessage = function (e) {
       resetMode();
       // ゲストは結果がまだ分からない（失敗のときは、届いた state を見て知らせる）
       if (!r.sent && !r.success) toast('アンサー失敗！手番が終了します。差し出すキューブを選択してください', 'warn', true);
-      if (!r.sent && r.stealth) toast('ステルスアンサー成功！隠れていたキューブを見破りました');
+      if (!r.sent && r.stealth) toast('ステルスアンサー成功！ステルスを解除しました');
       afterHuman();
     },
     'skip-call'() {
       const g = G(), v = viewer();
       const r = act('skipCall', v);
-      if (!r.ok) { toast(r.reason || 'コールできるブロックがあります'); return; }
+      if (!r.ok) { toast(r.reason || 'コール可能なブロックがあります'); return; }
       resetMode();
       afterHuman();
     },
@@ -3565,7 +3565,7 @@ self.onmessage = function (e) {
     'warp-rotate'() { warpRotate(); },
     'warp-done'() {
       const w = app.ui.warp;
-      if (!w || !w.pos) { toast('先に移動先をタップしてください'); return; }
+      if (!w || !w.pos) { toast('先にワープ先をタップしてください'); return; }
       useItem('warp', { pieceId: w.pieceId, cell: w.trig, t: w.t, r0: w.pos.r0, c0: w.pos.c0 });
     },
 
@@ -3594,7 +3594,7 @@ self.onmessage = function (e) {
     if (p) { act('removePiece', pi, p.id); render(); SND.sfx('remove'); return; }
     if (!S.key) { toast('先に形を選択してください'); return; }
     const a = anchorFor(S.key, S.t, c, g.N);
-    if (!a) { toast('このフィールドには入らない形です', 'warn'); return; }
+    if (!a) { toast('このフィールドに収まらない形状です', 'warn'); return; }
     const r = act('placePiece', pi, S.key, S.t, a.r0, a.c0);
     if (!r.ok) { toast(r.reason, 'warn'); return; }
     SND.sfx('place');
@@ -3604,7 +3604,7 @@ self.onmessage = function (e) {
       S.key = next ? SHAPES_BY_SIZE[next][0] : null;
       S.t = 0;
     }
-    if (!g.players[pi].treasure) toast('◆トレジャーのセットも忘れずに', 'note');
+    if (!g.players[pi].treasure) toast('◆トレジャーのセットを行ってください', 'note');
     render();
   }
 
@@ -3616,7 +3616,7 @@ self.onmessage = function (e) {
     if ((mode === 'item' || mode === 'call' || mode === 'treasure') && memoOf(v)[c]) {
       delete memoOf(v)[c];
       SND.sfx('desel', 0, { n: 0, pan: 0.35 });
-      toast('メモを外しました（もう一度押すと' + (mode === 'treasure' ? 'トレジャーコール' : 'コール') + '）', 'note', true);
+      toast('メモを解除しました（再度押すと' + (mode === 'treasure' ? 'トレジャーコール' : 'コール') + '）', 'note', true);
       render();
       return;
     }
@@ -3651,19 +3651,19 @@ self.onmessage = function (e) {
       case 'shape': useItem('shape', { cell: c }); return;
       case 'cross': useItem('cross', { cell: c }); return;
       case 'acid':
-        if (P.view.dead[c]) { toast('撃破済みのブロックには使えません'); return; }
+        if (P.view.dead[c]) { toast('撃破済ブロックには使用できません'); return; }
         useItem('acid', { cell: c });
         return;
       case 'number': useItem('number', { cell: c }); return;
       case 'node':
       case 'bazooka':
-        if (P.view.dead[c]) { toast('撃破済みのブロックには使えません'); return; }
+        if (P.view.dead[c]) { toast('撃破済ブロックには使用できません'); return; }
         useItem(mode, { cell: c });
         return;
-      case 'line': toast('列（アルファベット）か行（数字）のラベルをタップしてください'); return;
+      case 'line': toast('列（アルファベット）/行（数字）のラベルをタップしてください'); return;
       case 'cube': return;
       case 'pair': {
-        if (P.view.dead[c]) { toast('撃破済みのブロックは選べません'); return; }
+        if (P.view.dead[c]) { toast('撃破済ブロックは選択できません'); return; }
         const i = ui.sel.indexOf(c);
         if (i >= 0) { ui.sel.splice(i, 1); render(); SND.sfx('desel', 0, { n: 0, pan: 0.35 }); return; }
         ui.sel.push(c);
@@ -3673,7 +3673,7 @@ self.onmessage = function (e) {
         return;
       }
       default:
-        if (mode === 'answer-phase') toast('このターンのコールは済んでいます。アンサーするかターンエンドしてください');
+        if (mode === 'answer-phase') toast('このターンはコール済です。アンサーかターンエンドを行ってください');
     }
   }
 
@@ -3687,11 +3687,11 @@ self.onmessage = function (e) {
         //  ②空きブロックを押す → そこに移動先を置く（回転で向きを変えられる）。「完了」で決める
         const p = g.pieceAt(v, c);
         if (p || mode === 'warp-pick') {
-          if (!p) { toast('ワープする自分のキューブの、まだ当たっていないブロックを選択してください'); return; }
+          if (!p) { toast('ワープする自分のキューブの、未コールのブロックを選択してください'); return; }
           if (p.stealth) { toast('ステルス中のキューブはワープできません'); return; }
-          if (p.warpPlan) { toast('そのキューブはすでにワープを待っています'); return; }
-          if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選択してください'); return; }
-          if (!g.warpOptions(v, p).length) { toast('このキューブには、移動先にできる空きブロックがありません', 'warn'); return; }
+          if (p.warpPlan) { toast('そのキューブはワープ待機中です'); return; }
+          if (p.hitMask & (1 << c)) { toast('トリガーブロックは未コールのブロックから選択してください'); return; }
+          if (!g.warpOptions(v, p).length) { toast('このキューブにはワープ先にできる空きブロックがありません', 'warn'); return; }
           // 同じキューブのトリガーを選び直したときは、向きと置いた場所をそのまま残す
           const same = ui.warp && ui.warp.pieceId === p.id;
           ui.warp = same ? Object.assign(ui.warp, { trig: c }) : { pieceId: p.id, trig: c, t: p.t, pos: null, at: null };
@@ -3702,7 +3702,7 @@ self.onmessage = function (e) {
         }
         const wp = g.players[v].pieces.find((x) => x.id === ui.warp.pieceId);
         const pos = warpPos(g, v, wp, ui.warp.t, c);
-        if (!pos.ok) { toast(pos.reason || 'そこには置けません', 'warn'); return; }
+        if (!pos.ok) { toast(pos.reason || 'そこには配置できません', 'warn'); return; }
         ui.warp.pos = { r0: pos.r0, c0: pos.c0 };
         ui.warp.at = c;
         render();
@@ -3713,8 +3713,8 @@ self.onmessage = function (e) {
         const p = g.pieceAt(v, c);
         if (!p) { toast('ステルスにする自分のキューブを選択してください'); return; }
         if (p.stealth) { toast('そのキューブはすでにステルス中です'); return; }
-        if (p.stealthRevealed) { toast('見破られたキューブには使えません'); return; }
-        if (p.hitMask & (1 << c)) { toast('トリガーブロックは、まだ当たっていないブロックから選択してください'); return; }
+        if (p.stealthRevealed) { toast('ステルス解除されたキューブには使用できません'); return; }
+        if (p.hitMask & (1 << c)) { toast('トリガーブロックは未コールのブロックから選択してください'); return; }
         useItem('stealth', { pieceId: p.id, cell: c });   // 押したブロックがトリガーブロック（v14.2）
         return;
       }
@@ -3918,7 +3918,7 @@ self.onmessage = function (e) {
     setTimeout(() => { setupSkipClick = false; }, 350);
     const g = G(), pi = S.pi;
     const m = E.matchPlacement(cells, g.N);
-    if (!m) { toast('置けない形です（R型・L型・T型・Z型のどれかを描いてください）', 'warn'); render(); return; }
+    if (!m) { toast('配置できない形状です（R型・L型・T型・Z型のいずれかを描いてください）', 'warn'); render(); return; }
     const size = SHAPES[m.key].size;
     if (g.stockLeft(pi, size) <= 0) { toast(size + 'ブロックのリソースが枯渇しています', 'warn'); render(); return; }
     const r = act('placePiece', pi, m.key, m.t, m.r0, m.c0);
@@ -4080,7 +4080,7 @@ self.onmessage = function (e) {
   function simMainMode() {
     const S = app.sim;
     if (S.run) S.run.main = true;
-    S.runNote = 'この画面の中で順に計算しています（並列の計算が使えませんでした）。計算の間は画面の動きが重くなります。';
+    S.runNote = 'この画面内で順に計算中です（並列計算が使用できませんでした）。計算中は動作が重くなります。';
     const el = $s('sim-runnote');
     if (el) el.textContent = S.runNote;
   }
@@ -4092,9 +4092,9 @@ self.onmessage = function (e) {
     const seed0 = (Date.now() % 1e9) | 0;
     const R = { n, withFinal, recs: [], t0: performance.now() };
     S.run = R;
-    S.runNote = '計算しています。タイトルに戻っても、裏で計算を続けます。';
+    S.runNote = '計算中です。タイトルに戻ってもバックグラウンドで計算を継続します。';
     R.job = simPool(Array.from({ length: n }, (_, k) => ({ cmd: 'run', seeds: [seed0 + k], rules, withFinal })), (d) => { if (d.type === 'rec') { R.recs.push(d.rec); simProgress(); } }, () => simFinish(false), simMainMode);
-    if (R.job.parallel > 1 && !R.main) S.runNote = `${R.job.parallel}つ並列で計算しています。タイトルに戻っても、裏で計算を続けます。`;
+    if (R.job.parallel > 1 && !R.main) S.runNote = `${R.job.parallel}つ並列で計算中です。タイトルに戻ってもバックグラウンドで計算を継続します。`;
     if (app.screen === 'sim') renderSim();
   }
   function simProgress() {
@@ -4109,16 +4109,16 @@ self.onmessage = function (e) {
     const S = app.sim, R = S && S.run;
     if (!R) return;
     S.run = null;
-    if (!R.recs.length) { S.runNote = '止めました（まだ結果がありません）。'; if (app.screen === 'sim') renderSim(); return; }
+    if (!R.recs.length) { S.runNote = '停止しました（結果なし）。'; if (app.screen === 'sim') renderSim(); return; }
     R.recs.sort((a, b) => a.seed - b.seed);
     S.recs = R.recs;
     const d = new Date(), pad = (x) => String(x).padStart(2, '0');
     const made = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     S.source = { kind: 'run', tours: R.recs.length, made, partial: stopped, sec: Math.round((performance.now() - R.t0) / 1000) };
     const ok = simStore.set('last', { v: E.VERSION, made, withFinal: R.withFinal, recs: R.recs.map(SIM.slim) });
-    S.runNote = `${stopped ? '途中で止めました。' : ''}${R.recs.length}回を${simTime(performance.now() - R.t0)}で計算しました。${ok ? '結果はこの端末に残ります。' : ''}`;
+    S.runNote = `${stopped ? '途中で停止しました。' : ''}${R.recs.length}回を${simTime(performance.now() - R.t0)}で計算しました。${ok ? '結果はこの端末に保存されます。' : ''}`;
     if (app.screen === 'sim') renderSim();
-    else toast(`シミュレーター：${R.recs.length}回の計算が終わりました`, 'note');
+    else toast(`シミュレーター：${R.recs.length}回の計算が完了しました`, 'note');
   }
   function simStop() {
     const S = app.sim;
@@ -4167,7 +4167,7 @@ self.onmessage = function (e) {
   // 結果（右側）と、ルールに合わせて変わる左側の表示
   function simOutHTML() {
     const S = app.sim;
-    if (!S.recs.length) return '<p class="sim-note">データがありません。▶ 実行で回してください。</p>';
+    if (!S.recs.length) return '<p class="sim-note">データがありません。▶ 実行で計算してください。</p>';
     const sm = SIM.summarize(S.recs, S.rules);
     S.lastSummary = sm;
     const cb = sm.comeback, gm = sm.gems, pz = sm.prize, ti = sm.ties, pl = sm.play;
@@ -4177,13 +4177,13 @@ self.onmessage = function (e) {
       ${skpi('1勝で決勝へ', sbig(cb.byWins[1].qual), `2勝で決勝へ ${spc(cb.byWins[2].qual)}`)}
       ${skpi('先攻の勝率', `${sn1(sm.first.prelim)}<small>%</small>`, `予選。決勝は ${spc(sm.first.final)}`)}
       ${skpi('優勝者の持ち点（賞金）', `${sn1(pz.mean)}<small>点</small>`, `最低 ${sn0(pz.min)}・最高 ${sn0(pz.max)}${fin}`)}
-      ${skpi('予選でいちばん低い持ち点', `${sn0(sm.low.prelim)}<small>点</small>`, sm.low.prelim < 0 ? `マイナスになる人 ${spc(sm.low.negativeShare)}` : 'マイナスなし')}
+      ${skpi('予選の最低持ち点', `${sn0(sm.low.prelim)}<small>点</small>`, sm.low.prelim < 0 ? `マイナスになったプレイヤー ${spc(sm.low.negativeShare)}` : 'マイナスなし')}
       ${skpi('トレジャーで決勝の2人が変わる', sbig(gm.changesFinalists), '宝石の点が0のときと比べて')}
     </section>`;
     h += `<section class="panel"><h3 class="ptitle">性格ごと<small>PERSONAS</small></h3><div class="sim-tw"><table class="sim-table">
       <thead><tr><th>性格</th><th>出場</th><th>予選通過</th><th>優勝</th><th>決勝の勝率</th><th>予選後の持ち点</th><th>1試合に置いたキューブ</th><th>1試合に使ったアイテム</th></tr></thead><tbody>
       ${sm.persona.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.n}</td><td>${scell(p.qual)}</td><td>${scell(p.champ, 'mg')}</td><td>${spc(p.finWin)}</td><td>${sn1(p.pts)}</td><td>${sn1(p.placed)}</td><td>${sn1(p.items)}</td></tr>`).join('')}
-      </tbody></table></div><p class="sim-note">標準＝あなたの席に座ったCPU（性格なし。大会の自動配置と同じ考え方）。ほかの3席に、4つの性格から毎回3つが出場します。</p></section>`;
+      </tbody></table></div><p class="sim-note">標準＝あなたの席のCPU（性格なし。大会の自動配置と同じ思考）。他の3席には4つの性格から毎回3つが出場します。</p></section>`;
     h += `<div class="sim-grid2">
       <section class="panel"><h3 class="ptitle">逆転<small>COMEBACK</small></h3><dl class="sim-kv">
         <dt>3試合目で決勝の2人が入れ替わる</dt><dd>${spc(cb.r3change)}</dd>
@@ -4195,19 +4195,19 @@ self.onmessage = function (e) {
         <dt>3試合目に勝った人の予選通過</dt><dd>${spc(cb.wonR3)}</dd>
       </dl></section>
       <section class="panel"><h3 class="ptitle">宝石（トレジャー）<small>GEMS</small></h3><dl class="sim-kv">
-        <dt>トレジャーを見つけられる割合（予選・決勝）</dt><dd>${spc(gm.foundPrelim)}・${spc(gm.foundFinal)}</dd>
-        <dt>予選1試合で、両方が奪う（差し引き0）</dt><dd>${spc(gm.both)}</dd>
-        <dt>片方だけ奪う</dt><dd>${spc(gm.one)}</dd>
-        <dt>どちらも奪えない</dt><dd>${spc(gm.none)}</dd>
+        <dt>トレジャー発見率（予選・決勝）</dt><dd>${spc(gm.foundPrelim)}・${spc(gm.foundFinal)}</dd>
+        <dt>予選1試合で双方が奪取（差し引き0）</dt><dd>${spc(gm.both)}</dd>
+        <dt>片方のみ奪取</dt><dd>${spc(gm.one)}</dd>
+        <dt>双方奪取なし</dt><dd>${spc(gm.none)}</dd>
         <dt>トレジャーで決勝の2人が変わる</dt><dd>${spc(gm.changesFinalists)}</dd>
-      </dl><p class="sim-lab" style="margin:10px 0 0">予選のあとの宝石の数</p><div class="sim-dist">${gm.dist.map((d) => `<div><span>${d.gems}つ</span><div class="sim-bar"><i style="width:${(d.share || 0).toFixed(1)}%"></i></div><b>${spc(d.share)}</b></div>`).join('')}</div></section>
+      </dl><p class="sim-lab" style="margin:10px 0 0">予選後の宝石数</p><div class="sim-dist">${gm.dist.map((d) => `<div><span>${d.gems}つ</span><div class="sim-bar"><i style="width:${(d.share || 0).toFixed(1)}%"></i></div><b>${spc(d.share)}</b></div>`).join('')}</div></section>
     </div>`;
     h += `<div class="sim-grid2">
       <section class="panel"><h3 class="ptitle">賞金（優勝者の持ち点）<small>PRIZE</small></h3>${simHist(pz.list)}<dl class="sim-kv" style="margin-top:8px">
         <dt>平均・中央</dt><dd>${sn1(pz.mean)}・${sn0(pz.p50)}点</dd>
         <dt>下位10%・上位10%</dt><dd>${sn0(pz.p10)}・${sn0(pz.p90)}点</dd>
         <dt>準優勝の方が持ち点が多い</dt><dd>${spc(pz.runnerAbove)}</dd>
-        <dt>大会の最後にいちばん低い持ち点</dt><dd>${sn0(sm.low.all)}点</dd>
+        <dt>大会終了時の最低持ち点</dt><dd>${sn0(sm.low.all)}点</dd>
       </dl></section>
       <section class="panel"><h3 class="ptitle">同点と試合<small>TIES / PLAY</small></h3><dl class="sim-kv">
         <dt>決勝ライン（2位と3位）が同点</dt><dd>${spc(ti.line)}</dd>
@@ -4221,7 +4221,7 @@ self.onmessage = function (e) {
       </dl></section>
     </div>`;
     const rows = [{ r: S.rules, cur: true }].concat(S.compare.filter((r) => simKey(r) !== simKey(S.rules)).map((r) => ({ r })));
-    h += `<section class="panel sim-cmp"><h3 class="ptitle">比較表<small>COMPARE</small></h3>${S.compare.length ? '' : '<p class="sim-note">点数のルールを変えて「比較表に追加」を押すと、同じ試合結果での違いをここに並べます。</p>'}
+    h += `<section class="panel sim-cmp"><h3 class="ptitle">比較表<small>COMPARE</small></h3>${S.compare.length ? '' : '<p class="sim-note">点数のルールを変更して「比較表に追加」を押すと、同じ試合結果での違いを表示します。</p>'}
       <div class="sim-tw"><table class="sim-table"><thead><tr><th>点数のルール</th><th>3試合目で入れ替わる</th><th>2試合目の後4位→決勝</th><th>1勝で決勝</th><th>1試合目に勝った人の通過</th><th>トレジャーで決勝が変わる</th><th>2位3位が同点</th><th>優勝者の持ち点（平均・最高）</th><th>予選の最低</th><th></th></tr></thead><tbody>
       ${rows.map(({ r, cur }) => { const s = cur ? sm : SIM.summarize(S.recs, r); return `<tr class="${cur ? 'cur' : ''}"><td class="lab">${cur ? '<b>いま</b>　' : ''}勝利 ${esc(r.vic.join('/'))}<small>宝石${r.gems}×${r.gemPts}・はじめ${r.start + r.gems * r.gemPts}・スピード${SIM.speedLabel(r)}</small></td><td>${spc(s.comeback.r3change)}</td><td>${spc(s.comeback.last2in)}</td><td>${spc(s.comeback.byWins[1].qual)}</td><td>${spc(s.comeback.wonR1)}</td><td>${spc(s.gems.changesFinalists)}</td><td>${spc(s.ties.line)}</td><td>${sn1(s.prize.mean)}・${sn0(s.prize.max)}${s.finals < s.tours ? `<small>（${s.finals}回）</small>` : ''}</td><td>${sn0(s.low.prelim)}</td><td>${cur ? '' : `<button type="button" class="sim-x" data-act="sim-rm" data-k="${esc(simKey(r))}" aria-label="比較表から外す">✕</button>`}</td></tr>`; }).join('')}
       </tbody></table></div></section>`;
@@ -4242,32 +4242,32 @@ self.onmessage = function (e) {
     const S = app.sim, sm = S.lastSummary;
     if (!sm || !sm.missingFinal) return '<div id="sim-finnote"></div>';
     const canRe = SIM.missingFinals(S.recs, S.rules).length;
-    return `<div id="sim-finnote"><p class="sim-note warn">この点数だと決勝の顔ぶれが変わる大会が${sm.missingFinal}回あります。その大会は決勝の結果がないので、優勝・賞金・決勝の数字から除いています。${canRe ? '' : '（見本・保存した記録には予選の後の状態がないので、回し直すには ▶ 実行 してください）'}</p>${canRe && !S.run && !S.refinal ? `<div class="row" style="margin-top:6px"><button class="btn" data-act="sim-refinal">決勝を回し直す（${canRe}試合）</button></div>` : ''}</div>`;
+    return `<div id="sim-finnote"><p class="sim-note warn">この点数では決勝の顔ぶれが変わる大会が${sm.missingFinal}回あります。それらの大会は決勝の結果がないため、優勝・賞金・決勝の集計から除外しています。${canRe ? '' : '（見本・保存した記録には予選後の状態がないため、再計算するには ▶ 実行 してください）'}</p>${canRe && !S.run && !S.refinal ? `<div class="row" style="margin-top:6px"><button class="btn" data-act="sim-refinal">決勝を再計算（${canRe}試合）</button></div>` : ''}</div>`;
   }
   function renderSim() {
     const S = simInit();
     const src = S.source;
-    const srcText = !src ? 'データがありません。▶ 実行で回してください。'
-      : src.kind === 'sample' ? `見本のデータ：CPUだけの大会 <b>${src.tours}</b>回（${esc(src.made || '')}）${src.stale ? `・ルールのバージョン${src.v}の記録です。実行し直してください` : ''}。▶ 実行で、この端末で新しく回せます。`
-        : src.kind === 'saved' ? `前回この端末で回した記録：<b>${src.tours}</b>回（${esc(src.made || '')}）`
-          : `いま回した記録：<b>${src.tours}</b>回${src.partial ? '（途中まで）' : ''}・${src.sec}秒`;
+    const srcText = !src ? 'データがありません。▶ 実行で計算してください。'
+      : src.kind === 'sample' ? `見本データ：CPUのみの大会 <b>${src.tours}</b>回（${esc(src.made || '')}）${src.stale ? `・ルールのバージョン${src.v}の記録です。再実行してください` : ''}。▶ 実行でこの端末で新たに計算できます。`
+        : src.kind === 'saved' ? `前回この端末で計算した記録：<b>${src.tours}</b>回（${esc(src.made || '')}）`
+          : `今回計算した記録：<b>${src.tours}</b>回${src.partial ? '（途中まで）' : ''}・${src.sec}秒`;
     const R = S.run || S.refinal;
     const out = simOutHTML();
     const r = S.rules;
     root.innerHTML = `
       <div class="wrap sim-screen">
-        ${hudHTML('<span class="stat">SIMULATOR<b>CPUだけの大会</b></span>', '<button class="btn ghost" data-act="sim-back">タイトルへ</button>')}
+        ${hudHTML('<span class="stat">SIMULATOR<b>CPUのみの大会</b></span>', '<button class="btn ghost" data-act="sim-back">タイトルへ</button>')}
         <div class="sim-head"><h2><small>SEARCH BATTLE SIMULATOR</small>シミュレーター</h2><p class="sim-src">${srcText}</p></div>
         <div class="sim-layout">
           <aside class="sim-side">
             <section class="panel" aria-labelledby="sim-run-h">
-              <h3 class="ptitle" id="sim-run-h">大会を回す<small>RUN</small></h3>
-              <div class="sim-field"><label for="sim-tours">大会の数（CPUだけ。4人のうち3人は性格つき）</label>
+              <h3 class="ptitle" id="sim-run-h">大会を計算<small>RUN</small></h3>
+              <div class="sim-field"><label for="sim-tours">大会数（CPUのみ。4人中3人は性格あり）</label>
                 <select id="sim-tours" class="sim-num" data-sim="tours">${[50, 100, 300, 1000].map((n) => `<option${n === S.tours ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
-              <label class="sim-check"><input type="checkbox" id="sim-final" data-sim="final"${S.withFinal ? ' checked' : ''}> 決勝まで回す（時間は約2倍）</label>
-              <div class="row" style="margin-top:10px">${R ? '<button class="btn" data-act="sim-stop">■ 止める</button>' : '<button class="btn primary" data-act="sim-run">▶ 実行</button>'}</div>
+              <label class="sim-check"><input type="checkbox" id="sim-final" data-sim="final"${S.withFinal ? ' checked' : ''}> 決勝まで計算（時間は約2倍）</label>
+              <div class="row" style="margin-top:10px">${R ? '<button class="btn" data-act="sim-stop">■ 停止</button>' : '<button class="btn primary" data-act="sim-run">▶ 実行</button>'}</div>
               ${R ? `<div class="sim-prog"><div class="sim-bar"><i id="sim-progbar"></i></div><span id="sim-progtext"></span></div>` : ''}
-              <p class="sim-note" id="sim-runnote">${esc(S.runNote || '大会の数を選んで実行すると、この端末で計算します（パソコンなら300回で数分）。')}</p>
+              <p class="sim-note" id="sim-runnote">${esc(S.runNote || '大会数を選択して実行すると、この端末で計算します（PCなら300回で数分）。')}</p>
             </section>
             <section class="panel" aria-labelledby="sim-rule-h">
               <h3 class="ptitle" id="sim-rule-h">点数のルール<small>RULES</small></h3>
@@ -4281,14 +4281,14 @@ self.onmessage = function (e) {
               <span class="sim-lab">スピードペナルティ（予選・負けた側の減点・決着したターン）</span>
               <div class="sim-vic sim-spd">${r.speed.slice(1).map((v, k) => k + 1).map((t) => `<div><input class="sim-num" id="sim-s${t}" data-sim="rule" type="number" min="0" step="1" value="${r.speed[t]}" aria-label="${t}ターン目に負けたときのスピードペナルティ"><span>${t}T</span></div>`).join('')}</div>
               <p class="sim-total" id="sim-tot">はじめの持ち点 <b>${SIM.startTotal(r)}</b>（${r.start}＋宝石${r.gems}×${r.gemPts}）</p>
-              <div class="row"><button class="btn" data-act="sim-pin">比較表に追加</button><button class="btn ghost" data-act="sim-reset">ゲームの値に戻す</button></div>
-              <p class="sim-note">試合の結果はそのままで、点数だけを当てはめ直します（CPUは持ち点を見ないので、試合の中身は変わりません）。</p>
+              <div class="row"><button class="btn" data-act="sim-pin">比較表に追加</button><button class="btn ghost" data-act="sim-reset">ゲームの値にリセット</button></div>
+              <p class="sim-note">試合結果はそのままで点数のみ再計算します（CPUは持ち点を参照しないため、試合内容は変わりません）。</p>
               ${simFinNoteHTML()}
             </section>
           </aside>
           <main class="sim-main" id="sim-out" aria-live="polite">${out}</main>
         </div>
-        <p class="sim-note">しくみ：ゲームと同じルールとCPUで、CPUだけの大会をこの端末の中で回します（端末のCPUを並列で使います）。点数のルールを変えると、記録した同じ試合結果で順位・決勝の顔ぶれ・賞金を数え直します。決勝の顔ぶれが変わった大会は、予選の後の状態から決勝だけを回し直せます。</p>
+        <p class="sim-note">仕組み：ゲームと同じルールとCPUで、CPUのみの大会をこの端末内で計算します（端末のCPUを並列使用）。点数のルールを変更すると、記録した同じ試合結果で順位・決勝の顔ぶれ・賞金を再集計します。決勝の顔ぶれが変わった大会は、予選後の状態から決勝のみ再計算できます。</p>
       </div>`;
     simProgress();
   }
@@ -4368,7 +4368,7 @@ self.onmessage = function (e) {
     const name = lobbyName();
     const el = document.getElementById('net-code');
     const code = NET.normCode(el ? el.value : '');
-    if (!code) { toast(`部屋のコード（${NET.CODE_LEN}文字の英数字）を入れてください`, 'warn'); if (el) el.focus(); return; }
+    if (!code) { toast(`部屋のコード（${NET.CODE_LEN}文字の英数字）を入力してください`, 'warn'); if (el) el.focus(); return; }
     const L = app.lobby = { st: 'joining', code };
     render();
     L.join = NET.joinRoom(code, {
@@ -4386,7 +4386,7 @@ self.onmessage = function (e) {
   function netCopyCode() {
     const L = app.lobby;
     if (!L || !L.code) return;
-    const ng = () => toast('コピーできませんでした。コードを書き写してください', 'warn');
+    const ng = () => toast('コピーに失敗しました。コードを手動で控えてください', 'warn');
     try { navigator.clipboard.writeText(L.code).then(() => toast('コードをコピーしました', 'note'), ng); } catch (e) { ng(); }
   }
 
@@ -4406,7 +4406,7 @@ self.onmessage = function (e) {
         });
       },
       on: {
-        guest(nm) { N.foe = nm; toast(`${nm}が入りました`, 'note', true); },
+        guest(nm) { N.foe = nm; toast(`${nm}が入室しました`, 'note', true); },
         match(g) { if (app.replay) closeReplay(); app.game = g; beginMatchUI(); },
         change() { if (app.net === N) netRefresh(); },
         bye(reason) { netGone(reason); },
@@ -4427,7 +4427,7 @@ self.onmessage = function (e) {
         welcome(g) { N.foe = g.players[1 - N.seat].name; netGuestWelcome(g); },
         state(g) { netGuestState(g); },
         foeReady() { if (app.screen === 'setup') render(); },
-        reject(m) { toast(m.reason || 'その操作はできませんでした', 'warn'); render(); },
+        reject(m) { toast(m.reason || 'その操作は実行できませんでした', 'warn'); render(); },
         bye(reason) { netGone(reason); },
       },
     });
@@ -4442,7 +4442,7 @@ self.onmessage = function (e) {
     const again = !!app.game;
     app.game = g;
     beginMatchUI();
-    if (again) toast(`${app.net.foe}が次の試合を始めました`, 'note', true);
+    if (again) toast(`${app.net.foe}が次の試合を開始しました`, 'note', true);
   }
   // ゲスト：ホストから新しい状態が届いた。手元の対戦を差し替えて、新しい演出だけを見せる
   //  （演出は「どこまで見せたか」を番号 app.fxSeen で覚えているので、届いた記録の続きから再生される）
@@ -4454,7 +4454,7 @@ self.onmessage = function (e) {
     if (app.screen !== 'battle') { render(); return; }
     const me = app.net.seat;
     if (g.phase === 'play' && g.sub === 'sacrifice' && g.pending && g.pending.who === me && !(prev && prev.sub === 'sacrifice')) {
-      toast('アンサー失敗！手番が終了します。差し出すキューブを選んでください', 'warn', true);
+      toast('アンサー失敗！手番が終了します。差し出すキューブを選択してください', 'warn', true);
     }
     afterHuman();
   }
@@ -4467,9 +4467,9 @@ self.onmessage = function (e) {
     if (app.screen === 'battle') afterHuman(); else render();
   }
   const BYE_TEXT = {
-    version: '相手とゲームの版が違います。両方ともページを読み込み直してから、もう一度つないでください',
-    full: 'その部屋はもう対戦中です',
-    timeout: '相手との通信が途切れました',
+    version: '相手とゲームのバージョンが異なります。両者ともページを再読み込みしてから再接続してください',
+    full: 'その部屋は対戦中です',
+    timeout: '相手との通信が切断されました',
     left: '相手が退出しました',
   };
   // 相手が抜けた・通信が切れた
@@ -4481,7 +4481,7 @@ self.onmessage = function (e) {
     const g = app.game;
     // 試合が届く前に切れた（ゲスト）：満員の部屋か、部屋が閉じられた。「満員」の知らせより先に切れることがあるので、まとめて伝える
     const early = !g && N.role === 'guest' && !BYE_TEXT[reason];
-    const text = BYE_TEXT[reason] || (early ? '部屋に入れませんでした（もう対戦中か、部屋が閉じられました）' : '相手との接続が切れました');
+    const text = BYE_TEXT[reason] || (early ? '入室できませんでした（対戦中か、部屋が閉じられました）' : '相手との接続が切断されました');
     // 決着のあとなら、結果・リプレイ・答え合わせはそのまま見られるようにする
     if (g && g.phase === 'over' && app.screen === 'battle') { toast(text, 'warn', true); render(); return; }
     netLeave(text, !g);   // 試合が始まる前なら、ロビーに戻る
@@ -4503,9 +4503,9 @@ self.onmessage = function (e) {
   function netQuitModal() {
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="nquit-h">
       <div class="panel dialog">
-        <h2 id="nquit-h" class="verdict-sub">対戦をやめて部屋を出ますか？</h2>
-        <p class="note">相手との接続が切れ、この試合は終わります。</p>
-        <div class="row"><button class="btn fire" data-act="net-quit">部屋を出る</button><button class="btn" data-act="close-modal">続ける</button></div>
+        <h2 id="nquit-h" class="verdict-sub">対戦を中止して退出しますか？</h2>
+        <p class="note">相手との接続が切断され、この試合は終了します。</p>
+        <div class="row"><button class="btn fire" data-act="net-quit">退出する</button><button class="btn" data-act="close-modal">続ける</button></div>
       </div>
     </div>`;
   }
@@ -4517,34 +4517,34 @@ self.onmessage = function (e) {
     if (!NET.supported()) {
       // claude.ai の公開ページなど、通信が止められているページでは、遊べるページ（GitHub Pages 版）を案内する
       body = `<div class="lob-wait lob-blocked">
-          <p class="note warn lob-err">このページではオンライン対戦を使えません。claude.ai の公開ページは、安全のため端末どうしの通信が止められています。</p>
-          <p class="note">GitHub Pages 版のサーチバトルを開いて、2人ともそちらで遊んでください。</p>
+          <p class="note warn lob-err">このページではオンライン対戦は使用できません。claude.ai の公開ページは、安全のため端末同士の通信が制限されています。</p>
+          <p class="note">GitHub Pages 版のサーチバトルを開き、2人ともそちらでプレイしてください。</p>
           <a class="btn primary" href="${esc(NET.PLAY_URL)}" target="_blank" rel="noopener">GitHub Pages 版を開く</a>
           <p class="note lob-url">${esc(NET.PLAY_URL)}</p>
         </div>`;
     } else if (N) {
-      const t = N.role === 'host' ? (N.foe ? `${esc(N.foe)}が入りました。準備しています` : '相手とつながりました。準備しています') : '部屋に入りました。準備しています';
+      const t = N.role === 'host' ? (N.foe ? `${esc(N.foe)}が入室しました。準備中` : '相手と接続しました。準備中') : '入室しました。準備中';
       body = `<div class="lob-wait"><p class="prompt net-wait">${t}</p></div>`;
     } else if (L.st === 'opening') {
-      body = '<div class="lob-wait"><p class="prompt net-wait">部屋を作っています</p><button class="btn ghost" data-act="net-cancel">やめる</button></div>';
+      body = '<div class="lob-wait"><p class="prompt net-wait">部屋を作成中</p><button class="btn ghost" data-act="net-cancel">やめる</button></div>';
     } else if (L.st === 'hosting') {
       body = `<div class="lob-wait">
-          <p class="note">このコードを相手に伝えてください（LINE など）。相手が「部屋に入る」に入力すると、つながります。</p>
+          <p class="note">このコードを相手に伝えてください（LINE など）。相手が「部屋に入る」に入力すると接続します。</p>
           <div class="room-code" aria-label="部屋のコード ${esc(L.code.split('').join(' '))}">${esc(L.code)}</div>
           <div class="row"><button class="btn" data-act="net-copy">コードをコピー</button><button class="btn ghost" data-act="net-cancel">部屋を閉じる</button></div>
-          <p class="prompt net-wait">相手を待っています</p>
+          <p class="prompt net-wait">相手を待機中</p>
           <p class="note">試合の設定：${esc(rulesTxt)}</p>
         </div>`;
     } else if (L.st === 'joining') {
-      body = `<div class="lob-wait"><p class="prompt net-wait">部屋 ${esc(L.code)} に接続しています</p><button class="btn ghost" data-act="net-cancel">やめる</button></div>`;
+      body = `<div class="lob-wait"><p class="prompt net-wait">部屋 ${esc(L.code)} に接続中</p><button class="btn ghost" data-act="net-cancel">やめる</button></div>`;
     } else {
       body = `
         ${L.err ? `<p class="note warn lob-err" role="alert">${esc(L.err)}</p>` : ''}
-        <label class="lob-field"><span>あなたの名前（相手の画面に出ます。12文字まで）</span><input id="net-name" class="lob-input" type="text" maxlength="12" autocomplete="nickname" placeholder="例：たろう" value="${esc(s.netName || '')}"></label>
+        <label class="lob-field"><span>あなたの名前（相手の画面に表示。12文字まで）</span><input id="net-name" class="lob-input" type="text" maxlength="12" autocomplete="nickname" placeholder="例：たろう" value="${esc(s.netName || '')}"></label>
         <div class="lob-grid">
           <section class="lob-card">
             <h3>部屋を作る</h3>
-            <p class="note">あなたの端末が審判になります。試合の設定はタイトルで選んだもの：<b>${esc(rulesTxt)}</b></p>
+            <p class="note">あなたの端末が審判になります。試合設定はタイトルで選択したもの：<b>${esc(rulesTxt)}</b></p>
             <button class="btn primary" data-act="net-create">部屋を作る</button>
           </section>
           <section class="lob-card enemy">
@@ -4553,7 +4553,7 @@ self.onmessage = function (e) {
             <button class="btn primary" data-act="net-join">入る</button>
           </section>
         </div>
-        <p class="note">知り合いどうしで遊ぶためのしくみです。つなぐときだけ PeerJS の無料サービスを使い、試合のデータは端末どうしで直接やりとりします。会社や学校のネットワークなど、つながらない回線もあります。</p>`;
+        <p class="note">知り合い同士で遊ぶための機能です。接続時のみ PeerJS の無料サービスを使用し、試合データは端末同士で直接やりとりします。会社や学校のネットワークなど、接続できない回線もあります。</p>`;
     }
     root.innerHTML = `
       <div class="wrap lobby">

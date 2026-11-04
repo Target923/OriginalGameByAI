@@ -363,14 +363,14 @@
     const cells = cellsFor(key, t, r0, c0, this.N);
     if (!cells) return { ok: false, reason: '盤面からはみ出します' };
     const mask = maskOf(cells);
-    if (mask & this.livingMask(pi)) return { ok: false, reason: 'ほかのキューブと重なります', cells, mask };
+    if (mask & this.livingMask(pi)) return { ok: false, reason: '他のキューブと重複します', cells, mask };
     return { ok: true, cells, mask };
   };
   Game.prototype.placePiece = function (pi, key, t, r0, c0) {
     const P = this.players[pi];
     if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
     const sh = SHAPES[key];
-    if (!sh || key === 'A1') return { ok: false, reason: '置けない形です' };
+    if (!sh || key === 'A1') return { ok: false, reason: '配置できない形状です' };
     if (this.stockLeft(pi, sh.size) <= 0) return { ok: false, reason: sh.size + 'ブロックのリソースが枯渇しています' };
     const chk = this.checkPlacement(pi, key, t, r0, c0);
     if (!chk.ok) return chk;
@@ -413,7 +413,7 @@
     const P = this.players[pi];
     if (!this._setupOpen() || P.setupDone) return { ok: false };
     const p = this.pieceAt(pi, cell);
-    if (!p) return { ok: false, reason: 'トレジャーはキューブのブロックに置きます' };
+    if (!p) return { ok: false, reason: 'トレジャーはキューブのブロックにセットしてください' };
     P.treasure = { pieceId: p.id, idx: p.cells.indexOf(cell), cell };
     return { ok: true };
   };
@@ -454,7 +454,7 @@
   Game.prototype.finishSetup = function (pi) {
     const P = this.players[pi];
     if (!this._setupOpen() || P.setupDone) return { ok: false, reason: '配置フェーズではありません' };
-    if (!P.pieces.length) return { ok: false, reason: '最低1キューブを置いてください' };
+    if (!P.pieces.length) return { ok: false, reason: '最低1キューブを配置してください' };
     if (!P.treasure) return { ok: false, reason: 'トレジャーをセットしてください' };
     P.setupDone = true;
     // ドラフトは配置の前（v15.4。ユーザーの希望）。ドラフト中に配置を済ませた側（CPU）は、ドラフトが終わるのを待つ
@@ -492,7 +492,7 @@
   Game.prototype.draftPick = function (pi, key) {
     const d = this.draft;
     if (this.phase !== 'draft' || !d) return { ok: false };
-    if (d.order[d.step] !== pi) return { ok: false, reason: '相手の番です' };
+    if (d.order[d.step] !== pi) return { ok: false, reason: '相手の手番です' };
     const i = d.pool.indexOf(key);
     if (i < 0) return { ok: false, reason: 'そのアイテムは残っていません' };
     d.pool.splice(i, 1);
@@ -1055,17 +1055,17 @@
   Game.prototype._warpDest = function (pi, p, t, r0, c0) {
     const N = this.N;
     if (!Number.isInteger(t) || t < 0 || t > 7) return { ok: false, reason: '向きが正しくありません' };
-    if (!rotationOf(p.shape, p.t, t)) return { ok: false, reason: 'ワープは回転だけで、裏返し（反転）はできません' };
+    if (!rotationOf(p.shape, p.t, t)) return { ok: false, reason: 'ワープは回転のみ可能です（反転不可）' };
     // 左右対称な形は、裏返しの向きの番号でも回転と同じ形になる。形は同じでも、ブロックの順番（どのブロックがトリガーか）は
     //  裏返しの対応になってしまうので、回転の向きの番号に直してから置く（移動後のレティクル・トレジャーの位置が、回転で正しく対応するように）
     if ((t & 4) !== (p.t & 4)) { const sig = ORIENT[p.shape][t].sig; for (let r = 0; r < 4; r++) if (ORIENT[p.shape][(p.t & 4) | r].sig === sig) { t = (p.t & 4) | r; break; } }
     const cells = cellsFor(p.shape, t, r0, c0, N);
     if (!cells) return { ok: false, reason: '盤面からはみ出します' };
     const m = maskOf(cells);
-    if (m & this.livingMask(pi, p.id)) return { ok: false, reason: 'ほかのキューブと重なります' };
-    if (m & p.mask) return { ok: false, reason: '移動前の位置とは重ねられません' };
-    if (m & this.deadMask(pi)) return { ok: false, reason: '撃破済みのキューブがあったブロックには置けません' };
-    for (const q of this.players[pi].pieces) if (q.alive && q !== p && q.warpPlan && (q.warpPlan.mask & m)) return { ok: false, reason: 'ほかのキューブのワープ先と重なります' };
+    if (m & this.livingMask(pi, p.id)) return { ok: false, reason: '他のキューブと重複します' };
+    if (m & p.mask) return { ok: false, reason: 'ワープ前の位置とは重複できません' };
+    if (m & this.deadMask(pi)) return { ok: false, reason: '撃破済ブロックには配置できません' };
+    for (const q of this.players[pi].pieces) if (q.alive && q !== p && q.warpPlan && (q.warpPlan.mask & m)) return { ok: false, reason: '他のキューブのワープ先と重複します' };
     return { ok: true, cells, mask: m, t };
   };
   // キューブ p の、いま選べるワープの移動先をすべて（向きと位置）。空なら、このキューブはワープできない
@@ -1109,18 +1109,18 @@
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
         return { ok: false, reason: '調べるブロックを選択してください' };
       case 'acid':
-        if (me.acid) return { ok: false, reason: 'アシッドが効いているあいだは、もう1つは使えません' };
+        if (me.acid) return { ok: false, reason: 'アシッド効果中は重複使用できません' };
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
-        return { ok: false, reason: '酸をかけるブロックを選択してください（撃破済みのブロックは選べません）' };
+        return { ok: false, reason: '酸をかけるブロックを選択してください（撃破済ブロックは選択不可）' };
       case 'cross':
         if (inRange(params.cell)) return { ok: true };
         return { ok: false, reason: '十字の中心のブロックを選択してください' };
       case 'bazooka':
         if (inRange(params.cell) && !v.dead[params.cell]) return { ok: true };
-        return { ok: false, reason: '撃ち込むブロックを選択してください（撃破済みのブロックは選べません）' };
+        return { ok: false, reason: '撃ち込むブロックを選択してください（撃破済ブロックは選択不可）' };
       case 'pair':
         if (!inRange(params.a) || !inRange(params.b) || params.a === params.b) return { ok: false, reason: '違うブロックを2つ選択してください' };
-        if (v.dead[params.a] || v.dead[params.b]) return { ok: false, reason: '撃破済みのブロックは選べません' };
+        if (v.dead[params.a] || v.dead[params.b]) return { ok: false, reason: '撃破済ブロックは選択できません' };
         return { ok: true };
       case 'warp': {
         // ワープ（v15。ユーザーの案）：使うときは「どのキューブを・どのブロックをトリガーにして・どこへ移すか」を決めておくだけ。
@@ -1129,10 +1129,10 @@
         if (!p) return { ok: false, reason: 'ワープするキューブを選択してください' };
         // ステルス中のキューブはワープできない（v14）。ワープを待っているキューブにも重ねては使えない（1つのキューブに1つまで）
         if (p.stealth) return { ok: false, reason: 'ステルス中のキューブはワープできません' };
-        if (p.warpPlan) return { ok: false, reason: 'そのキューブはすでにワープを待っています' };
+        if (p.warpPlan) return { ok: false, reason: 'そのキューブはワープ待機中です' };
         // トリガーブロック：そのキューブの、まだ当たっていない（コールされていない）ブロック
         if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選択してください' };
-        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選択してください' };
+        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは未コールのブロックから選択してください' };
         const dest = this._warpDest(pi, p, params.t, params.r0, params.c0);
         if (!dest.ok) return dest;
         return { ok: true, cells: dest.cells, mask: dest.mask, t: dest.t, piece: p };
@@ -1141,11 +1141,11 @@
         const p = me.pieces.find((x) => x.id === params.pieceId && x.alive);
         if (!p) return { ok: false, reason: 'ステルスにする自分のキューブを選択してください' };
         if (p.stealth) return { ok: false, reason: 'そのキューブはすでにステルス中です' };
-        if (p.warpPlan) return { ok: false, reason: 'ワープを待っているキューブにはステルスを使えません' };   // v15：1つのキューブに防御アイテムは1つまで
-        if (p.stealthRevealed) return { ok: false, reason: '見破られたキューブには使えません' };
+        if (p.warpPlan) return { ok: false, reason: 'ワープ待機中のキューブにはステルスを使用できません' };   // v15：1つのキューブに防御アイテムは1つまで
+        if (p.stealthRevealed) return { ok: false, reason: 'ステルス解除されたキューブには使用できません' };
         // トリガーブロック（v14.2）：隠すキューブのブロックを1つ選ぶ。まだ当たっていないブロックに限る（当たったブロックは二度とコールされず、弱点にならないため）
         if (!Number.isInteger(params.cell) || !(p.mask & bit(params.cell))) return { ok: false, reason: 'トリガーブロックにする、そのキューブのブロックを選択してください' };
-        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは、まだ当たっていないブロックから選択してください' };
+        if (p.hitMask & bit(params.cell)) return { ok: false, reason: 'トリガーブロックは未コールのブロックから選択してください' };
         return { ok: true, piece: p };
       }
     }

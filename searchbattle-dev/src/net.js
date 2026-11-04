@@ -266,7 +266,7 @@
       if (open()) g.clearSetup(pi);
       this.send({ t: 'reject', what: 'setup', reason: reason || '配置が正しくありません' });
     };
-    if (!open()) return fail('いまは配置を受け付けていません');
+    if (!open()) return fail('現在は配置を受け付けていません');
     const s = cleanSetup(msg, g);
     if (!s) return fail();
     g.clearSetup(pi);
@@ -295,7 +295,7 @@
     }
     if (seq > this.ack) this.ack = seq;
     if (!r || r.ok === false) {
-      this.send({ t: 'reject', what: 'act', seq, reason: (r && r.reason) || 'いまはその操作はできません' });
+      this.send({ t: 'reject', what: 'act', seq, reason: (r && r.reason) || '現在その操作はできません' });
       return;
     }
     this.sync();
@@ -374,7 +374,7 @@
   };
   // 対戦中の操作をホストに頼む（args に自分の席は入れない）。結果はあとで state として届く
   Guest.prototype.act = function (name, args) {
-    if (this.wait) return { ok: false, reason: '前の操作の結果を待っています' };
+    if (this.wait) return { ok: false, reason: '前の操作の結果を待機中です' };
     if (PLAY_ACTS.indexOf(name) < 0) return { ok: false, reason: 'できない操作です' };
     this.seq += 1;
     this.wait = this.seq;
@@ -384,8 +384,8 @@
   // 配置をまとめてホストに送る（形・向き・位置・色と柄の番号と、トレジャーのブロック）。置いた順に並べる（キューブの色が変わらないように）
   Guest.prototype.sendSetup = function () {
     const g = this.game, P = g && g.players[this.seat];
-    if (!P || g.phase !== 'setup' || P.setupDone || this.setupSent) return { ok: false, reason: '配置の時間ではありません' };
-    if (!P.pieces.length) return { ok: false, reason: '最低1キューブを置いてください' };
+    if (!P || g.phase !== 'setup' || P.setupDone || this.setupSent) return { ok: false, reason: '配置フェーズではありません' };
+    if (!P.pieces.length) return { ok: false, reason: '最低1キューブを配置してください' };
     if (!P.treasure) return { ok: false, reason: 'トレジャーをセットしてください' };
     const pieces = P.pieces.slice().sort((a, b) => a.id - b.id).map((p) => ({ key: p.shape, t: p.t, r0: p.r0, c0: p.c0, col: p.col }));
     this.setupSent = true;
@@ -431,16 +431,16 @@
   }
   const ERR_TEXT = {
     'browser-incompatible': 'このブラウザはオンライン対戦（WebRTC）に対応していません',
-    network: '通信の仲介サーバーにつながりません。インターネットの接続を確かめてください',
-    'server-error': '通信の仲介サーバーにつながりません。しばらくしてから試してください',
-    'socket-error': '通信の仲介サーバーとの接続が切れました',
-    'socket-closed': '通信の仲介サーバーとの接続が切れました',
-    'unavailable-id': '部屋のコードが使えませんでした。もう一度作ってください',
-    'peer-unavailable': 'その部屋は見つかりませんでした。コードを確かめてください',
-    webrtc: '相手と直接つながれませんでした。別の回線（Wi-Fi とモバイル回線など）で試してください',
-    'ssl-unavailable': '安全な接続（https）が使えません',
+    network: '通信の仲介サーバーに接続できません。インターネット接続を確認してください',
+    'server-error': '通信の仲介サーバーに接続できません。しばらくしてから再試行してください',
+    'socket-error': '通信の仲介サーバーとの接続が切断されました',
+    'socket-closed': '通信の仲介サーバーとの接続が切断されました',
+    'unavailable-id': '部屋のコードが使用できませんでした。再度作成してください',
+    'peer-unavailable': 'その部屋は見つかりませんでした。コードを確認してください',
+    webrtc: '相手と直接接続できませんでした。別の回線（Wi-Fi/モバイル回線など）で試してください',
+    'ssl-unavailable': '安全な接続（https）が使用できません',
   };
-  function errorText(err) { return ERR_TEXT[err && err.type] || '通信でエラーが起きました'; }
+  function errorText(err) { return ERR_TEXT[err && err.type] || '通信エラーが発生しました'; }
 
   // PeerJS のつながり（DataConnection）を、このゲームで使う「通信路」の形にまとめる。
   //  外に見せるのは send(msg)・onmessage・onclose・close() だけ（Host・Guest はこれだけを使う）。
@@ -521,7 +521,7 @@
         o.onError(errorText(err));
       });
     };
-    loadPeerJS().then(start, () => { if (!stopped) { stopped = true; o.onError('通信の部品（PeerJS）を読み込めませんでした。インターネットの接続を確かめてください'); } });
+    loadPeerJS().then(start, () => { if (!stopped) { stopped = true; o.onError('通信モジュール（PeerJS）を読み込めませんでした。インターネット接続を確認してください'); } });
     return { close() { stopped = true; if (peer && !taken) try { peer.destroy(); } catch (e) { /* 無視 */ } } };
   }
 
@@ -536,7 +536,7 @@
       try { if (peer) peer.destroy(); } catch (e) { /* 無視 */ }
       o.onError(text);
     };
-    const timer = setTimeout(() => fail('つながりませんでした。コードを確かめて、もう一度試してください'), JOIN_TIMEOUT_MS);
+    const timer = setTimeout(() => fail('接続できませんでした。コードを確認して再試行してください'), JOIN_TIMEOUT_MS);
     loadPeerJS().then((Peer) => {
       if (done) return;
       peer = new Peer(peerOptions());   // 自分の ID はクラウドに決めてもらう
@@ -550,10 +550,10 @@
           clearTimeout(timer);
           o.onLink(wrapConn(conn, peer));
         });
-        conn.on('error', () => fail('つながりませんでした'));
+        conn.on('error', () => fail('接続できませんでした'));
       });
       peer.on('error', (err) => fail(errorText(err)));
-    }, () => fail('通信の部品（PeerJS）を読み込めませんでした。インターネットの接続を確かめてください'));
+    }, () => fail('通信モジュール（PeerJS）を読み込めませんでした。インターネット接続を確認してください'));
     return { close() { if (!done) { done = true; clearTimeout(timer); try { if (peer) peer.destroy(); } catch (e) { /* 無視 */ } } } };
   }
 
