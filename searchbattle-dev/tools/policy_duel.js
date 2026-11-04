@@ -30,4 +30,4 @@ for (let g = 0; g < n; g++) {
 }
 AI.policy[0] = {}; AI.policy[1] = {};
 const per = (u) => Object.fromEntries(Object.entries(u).map(([k, v]) => [k, +(v / games).toFixed(2)]));
-console.log(JSON.stringify({ rules, A, B, games, winPctA: +(100 * (wins + draws / 2) / games).toFixed(1), se: +(100 * Math.sqrt(0.25 / games)).toFixed(1), avgTurns: +(turns / games).toFixed(1), bazookaA: per(usedA).bazooka || 0, bazookaB: per(usedB).bazooka || 0, sec: Math.round((Date.now() - t0) / 1000) }));
+console.log(JSON.stringify({ rules, A, B, games, winPctA: +(100 * (wins + draws / 2) / games).toFixed(1), se: +(100 * Math.sqrt(0.25 / games)).toFixed(1), avgTurns: +(turns / games).toFixed(1), bazookaA: per(usedA).bazooka || 0, acidA: per(usedA).acid || 0, acidB: per(usedB).acid || 0, bazookaB: per(usedB).bazooka || 0, sec: Math.round((Date.now() - t0) / 1000) }));

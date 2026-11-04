@@ -305,6 +305,7 @@
         N: this.N, stock: Object.assign({}, STOCK),
         calls: [], deads: [], warps: [], adds: [], empties: [], occs: [], counts: [], sums: [], crossMiss: [],
         pairs: [], nodes: [], splits: [], stealths: [], tlogs: [], grays: [], failedAnswers: [],
+        acidPairs: [],   // アシッドの自動コールから分かる「同じキューブ／違うキューブ」（2026-11-04。ペアショットと同じ形。画面の線には使わない）
         reveals: [],   // ステルスを見破った時刻と、見破ったキューブの数（v14）
         warpUses: [],  // 相手がワープを使った時刻（v15。使ったことだけが分かる。どのキューブか・移動先は伏せられる）
       },
@@ -799,11 +800,32 @@
       return;
     }
     const acidCell = me.acid.cell;   // コールで撃破・ワープすると me.acid が消えるので、先に覚えておく
+    // 自動コールから読み取れる事実（2026-11-04。人にも見えているので CPU にも使わせる。kb.acidPairs）：
+    //  ・溶かしたブロック（自動コールのヒット）は、酸をかけたブロックと同じキューブ
+    //  ・自動コールは「当たったブロックに隣り合う、まだ当たっていないブロック」を読み順に選ぶので、
+    //    すでに分かっているそのキューブのブロック（酸をかけたブロック・それまでに溶かしたブロック）に隣り合い、
+    //    読み順で今回より前にある、まだ誰もコールしていないブロックは、そのキューブではない
+    //  （酸をかけたブロック自身を呼ぶ1回目は、まだそのブロックに当たっていないので、2つ目の事実は使わない）
+    const known = [acidCell].concat(me.acid.dis || []);
+    const before = [];
+    if (c !== acidCell) {
+      const adj = (a, b) => Math.abs(Math.floor(a / N) - Math.floor(b / N)) + Math.abs((a % N) - (b % N)) === 1;
+      for (let y = 0; y < c; y++) if (!me.view.marks[y] && known.some((k) => adj(k, y))) before.push(y);
+    }
     this._log(this.cur, `${me.name}：アシッドで自動コール`, null, 'call');
     this._acidCalling = true;
-    try { this.call(this.cur, c); } finally { delete this._acidCalling; }
+    let res = null;
+    try { res = this.call(this.cur, c); } finally { delete this._acidCalling; }
     const m = me.view.marks[c];
     if (m) { m.acid = true; if (c === acidCell) m.acidSrc = true; }
+    // ふつうのヒット（◎・○）のときだけ事実にする（ステルスで隠れた×・ワープのレティクルなどは、見えている形が違うので使わない）
+    if (res && res.ok && (res.r === 'oo' || res.r === 'o')) {
+      const kb = me.kb.acidPairs || (me.kb.acidPairs = []);
+      const t = m ? m.t : 0;
+      if (c !== acidCell) kb.push({ t, turn: this.turn, a: acidCell, b: c, same: true, src: 'acid' });
+      for (const y of before) kb.push({ t, turn: this.turn, a: acidCell, b: y, same: false, src: 'acid' });
+      if (me.acid) (me.acid.dis || (me.acid.dis = [])).push(c);
+    }
     // 撃破・ワープで酸がなくなったとき
     if (!p.alive || !p.acid) { p.acid = false; me.acid = null; }
   };

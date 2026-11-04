@@ -121,7 +121,8 @@
     const warpTouches = (c, t) => partialWarps.some((w) => w.t > t && !(w.mask & bit(c)) && !safeFromWarp(c, w));
     const pairs = [];
     const derivedOccs = [];
-    for (const p of kb.pairs) {
+    // ペアショットの結果と、アシッドの自動コールから分かる同じ・違うキューブ（kb.acidPairs。2026-11-04）を同じに扱う
+    for (const p of kb.pairs.concat(kb.acidPairs || [])) {
       if (p.same) {
         // 同じキューブの2ブロック：どちらかが分解されたキューブでなければ、もう片方も同じキューブなので分解されていない
         if (explained(p.a, p.t) || explained(p.b, p.t)) continue;
@@ -644,7 +645,7 @@
     let since = lw;
     for (const s0 of ctx.splits) if (s0.t < sp.t && s0.t > since) since = s0.t;
     const facts = useFacts ? kb.occs.filter((o) => o.t > since && o.t < sp.t && (o.cat || o.size || o.deg != null)) : [];
-    const pairs = useFacts ? kb.pairs.filter((q) => q.t > since && q.t < sp.t) : [];
+    const pairs = useFacts ? kb.pairs.concat(kb.acidPairs || []).filter((q) => q.t > since && q.t < sp.t) : [];
     const factOK = (Pl) => {
       for (const o of facts) {
         if (!(Pl.mask & bit(o.c))) continue;
@@ -1549,11 +1550,22 @@
         const beta = pol.beta != null ? pol.beta : 0.3;
         for (const o of cubeOptions(A)) consider('cube', o.params, (1 - beta) * o.infoA + beta * o.Hn);
       }
-      // アシッド（v15.8）：候補がいちばん割れている◎のキューブに酸をかける（撃破まで自動でコールしてくれる）。
-      //  候補の割れ方（エントロピー）が acidH（既定 2.5）以上のときだけ
-      //  4×4（予選）では使わない（policy.acidMinN、既定5）。測定：予選でも使うと、持たない側の勝率が58.6%（2000局。使わない方が強い：
-      //  コールを酸に取られて、ほかのキューブを探せなくなるため。しきい値を3.5に上げても55.2%）。決勝は持たない側30.0%（80局）でよく効く
-      if (free('acid') && !me.acid && N >= (pol.acidMinN != null ? pol.acidMinN : 5)) {
+      // アシッド（v15.8。CPU の使い方は 2026-11-04 に作り直し。ユーザーの案）：
+      //  酸をかけると、次の手番から撃破までコールを自動に取られる代わりに、そのキューブに必ず当たり続ける。
+      //  自動コールで溶かしたブロックは「酸のブロックと同じキューブ」、読み順で飛ばされたブロックは「違うキューブ」と分かる（kb.acidPairs）。
+      //  候補に「長いキューブ（まだ当たっていないブロックの見込み R）」と「情報の少ないキューブ（候補の割れ方 H）」を考え、
+      //  R が acidR 以上・H が acidH 以上の◎キューブのうち、R＋acidHW×H がいちばん大きいものの◎のブロックにかける。
+      //  測定（tools/acid_probe.js。使える局面から「使う／使わない」を同じ乱数で打ち比べた勝率の差）：
+      //   予選4×4（781局面）：使うと −10.5（誤差1.4）。どの局面でも損（R 2.5〜3.5 の長いキューブで −21.6、H 3以上でも −8.4）。
+      //    4×4 は盤がほぼ埋まっていて、手のコールで新しいキューブが見つかる。分かっているキューブへのコールはアンサーで済むので、
+      //    コールを2回ほど酸に取られる分の損が大きい。だから 4×4 では使わない（acidMinN 既定5）
+      //   決勝5×5（138局面）：全体 +2.2（誤差4.0）。H 3以上 +10.0（誤差5.8）・H 1未満 −13.3（誤差9.6）。R ではほとんど差がない。
+      //    だから 5×5 では、情報の少ないキューブ（H 3以上）に使う（acidH 既定3.0、acidR 既定1.5）
+      //  acidHuntMax：見つけていないキューブの見込みがこれを超えるときは使わない（既定は制限なし）
+      //  acidInfoMax：ほかの絞り込みアイテムの割れ方（bestH）がこれ以上なら、そちらを先に使う（既定は制限なし）
+      //  policy.acid：'target'（既定。上の使い方）／'old'（v15.8 の使い方：割れ方 2.5 以上・5×5 だけ）／'none'（使わない）
+      const acidMode = pol.acid || 'target';
+      if (acidMode === 'old' && free('acid') && !me.acid && N >= 5) {
         let ab = null;
         for (const i of uncertain) {
           const g = ctx.groups[i];
@@ -1563,7 +1575,39 @@
           const h = entropy(w);
           if (!ab || h > ab.h) ab = { h, c: g.c };
         }
-        if (ab && ab.h >= (pol.acidH != null ? pol.acidH : 2.5)) return { key: 'acid', params: { cell: ab.c } };
+        if (ab && ab.h >= 2.5) return { key: 'acid', params: { cell: ab.c } };
+      }
+      //  acidInfoMax：ほかの絞り込みアイテムの割れ方（bestH）がこれ以上なら、そちらを先に使う（1手番に使えるアイテムは1つなので）
+      if (acidMode === 'target' && free('acid') && !me.acid && N >= (pol.acidMinN != null ? pol.acidMinN : 5)
+        && bestH < (pol.acidInfoMax != null ? pol.acidInfoMax : 99)
+        && (A.hunt.Etotal || 0) <= (pol.acidHuntMax != null ? pol.acidHuntMax : 99)) {
+        const minR = pol.acidR != null ? pol.acidR : 1.5;
+        const minH = pol.acidH != null ? pol.acidH : 3.0;
+        const hw = pol.acidHW != null ? pol.acidHW : 0.5;
+        let hitM = 0;
+        for (const u of ctx.U) hitM |= bit(u.c);
+        let ab = null;
+        for (const i of uncertain) {
+          const g = ctx.groups[i];
+          if (g.q || me.view.dead[g.c]) continue;
+          const w = {};
+          let tw = 0, rem = 0;
+          g.cands.forEach((cd, k) => {
+            if (cd.merge || cd.st) return;
+            const x = A.joint.candW[i][k];
+            if (!(x > 0)) return;
+            w[k] = x; tw += x; rem += x * popcount(cd.mask & ~hitM);
+          });
+          if (!(tw > 0)) continue;
+          const R = rem / tw, h = entropy(w), v = R + hw * h;
+          if (R >= minR && h >= minH && (!ab || v > ab.v)) ab = { v, c: g.c, R, h };
+        }
+        // acidHook：測定用（tools/acid_probe.js）。局面の特徴を渡して、使うかどうかを外から決める
+        if (ab && pol.acidHook) {
+          ab.turn = game.turn; ab.N = N; ab.hunt = A.hunt.Etotal || 0; ab.bestH = bestH; ab.groups = uncertain.length;
+          if (!pol.acidHook(game, pi, ab)) ab = null;
+        }
+        if (ab) return { key: 'acid', params: { cell: ab.c } };
       }
       // クロスボム（v15.7）：◎のキューブの候補が十字にすっぽり収まる見込み（撃破できるキューブの数の期待値）がいちばん大きい中心。
       //  アンサーでは決めきれない（候補が割れている）キューブを、外れの心配なく倒せる。見込みが crossMin（既定 0.7）以上なら使う
@@ -1677,7 +1721,8 @@
       }
       if (lineBest) return { key: 'line', params: lineBest };
       // アシッド（v15.8）：キューブがいる見込みが acidHunt（既定 0.8）以上のブロックに、コールの前にかける
-      if (stage === 'pre' && free('acid') && !me.acid && cells.length && N >= (pol.acidMinN != null ? pol.acidMinN : 5)) {
+      //  （2026-11-04：盤の大きさの条件は acidHuntN（既定5）。'none' なら使わない）
+      if (stage === 'pre' && (pol.acid || 'target') !== 'none' && free('acid') && !me.acid && cells.length && N >= (pol.acidHuntN != null ? pol.acidHuntN : 5)) {
         let best = -1;
         for (const c of cells) if (best < 0 || hp[c] > hp[best]) best = c;
         if (best >= 0 && hp[best] >= (pol.acidHunt != null ? pol.acidHunt : 0.8)) return { key: 'acid', params: { cell: best } };

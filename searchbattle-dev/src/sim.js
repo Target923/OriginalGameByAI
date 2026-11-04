@@ -37,6 +37,8 @@
     const T = typeof post === 'string' ? JSON.parse(post) : post;
     const rng = mulberry32(hash3(seed, f1, f2));
     const choice = AI.tourChooseFirst(T, f1);
+    // 決勝に補充するレア（画面の大会と同じく CPU の決め方で選ぶ。2026-11-04 まではここで選んでおらず、いつも1つ目のレアになっていた）
+    for (const id of [f1, f2]) if (T.players[id].rares) Tour.setFinalRare(T, id, AI.tourChooseFinalRare(T, id));
     const g = new E.Game(Object.assign(Tour.matchOpts(T, f1, f2, 'final', { first: choice === 'first' ? 0 : 1, setupPlan: [AI.tourSetupPlan(T, f1, 'final'), AI.tourSetupPlan(T, f2, 'final')] }), { rng }));
     AI.autoMatch(g);
     return compactMatch(g, 'final', 3, f1, f2);
