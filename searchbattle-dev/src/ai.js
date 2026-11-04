@@ -352,6 +352,9 @@
   const HOMING_BOOST = 6;
   function finishCands(g, out, ctx) {
     const list = Array.from(out.values());
+    // ステルスの枝の印（st・pureSt）は最初に付ける（2026-11-04 の修正）。下のホーミングの重み・クロスボムの不発の判定がこの印を見るため。
+    //  それまでは印を付ける前に判定していたので、ステルスで隠れていたかもしれない候補まで、不発の十字に収まるとして消していた
+    for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     const hs = homingSums(ctx);
     if (hs.length) for (const cd of list) if (!cd.pureSt && hs.indexOf(cellSum(cd.cells)) >= 0) cd.w *= HOMING_BOOST;
     // クロスボムの不発の十字にすっぽり収まる候補は、ありえない（ステルスで隠れていたかもしれない候補と、Stealth hit のグループは除く）
@@ -360,7 +363,6 @@
       const keep = list.filter((cd) => cd.st || !cd.cells.length || !cm.some((m) => (cd.mask & ~m) === 0));
       if (keep.length) return keep;
     }
-    for (const cd of list) if (cd.branches.indexOf('s') >= 0) { cd.st = true; cd.pureSt = cd.branches.every((b) => b === 's'); }
     // Stealth hit のグループ：「前に見つかったキューブの○だった」候補（merge）を足す。前に◎か Stealth hit があるときだけありうる。
     // 重みは、新しいキューブだった場合の重みの合計と同じ（どちらとも決めない）
     if (g.q && ctx.groups.some((h) => h !== g && h.t < g.t)) {
