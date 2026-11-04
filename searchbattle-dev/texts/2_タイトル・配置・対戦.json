@@ -95,200 +95,200 @@
     "h": "e9297aae"
    },
    {
-    "id": "engine.js:51658",
+    "id": "engine.js:51650",
     "line": 1057,
     "where": "_warpDest › reason",
     "text": "向きが正しくありません",
-    "h": "8ab1f631"
+    "h": "0092c536"
    },
    {
-    "id": "engine.js:51741",
+    "id": "engine.js:51733",
     "line": 1058,
     "where": "_warpDest › reason",
     "text": "ワープは回転だけで、裏返し（反転）はできません",
-    "h": "f400b7f8"
+    "h": "4160e5c5"
    },
    {
-    "id": "engine.js:52184",
+    "id": "engine.js:52176",
     "line": 1063,
     "where": "_warpDest › reason",
     "text": "盤面からはみ出します",
-    "h": "0a20b667"
+    "h": "5940e118"
    },
    {
-    "id": "engine.js:52296",
+    "id": "engine.js:52288",
     "line": 1065,
     "where": "_warpDest › reason",
     "text": "ほかのキューブと重なります",
-    "h": "b7a5eae8"
+    "h": "3ad355eb"
    },
    {
-    "id": "engine.js:52363",
+    "id": "engine.js:52355",
     "line": 1066,
     "where": "_warpDest › reason",
     "text": "移動前の位置とは重ねられません",
-    "h": "c58b4974"
+    "h": "60fc0a06"
    },
    {
-    "id": "engine.js:52443",
+    "id": "engine.js:52435",
     "line": 1067,
     "where": "_warpDest › reason",
     "text": "撃破済みのキューブがあったブロックには置けません",
-    "h": "62021549"
+    "h": "85467888"
    },
    {
-    "id": "engine.js:52609",
+    "id": "engine.js:52601",
     "line": 1068,
     "where": "_warpDest › reason",
     "text": "ほかのキューブのワープ先と重なります",
-    "h": "ae5335db"
+    "h": "ee23c08b"
    },
    {
-    "id": "engine.js:54091",
+    "id": "engine.js:54083",
     "line": 1102,
     "where": "validateItem › case cube › reason",
     "text": "形状かブロック数を選択してください",
-    "h": "e5cc3c72"
+    "h": "1a225b93"
    },
    {
-    "id": "engine.js:54327",
+    "id": "engine.js:54319",
     "line": 1105,
     "where": "validateItem › case line › reason",
     "text": "列か行を選択してください",
-    "h": "43ee69ba"
+    "h": "6f65dc52"
    },
    {
-    "id": "engine.js:54520",
+    "id": "engine.js:54512",
     "line": 1110,
     "where": "validateItem › case node › reason",
     "text": "調べるブロックを選択してください",
-    "h": "183dc916"
+    "h": "0f4fb77d"
    },
    {
-    "id": "engine.js:54610",
+    "id": "engine.js:54602",
     "line": 1112,
     "where": "validateItem › case acid › reason",
     "text": "アシッドが効いているあいだは、もう1つは使えません",
-    "h": "f134d915"
+    "h": "9feb69dd"
    },
    {
-    "id": "engine.js:54756",
+    "id": "engine.js:54748",
     "line": 1114,
     "where": "validateItem › case acid › reason",
     "text": "酸をかけるブロックを選択してください（撃破済みのブロックは選べません）",
-    "h": "fd9e04cf"
+    "h": "8d993631"
    },
    {
-    "id": "engine.js:54908",
+    "id": "engine.js:54900",
     "line": 1117,
     "where": "validateItem › case cross › reason",
     "text": "十字の中心のブロックを選択してください",
-    "h": "cc635767"
+    "h": "1cf01a75"
    },
    {
-    "id": "engine.js:55070",
+    "id": "engine.js:55062",
     "line": 1120,
     "where": "validateItem › case bazooka › reason",
     "text": "撃ち込むブロックを選択してください（撃破済みのブロックは選べません）",
-    "h": "a5eddfa4"
+    "h": "6470918b"
    },
    {
-    "id": "engine.js:55236",
+    "id": "engine.js:55228",
     "line": 1122,
     "where": "validateItem › case pair › reason",
     "text": "違うブロックを2つ選択してください",
-    "h": "84e54cb1"
+    "h": "d6f838d0"
    },
    {
-    "id": "engine.js:55337",
+    "id": "engine.js:55329",
     "line": 1123,
     "where": "validateItem › case pair › reason",
     "text": "撃破済みのブロックは選べません",
-    "h": "727fda35"
+    "h": "911984bc"
    },
    {
-    "id": "engine.js:55667",
+    "id": "engine.js:55659",
     "line": 1129,
     "where": "validateItem › case warp › reason",
     "text": "ワープするキューブを選択してください",
-    "h": "29de7631"
+    "h": "1ab06f84"
    },
    {
-    "id": "engine.js:55815",
+    "id": "engine.js:55807",
     "line": 1131,
     "where": "validateItem › case warp › reason",
     "text": "ステルス中のキューブはワープできません",
-    "h": "c1c3f40f"
+    "h": "9f67ea91"
    },
    {
-    "id": "engine.js:55892",
+    "id": "engine.js:55884",
     "line": 1132,
     "where": "validateItem › case warp › reason",
     "text": "そのキューブはすでにワープを待っています",
-    "h": "dccb753a"
+    "h": "d352accb"
    },
    {
-    "id": "engine.js:56075",
+    "id": "engine.js:56067",
     "line": 1134,
     "where": "validateItem › case warp › reason",
     "text": "トリガーブロックにする、そのキューブのブロックを選択してください",
-    "h": "50988733"
+    "h": "b1497910"
    },
    {
-    "id": "engine.js:56183",
+    "id": "engine.js:56175",
     "line": 1135,
     "where": "validateItem › case warp › reason",
     "text": "トリガーブロックは、まだ当たっていないブロックから選択してください",
-    "h": "c97a6761"
+    "h": "b93e1ac6"
    },
    {
-    "id": "engine.js:56572",
+    "id": "engine.js:56564",
     "line": 1142,
     "where": "validateItem › case stealth › reason",
     "text": "ステルスにする自分のキューブを選択してください",
-    "h": "ba3f9e94"
+    "h": "646cf39d"
    },
    {
-    "id": "engine.js:56652",
+    "id": "engine.js:56644",
     "line": 1143,
     "where": "validateItem › case stealth › reason",
     "text": "そのキューブはすでにステルス中です",
-    "h": "64b05261"
+    "h": "830d9a46"
    },
    {
-    "id": "engine.js:56727",
+    "id": "engine.js:56719",
     "line": 1144,
     "where": "validateItem › case stealth › reason",
     "text": "ワープを待っているキューブにはステルスを使えません",
-    "h": "d831ed6b"
+    "h": "3dae0470"
    },
    {
-    "id": "engine.js:56846",
+    "id": "engine.js:56838",
     "line": 1145,
     "where": "validateItem › case stealth › reason",
     "text": "見破られたキューブには使えません",
-    "h": "659c510d"
+    "h": "39e07ce9"
    },
    {
-    "id": "engine.js:57063",
+    "id": "engine.js:57055",
     "line": 1147,
     "where": "validateItem › case stealth › reason",
     "text": "トリガーブロックにする、そのキューブのブロックを選択してください",
-    "h": "2ece1327"
+    "h": "edbc28d6"
    },
    {
-    "id": "engine.js:57171",
+    "id": "engine.js:57163",
     "line": 1148,
     "where": "validateItem › case stealth › reason",
     "text": "トリガーブロックは、まだ当たっていないブロックから選択してください",
-    "h": "ff57a491"
+    "h": "0812c94c"
    },
    {
-    "id": "engine.js:57295",
+    "id": "engine.js:57287",
     "line": 1152,
     "where": "validateItem › reason",
     "text": "不明なアイテムです",
-    "h": "50b961d2"
+    "h": "df41c5ba"
    }
   ],
   "src/ui.js": [
@@ -300,35 +300,35 @@
     "h": "9836ca06"
    },
    {
-    "id": "ui.js:16313",
+    "id": "ui.js:16278",
     "line": 250,
     "where": "x",
     "text": "×（なさそう）",
-    "h": "dc294b93"
+    "h": "be55a84f"
    },
    {
-    "id": "ui.js:16327",
+    "id": "ui.js:16292",
     "line": 250,
     "where": "o",
     "text": "●（ありそう）",
-    "h": "a588ee41"
+    "h": "11f40df3"
    },
    {
-    "id": "ui.js:16341",
+    "id": "ui.js:16306",
     "line": 250,
     "where": "t",
     "text": "★（トレジャーがありそう）",
-    "h": "e96a5aca"
+    "h": "a744b4df"
    },
    {
-    "id": "ui.js:16952",
+    "id": "ui.js:16917",
     "line": 266,
     "where": "toggleMemo",
     "text": "コール済みのブロックにはメモできません",
-    "h": "5b691f73"
+    "h": "439b4b6e"
    },
    {
-    "id": "ui.js:17457",
+    "id": "ui.js:17422",
     "line": 276,
     "where": "btn",
     "text": "メモ：{{1}}。右クリックで付けるしるしを{{2}}にします。押すと、タップでメモする状態になります（もう一度押すと戻る）",
@@ -336,68 +336,68 @@
      "MEMO_NAME[k]",
      "MEMO_NAME[k].slice(0, 1)"
     ],
-    "h": "ec9c5767"
+    "h": "f796fd50"
    },
    {
-    "id": "ui.js:17699",
+    "id": "ui.js:17664",
     "line": 278,
     "where": "memoBarHTML",
     "text": "メモ",
     "around": "メモ ……… 全部消す …",
-    "h": "923adebc"
+    "h": "c2fb795c"
    },
    {
-    "id": "ui.js:17832",
+    "id": "ui.js:17797",
     "line": 279,
     "where": "memoBarHTML",
     "text": "全部消す",
     "around": "メモ ……… 全部消す …",
-    "h": "7499a668"
+    "h": "304372ea"
    },
    {
-    "id": "ui.js:17891",
+    "id": "ui.js:17856",
     "line": 280,
     "where": "memoBarHTML",
     "text": "タップでメモ中（同じボタンでもどる）",
-    "h": "6c4beb90"
+    "h": "6cf77f32"
    },
    {
-    "id": "ui.js:17922",
+    "id": "ui.js:17887",
     "line": 280,
     "where": "memoBarHTML",
     "text": "しるしのボタンを押してから、ブロックをタップ",
-    "h": "309abab3"
+    "h": "b33c3604"
    },
    {
-    "id": "ui.js:17949",
+    "id": "ui.js:17914",
     "line": 280,
     "where": "memoBarHTML",
     "text": "右クリックでメモ",
-    "h": "d07bff7d"
+    "h": "73b78adf"
    },
    {
-    "id": "ui.js:19474",
+    "id": "ui.js:19439",
     "line": 316,
     "where": "warpPos › reason",
     "text": "盤面からはみ出します",
-    "h": "cc59fc10"
+    "h": "961791d9"
    },
    {
-    "id": "ui.js:19920",
+    "id": "ui.js:19885",
     "line": 327,
     "where": "warpRotate",
     "text": "この向きでは、そこに置けません。置き直してください",
-    "h": "e2b27651"
+    "h": "3e666b0e"
    },
    {
-    "id": "ui.js:22032",
+    "id": "ui.js:21997",
     "line": 372,
     "where": "intelFor › pre",
     "text": "残り",
-    "h": "494329ed"
+    "h": "c016f58e"
    },
    {
-    "id": "ui.js:22109",
+    "id": "ui.js:22074",
     "line": 373,
     "where": "intelFor › tip",
     "text": "サーチライン（T{{1}}）：{{2}}にかかっている（撃破されていない）キューブの数（C）/ そのブロックの数（B）。◎・○のブロックも数に入ります。",
@@ -405,53 +405,53 @@
      "pad2(q.turn)",
      "label"
     ],
-    "h": "3249b1ce"
+    "h": "4c775240"
    },
    {
-    "id": "ui.js:22209",
+    "id": "ui.js:22174",
     "line": 373,
     "where": "intelFor › tip",
     "text": "その後ワープがあったため、今は変わっているかもしれません",
-    "h": "6483c864"
+    "h": "2e7b81eb"
    },
    {
-    "id": "ui.js:22249",
+    "id": "ui.js:22214",
     "line": 373,
     "where": "intelFor › tip",
     "text": "撃破されると自動で減ります。その後バズーカで分解したキューブがあり、破片は1つずつ数えるため、キューブの数は目安です（ブロックの数は正しい）",
-    "h": "dce22822"
+    "h": "3b187b51"
    },
    {
-    "id": "ui.js:22324",
+    "id": "ui.js:22289",
     "line": 373,
     "where": "intelFor › tip",
     "text": "撃破されると自動で減ります",
-    "h": "5f209a3e"
+    "h": "a05ff4f7"
    },
    {
-    "id": "ui.js:23023",
+    "id": "ui.js:22988",
     "line": 385,
     "where": "intelFor",
     "text": "ブロック",
     "around": "…ブロック",
-    "h": "f2a34384"
+    "h": "f6296e0c"
    },
    {
-    "id": "ui.js:23084",
+    "id": "ui.js:23049",
     "line": 386,
     "where": "intelFor › pre",
     "text": "残り",
-    "h": "dfa7f1c1"
+    "h": "f2d17e12"
    },
    {
-    "id": "ui.js:23099",
+    "id": "ui.js:23064",
     "line": 386,
     "where": "intelFor › unit",
     "text": "キューブ",
-    "h": "a250cc27"
+    "h": "616d8027"
    },
    {
-    "id": "ui.js:23160",
+    "id": "ui.js:23125",
     "line": 387,
     "where": "intelFor › tip",
     "text": "サーチキューブ（T{{1}}）：",
@@ -459,40 +459,40 @@
      "pad2(q.turn)"
     ],
     "around": "サーチキューブ（T…）：…のキューブが、いくつ残っているか。撃破で自動更新。…",
-    "h": "83b2f90a"
+    "h": "7022780f"
    },
    {
-    "id": "ui.js:23219",
+    "id": "ui.js:23184",
     "line": 387,
     "where": "intelFor › tip",
     "text": "ブロック",
     "around": "…ブロック",
-    "h": "30c4d6e8"
+    "h": "5e6fc195"
    },
    {
-    "id": "ui.js:23235",
+    "id": "ui.js:23200",
     "line": 387,
     "where": "intelFor › tip",
     "text": "のキューブが、いくつ残っているか。撃破で自動更新。",
     "around": "サーチキューブ（T…）：…のキューブが、いくつ残っているか。撃破で自動更新。…",
-    "h": "5bdbbb41"
+    "h": "703b22b8"
    },
    {
-    "id": "ui.js:23271",
+    "id": "ui.js:23236",
     "line": 387,
     "where": "intelFor › tip",
     "text": "その後バズーカで分解したキューブがあり、そのキューブが数に入っていたかは分からないため、目安です",
-    "h": "78189310"
+    "h": "6c5bbf76"
    },
    {
-    "id": "ui.js:23715",
+    "id": "ui.js:23680",
     "line": 394,
     "where": "intelFor › label",
     "text": "合計",
-    "h": "a56021e8"
+    "h": "341b554b"
    },
    {
-    "id": "ui.js:23842",
+    "id": "ui.js:23807",
     "line": 395,
     "where": "intelFor › tip",
     "text": "ホーミングミサイル（T{{1}}）：相手のキューブ1つ（どれかは分からない）の、ブロックの番号（A-1から読み順に1〜{{2}}）の合計。",
@@ -500,691 +500,691 @@
      "pad2(q.turn)",
      "N * N"
     ],
-    "h": "fa274764"
+    "h": "2c73e9e4"
    },
    {
-    "id": "ui.js:23934",
+    "id": "ui.js:23899",
     "line": 395,
     "where": "intelFor › tip",
     "text": "その合計のキューブはもう撃破しました。",
-    "h": "99bba1c8"
+    "h": "f1276176"
    },
    {
-    "id": "ui.js:23971",
+    "id": "ui.js:23936",
     "line": 395,
     "where": "intelFor › tip",
     "text": "その後ワープか分解があり、目安です。",
-    "h": "95a7264e"
+    "h": "e6136d44"
    },
    {
-    "id": "ui.js:26642",
+    "id": "ui.js:26607",
     "line": 437,
     "where": "intelTagsHTML",
     "text": "（ステルスを見破って直った数）",
-    "h": "f554742b"
+    "h": "06020068"
    },
    {
-    "id": "ui.js:27474",
+    "id": "ui.js:27439",
     "line": 450,
     "where": "cellTagHTML",
     "text": "サーチシェイプ：",
-    "h": "a9228168"
+    "h": "2de8962b"
    },
    {
-    "id": "ui.js:27512",
+    "id": "ui.js:27477",
     "line": 450,
     "where": "cellTagHTML",
     "text": "サーチサイズ：{{1}}ブロック",
     "vars": [
      "a.size.v"
     ],
-    "h": "016e4841"
+    "h": "6ae16dba"
    },
    {
-    "id": "ui.js:27579",
+    "id": "ui.js:27544",
     "line": 450,
     "where": "cellTagHTML",
     "text": "（ステルスを見破って直った結果）",
-    "h": "d7c5e4b8"
+    "h": "cca0dd4c"
    },
    {
-    "id": "ui.js:28001",
+    "id": "ui.js:27966",
     "line": 456,
     "where": "number",
     "text": "サーチサイズ",
-    "h": "e5cde9f0"
+    "h": "1fe1f775"
    },
    {
-    "id": "ui.js:28018",
+    "id": "ui.js:27983",
     "line": 456,
     "where": "shape",
     "text": "サーチシェイプ",
-    "h": "68194c88"
+    "h": "ee1c307d"
    },
    {
-    "id": "ui.js:28035",
+    "id": "ui.js:28000",
     "line": 456,
     "where": "node",
     "text": "ノードショット",
-    "h": "2b1eef3b"
+    "h": "1d84fc68"
    },
    {
-    "id": "ui.js:28055",
+    "id": "ui.js:28020",
     "line": 456,
     "where": "bazooka",
     "text": "バズーカ",
-    "h": "23d58798"
+    "h": "0c08daf8"
    },
    {
-    "id": "ui.js:28069",
+    "id": "ui.js:28034",
     "line": 456,
     "where": "acid",
     "text": "アシッド",
-    "h": "35e80ffd"
+    "h": "df5b258b"
    },
    {
-    "id": "ui.js:38693",
+    "id": "ui.js:38658",
     "line": 647,
     "where": "ownBoard",
     "text": "ブロックのキューブ",
     "around": "…ブロックのキューブ……",
-    "h": "2a872585"
+    "h": "476bd552"
    },
    {
-    "id": "ui.js:38717",
+    "id": "ui.js:38682",
     "line": 647,
     "where": "ownBoard",
     "text": "（ステルス）",
-    "h": "11cd7fec"
+    "h": "b5c2edd2"
    },
    {
-    "id": "ui.js:38746",
+    "id": "ui.js:38711",
     "line": 647,
     "where": "ownBoard",
     "text": "（ワープ待ち",
     "around": "（ワープ待ち…）",
-    "h": "e24347c2"
+    "h": "358541da"
    },
    {
-    "id": "ui.js:38785",
+    "id": "ui.js:38750",
     "line": 647,
     "where": "ownBoard",
     "text": "・トリガー",
-    "h": "7aed7933"
+    "h": "1b6911de"
    },
    {
-    "id": "ui.js:38815",
+    "id": "ui.js:38780",
     "line": 647,
     "where": "ownBoard",
     "text": "撃破済み",
-    "h": "7635775c"
+    "h": "bd035f89"
    },
    {
-    "id": "ui.js:38863",
+    "id": "ui.js:38828",
     "line": 647,
     "where": "ownBoard",
     "text": "ワープの移動先（ワープ後のトリガー）",
-    "h": "a23a9942"
+    "h": "2ef822d3"
    },
    {
-    "id": "ui.js:38887",
+    "id": "ui.js:38852",
     "line": 647,
     "where": "ownBoard",
     "text": "ワープの移動先",
-    "h": "710dcd68"
+    "h": "de1f977d"
    },
    {
-    "id": "ui.js:39548",
+    "id": "ui.js:39513",
     "line": 658,
     "where": "cubeMenuHTML",
     "text": "SEARCH CUBE ─ 形状",
     "around": "✕ SEARCH CUBE ─ 形状 … ブロック数 …",
-    "h": "0b52bc2e"
+    "h": "7899c14a"
    },
    {
-    "id": "ui.js:39796",
+    "id": "ui.js:39761",
     "line": 660,
     "where": "cubeMenuHTML",
     "text": "ブロック数",
     "around": "✕ SEARCH CUBE ─ 形状 … ブロック数 …",
-    "h": "901dd3ad"
+    "h": "a75c2a6f"
    },
    {
-    "id": "ui.js:39990",
+    "id": "ui.js:39955",
     "line": 661,
     "where": "cubeMenuHTML",
     "text": "（バズーカの破片）",
-    "h": "a305cc58"
+    "h": "7f2f7cad"
    },
    {
-    "id": "ui.js:40021",
+    "id": "ui.js:39986",
     "line": 661,
     "where": "cubeMenuHTML",
     "text": "title=\"1ブロックのキューブ（バズーカで分解された破片）\"",
-    "h": "401ee12a"
+    "h": "3dfcf1d0"
    },
    {
-    "id": "ui.js:43157",
+    "id": "ui.js:43122",
     "line": 715,
     "where": "predBoard",
     "text": "×（再コールできる）",
-    "h": "b473a551"
+    "h": "95f5859f"
    },
    {
-    "id": "ui.js:43193",
+    "id": "ui.js:43158",
     "line": 715,
     "where": "predBoard",
     "text": "×（ワープ前の位置・トリガー）",
-    "h": "3d5ca63a"
+    "h": "e93506f1"
    },
    {
-    "id": "ui.js:43214",
+    "id": "ui.js:43179",
     "line": 715,
     "where": "predBoard",
     "text": "×（ワープ前の位置）",
-    "h": "4596c22b"
+    "h": "aac197b0"
    },
    {
-    "id": "ui.js:43283",
+    "id": "ui.js:43248",
     "line": 715,
     "where": "predBoard",
     "text": "STEALTH HIT",
-    "h": "a390c697"
+    "h": "7193aecc"
    },
    {
-    "id": "ui.js:43350",
+    "id": "ui.js:43315",
     "line": 715,
     "where": "predBoard",
     "text": "ワープレティクル",
-    "h": "84a3431e"
+    "h": "a7d4628c"
    },
    {
-    "id": "ui.js:43432",
+    "id": "ui.js:43397",
     "line": 717,
     "where": "predBoard",
     "text": "撃破済み",
-    "h": "a5a69caa"
+    "h": "963a80c7"
    },
    {
-    "id": "ui.js:43475",
+    "id": "ui.js:43440",
     "line": 718,
     "where": "predBoard",
     "text": "（メモ：{{1}}）",
     "vars": [
      "MEMO_NAME[mo]"
     ],
-    "h": "5044b5de"
+    "h": "18670240"
    },
    {
-    "id": "ui.js:46476",
+    "id": "ui.js:46441",
     "line": 761,
     "where": "fieldChips",
     "text": "相手の攻撃",
-    "h": "827e0e7e"
+    "h": "d8ef9782"
    },
    {
-    "id": "ui.js:46524",
+    "id": "ui.js:46489",
     "line": 761,
     "where": "fieldChips",
     "text": "自分の防御",
-    "h": "c1fdb5a4"
+    "h": "d0346f7c"
    },
    {
-    "id": "ui.js:46614",
+    "id": "ui.js:46579",
     "line": 762,
     "where": "fieldChips",
     "text": "自分の攻撃",
-    "h": "20d21d56"
+    "h": "3b159d7e"
    },
    {
-    "id": "ui.js:46665",
+    "id": "ui.js:46630",
     "line": 762,
     "where": "fieldChips",
     "text": "相手の防御",
-    "h": "49335dcb"
+    "h": "87f0e3c4"
    },
    {
-    "id": "ui.js:51217",
+    "id": "ui.js:51182",
     "line": 837,
     "where": "phaseText › case item",
     "text": "アイテムを使うか、相手フィールドをタップしてコール",
-    "h": "7df9fa02"
+    "h": "9e525e5f"
    },
    {
-    "id": "ui.js:51247",
+    "id": "ui.js:51212",
     "line": 837,
     "where": "phaseText › case item",
     "text": "コールできるブロックがありません。コールを飛ばしてください",
-    "h": "c18304fe"
+    "h": "4605cb10"
    },
    {
-    "id": "ui.js:51313",
+    "id": "ui.js:51278",
     "line": 838,
     "where": "phaseText › case call",
     "text": "相手フィールドをタップしてコール",
     "around": "…相手フィールドをタップしてコール",
-    "h": "5b988c41"
+    "h": "b7414219"
    },
    {
-    "id": "ui.js:51387",
+    "id": "ui.js:51352",
     "line": 839,
     "where": "phaseText › case answer-phase",
     "text": "アンサーするか、ターンエンドしてください",
-    "h": "a21d3c6f"
+    "h": "61ba1d2e"
    },
    {
-    "id": "ui.js:51412",
+    "id": "ui.js:51377",
     "line": 839,
     "where": "phaseText › case answer-phase",
     "text": "アンサー・アイテム・ターンエンドから選択してください",
-    "h": "d03be62a"
+    "h": "0d9ab650"
    },
    {
-    "id": "ui.js:51477",
+    "id": "ui.js:51442",
     "line": 840,
     "where": "phaseText › case answer",
     "text": "相手フィールドで、キューブの全ブロックを選択してください",
     "around": "…相手フィールドで、キューブの全ブロックを選択してください",
-    "h": "523cfa9f"
+    "h": "f052b205"
    },
    {
-    "id": "ui.js:51545",
+    "id": "ui.js:51510",
     "line": 841,
     "where": "phaseText › case treasure",
     "text": "トレジャーコール（残り{{1}}回）：相手フィールドのブロックを1つ選択してください",
     "vars": [
      "g.treasureLeft(v)"
     ],
-    "h": "28075f2c"
+    "h": "889d6970"
    },
    {
-    "id": "ui.js:51646",
+    "id": "ui.js:51611",
     "line": 842,
     "where": "phaseText › case stealth-pick",
     "text": "ステルス：隠すキューブのブロックを1つ選択してください（そのブロックがトリガーブロック）",
     "around": "…ステルス：隠すキューブのブロックを1つ選択してください（そのブロックがトリガーブロック）",
-    "h": "4914ccfe"
+    "h": "f69dbdc2"
    },
    {
-    "id": "ui.js:51731",
+    "id": "ui.js:51696",
     "line": 843,
     "where": "phaseText › case warp-pick",
     "text": "ワープ：キューブの、まだ当たっていないブロックを1つ選択してください（そのブロックがトリガーブロック）",
     "around": "…ワープ：キューブの、まだ当たっていないブロックを1つ選択してください（そのブロックがトリガーブロック）",
-    "h": "3e97cb8a"
+    "h": "39a49276"
    },
    {
-    "id": "ui.js:51824",
+    "id": "ui.js:51789",
     "line": 844,
     "where": "phaseText › case warp-place",
     "text": "ワープ：移動先をタップして、向きを回し、「完了」で決めてください",
     "around": "…ワープ：移動先をタップして、向きを回し、「完了」で決めてください",
-    "h": "ca7d6bd4"
+    "h": "c1416a7d"
    },
    {
-    "id": "ui.js:51897",
+    "id": "ui.js:51862",
     "line": 845,
     "where": "phaseText › case sacrifice",
     "text": "アンサー失敗！手番が終了します。差し出す自分のキューブを選択してください",
     "around": "…アンサー失敗！手番が終了します。差し出す自分のキューブを選択してください",
-    "h": "421074e5"
+    "h": "dbef03d4"
    },
    {
-    "id": "ui.js:51969",
+    "id": "ui.js:51934",
     "line": 846,
     "where": "phaseText › case line",
     "text": "サーチライン：相手フィールドの列か行のラベルをタップ",
     "around": "…サーチライン：相手フィールドの列か行のラベルをタップ",
-    "h": "34c1ec4f"
+    "h": "5d0e309c"
    },
    {
-    "id": "ui.js:52033",
+    "id": "ui.js:51998",
     "line": 847,
     "where": "phaseText › case number",
     "text": "サーチサイズ：相手フィールドで調べるブロックを選択してください",
     "around": "…サーチサイズ：相手フィールドで調べるブロックを選択してください",
-    "h": "874d5ca1"
+    "h": "083fcac6"
    },
    {
-    "id": "ui.js:52100",
+    "id": "ui.js:52065",
     "line": 848,
     "where": "phaseText › case node",
     "text": "ノードショット：相手フィールドで調べるブロックを選択してください",
     "around": "…ノードショット：相手フィールドで調べるブロックを選択してください",
-    "h": "402e2b46"
+    "h": "bd7e7e8c"
    },
    {
-    "id": "ui.js:52171",
+    "id": "ui.js:52136",
     "line": 849,
     "where": "phaseText › case bazooka",
     "text": "バズーカ：相手フィールドで撃ち込むブロックを選択してください",
     "around": "…バズーカ：相手フィールドで撃ち込むブロックを選択してください",
-    "h": "cf513f09"
+    "h": "5fc446a0"
    },
    {
-    "id": "ui.js:52239",
+    "id": "ui.js:52204",
     "line": 850,
     "where": "phaseText › case homing",
     "text": "ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います",
     "around": "…ホーミングミサイル：発射すると、相手のキューブを1つ自動で狙います",
-    "h": "e72a7315"
+    "h": "a577a8f5"
    },
    {
-    "id": "ui.js:52309",
+    "id": "ui.js:52274",
     "line": 851,
     "where": "phaseText › case cross",
     "text": "クロスボム：相手フィールドで十字の中心のブロックを選択してください",
     "around": "…クロスボム：相手フィールドで十字の中心のブロックを選択してください",
-    "h": "bfef68dc"
+    "h": "b15db66d"
    },
    {
-    "id": "ui.js:52378",
+    "id": "ui.js:52343",
     "line": 852,
     "where": "phaseText › case acid",
     "text": "アシッド：相手フィールドで酸をかけるブロックを選択してください",
     "around": "…アシッド：相手フィールドで酸をかけるブロックを選択してください",
-    "h": "cba09d5c"
+    "h": "7c4d687f"
    },
    {
-    "id": "ui.js:52445",
+    "id": "ui.js:52410",
     "line": 853,
     "where": "phaseText › case pair",
     "text": "ペアショット：相手フィールドでブロックを2つ選択してください",
     "around": "…ペアショット：相手フィールドでブロックを2つ選択してください",
-    "h": "8c4a9ccb"
+    "h": "4f8c3eea"
    },
    {
-    "id": "ui.js:52511",
+    "id": "ui.js:52476",
     "line": 854,
     "where": "phaseText › case cube",
     "text": "サーチキューブ：相手フィールドのメニューから選択してください",
     "around": "…サーチキューブ：相手フィールドのメニューから選択してください",
-    "h": "7ed999fa"
+    "h": "285bcddf"
    },
    {
-    "id": "ui.js:52607",
+    "id": "ui.js:52572",
     "line": 856,
     "where": "phaseText › case wait",
     "text": "送信しています…",
-    "h": "28fc7359"
+    "h": "2e3dcb2b"
    },
    {
-    "id": "ui.js:52644",
+    "id": "ui.js:52609",
     "line": 856,
     "where": "phaseText › case wait",
     "text": "の番です。相手の操作を待っています…",
-    "h": "d28152db"
+    "h": "31743ea7"
    },
    {
-    "id": "ui.js:52707",
+    "id": "ui.js:52672",
     "line": 857,
     "where": "phaseText › case wait",
     "text": "が解析しています…",
-    "h": "5d159632"
+    "h": "9bb64572"
    },
    {
-    "id": "ui.js:52751",
+    "id": "ui.js:52716",
     "line": 858,
     "where": "phaseText › case over",
     "text": "試合終了",
-    "h": "44409681"
+    "h": "0de86f9f"
    },
    {
-    "id": "ui.js:52835",
+    "id": "ui.js:52800",
     "line": 859,
     "where": "phaseText",
     "text": "の対象を選択してください",
     "around": "…の対象を選択してください",
-    "h": "666a4085"
+    "h": "b5339852"
    },
    {
-    "id": "ui.js:53519",
+    "id": "ui.js:53484",
     "line": 873,
     "where": "dockHTML",
     "text": "やめる",
-    "h": "fe9a4217"
+    "h": "84457629"
    },
    {
-    "id": "ui.js:53657",
+    "id": "ui.js:53622",
     "line": 877,
     "where": "dockHTML › case item",
     "text": "アイテムはコールの前か後のどちらかで、1ターンに1つまで。選んだアイコンをもう一度押すとやめられます。",
-    "h": "cfbaa226"
+    "h": "d780d418"
    },
    {
-    "id": "ui.js:53768",
+    "id": "ui.js:53733",
     "line": 879,
     "where": "dockHTML › case item",
     "text": "コールできるブロックが残っていません。コールを飛ばして、アンサーかターンエンドに進みます。",
-    "h": "53970843"
+    "h": "8f3dc8fd"
    },
    {
-    "id": "ui.js:53887",
+    "id": "ui.js:53852",
     "line": 880,
     "where": "dockHTML › case item",
     "text": "コールを飛ばす",
-    "h": "3e7fee22"
+    "h": "34a88838"
    },
    {
-    "id": "ui.js:53982",
+    "id": "ui.js:53947",
     "line": 884,
     "where": "dockHTML › case call",
     "text": "相手フィールドのブロックをタップしてコールします。",
-    "h": "3535ee6c"
+    "h": "f2814dd9"
    },
    {
-    "id": "ui.js:54104",
+    "id": "ui.js:54069",
     "line": 887,
     "where": "dockHTML › case answer-phase",
     "text": "アンサーでキューブの全ブロックを宣言するか、ターンエンドします。",
-    "h": "e8677bf3"
+    "h": "d77b141e"
    },
    {
-    "id": "ui.js:54141",
+    "id": "ui.js:54106",
     "line": 887,
     "where": "dockHTML › case answer-phase",
     "text": "このターンはまだアイテムを使えます（フィールド上部のアイコン）。",
-    "h": "3f97acd9"
+    "h": "68cb0150"
    },
    {
-    "id": "ui.js:54250",
+    "id": "ui.js:54215",
     "line": 888,
     "where": "dockHTML › case answer-phase",
     "text": "アンサー",
-    "h": "0a007bb3"
+    "h": "ae430aa2"
    },
    {
-    "id": "ui.js:54303",
+    "id": "ui.js:54268",
     "line": 888,
     "where": "dockHTML › case answer-phase",
     "text": "ターンエンド",
-    "h": "12a2df0b"
+    "h": "ccd88872"
    },
    {
-    "id": "ui.js:54473",
+    "id": "ui.js:54438",
     "line": 892,
     "where": "dockHTML › case answer",
     "text": "ブロックを選択",
-    "h": "08ad093b"
+    "h": "9d6fa897"
    },
    {
-    "id": "ui.js:54509",
+    "id": "ui.js:54474",
     "line": 892,
     "where": "dockHTML › case answer",
     "text": "（{{1}}ブロック）",
     "vars": [
      "SHAPES[key].size"
     ],
-    "h": "cd793a96"
+    "h": "096134c0"
    },
    {
-    "id": "ui.js:54539",
+    "id": "ui.js:54504",
     "line": 892,
     "where": "dockHTML › case answer",
     "text": "形になっていません",
-    "h": "a72733e4"
+    "h": "30de4f64"
    },
    {
-    "id": "ui.js:54587",
+    "id": "ui.js:54552",
     "line": 893,
     "where": "dockHTML › case answer",
     "text": "キューブの",
-    "h": "f8115f50"
+    "h": "6a0fdf3f"
    },
    {
-    "id": "ui.js:54595",
+    "id": "ui.js:54560",
     "line": 893,
     "where": "dockHTML › case answer",
     "text": "全ブロック",
-    "h": "9c63cbc7"
+    "h": "7efb22f2"
    },
    {
-    "id": "ui.js:54604",
+    "id": "ui.js:54569",
     "line": 893,
     "where": "dockHTML › case answer",
     "text": "を選択して宣言します。失敗すると自分のキューブを1つ差し出し、",
-    "h": "b57cd15a"
+    "h": "05d110b3"
    },
    {
-    "id": "ui.js:54638",
+    "id": "ui.js:54603",
     "line": 893,
     "where": "dockHTML › case answer",
     "text": "手番が終了",
-    "h": "3a284e8c"
+    "h": "aa8d1c07"
    },
    {
-    "id": "ui.js:54647",
+    "id": "ui.js:54612",
     "line": 893,
     "where": "dockHTML › case answer",
     "text": "します。",
-    "h": "0419fb29"
+    "h": "a9501462"
    },
    {
-    "id": "ui.js:54813",
+    "id": "ui.js:54778",
     "line": 894,
     "where": "dockHTML › case answer",
     "text": "宣言する",
-    "h": "8668e1d6"
+    "h": "c14659d3"
    },
    {
-    "id": "ui.js:54913",
+    "id": "ui.js:54878",
     "line": 898,
     "where": "dockHTML › case cube",
     "text": "相手フィールドのメニューから、調べる形かブロック数を選択してください。",
-    "h": "07d3d121"
+    "h": "dfc70f85"
    },
    {
-    "id": "ui.js:55042",
+    "id": "ui.js:55007",
     "line": 902,
     "where": "dockHTML › case line",
     "text": "調べる列（A〜）か行（1〜）のラベルを選択してください。かかっているキューブの数とブロックの数が分かります。",
-    "h": "7f136b0d"
+    "h": "769da04f"
    },
    {
-    "id": "ui.js:55194",
+    "id": "ui.js:55159",
     "line": 906,
     "where": "dockHTML › case number",
     "text": "調べるブロックを選択してください。そのキューブが何ブロックか分かります。",
-    "h": "18b5a38b"
+    "h": "f3f43592"
    },
    {
-    "id": "ui.js:55326",
+    "id": "ui.js:55291",
     "line": 910,
     "where": "dockHTML › case shape",
     "text": "調べるブロックを選択してください。そのキューブの形が分かります。",
-    "h": "89ee1c7b"
+    "h": "5376a84c"
    },
    {
-    "id": "ui.js:55452",
+    "id": "ui.js:55417",
     "line": 914,
     "where": "dockHTML › case pair",
     "text": "調べるブロックを2つ選択してください（{{1}}/2）。同じキューブか分かります。",
     "vars": [
      "ui.sel.length"
     ],
-    "h": "141e634c"
+    "h": "71ec7531"
    },
    {
-    "id": "ui.js:55598",
+    "id": "ui.js:55563",
     "line": 918,
     "where": "dockHTML › case node",
     "text": "調べるブロックを選択してください。上下左右にいくつつながっているか分かります（1＝端、2＝途中か角、3＝分かれ目）。",
-    "h": "fffa3d4f"
+    "h": "ef7afc00"
    },
    {
-    "id": "ui.js:55750",
+    "id": "ui.js:55715",
     "line": 922,
     "where": "dockHTML › case acid",
     "text": "酸をかけるブロックを選択してください。キューブがあればアシッドマークが付き、次の手番から、コールの代わりにそのキューブのブロックをランダムに1つずつ自動でコールして、撃破まで溶かします。サーチサイズでブロック数が分かっていれば、早くアンサーできます（ワープされると洗い流されます）。",
-    "h": "0919f347"
+    "h": "06f62cf3"
    },
    {
-    "id": "ui.js:55987",
+    "id": "ui.js:55952",
     "line": 926,
     "where": "dockHTML › case cross",
     "text": "十字の中心のブロックを選択してください。中心と上下左右の5ブロックに、すっぽり収まるキューブをすべて撃破します（一部だけかかっていても何も分かりません）。",
-    "h": "95f151d9"
+    "h": "43ab0cad"
    },
    {
-    "id": "ui.js:56162",
+    "id": "ui.js:56127",
     "line": 930,
     "where": "dockHTML › case homing",
     "text": "相手のキューブ（隠れているステルスを除く）を1つ自動で選び、そのブロックの番号の合計が分かります。番号は相手フィールドのA-1から読み順に1〜。どのキューブかは分かりません。",
-    "h": "4f613d60"
+    "h": "640d1665"
    },
    {
-    "id": "ui.js:56320",
+    "id": "ui.js:56285",
     "line": 931,
     "where": "dockHTML › case homing",
     "text": "発射する",
-    "h": "49b478b6"
+    "h": "f892787c"
    },
    {
-    "id": "ui.js:56418",
+    "id": "ui.js:56383",
     "line": 934,
     "where": "dockHTML › case bazooka",
     "text": "撃ち込むブロックを選択してください。そのキューブを1ブロックずつに分解し、当たっていたブロックはその場で撃破します。",
-    "h": "6a20e44e"
+    "h": "58e5039e"
    },
    {
-    "id": "ui.js:56575",
+    "id": "ui.js:56540",
     "line": 938,
     "where": "dockHTML › case warp-pick",
     "text": "ワープするキューブの、まだ当たっていないブロックを1つ選択してください。そこがトリガー（撃たれると発動）になります。",
-    "h": "76bbfae3"
+    "h": "4ead873a"
    },
    {
-    "id": "ui.js:56867",
+    "id": "ui.js:56832",
     "line": 944,
     "where": "dockHTML › case warp-place",
     "text": "移動先の空きブロックをタップして置き、回転で向きを合わせて「完了」。移動先の印のブロックが、ワープ後のトリガー（トリガーで発動したとき、ワープレティクルが出るブロック）です。トリガーは、自分のキューブのまだ当たっていないブロックをタップすると選び直せます。",
-    "h": "a1a598b2"
+    "h": "06bbcc97"
    },
    {
-    "id": "ui.js:57071",
+    "id": "ui.js:57036",
     "line": 945,
     "where": "dockHTML › case warp-place",
     "text": "↻ 回転",
     "around": "↻ 回転 完了 …",
-    "h": "e1f7c169"
+    "h": "518dbd71"
    },
    {
-    "id": "ui.js:57157",
+    "id": "ui.js:57122",
     "line": 945,
     "where": "dockHTML › case warp-place",
     "text": "完了",
     "around": "↻ 回転 完了 …",
-    "h": "9f007760"
+    "h": "7639d20f"
    },
    {
-    "id": "ui.js:57266",
+    "id": "ui.js:57231",
     "line": 949,
     "where": "dockHTML › case stealth-pick",
     "text": "隠すキューブの、まだ当たっていないブロックを1つ選択してください。そこが弱点（トリガー）になり、撃たれるとばれます。",
-    "h": "5548a718"
+    "h": "0749afcb"
    },
    {
-    "id": "ui.js:57425",
+    "id": "ui.js:57390",
     "line": 953,
     "where": "dockHTML › case treasure",
     "text": "トレジャーコール（残り{{1}}回／全{{2}}回）：相手フィールドのブロックを1つ。H＝的中、N＝上下左右か同じキューブ、X＝外れ。",
@@ -1192,262 +1192,262 @@
      "g.treasureLeft(v)",
      "g.rules.treasureMax"
     ],
-    "h": "12b034a2"
+    "h": "40b59ba4"
    },
    {
-    "id": "ui.js:57882",
+    "id": "ui.js:57847",
     "line": 962,
     "where": "dockHTML › case over",
     "text": "試合終了",
-    "h": "b0bb128a"
+    "h": "cf02716c"
    },
    {
-    "id": "ui.js:57981",
+    "id": "ui.js:57946",
     "line": 964,
     "where": "dockHTML › case over",
     "text": "結果を見る",
-    "h": "5cc9874e"
+    "h": "ce180de9"
    },
    {
-    "id": "ui.js:58036",
+    "id": "ui.js:58001",
     "line": 964,
     "where": "dockHTML › case over",
     "text": "大会の画面へ",
-    "h": "faa6f7b7"
+    "h": "74e3e0fe"
    },
    {
-    "id": "ui.js:58117",
+    "id": "ui.js:58082",
     "line": 965,
     "where": "dockHTML › case over",
     "text": "結果を見る",
-    "h": "8ece9ed8"
+    "h": "3e93093d"
    },
    {
-    "id": "ui.js:58170",
+    "id": "ui.js:58135",
     "line": 965,
     "where": "dockHTML › case over",
     "text": "もう一度",
-    "h": "e208a0d5"
+    "h": "2aa18ae3"
    },
    {
-    "id": "ui.js:58229",
+    "id": "ui.js:58194",
     "line": 965,
     "where": "dockHTML › case over",
     "text": "設定に戻る",
-    "h": "e52c5e29"
+    "h": "8591733e"
    },
    {
-    "id": "ui.js:59069",
+    "id": "ui.js:59034",
     "line": 981,
     "where": "tre",
     "text": "宝石+1",
-    "h": "50fdc54b"
+    "h": "55ef3fe8"
    },
    {
-    "id": "ui.js:59078",
+    "id": "ui.js:59043",
     "line": 981,
     "where": "tre",
     "text": "発見",
-    "h": "49614557"
+    "h": "5db670ad"
    },
    {
-    "id": "ui.js:59157",
+    "id": "ui.js:59122",
     "line": 983,
     "where": "tre",
     "text": "あと{{1}}回",
     "vars": [
      "left"
     ],
-    "h": "c6adfdb6"
+    "h": "306ff83a"
    },
    {
-    "id": "ui.js:59187",
+    "id": "ui.js:59152",
     "line": 983,
     "where": "tre",
     "text": "失敗",
-    "h": "47b48d41"
+    "h": "470e97ea"
    },
    {
-    "id": "ui.js:59899",
+    "id": "ui.js:59864",
     "line": 993,
     "where": "row",
     "text": "先攻",
-    "h": "c980290d"
+    "h": "4757d135"
    },
    {
-    "id": "ui.js:60002",
+    "id": "ui.js:59967",
     "line": 994,
     "where": "row",
     "text": "ブロック",
     "around": "…… … … ブロック … … … …",
-    "h": "4cdbada2"
+    "h": "89ee3598"
    },
    {
-    "id": "ui.js:60200",
+    "id": "ui.js:60165",
     "line": 995,
     "where": "row",
     "text": "所持キューブ",
-    "h": "676d8330"
+    "h": "84f28832"
    },
    {
-    "id": "ui.js:60290",
+    "id": "ui.js:60255",
     "line": 996,
     "where": "scoreHTML",
     "text": "持ち点は、この試合の前の点に、ここまでの撃破（奪った・奪われたブロック数）とトレジャーを足したもの（勝利点は試合の終わりに）。所持キューブは大会の持ち数（◆持っている・◇失った）。相手のキューブをバズーカで分解したときは、そのキューブを失ったかどうかは試合終了まで非公開。",
-    "h": "aae7d37e"
+    "h": "c3a0bd86"
    },
    {
-    "id": "ui.js:60568",
+    "id": "ui.js:60533",
     "line": 999,
     "where": "scoreHTML",
     "text": "持ち点",
-    "h": "39f6265a"
+    "h": "651b0b55"
    },
    {
-    "id": "ui.js:60587",
+    "id": "ui.js:60552",
     "line": 999,
     "where": "scoreHTML",
     "text": "撃破",
     "around": "… 撃破 トレジャー 残りキューブ … … … 相手の残りキューブ数は分かりません。…",
-    "h": "f7641406"
+    "h": "7a8df87c"
    },
    {
-    "id": "ui.js:60598",
+    "id": "ui.js:60563",
     "line": 999,
     "where": "scoreHTML",
     "text": "トレジャー",
     "around": "… 撃破 トレジャー 残りキューブ … … … 相手の残りキューブ数は分かりません。…",
-    "h": "126ab378"
+    "h": "358261d2"
    },
    {
-    "id": "ui.js:60612",
+    "id": "ui.js:60577",
     "line": 999,
     "where": "scoreHTML",
     "text": "残りキューブ",
     "around": "… 撃破 トレジャー 残りキューブ … … … 相手の残りキューブ数は分かりません。…",
-    "h": "5b2c7e86"
+    "h": "30b1dbd1"
    },
    {
-    "id": "ui.js:60634",
+    "id": "ui.js:60599",
     "line": 999,
     "where": "scoreHTML",
     "text": "所持キューブ",
-    "h": "2376e01e"
+    "h": "0c6c025d"
    },
    {
-    "id": "ui.js:60726",
+    "id": "ui.js:60691",
     "line": 1001,
     "where": "scoreHTML",
     "text": "キューブ・{{1}}ブロック",
     "vars": [
      "myCells"
     ],
-    "h": "86f9af48"
+    "h": "67273df8"
    },
    {
-    "id": "ui.js:60842",
+    "id": "ui.js:60807",
     "line": 1005,
     "where": "scoreHTML",
     "text": "相手の残りキューブ数は分かりません。",
     "around": "… 撃破 トレジャー 残りキューブ … … … 相手の残りキューブ数は分かりません。…",
-    "h": "91920bd4"
+    "h": "4bc4d918"
    },
    {
-    "id": "ui.js:61007",
+    "id": "ui.js:60972",
     "line": 1011,
     "where": "all",
     "text": "BGM・SE",
-    "h": "857ac8f0"
+    "h": "cf5145be"
    },
    {
-    "id": "ui.js:61017",
+    "id": "ui.js:60982",
     "line": 1011,
     "where": "all",
     "text": "BGMと効果音",
-    "h": "f379fed2"
+    "h": "a29ebc65"
    },
    {
-    "id": "ui.js:61035",
+    "id": "ui.js:61000",
     "line": 1011,
     "where": "sfx",
     "text": "SEのみ",
-    "h": "5a46dcf7"
+    "h": "9d42d427"
    },
    {
-    "id": "ui.js:61043",
+    "id": "ui.js:61008",
     "line": 1011,
     "where": "sfx",
     "text": "効果音だけ",
-    "h": "ffd8a581"
+    "h": "0fb2bde5"
    },
    {
-    "id": "ui.js:61059",
+    "id": "ui.js:61024",
     "line": 1011,
     "where": "off",
     "text": "OFF",
-    "h": "dfb8b1d1"
+    "h": "bd5dd1be"
    },
    {
-    "id": "ui.js:61066",
+    "id": "ui.js:61031",
     "line": 1011,
     "where": "off",
     "text": "音なし",
-    "h": "0cbe4d29"
+    "h": "c6af119e"
    },
    {
-    "id": "ui.js:62133",
+    "id": "ui.js:62098",
     "line": 1028,
     "where": "setSound",
     "text": "BGMと効果音をオンにしました",
-    "h": "3180ecf1"
+    "h": "d042eb83"
    },
    {
-    "id": "ui.js:62167",
+    "id": "ui.js:62132",
     "line": 1028,
     "where": "setSound",
     "text": "BGMを止めました（効果音だけ鳴ります）",
-    "h": "c649fee5"
+    "h": "fcb41f22"
    },
    {
-    "id": "ui.js:62192",
+    "id": "ui.js:62157",
     "line": 1028,
     "where": "setSound",
     "text": "音をすべてオフにしました",
-    "h": "e1bb3dca"
+    "h": "0ed578bd"
    },
    {
-    "id": "ui.js:62317",
+    "id": "ui.js:62282",
     "line": 1033,
     "where": "hudHTML",
     "text": "サーチバトル",
     "around": "サーチバトル SEARCH BATTLE … … ルール …",
-    "h": "ab30c106"
+    "h": "d2483df9"
    },
    {
-    "id": "ui.js:62351",
+    "id": "ui.js:62316",
     "line": 1033,
     "where": "hudHTML",
     "text": "SEARCH BATTLE",
     "around": "サーチバトル SEARCH BATTLE … … ルール …",
-    "h": "713525dd"
+    "h": "93fc98b3"
    },
    {
-    "id": "ui.js:62508",
+    "id": "ui.js:62473",
     "line": 1035,
     "where": "hudHTML",
     "text": "ルール",
     "around": "サーチバトル SEARCH BATTLE … … ルール …",
-    "h": "0d1558f9"
+    "h": "21e29655"
    },
    {
-    "id": "ui.js:62577",
+    "id": "ui.js:62542",
     "line": 1035,
     "where": "hudHTML",
     "text": "やめる",
-    "h": "da0a7369"
+    "h": "066acaa1"
    },
    {
-    "id": "ui.js:66023",
+    "id": "ui.js:65988",
     "line": 1097,
     "where": "itemsSummary",
     "text": "ドラフト（{{1}}個から1人{{2}}個）",
@@ -1455,562 +1455,562 @@
      "countTotal(s.draftPool)",
      "Math.min(s.draftN, draftMax(s))"
     ],
-    "h": "f9c86a56"
+    "h": "8b4761a0"
    },
    {
-    "id": "ui.js:66136",
+    "id": "ui.js:66101",
     "line": 1098,
     "where": "itemsSummary",
     "text": "ミラー（毎試合 同じ{{1}}種）",
     "vars": [
      "s.randomN"
     ],
-    "h": "5a9d060d"
+    "h": "6e09c7a8"
    },
    {
-    "id": "ui.js:66201",
+    "id": "ui.js:66166",
     "line": 1099,
     "where": "itemsSummary",
     "text": "ランダム（毎試合 別々の{{1}}種）",
     "vars": [
      "s.randomN"
     ],
-    "h": "9f9b21a4"
+    "h": "7d095ce3"
    },
    {
-    "id": "ui.js:66268",
+    "id": "ui.js:66233",
     "line": 1100,
     "where": "itemsSummary",
     "text": "個（{{1}}種）",
     "vars": [
      "ITEM_KEYS.filter((k) => s.itemCount[k] > 0).length"
     ],
-    "h": "08849c9a"
+    "h": "699898b6"
    },
    {
-    "id": "ui.js:66516",
+    "id": "ui.js:66481",
     "line": 1105,
     "where": "itemCountHTML",
     "text": "ドラフトに並べるアイテムの数",
-    "h": "c3fb7de6"
+    "h": "593b2e06"
    },
    {
-    "id": "ui.js:66535",
+    "id": "ui.js:66500",
     "line": 1105,
     "where": "itemCountHTML",
     "text": "持つアイテムの数（2人共通）",
-    "h": "6e7b534d"
+    "h": "d3fd02cd"
    },
    {
-    "id": "ui.js:67230",
+    "id": "ui.js:67195",
     "line": 1111,
     "where": "itemCountHTML",
     "text": "合わせて{{1}}個を並べます。",
     "vars": [
      "countTotal(o)"
     ],
-    "h": "77bed1bc"
+    "h": "90ac2f5b"
    },
    {
-    "id": "ui.js:67262",
+    "id": "ui.js:67227",
     "line": 1111,
     "where": "itemCountHTML",
     "text": "2人とも合わせて{{1}}個を持って始めます。",
     "vars": [
      "countTotal(o)"
     ],
-    "h": "d6a22829"
+    "h": "7b80861c"
    },
    {
-    "id": "ui.js:68314",
+    "id": "ui.js:68279",
     "line": 1131,
     "where": "renderTitle",
     "text": "シミュレーター",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "44dc4348"
+    "h": "22d14ce7"
    },
    {
-    "id": "ui.js:68373",
+    "id": "ui.js:68338",
     "line": 1131,
     "where": "renderTitle",
     "text": "ルールを見る",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "02066e68"
+    "h": "861f3cf8"
    },
    {
-    "id": "ui.js:68489",
+    "id": "ui.js:68454",
     "line": 1135,
     "where": "renderTitle",
     "text": "サーチバトル",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "1605b9ba"
+    "h": "b46145e3"
    },
    {
-    "id": "ui.js:68535",
+    "id": "ui.js:68500",
     "line": 1136,
     "where": "renderTitle",
     "text": "SEARCH BATTLE",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "da1650b5"
+    "h": "e732e32b"
    },
    {
-    "id": "ui.js:68586",
+    "id": "ui.js:68551",
     "line": 1137,
     "where": "renderTitle",
     "text": "座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "998d0749"
+    "h": "1ed171b1"
    },
    {
-    "id": "ui.js:68657",
+    "id": "ui.js:68622",
     "line": 1138,
     "where": "renderTitle",
     "text": "サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたらアンサーで一気に撃破します。",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "ed29c7a8"
+    "h": "18c3a3ff"
    },
    {
-    "id": "ui.js:68846",
+    "id": "ui.js:68811",
     "line": 1140,
     "where": "renderTitle",
     "text": "ファーストヒット",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "e3d78d84"
+    "h": "7797608b"
    },
    {
-    "id": "ui.js:68917",
+    "id": "ui.js:68882",
     "line": 1141,
     "where": "renderTitle",
     "text": "ヒット",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "17ee3d24"
+    "h": "0ac13fb7"
    },
    {
-    "id": "ui.js:68983",
+    "id": "ui.js:68948",
     "line": 1142,
     "where": "renderTitle",
     "text": "ノットヒット",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "6f1b3490"
+    "h": "bfc3e60d"
    },
    {
-    "id": "ui.js:69052",
+    "id": "ui.js:69017",
     "line": 1143,
     "where": "renderTitle",
     "text": "ステルスヒット",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "f69be512"
+    "h": "fafdd7c0"
    },
    {
-    "id": "ui.js:69124",
+    "id": "ui.js:69089",
     "line": 1144,
     "where": "renderTitle",
     "text": "ワープレティクル",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "5c1c4066"
+    "h": "b71b631c"
    },
    {
-    "id": "ui.js:69182",
+    "id": "ui.js:69147",
     "line": 1145,
     "where": "renderTitle",
     "text": "トレジャーのニア",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "5ecb9b47"
+    "h": "6a21d266"
    },
    {
-    "id": "ui.js:69558",
+    "id": "ui.js:69523",
     "line": 1155,
     "where": "renderTitle",
     "text": "モード",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "e3f13291"
+    "h": "c0550c8f"
    },
    {
-    "id": "ui.js:69609",
+    "id": "ui.js:69574",
     "line": 1156,
     "where": "renderTitle",
     "text": "大会は",
-    "h": "f4230a30"
+    "h": "bd13b84e"
    },
    {
-    "id": "ui.js:69616",
+    "id": "ui.js:69581",
     "line": 1156,
     "where": "renderTitle",
     "text": "あなた＋CPU3人",
-    "h": "ab964d07"
+    "h": "acf068f1"
    },
    {
-    "id": "ui.js:69630",
+    "id": "ui.js:69595",
     "line": 1156,
     "where": "renderTitle",
     "text": "の4人で戦います",
-    "h": "3dc94353"
+    "h": "f6880988"
    },
    {
-    "id": "ui.js:69688",
+    "id": "ui.js:69653",
     "line": 1157,
     "where": "renderTitle",
     "text": "CPU戦",
-    "h": "9b51afcb"
+    "h": "da936b12"
    },
    {
-    "id": "ui.js:69696",
+    "id": "ui.js:69661",
     "line": 1157,
     "where": "renderTitle",
     "text": "最強CPUが相手",
-    "h": "b9f1a6e8"
+    "h": "bd71e926"
    },
    {
-    "id": "ui.js:69717",
+    "id": "ui.js:69682",
     "line": 1157,
     "where": "renderTitle",
     "text": "プレイヤーバトル",
-    "h": "5b906248"
+    "h": "4522dafe"
+   },
+   {
+    "id": "ui.js:69694",
+    "line": 1157,
+    "where": "renderTitle",
+    "text": "1台で2人が交代",
+    "h": "0c8468a9"
+   },
+   {
+    "id": "ui.js:69718",
+    "line": 1157,
+    "where": "renderTitle",
+    "text": "オンライン対戦",
+    "h": "9c632243"
    },
    {
     "id": "ui.js:69729",
     "line": 1157,
     "where": "renderTitle",
-    "text": "1台で2人が交代",
-    "h": "259674b7"
-   },
-   {
-    "id": "ui.js:69753",
-    "line": 1157,
-    "where": "renderTitle",
-    "text": "オンライン対戦",
-    "h": "6f8d9c5d"
-   },
-   {
-    "id": "ui.js:69764",
-    "line": 1157,
-    "where": "renderTitle",
     "text": "別の端末の人と",
-    "h": "90d63402"
+    "h": "e664f6f5"
    },
    {
-    "id": "ui.js:69818",
+    "id": "ui.js:69783",
     "line": 1158,
     "where": "renderTitle",
     "text": "ルール",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "a088b0a1"
+    "h": "147bf9f3"
    },
    {
-    "id": "ui.js:69870",
+    "id": "ui.js:69835",
     "line": 1158,
     "where": "renderTitle",
     "text": "トレジャー4回",
-    "h": "7d53bd01"
+    "h": "47eaa24d"
    },
    {
-    "id": "ui.js:69899",
+    "id": "ui.js:69864",
     "line": 1158,
     "where": "renderTitle",
     "text": "トレジャー5回",
-    "h": "e3348ed2"
+    "h": "08393f58"
    },
    {
-    "id": "ui.js:69920",
+    "id": "ui.js:69885",
     "line": 1158,
     "where": "renderTitle",
     "text": "大会",
-    "h": "fc3a76bb"
+    "h": "60aabf69"
    },
    {
-    "id": "ui.js:69926",
+    "id": "ui.js:69891",
     "line": 1158,
     "where": "renderTitle",
     "text": "予選3試合＋決勝",
-    "h": "9f6bfb3f"
+    "h": "7f15d5a1"
    },
    {
-    "id": "ui.js:69981",
+    "id": "ui.js:69946",
     "line": 1159,
     "where": "renderTitle",
     "text": "使えるアイテム",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "9d25036a"
+    "h": "658ee37f"
    },
    {
-    "id": "ui.js:70036",
+    "id": "ui.js:70001",
     "line": 1160,
     "where": "renderTitle",
     "text": "ベース8種＋選んだレア2種を",
     "around": "ベース8種＋選んだレア2種を 2つずつ（20個） 持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点 … から、撃破と勝利で相手の点を奪い合います。",
-    "h": "24ef83ba"
+    "h": "911d66ac"
    },
    {
-    "id": "ui.js:70053",
+    "id": "ui.js:70018",
     "line": 1160,
     "where": "renderTitle",
     "text": "2つずつ（20個）",
     "around": "ベース8種＋選んだレア2種を 2つずつ（20個） 持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点 … から、撃破と勝利で相手の点を奪い合います。",
-    "h": "56d9c099"
+    "h": "183cdfb1"
    },
    {
-    "id": "ui.js:70066",
+    "id": "ui.js:70031",
     "line": 1160,
     "where": "renderTitle",
     "text": "持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点",
     "around": "ベース8種＋選んだレア2種を 2つずつ（20個） 持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点 … から、撃破と勝利で相手の点を奪い合います。",
-    "h": "53eece14"
+    "h": "a77c4411"
    },
    {
-    "id": "ui.js:70159",
+    "id": "ui.js:70124",
     "line": 1160,
     "where": "renderTitle",
     "text": "から、撃破と勝利で相手の点を奪い合います。",
     "around": "ベース8種＋選んだレア2種を 2つずつ（20個） 持って始め、予選3試合と決勝で使い分けます。予選は1試合で同じ種類は1回まで。決勝は予選の残り＋ベースのドラフト（4つずつ）＋レア1つ。持ち点 … から、撃破と勝利で相手の点を奪い合います。",
-    "h": "2fcfd61c"
+    "h": "1313dffc"
    },
    {
-    "id": "ui.js:70233",
+    "id": "ui.js:70198",
     "line": 1161,
     "where": "renderTitle",
     "text": "選ぶ",
-    "h": "acc2fbe8"
+    "h": "9aab45c7"
    },
    {
-    "id": "ui.js:70265",
+    "id": "ui.js:70230",
     "line": 1161,
     "where": "renderTitle",
     "text": "個を指定",
     "around": "…個を指定",
-    "h": "3f256d24"
+    "h": "b5a8b590"
    },
    {
-    "id": "ui.js:70284",
+    "id": "ui.js:70249",
     "line": 1161,
     "where": "renderTitle",
     "text": "ドラフト",
-    "h": "2abafb17"
+    "h": "8eda1384"
    },
    {
-    "id": "ui.js:70292",
+    "id": "ui.js:70257",
     "line": 1161,
     "where": "renderTitle",
     "text": "1人{{1}}個ずつ",
     "vars": [
      "Math.min(s.draftN, draftMax(s))"
     ],
-    "h": "044d8d8b"
+    "h": "74eb2352"
    },
    {
-    "id": "ui.js:70347",
+    "id": "ui.js:70312",
     "line": 1161,
     "where": "renderTitle",
     "text": "ミラー",
-    "h": "ebcb48c1"
+    "h": "57d1fc3e"
    },
    {
-    "id": "ui.js:70354",
+    "id": "ui.js:70319",
     "line": 1161,
     "where": "renderTitle",
     "text": "同じ{{1}}種",
     "vars": [
      "s.randomN"
     ],
-    "h": "d9516e35"
+    "h": "792f2b54"
    },
    {
-    "id": "ui.js:70385",
+    "id": "ui.js:70350",
     "line": 1161,
     "where": "renderTitle",
     "text": "ランダム",
-    "h": "a0a7c760"
+    "h": "9beb6977"
    },
    {
-    "id": "ui.js:70393",
+    "id": "ui.js:70358",
     "line": 1161,
     "where": "renderTitle",
     "text": "別々の{{1}}種",
     "vars": [
      "s.randomN"
     ],
-    "h": "06d18875"
+    "h": "52019b0d"
    },
    {
-    "id": "ui.js:70742",
+    "id": "ui.js:70707",
     "line": 1163,
     "where": "renderTitle",
     "text": "種",
-    "h": "c2122187"
+    "h": "f760e6a0"
    },
    {
-    "id": "ui.js:70789",
+    "id": "ui.js:70754",
     "line": 1163,
     "where": "renderTitle",
     "text": "種類の中から試合ごとにランダムに選び、2人とも同じ種類を1つずつ持ちます",
-    "h": "26a9981e"
+    "h": "3fdd5dc4"
    },
    {
-    "id": "ui.js:70849",
+    "id": "ui.js:70814",
     "line": 1163,
     "where": "renderTitle",
     "text": "種類の中から試合ごとに、2人それぞれ別々にランダムに選びます（1つずつ）",
-    "h": "413913c1"
+    "h": "535803b7"
    },
    {
-    "id": "ui.js:71161",
+    "id": "ui.js:71126",
     "line": 1164,
     "where": "renderTitle",
     "text": "個",
-    "h": "95efe533"
+    "h": "5e605673"
    },
    {
-    "id": "ui.js:71166",
+    "id": "ui.js:71131",
     "line": 1164,
     "where": "renderTitle",
     "text": "並べたアイテムから、1人がこの数ずつドラフトで取ります（後攻から）",
-    "h": "da0030f0"
+    "h": "63c1c6a3"
    },
    {
-    "id": "ui.js:71251",
+    "id": "ui.js:71216",
     "line": 1165,
     "where": "renderTitle",
     "text": "演出とCPUの速さ",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "f438b52f"
+    "h": "d6254690"
    },
    {
-    "id": "ui.js:71302",
+    "id": "ui.js:71267",
     "line": 1165,
     "where": "renderTitle",
     "text": "ふつう",
-    "h": "431cdd6e"
+    "h": "082b4118"
    },
    {
-    "id": "ui.js:71323",
+    "id": "ui.js:71288",
     "line": 1165,
     "where": "renderTitle",
     "text": "はやい",
-    "h": "edef2d23"
+    "h": "101be099"
    },
    {
-    "id": "ui.js:71377",
+    "id": "ui.js:71342",
     "line": 1166,
     "where": "renderTitle",
     "text": "サウンド",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "ef16ee12"
+    "h": "39ad869b"
    },
    {
-    "id": "ui.js:71424",
+    "id": "ui.js:71389",
     "line": 1166,
     "where": "renderTitle",
     "text": "BGMと効果音",
-    "h": "35b7d9b5"
+    "h": "b1631239"
    },
    {
-    "id": "ui.js:71448",
+    "id": "ui.js:71413",
     "line": 1166,
     "where": "renderTitle",
     "text": "効果音だけ",
-    "h": "85fb310b"
+    "h": "3ef65d0e"
    },
    {
-    "id": "ui.js:71470",
+    "id": "ui.js:71435",
     "line": 1166,
     "where": "renderTitle",
     "text": "なし",
-    "h": "2aa4096c"
+    "h": "8d3598eb"
    },
    {
-    "id": "ui.js:71593",
+    "id": "ui.js:71558",
     "line": 1168,
     "where": "renderTitle",
     "text": "大会を始める",
-    "h": "5cd61b0a"
+    "h": "d3396df7"
    },
    {
-    "id": "ui.js:71613",
+    "id": "ui.js:71578",
     "line": 1168,
     "where": "renderTitle",
     "text": "オンライン対戦の部屋へ",
-    "h": "c59b9de0"
+    "h": "0786b947"
    },
    {
-    "id": "ui.js:71629",
+    "id": "ui.js:71594",
     "line": 1168,
     "where": "renderTitle",
     "text": "対戦を始める",
-    "h": "7ff5b492"
+    "h": "3a37e7f7"
    },
    {
-    "id": "ui.js:71685",
+    "id": "ui.js:71650",
     "line": 1169,
     "where": "renderTitle",
     "text": "総当たりの予選3試合（4×4）の上位2名が、決勝（5×5）に進みます。",
-    "h": "e40be2d5"
+    "h": "e5d08fc6"
    },
    {
-    "id": "ui.js:71753",
+    "id": "ui.js:71718",
     "line": 1169,
     "where": "renderTitle",
     "text": "部屋を作った人のルールとアイテムの設定で対戦します。部屋に入る人の設定は使いません。",
-    "h": "ff701db1"
+    "h": "b7a419a9"
    },
    {
-    "id": "ui.js:71800",
+    "id": "ui.js:71765",
     "line": 1169,
     "where": "renderTitle",
     "text": "このページではオンライン対戦を使えません（次の画面に、遊べるページへのリンクがあります）。",
-    "h": "4b3288ec"
+    "h": "78ac9706"
    },
    {
-    "id": "ui.js:71851",
+    "id": "ui.js:71816",
     "line": 1169,
     "where": "renderTitle",
     "text": "先攻・後攻はランダムで決まります。",
-    "h": "b3003e85"
+    "h": "14f7e020"
    },
    {
-    "id": "ui.js:71870",
+    "id": "ui.js:71835",
     "line": 1169,
     "where": "renderTitle",
     "text": "音は最初に画面を操作したときから鳴ります。",
     "around": "Tactical search battle … シミュレーター ルールを見る サーチバトル SEARCH BATTLE 座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。 サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたら…",
-    "h": "3c718a6e"
+    "h": "c2a850ec"
    },
    {
-    "id": "ui.js:72551",
+    "id": "ui.js:72516",
     "line": 1187,
     "where": "cubePips",
     "text": "ブロックのキューブ：",
     "around": "…ブロックのキューブ：……………（大会の最初は…）",
-    "h": "7ba9b0c3"
+    "h": "1688c6e9"
    },
    {
-    "id": "ui.js:72575",
+    "id": "ui.js:72540",
     "line": 1187,
     "where": "cubePips",
     "text": "残り",
-    "h": "fb2ec45f"
+    "h": "4c563d66"
    },
    {
-    "id": "ui.js:72596",
+    "id": "ui.js:72561",
     "line": 1187,
     "where": "cubePips",
     "text": "・置いた",
-    "h": "017b0b07"
+    "h": "7c430145"
    },
    {
-    "id": "ui.js:72626",
+    "id": "ui.js:72591",
     "line": 1187,
     "where": "cubePips",
     "text": "・この試合で失った",
-    "h": "123986d2"
+    "h": "103628ba"
    },
    {
-    "id": "ui.js:72659",
+    "id": "ui.js:72624",
     "line": 1187,
     "where": "cubePips",
     "text": "・大会で失った",
-    "h": "0fba467b"
+    "h": "40d27c64"
    },
    {
-    "id": "ui.js:72680",
+    "id": "ui.js:72645",
     "line": 1187,
     "where": "cubePips",
     "text": "（大会の最初は{{1}}）",
@@ -2018,175 +2018,175 @@
      "full"
     ],
     "around": "…ブロックのキューブ：……………（大会の最初は…）",
-    "h": "ee92b7dd"
+    "h": "8d647f7f"
    },
    {
-    "id": "ui.js:73468",
+    "id": "ui.js:73433",
     "line": 1197,
     "where": "heldCubes › label",
     "text": "持っている",
-    "h": "133ab69a"
+    "h": "624e67be"
    },
    {
-    "id": "ui.js:73773",
+    "id": "ui.js:73738",
     "line": 1205,
     "where": "renderSetup",
     "text": "あなた",
-    "h": "d737a641"
+    "h": "25864fa8"
    },
    {
-    "id": "ui.js:74171",
+    "id": "ui.js:74136",
     "line": 1213,
     "where": "renderSetup",
     "text": "ブロック",
     "around": "…ブロック …",
-    "h": "c0d054c2"
+    "h": "ed488e34"
    },
    {
-    "id": "ui.js:74224",
+    "id": "ui.js:74189",
     "line": 1213,
     "where": "renderSetup › label",
     "text": "置ける",
-    "h": "63791f26"
+    "h": "5badd073"
    },
    {
-    "id": "ui.js:74693",
+    "id": "ui.js:74658",
     "line": 1218,
     "where": "renderSetup",
     "text": "5×5のみ",
-    "h": "41a138f1"
+    "h": "463d967f"
    },
    {
-    "id": "ui.js:74875",
+    "id": "ui.js:74840",
     "line": 1224,
     "where": "renderSetup",
     "text": "配置を送りました。相手の配置が終わると対戦が始まります。",
-    "h": "a5e5685d"
+    "h": "df54bbc1"
    },
    {
-    "id": "ui.js:74937",
+    "id": "ui.js:74902",
     "line": 1226,
     "where": "renderSetup",
     "text": "トレジャーを置くキューブのブロックをタップしてください。",
-    "h": "907bd838"
+    "h": "f44ae25f"
    },
    {
-    "id": "ui.js:74985",
+    "id": "ui.js:74950",
     "line": 1227,
     "where": "renderSetup",
     "text": "フィールドをタップして配置。空きブロックをなぞると、その形でも置けます。置いたキューブをタップすると外せます。R：回転 / F：反転",
-    "h": "183c98e7"
+    "h": "33d8adbd"
    },
    {
-    "id": "ui.js:75056",
+    "id": "ui.js:75021",
     "line": 1227,
     "where": "renderSetup",
     "text": "空きブロックをなぞって形を描くか、キューブの一覧から形を選択してください。",
-    "h": "da8c084d"
+    "h": "58a691f4"
    },
    {
-    "id": "ui.js:75864",
+    "id": "ui.js:75829",
     "line": 1237,
     "where": "renderSetup",
     "text": "の残りアイテム",
     "around": "…の残りアイテム YOUR ITEMS … …の残りアイテム RIVAL ITEMS …",
-    "h": "b6f8685a"
+    "h": "20eb1a51"
    },
    {
-    "id": "ui.js:75878",
+    "id": "ui.js:75843",
     "line": 1237,
     "where": "renderSetup",
     "text": "YOUR ITEMS",
     "around": "…の残りアイテム YOUR ITEMS … …の残りアイテム RIVAL ITEMS …",
-    "h": "c3dbc6b4"
+    "h": "d275b169"
    },
    {
-    "id": "ui.js:75974",
+    "id": "ui.js:75939",
     "line": 1238,
     "where": "renderSetup",
     "text": "の残りアイテム",
     "around": "…の残りアイテム YOUR ITEMS … …の残りアイテム RIVAL ITEMS …",
-    "h": "26191b55"
+    "h": "77a5e539"
    },
    {
-    "id": "ui.js:75988",
+    "id": "ui.js:75953",
     "line": 1238,
     "where": "renderSetup",
     "text": "RIVAL ITEMS",
     "around": "…の残りアイテム YOUR ITEMS … …の残りアイテム RIVAL ITEMS …",
-    "h": "9bf5c4db"
+    "h": "90e2a5a2"
    },
    {
-    "id": "ui.js:76146",
+    "id": "ui.js:76111",
     "line": 1240,
     "where": "renderSetup",
     "text": "あなた",
-    "h": "17a69f05"
+    "h": "9892e6d6"
    },
    {
-    "id": "ui.js:76158",
+    "id": "ui.js:76123",
     "line": 1240,
     "where": "renderSetup",
     "text": "のアイテム",
     "around": "…のアイテム YOUR ITEMS … …のアイテム RIVAL ITEMS …",
-    "h": "30bddca4"
+    "h": "7260dfb8"
    },
    {
-    "id": "ui.js:76170",
+    "id": "ui.js:76135",
     "line": 1240,
     "where": "renderSetup",
     "text": "YOUR ITEMS",
     "around": "…のアイテム YOUR ITEMS … …のアイテム RIVAL ITEMS …",
-    "h": "26e3c293"
+    "h": "2cdd3933"
    },
    {
-    "id": "ui.js:76266",
+    "id": "ui.js:76231",
     "line": 1241,
     "where": "renderSetup",
     "text": "のアイテム",
     "around": "…のアイテム YOUR ITEMS … …のアイテム RIVAL ITEMS …",
-    "h": "9fa7f9bf"
+    "h": "e1f1a64e"
    },
    {
-    "id": "ui.js:76278",
+    "id": "ui.js:76243",
     "line": 1241,
     "where": "renderSetup",
     "text": "RIVAL ITEMS",
     "around": "…のアイテム YOUR ITEMS … …のアイテム RIVAL ITEMS …",
-    "h": "ccb0af07"
+    "h": "3b2d2470"
    },
    {
-    "id": "ui.js:76479",
+    "id": "ui.js:76444",
     "line": 1244,
     "where": "renderSetup",
     "text": "DEPLOY",
-    "h": "28be2ce8"
+    "h": "482221db"
    },
    {
-    "id": "ui.js:76550",
+    "id": "ui.js:76515",
     "line": 1245,
     "where": "renderSetup",
     "text": "のキューブを配置してください",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "223aaae0"
+    "h": "e1e7da64"
    },
    {
-    "id": "ui.js:76782",
+    "id": "ui.js:76747",
     "line": 1249,
     "where": "renderSetup",
     "text": "自分フィールド",
-    "h": "bafd8edc"
+    "h": "069136cc"
    },
    {
-    "id": "ui.js:76805",
+    "id": "ui.js:76770",
     "line": 1249,
     "where": "renderSetup",
     "text": "のフィールド",
     "around": "…のフィールド",
-    "h": "7d0f9cae"
+    "h": "1b4bcb25"
    },
    {
-    "id": "ui.js:76843",
+    "id": "ui.js:76808",
     "line": 1249,
     "where": "renderSetup",
     "text": "UNITS / {{1}} CELLS",
@@ -2194,246 +2194,246 @@
      "totalCells"
     ],
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "985a3f87"
+    "h": "ac22e7b6"
    },
    {
-    "id": "ui.js:77159",
+    "id": "ui.js:77124",
     "line": 1254,
     "where": "renderSetup",
     "text": "↻ 回転",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "4883a5cf"
+    "h": "e666e2bb"
    },
    {
-    "id": "ui.js:77244",
+    "id": "ui.js:77209",
     "line": 1255,
     "where": "renderSetup",
     "text": "⇋ 反転",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "772d48a5"
+    "h": "ac4b68f0"
    },
    {
-    "id": "ui.js:77416",
+    "id": "ui.js:77381",
     "line": 1256,
     "where": "renderSetup",
     "text": "◆ トレジャー",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "3c753ebd"
+    "h": "7ba4d8a3"
    },
    {
-    "id": "ui.js:77439",
+    "id": "ui.js:77404",
     "line": 1256,
     "where": "renderSetup",
     "text": "（済）",
-    "h": "12352e7f"
+    "h": "1da2a61f"
    },
    {
-    "id": "ui.js:77598",
+    "id": "ui.js:77563",
     "line": 1259,
     "where": "renderSetup",
     "text": "自動配置",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "3f3fdf8c"
+    "h": "be3358f6"
    },
    {
-    "id": "ui.js:77700",
+    "id": "ui.js:77665",
     "line": 1260,
     "where": "renderSetup",
     "text": "リセット",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "1185852f"
+    "h": "6b1a01b6"
    },
    {
-    "id": "ui.js:77882",
+    "id": "ui.js:77847",
     "line": 1266,
     "where": "renderSetup",
     "text": "相手の配置を待っています",
-    "h": "3416f558"
+    "h": "9fcbcf74"
    },
    {
-    "id": "ui.js:78009",
+    "id": "ui.js:77974",
     "line": 1267,
     "where": "renderSetup",
     "text": "配置完了",
-    "h": "2e1c5a9e"
+    "h": "3ad24beb"
    },
    {
-    "id": "ui.js:78077",
+    "id": "ui.js:78042",
     "line": 1268,
     "where": "renderSetup",
     "text": "準備ができました",
-    "h": "bd598198"
+    "h": "443bbf1f"
    },
    {
-    "id": "ui.js:78109",
+    "id": "ui.js:78074",
     "line": 1268,
     "where": "renderSetup",
     "text": "トレジャーをセットしてください",
-    "h": "bea2df67"
+    "h": "98e47456"
    },
    {
-    "id": "ui.js:78129",
+    "id": "ui.js:78094",
     "line": 1268,
     "where": "renderSetup",
     "text": "キューブを置いてください",
-    "h": "a459a6df"
+    "h": "5b38c484"
    },
    {
-    "id": "ui.js:78228",
+    "id": "ui.js:78193",
     "line": 1269,
     "where": "renderSetup",
     "text": "相手",
-    "h": "7ea4f03b"
+    "h": "4e3bab6c"
    },
    {
-    "id": "ui.js:78256",
+    "id": "ui.js:78221",
     "line": 1269,
     "where": "renderSetup",
     "text": "配置完了",
-    "h": "6d1412f9"
+    "h": "c28238f1"
    },
    {
-    "id": "ui.js:78269",
+    "id": "ui.js:78234",
     "line": 1269,
     "where": "renderSetup",
     "text": "配置中…",
-    "h": "fcbfaacb"
+    "h": "9a3f584e"
    },
    {
-    "id": "ui.js:78385",
+    "id": "ui.js:78350",
     "line": 1272,
     "where": "renderSetup",
     "text": "キューブ",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "99e86b01"
+    "h": "61163f96"
    },
    {
-    "id": "ui.js:78396",
+    "id": "ui.js:78361",
     "line": 1272,
     "where": "renderSetup",
     "text": "CUBES",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "48dc41d1"
+    "h": "cd10b34e"
    },
    {
-    "id": "ui.js:78493",
+    "id": "ui.js:78458",
     "line": 1274,
     "where": "renderSetup",
     "text": "最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "0099440e"
+    "h": "e887a0f1"
    },
    {
-    "id": "ui.js:78540",
+    "id": "ui.js:78505",
     "line": 1274,
     "where": "renderSetup",
     "text": "大会では、撃破されるとキューブのブロック数ぶんの点を相手に奪われます。",
-    "h": "c4195f53"
+    "h": "cb896082"
    },
    {
-    "id": "ui.js:78582",
+    "id": "ui.js:78547",
     "line": 1274,
     "where": "renderSetup",
     "text": "配置したら、どれか1ブロックにトレジャーをセットします。",
     "around": "… …のキューブを配置してください … … … UNITS / … CELLS … … ↻ 回転 ⇋ 反転 ◆ トレジャー… 自動配置 リセット … … キューブ CUBES … 最低1キューブ。詰め込んでも、1キューブだけで隠れても構いません。…配置したら、どれか1ブロックにトレジャーをセットします。…",
-    "h": "96cc0e85"
+    "h": "7d36242b"
    },
    {
-    "id": "ui.js:78642",
+    "id": "ui.js:78607",
     "line": 1274,
     "where": "renderSetup",
     "text": "大会：撃破された（アンサー失敗で差し出した）キューブは、次の試合から使えません。",
-    "h": "4666b197"
+    "h": "c27679c2"
    },
    {
-    "id": "ui.js:79629",
+    "id": "ui.js:79594",
     "line": 1295,
     "where": "held",
     "text": "手持ち（予選の残り）：",
-    "h": "97d5c955"
+    "h": "b6b2fe9f"
    },
    {
-    "id": "ui.js:79667",
+    "id": "ui.js:79632",
     "line": 1295,
     "where": "held",
     "text": "・",
-    "h": "a4fa8237"
+    "h": "a659aae6"
    },
    {
-    "id": "ui.js:79674",
+    "id": "ui.js:79639",
     "line": 1295,
     "where": "held",
     "text": "なし",
-    "h": "3b2aa4de"
+    "h": "f12f4fbf"
    },
    {
-    "id": "ui.js:79792",
+    "id": "ui.js:79757",
     "line": 1299,
     "where": "renderDraft",
     "text": "決勝",
-    "h": "57944f19"
+    "h": "bc909abb"
    },
    {
-    "id": "ui.js:79799",
+    "id": "ui.js:79764",
     "line": 1299,
     "where": "renderDraft",
     "text": "バトル",
-    "h": "a70eb005"
+    "h": "d0462a3d"
    },
    {
-    "id": "ui.js:79807",
+    "id": "ui.js:79772",
     "line": 1299,
     "where": "renderDraft",
     "text": "DRAFT",
     "around": "… DRAFT PICK …",
-    "h": "35f805e2"
+    "h": "5e147c2b"
    },
    {
-    "id": "ui.js:79845",
+    "id": "ui.js:79810",
     "line": 1299,
     "where": "renderDraft",
     "text": "PICK",
     "around": "… DRAFT PICK …",
-    "h": "3e8101f4"
+    "h": "c4163893"
    },
    {
-    "id": "ui.js:79962",
+    "id": "ui.js:79927",
     "line": 1301,
     "where": "renderDraft",
     "text": "アイテムドラフト",
     "around": "… アイテムドラフト ITEM DRAFT …から、…つずつ取ります。順番は …（後＝…）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。 …の番です… … …",
-    "h": "a9162d4e"
+    "h": "2c5ef720"
    },
    {
-    "id": "ui.js:79977",
+    "id": "ui.js:79942",
     "line": 1301,
     "where": "renderDraft",
     "text": "ITEM DRAFT",
     "around": "… アイテムドラフト ITEM DRAFT …から、…つずつ取ります。順番は …（後＝…）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。 …の番です… … …",
-    "h": "4bc096db"
+    "h": "6bc271ba"
    },
    {
-    "id": "ui.js:80044",
+    "id": "ui.js:80009",
     "line": 1302,
     "where": "renderDraft",
     "text": "並べた{{1}}個",
     "vars": [
      "g.draftPool.length"
     ],
-    "h": "29455a9e"
+    "h": "9b979a46"
    },
    {
-    "id": "ui.js:80074",
+    "id": "ui.js:80039",
     "line": 1302,
     "where": "renderDraft",
     "text": "この試合の{{1}}種類",
     "vars": [
      "g.itemKeys.length"
     ],
-    "h": "56d9bf10"
+    "h": "15aca677"
    },
    {
-    "id": "ui.js:80103",
+    "id": "ui.js:80068",
     "line": 1302,
     "where": "renderDraft",
     "text": "から、{{1}}つずつ取ります。順番は",
@@ -2441,24 +2441,24 @@
      "d.each || Math.floor(g.itemKeys.length / 2)"
     ],
     "around": "… アイテムドラフト ITEM DRAFT …から、…つずつ取ります。順番は …（後＝…）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。 …の番です… … …",
-    "h": "661f8321"
+    "h": "ac4e7a50"
    },
    {
-    "id": "ui.js:80203",
+    "id": "ui.js:80168",
     "line": 1302,
     "where": "renderDraft",
     "text": "先",
-    "h": "12dc3a52"
+    "h": "7e931eb5"
    },
    {
-    "id": "ui.js:80209",
+    "id": "ui.js:80174",
     "line": 1302,
     "where": "renderDraft",
     "text": "後",
-    "h": "1b66f954"
+    "h": "a588ae13"
    },
    {
-    "id": "ui.js:80223",
+    "id": "ui.js:80188",
     "line": 1302,
     "where": "renderDraft",
     "text": "（後＝{{1}}）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。",
@@ -2466,279 +2466,279 @@
      "esc(g.players[second].name)"
     ],
     "around": "… アイテムドラフト ITEM DRAFT …から、…つずつ取ります。順番は …（後＝…）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。 …の番です… … …",
-    "h": "c56a4013"
+    "h": "74d79440"
    },
    {
-    "id": "ui.js:80376",
+    "id": "ui.js:80341",
     "line": 1303,
     "where": "renderDraft",
     "text": "の番です",
     "around": "… アイテムドラフト ITEM DRAFT …から、…つずつ取ります。順番は …（後＝…）。偏りが出にくい「トゥエ・モース順」で、最初と最後は別の人が取ります。取ったアイテムは手持ちに1回ぶん追加されます。 …の番です… … …",
-    "h": "92930b8a"
+    "h": "a96ef084"
    },
    {
-    "id": "ui.js:80395",
+    "id": "ui.js:80360",
     "line": 1303,
     "where": "renderDraft",
     "text": "。アイテムを選択してください",
-    "h": "a9a92722"
+    "h": "7849735f"
    },
    {
-    "id": "ui.js:80989",
+    "id": "ui.js:80954",
     "line": 1308,
     "where": "renderDraft",
     "text": "先攻",
-    "h": "3cc157bc"
+    "h": "e5b5d837"
    },
    {
-    "id": "ui.js:80996",
+    "id": "ui.js:80961",
     "line": 1308,
     "where": "renderDraft",
     "text": "後攻",
-    "h": "faa773e0"
+    "h": "10628152"
    },
    {
-    "id": "ui.js:82935",
+    "id": "ui.js:82900",
     "line": 1342,
     "where": "renderBattle",
     "text": "GET",
-    "h": "18397236"
+    "h": "63f8be37"
    },
    {
-    "id": "ui.js:82955",
+    "id": "ui.js:82920",
     "line": 1342,
     "where": "renderBattle",
     "text": "あと{{1}}回",
     "vars": [
      "tLeft"
     ],
-    "h": "7792b626"
+    "h": "459feca7"
    },
    {
-    "id": "ui.js:82971",
+    "id": "ui.js:82936",
     "line": 1342,
     "where": "renderBattle",
     "text": "失敗",
-    "h": "c78fbed6"
+    "h": "da3112d1"
    },
    {
-    "id": "ui.js:83041",
+    "id": "ui.js:83006",
     "line": 1344,
     "where": "renderBattle",
     "text": "TURN",
     "around": "TURN … … …×… TREASURE … 手番 …",
-    "h": "891f537e"
+    "h": "4d04937d"
    },
    {
-    "id": "ui.js:83165",
+    "id": "ui.js:83130",
     "line": 1344,
     "where": "renderBattle",
     "text": "TREASURE",
     "around": "TURN … … …×… TREASURE … 手番 …",
-    "h": "a60e9908"
+    "h": "03589e35"
    },
    {
-    "id": "ui.js:83245",
+    "id": "ui.js:83210",
     "line": 1344,
     "where": "renderBattle",
     "text": "手番",
     "around": "TURN … … …×… TREASURE … 手番 …",
-    "h": "1f2bd0f4"
+    "h": "d73cd780"
    },
    {
-    "id": "ui.js:83320",
+    "id": "ui.js:83285",
     "line": 1345,
     "where": "renderBattle",
     "text": "GAME",
     "around": "GAME OVER",
-    "h": "57815b79"
+    "h": "37a4a529"
    },
    {
-    "id": "ui.js:83327",
+    "id": "ui.js:83292",
     "line": 1345,
     "where": "renderBattle",
     "text": "OVER",
     "around": "GAME OVER",
-    "h": "706fcf0a"
+    "h": "af8cee80"
    },
    {
-    "id": "ui.js:83917",
+    "id": "ui.js:83882",
     "line": 1359,
     "where": "renderBattle",
     "text": "自分フィールド",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "d418da02"
+    "h": "ca7e73e7"
    },
    {
-    "id": "ui.js:83935",
+    "id": "ui.js:83900",
     "line": 1359,
     "where": "renderBattle",
     "text": "MY FIELD",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "d6450c0e"
+    "h": "7e939a62"
    },
    {
-    "id": "ui.js:84449",
+    "id": "ui.js:84414",
     "line": 1365,
     "where": "renderBattle",
     "text": "相手フィールド（答え合わせ）",
-    "h": "7892e808"
+    "h": "e3493fa4"
    },
    {
-    "id": "ui.js:84468",
+    "id": "ui.js:84433",
     "line": 1365,
     "where": "renderBattle",
     "text": "相手フィールド",
-    "h": "bb85be38"
+    "h": "c8f9f1fb"
    },
    {
-    "id": "ui.js:84488",
+    "id": "ui.js:84453",
     "line": 1365,
     "where": "renderBattle",
     "text": "ENEMY FIELD",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "73251813"
+    "h": "f26f4f8d"
    },
    {
-    "id": "ui.js:85079",
+    "id": "ui.js:85044",
     "line": 1376,
     "where": "renderBattle",
     "text": "自分フィールドのアイテム",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "c1bab76d"
+    "h": "ff3292d9"
    },
    {
-    "id": "ui.js:85098",
+    "id": "ui.js:85063",
     "line": 1376,
     "where": "renderBattle",
     "text": "MY FIELD",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "1c1b8db9"
+    "h": "57232af0"
    },
    {
-    "id": "ui.js:85148",
+    "id": "ui.js:85113",
     "line": 1376,
     "where": "renderBattle",
     "text": "まだ使われていません",
-    "h": "8e237ebd"
+    "h": "3eb17c45"
    },
    {
-    "id": "ui.js:85236",
+    "id": "ui.js:85201",
     "line": 1377,
     "where": "renderBattle",
     "text": "防御ログ",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "63387269"
+    "h": "6a1caa50"
    },
    {
-    "id": "ui.js:85247",
+    "id": "ui.js:85212",
     "line": 1377,
     "where": "renderBattle",
     "text": "DEFENSE",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "bfc79e68"
+    "h": "e8d639fd"
    },
    {
-    "id": "ui.js:85297",
+    "id": "ui.js:85262",
     "line": 1377,
     "where": "renderBattle",
     "text": "まだ攻撃を受けていません",
-    "h": "3a7803dd"
+    "h": "866a380e"
    },
    {
-    "id": "ui.js:85481",
+    "id": "ui.js:85446",
     "line": 1380,
     "where": "renderBattle",
     "text": "相手フィールドのアイテム",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "1b5c9f93"
+    "h": "6746ba1c"
    },
    {
-    "id": "ui.js:85500",
+    "id": "ui.js:85465",
     "line": 1380,
     "where": "renderBattle",
     "text": "ENEMY FIELD",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "f8679cdf"
+    "h": "4d5365eb"
    },
    {
-    "id": "ui.js:85554",
+    "id": "ui.js:85519",
     "line": 1380,
     "where": "renderBattle",
     "text": "まだ使われていません",
-    "h": "63ebeb6f"
+    "h": "4a8321da"
    },
    {
-    "id": "ui.js:85648",
+    "id": "ui.js:85613",
     "line": 1381,
     "where": "renderBattle",
     "text": "攻撃ログ",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "50770226"
+    "h": "b6ffdb82"
    },
    {
-    "id": "ui.js:85659",
+    "id": "ui.js:85624",
     "line": 1381,
     "where": "renderBattle",
     "text": "ATTACK",
     "around": "… … … 自分フィールド MY FIELD … … … … ENEMY FIELD … … … … … 自分フィールドのアイテム MY FIELD … 防御ログ DEFENSE … 相手フィールドのアイテム ENEMY FIELD … 攻撃ログ ATTACK … …",
-    "h": "10a7d845"
+    "h": "780807a5"
    },
    {
-    "id": "ui.js:85708",
+    "id": "ui.js:85673",
     "line": 1381,
     "where": "renderBattle",
     "text": "まだコールしていません",
-    "h": "dc718f45"
+    "h": "d992d1dd"
    },
    {
-    "id": "ui.js:90354",
+    "id": "ui.js:90285",
     "line": 1455,
     "where": "quitModal",
     "text": "大会をやめますか？",
     "around": "大会をやめますか？ ここまでの成績は残りません。 やめる 続ける",
-    "h": "70c575c1"
+    "h": "8e29b5cb"
    },
    {
-    "id": "ui.js:90393",
+    "id": "ui.js:90324",
     "line": 1456,
     "where": "quitModal",
     "text": "ここまでの成績は残りません。",
     "around": "大会をやめますか？ ここまでの成績は残りません。 やめる 続ける",
-    "h": "7a392270"
+    "h": "08f70c16"
    },
    {
-    "id": "ui.js:90483",
+    "id": "ui.js:90414",
     "line": 1457,
     "where": "quitModal",
     "text": "やめる",
     "around": "大会をやめますか？ ここまでの成績は残りません。 やめる 続ける",
-    "h": "ad537380"
+    "h": "83b54e10"
    },
    {
-    "id": "ui.js:90538",
+    "id": "ui.js:90469",
     "line": 1457,
     "where": "quitModal",
     "text": "続ける",
     "around": "大会をやめますか？ ここまでの成績は残りません。 やめる 続ける",
-    "h": "652cd217"
+    "h": "4220e845"
    },
    {
-    "id": "ui.js:105074",
+    "id": "ui.js:105005",
     "line": 1722,
     "where": "itemsHTML",
     "text": "所持",
-    "h": "77904201"
+    "h": "625cb70f"
    },
    {
-    "id": "ui.js:105085",
+    "id": "ui.js:105016",
     "line": 1722,
     "where": "itemsHTML",
     "text": "未所持",
-    "h": "f29655d4"
+    "h": "5641a3dc"
    },
    {
-    "id": "ui.js:109216",
+    "id": "ui.js:109132",
     "line": 1776,
     "where": "side",
     "text": "撃破で奪った{{1}}・奪われた{{2}}・勝利",
@@ -2746,238 +2746,238 @@
      "sg(pt.take)",
      "sg(-pt.taken)"
     ],
-    "h": "7097ef44"
+    "h": "953b0ae3"
    },
    {
-    "id": "ui.js:109291",
+    "id": "ui.js:109207",
     "line": 1776,
     "where": "side",
     "text": "・スピード",
-    "h": "9f9e23f4"
+    "h": "6e6471a4"
    },
    {
-    "id": "ui.js:109318",
+    "id": "ui.js:109234",
     "line": 1776,
     "where": "side",
     "text": "・宝石",
     "around": "撃破で奪った…・奪われた…・勝利……・宝石…",
-    "h": "b4a0e27d"
+    "h": "054ed85d"
    },
    {
-    "id": "ui.js:109348",
+    "id": "ui.js:109264",
     "line": 1776,
     "where": "side",
     "text": "つ",
     "around": "…つ",
-    "h": "3cfd5d63"
+    "h": "96cd474a"
    },
    {
-    "id": "ui.js:109415",
+    "id": "ui.js:109331",
     "line": 1776,
     "where": "side",
     "text": "WIN",
-    "h": "f4d1ec49"
+    "h": "a8cf73d8"
    },
    {
-    "id": "ui.js:137197",
+    "id": "ui.js:137096",
     "line": 2286,
     "where": "playItem › case cube",
     "text": "ブロック",
     "around": "…ブロック",
-    "h": "eb215d7c"
+    "h": "455c97e0"
    },
    {
-    "id": "ui.js:137273",
+    "id": "ui.js:137172",
     "line": 2287,
     "where": "playItem › case cube",
     "text": "：残り {{1}} 体",
     "vars": [
      "ev.n"
     ],
-    "h": "0a4314ba"
+    "h": "599d1c9a"
    },
    {
-    "id": "ui.js:137915",
+    "id": "ui.js:137814",
     "line": 2298,
     "where": "playItem › case line",
     "text": "：残り",
     "around": "…：残り …… ブロック",
-    "h": "8f86313a"
+    "h": "126641bd"
    },
    {
-    "id": "ui.js:137945",
+    "id": "ui.js:137844",
     "line": 2298,
     "where": "playItem › case line",
     "text": "キューブ /",
     "around": "… キューブ /",
-    "h": "e024beb6"
+    "h": "00899df2"
    },
    {
-    "id": "ui.js:137967",
+    "id": "ui.js:137866",
     "line": 2298,
     "where": "playItem › case line",
     "text": "ブロック",
     "around": "…：残り …… ブロック",
-    "h": "09b259fa"
+    "h": "c7def0b2"
    },
    {
-    "id": "ui.js:139156",
+    "id": "ui.js:139055",
     "line": 2322,
     "where": "playItem › case number",
     "text": "ブロック",
-    "h": "fc1421e5"
+    "h": "2947043a"
    },
    {
-    "id": "ui.js:139897",
+    "id": "ui.js:139796",
     "line": 2335,
     "where": "playItem › case pair",
     "text": "SAME",
-    "h": "d1094bbb"
+    "h": "a797ebba"
    },
    {
-    "id": "ui.js:139906",
+    "id": "ui.js:139805",
     "line": 2335,
     "where": "playItem › case pair",
     "text": "NOT SAME",
-    "h": "7acf9832"
+    "h": "84e291ef"
    },
    {
-    "id": "ui.js:140680",
+    "id": "ui.js:140579",
     "line": 2348,
     "where": "playItem › case node",
     "text": "つながり",
-    "h": "bcdbc86b"
+    "h": "503eab48"
    },
    {
-    "id": "ui.js:141274",
+    "id": "ui.js:141173",
     "line": 2360,
     "where": "playItem › case acid",
     "text": "ACID",
-    "h": "cd995758"
+    "h": "803b96ab"
    },
    {
-    "id": "ui.js:142183",
+    "id": "ui.js:142082",
     "line": 2375,
     "where": "playItem › case cross",
     "text": "不発",
-    "h": "2ec3aebf"
+    "h": "ed3f2adc"
    },
    {
-    "id": "ui.js:142190",
+    "id": "ui.js:142089",
     "line": 2375,
     "where": "playItem › case cross",
     "text": "命中",
-    "h": "c2e791a4"
+    "h": "eb5e0069"
    },
    {
-    "id": "ui.js:142689",
+    "id": "ui.js:142588",
     "line": 2386,
     "where": "playItem › case homing",
     "text": "合計",
-    "h": "4fe10f2e"
+    "h": "261038f2"
    },
    {
-    "id": "ui.js:143573",
+    "id": "ui.js:143472",
     "line": 2404,
     "where": "playItem › case bazooka",
     "text": "BREAK",
-    "h": "3b026080"
+    "h": "ed8aa8c7"
    },
    {
-    "id": "ui.js:143988",
+    "id": "ui.js:143887",
     "line": 2412,
     "where": "playItem › case bazooka",
     "text": "ヒット済み {{1}}ブロック撃破",
     "vars": [
      "ev.killed.length"
     ],
-    "h": "2318e341"
+    "h": "7c696115"
    },
    {
-    "id": "ui.js:144979",
+    "id": "ui.js:144878",
     "line": 2429,
     "where": "playItem › case warp",
     "text": "WARP READY",
-    "h": "9967a479"
+    "h": "520000d8"
    },
    {
-    "id": "ui.js:145610",
+    "id": "ui.js:145509",
     "line": 2445,
     "where": "playItem › case stealth",
     "text": "STEALTH",
-    "h": "84b48889"
+    "h": "bb054046"
    },
    {
-    "id": "ui.js:146288",
+    "id": "ui.js:146187",
     "line": 2466,
     "where": "play › case start",
     "text": "BATTLE START",
-    "h": "5498e29b"
+    "h": "95f02d24"
    },
    {
-    "id": "ui.js:146304",
+    "id": "ui.js:146203",
     "line": 2466,
     "where": "play › case start",
     "text": "先攻：",
-    "h": "8dd78630"
+    "h": "31ba27a6"
    },
    {
-    "id": "ui.js:146694",
+    "id": "ui.js:146593",
     "line": 2473,
     "where": "play › case turn",
     "text": "YOUR TURN",
-    "h": "c9d379bb"
+    "h": "2c8f749e"
    },
    {
-    "id": "ui.js:146708",
+    "id": "ui.js:146607",
     "line": 2473,
     "where": "play › case turn",
     "text": "ENEMY TURN",
-    "h": "afbf7ee2"
+    "h": "8993568a"
    },
    {
-    "id": "ui.js:146741",
+    "id": "ui.js:146640",
     "line": 2473,
     "where": "play › case turn",
     "text": "ターン目・",
-    "h": "d682563d"
+    "h": "db4130c1"
    },
    {
-    "id": "ui.js:146765",
+    "id": "ui.js:146664",
     "line": 2473,
     "where": "play › case turn",
     "text": "あなたの手番",
-    "h": "9ffcca65"
+    "h": "9ae1843e"
    },
    {
-    "id": "ui.js:146801",
+    "id": "ui.js:146700",
     "line": 2473,
     "where": "play › case turn",
     "text": "の手番",
-    "h": "3cdb05b6"
+    "h": "066619ec"
    },
    {
-    "id": "ui.js:146869",
+    "id": "ui.js:146768",
     "line": 2474,
     "where": "play › case turn",
     "text": "P{{1}} TURN",
     "vars": [
      "ev.cur + 1"
     ],
-    "h": "17f52602"
+    "h": "bfde6cc7"
    },
    {
-    "id": "ui.js:146909",
+    "id": "ui.js:146808",
     "line": 2474,
     "where": "play › case turn",
     "text": "ターン目・{{1}}の手番",
     "vars": [
      "g.players[ev.cur].name"
     ],
-    "h": "5386058c"
+    "h": "1a329268"
    },
    {
-    "id": "ui.js:147149",
+    "id": "ui.js:147048",
     "line": 2480,
     "where": "play › case tchance",
     "text": "（残り{{1}}回／全{{2}}回）",
@@ -2985,319 +2985,319 @@
      "ev.left",
      "ev.max"
     ],
-    "h": "535fec90"
+    "h": "13c8a90e"
    },
    {
-    "id": "ui.js:147229",
+    "id": "ui.js:147128",
     "line": 2481,
     "where": "play › case tchance",
     "text": "相手フィールドのブロックを1つ選択してください",
-    "h": "fd8df253"
+    "h": "d05edb38"
    },
    {
-    "id": "ui.js:147290",
+    "id": "ui.js:147189",
     "line": 2481,
     "where": "play › case tchance",
     "text": "のトレジャーチャンス",
-    "h": "a3327966"
+    "h": "ae030740"
    },
    {
-    "id": "ui.js:147327",
+    "id": "ui.js:147226",
     "line": 2482,
     "where": "play › case tchance",
     "text": "TREASURE CHANCE",
-    "h": "ae61824f"
+    "h": "49701b6a"
    },
    {
-    "id": "ui.js:147628",
+    "id": "ui.js:147527",
     "line": 2490,
     "where": "play › case tfail",
     "text": "TREASURE 失敗",
-    "h": "bd3beef7"
+    "h": "c958853f"
    },
    {
-    "id": "ui.js:147671",
+    "id": "ui.js:147570",
     "line": 2490,
     "where": "play › case tfail",
     "text": "：TREASURE 失敗",
-    "h": "b6193f73"
+    "h": "acd5846e"
    },
    {
-    "id": "ui.js:148118",
+    "id": "ui.js:148017",
     "line": 2499,
     "where": "play › case reveal",
     "text": "STEALTH REVEALED",
-    "h": "6ae038f8"
+    "h": "5b2d520b"
    },
    {
-    "id": "ui.js:148470",
+    "id": "ui.js:148369",
     "line": 2505,
     "where": "play › case reveal",
     "text": "STEALTH REVEALED",
-    "h": "462b7e92"
+    "h": "7e8230d8"
    },
    {
-    "id": "ui.js:148974",
+    "id": "ui.js:148873",
     "line": 2516,
     "where": "play › case call",
     "text": "NO HIT",
-    "h": "aee265f2"
+    "h": "53fd78ac"
    },
    {
-    "id": "ui.js:149669",
+    "id": "ui.js:149568",
     "line": 2529,
     "where": "play › case call",
     "text": "STEALTH HIT",
-    "h": "cbebcf8d"
+    "h": "1c3ef996"
    },
    {
-    "id": "ui.js:149695",
+    "id": "ui.js:149594",
     "line": 2529,
     "where": "play › case call",
     "text": "STEALTH HIT",
-    "h": "291f20e9"
+    "h": "7f619560"
    },
    {
-    "id": "ui.js:149727",
+    "id": "ui.js:149626",
     "line": 2529,
     "where": "play › case call",
     "text": "HIT",
-    "h": "2b8f022e"
+    "h": "049a9b12"
    },
    {
-    "id": "ui.js:149816",
+    "id": "ui.js:149715",
     "line": 2530,
     "where": "play › case call",
     "text": "ACID",
-    "h": "e0742bb9"
+    "h": "57637e15"
    },
    {
-    "id": "ui.js:150293",
+    "id": "ui.js:150192",
     "line": 2539,
     "where": "play › case call",
     "text": "WARP RETICLE",
-    "h": "63f41867"
+    "h": "2b344fd9"
    },
    {
-    "id": "ui.js:150687",
+    "id": "ui.js:150586",
     "line": 2547,
     "where": "play › case call",
     "text": "WARP TRIGGER",
-    "h": "b98411f7"
+    "h": "061c4909"
    },
    {
-    "id": "ui.js:151092",
+    "id": "ui.js:150991",
     "line": 2556,
     "where": "play › case call",
     "text": "STEALTH HIT",
-    "h": "9c11fad7"
+    "h": "a4246b23"
    },
    {
-    "id": "ui.js:151118",
+    "id": "ui.js:151017",
     "line": 2556,
     "where": "play › case call",
     "text": "STEALTH HIT",
-    "h": "cec352d2"
+    "h": "775472ba"
    },
    {
-    "id": "ui.js:151434",
+    "id": "ui.js:151333",
     "line": 2564,
     "where": "play › case call",
     "text": "HIT",
-    "h": "fd3b8c62"
+    "h": "afdb3d89"
    },
    {
-    "id": "ui.js:153084",
+    "id": "ui.js:152983",
     "line": 2596,
     "where": "play › case destroy",
     "text": "PENALTY",
-    "h": "3a92682b"
+    "h": "1808a367"
    },
    {
-    "id": "ui.js:153096",
+    "id": "ui.js:152995",
     "line": 2596,
     "where": "play › case destroy",
     "text": "DESTROYED",
-    "h": "3a7e25d7"
+    "h": "1f61c3c9"
    },
    {
-    "id": "ui.js:153198",
+    "id": "ui.js:153097",
     "line": 2598,
     "where": "play › case destroy",
     "text": "1ブロックのキューブ撃破",
-    "h": "ef7936d9"
+    "h": "5ee14578"
    },
    {
-    "id": "ui.js:153225",
+    "id": "ui.js:153124",
     "line": 2598,
     "where": "play › case destroy",
     "text": "ブロック撃破",
-    "h": "1ea5abd7"
+    "h": "1f367075"
    },
    {
-    "id": "ui.js:154016",
+    "id": "ui.js:153915",
     "line": 2614,
     "where": "play › case answer",
     "text": "STEALTH ANSWER",
-    "h": "209b8f72"
+    "h": "0137771c"
    },
    {
-    "id": "ui.js:154035",
+    "id": "ui.js:153934",
     "line": 2614,
     "where": "play › case answer",
     "text": "ANSWER!",
-    "h": "46f4a3a3"
+    "h": "a72ddae5"
    },
    {
-    "id": "ui.js:154247",
+    "id": "ui.js:154146",
     "line": 2618,
     "where": "play › case answer",
     "text": "ANSWER FAILED",
-    "h": "03dee28f"
+    "h": "40b2b85f"
    },
    {
-    "id": "ui.js:154815",
+    "id": "ui.js:154714",
     "line": 2631,
     "where": "play › case treasure",
     "text": "TREASURE +",
-    "h": "ffd66d4e"
+    "h": "d5517856"
    },
    {
-    "id": "ui.js:154848",
+    "id": "ui.js:154747",
     "line": 2631,
     "where": "play › case treasure",
     "text": "TREASURE",
-    "h": "b1137c05"
+    "h": "d9f1e0e9"
    },
    {
-    "id": "ui.js:155098",
+    "id": "ui.js:154997",
     "line": 2637,
     "where": "play › case treasure",
     "text": "NEAR",
-    "h": "ff91503d"
+    "h": "cf88cc88"
    },
    {
-    "id": "ui.js:155232",
+    "id": "ui.js:155131",
     "line": 2641,
     "where": "play › case treasure",
     "text": "NO TREASURE",
-    "h": "3b7bf377"
+    "h": "09b28ba5"
    },
    {
-    "id": "ui.js:156344",
+    "id": "ui.js:156243",
     "line": 2666,
     "where": "play › case warpfire",
     "text": "DESTROYED",
-    "h": "28323448"
+    "h": "d77fca1b"
    },
    {
-    "id": "ui.js:156402",
+    "id": "ui.js:156301",
     "line": 2667,
     "where": "play › case warpfire",
     "text": "自動撃破後、ワープ発動",
-    "h": "2e33e878"
+    "h": "c94b5f62"
    },
    {
-    "id": "ui.js:156498",
+    "id": "ui.js:156397",
     "line": 2668,
     "where": "play › case warpfire",
     "text": "WARP ESCAPE",
-    "h": "43b4ef16"
+    "h": "cfeecb1b"
    },
    {
-    "id": "ui.js:156514",
+    "id": "ui.js:156413",
     "line": 2668,
     "where": "play › case warpfire",
     "text": "WARP",
-    "h": "d3d0b53b"
+    "h": "31dce65d"
    },
    {
-    "id": "ui.js:157353",
+    "id": "ui.js:157252",
     "line": 2689,
     "where": "play › case over",
     "text": "DRAW",
-    "h": "f47004e4"
+    "h": "76a32f3f"
    },
    {
-    "id": "ui.js:157369",
+    "id": "ui.js:157268",
     "line": 2689,
     "where": "play › case over",
     "text": "両者全滅",
-    "h": "3743fddf"
+    "h": "63a1addb"
    },
    {
-    "id": "ui.js:157431",
+    "id": "ui.js:157330",
     "line": 2690,
     "where": "play › case over",
     "text": "VICTORY",
-    "h": "d0ec632d"
+    "h": "0c330170"
    },
    {
-    "id": "ui.js:157443",
+    "id": "ui.js:157342",
     "line": 2690,
     "where": "play › case over",
     "text": "DEFEAT",
-    "h": "4f0fc5af"
+    "h": "2e741b5e"
    },
    {
-    "id": "ui.js:157479",
+    "id": "ui.js:157378",
     "line": 2690,
     "where": "play › case over",
     "text": "あなたの勝ち",
-    "h": "7d0e973c"
+    "h": "825bacdb"
    },
    {
-    "id": "ui.js:157517",
+    "id": "ui.js:157416",
     "line": 2690,
     "where": "play › case over",
     "text": "の勝ち",
-    "h": "5f7d8184"
+    "h": "509fd633"
    },
    {
-    "id": "ui.js:157587",
+    "id": "ui.js:157486",
     "line": 2691,
     "where": "play › case over",
     "text": "WINNER",
-    "h": "bdb15ac9"
+    "h": "fed321ce"
    },
    {
-    "id": "ui.js:157632",
+    "id": "ui.js:157531",
     "line": 2691,
     "where": "play › case over",
     "text": "の勝ち",
-    "h": "66ba9b9a"
+    "h": "b49d10e4"
    },
    {
-    "id": "ui.js:170548",
+    "id": "ui.js:170447",
     "line": 2955,
     "where": "field",
     "text": "の攻撃",
-    "h": "16174424"
+    "h": "1a1a6caf"
    },
    {
-    "id": "ui.js:170614",
+    "id": "ui.js:170513",
     "line": 2955,
     "where": "field",
     "text": "の防御",
-    "h": "3c27ca9c"
+    "h": "fe680a87"
    },
    {
-    "id": "ui.js:170702",
+    "id": "ui.js:170601",
     "line": 2956,
     "where": "field",
     "text": "所持キューブ",
-    "h": "8ada0ea1"
+    "h": "2643e789"
    },
    {
-    "id": "ui.js:170865",
+    "id": "ui.js:170764",
     "line": 2957,
     "where": "field",
     "text": "のフィールド",
     "around": "…のフィールド 残り…キューブ …………",
-    "h": "24882ae1"
+    "h": "86fe2052"
    },
    {
-    "id": "ui.js:170897",
+    "id": "ui.js:170796",
     "line": 2957,
     "where": "field",
     "text": "残り{{1}}キューブ",
@@ -3305,115 +3305,115 @@
      "g.living(k).length"
     ],
     "around": "…のフィールド 残り…キューブ …………",
-    "h": "9e19bcae"
+    "h": "016f3b17"
    },
    {
-    "id": "ui.js:177946",
+    "id": "ui.js:177839",
     "line": 3091,
     "where": "startGame › label",
     "text": "バトル",
-    "h": "2831e8af"
+    "h": "db651337"
    },
    {
-    "id": "ui.js:177967",
+    "id": "ui.js:177860",
     "line": 3091,
     "where": "startGame › names",
     "text": "あなた",
-    "h": "99dd4d62"
+    "h": "880e1896"
    },
    {
-    "id": "ui.js:177974",
+    "id": "ui.js:177867",
     "line": 3091,
     "where": "startGame › names",
     "text": "CPU",
-    "h": "b431369f"
+    "h": "92a3def4"
    },
    {
-    "id": "ui.js:177984",
+    "id": "ui.js:177877",
     "line": 3091,
     "where": "startGame › names",
     "text": "プレイヤー1",
-    "h": "faf58dcb"
+    "h": "fe6bd3b8"
    },
    {
-    "id": "ui.js:177994",
+    "id": "ui.js:177887",
     "line": 3091,
     "where": "startGame › names",
     "text": "プレイヤー2",
-    "h": "3614de00"
+    "h": "505ad217"
    },
    {
-    "id": "ui.js:185473",
+    "id": "ui.js:185367",
     "line": 3305,
     "where": "startItem",
     "text": "アイテムは自分のターンの、コールの前か後に使えます",
-    "h": "fa2605cd"
+    "h": "9b0bf8ff"
    },
    {
-    "id": "ui.js:185541",
+    "id": "ui.js:185435",
     "line": 3306,
     "where": "startItem",
     "text": "このターンはもうアイテムを使いました",
-    "h": "b18b1f52"
+    "h": "e5d6131c"
    },
    {
-    "id": "ui.js:185623",
+    "id": "ui.js:185517",
     "line": 3308,
     "where": "startItem",
     "text": "予選では、同じ種類のアイテムは1試合1回までです",
-    "h": "132566df"
+    "h": "247a6916"
    },
    {
-    "id": "ui.js:185713",
+    "id": "ui.js:185607",
     "line": 3309,
     "where": "startItem",
     "text": "このアイテムは使い切りました",
-    "h": "56c7fd9f"
+    "h": "640e17d4"
    },
    {
-    "id": "ui.js:185749",
+    "id": "ui.js:185643",
     "line": 3310,
     "where": "startItem",
     "text": "このアイテムは持っていません",
-    "h": "92aaed2c"
+    "h": "5622a4c7"
    },
    {
-    "id": "ui.js:185907",
+    "id": "ui.js:185801",
     "line": 3314,
     "where": "startItem",
     "text": "ワープできるキューブがありません（移動先にできる空きブロックが足りません）",
-    "h": "07b87549"
+    "h": "e0e26ac9"
    },
    {
-    "id": "ui.js:186444",
+    "id": "ui.js:186338",
     "line": 3326,
     "where": "useItem",
     "text": "使えません",
-    "h": "2a4df2bf"
+    "h": "08b75c69"
    },
    {
-    "id": "ui.js:190011",
+    "id": "ui.js:189905",
     "line": 3395,
     "where": "icnt",
     "text": "ドラフトには2個以上並べてください",
-    "h": "4e72e964"
+    "h": "d4871f95"
    },
    {
-    "id": "ui.js:190033",
+    "id": "ui.js:189927",
     "line": 3395,
     "where": "icnt",
     "text": "アイテムは1個以上にしてください",
-    "h": "5414cfcd"
+    "h": "70a70c9b"
    },
    {
-    "id": "ui.js:193858",
+    "id": "ui.js:193753",
     "line": 3490,
     "where": "random",
     "text": "自動配置で置けませんでした。手で置いてください",
-    "h": "d87d3829"
+    "h": "e223cab8"
    },
    {
-    "id": "ui.js:193959",
+    "id": "ui.js:193854",
     "line": 3492,
     "where": "random",
     "text": "CPUと同じ考え方で置きました（{{1}}キューブ・{{2}}ブロック）",
@@ -3421,303 +3421,303 @@
      "ps.length",
      "ps.reduce((a, q) => a + q.size, 0)"
     ],
-    "h": "2f4e743e"
+    "h": "ba6f6c92"
    },
    {
-    "id": "ui.js:194161",
+    "id": "ui.js:194056",
     "line": 3493,
     "where": "random",
     "text": "自動配置で置けませんでした。手で置いてください",
-    "h": "f469bd8c"
+    "h": "36cb228e"
    },
    {
-    "id": "ui.js:195013",
+    "id": "ui.js:194908",
     "line": 3509,
     "where": "setup-done",
     "text": "プレイヤー2の配置です",
-    "h": "cf5ed024"
+    "h": "d27243d7"
    },
    {
-    "id": "ui.js:195485",
+    "id": "ui.js:195380",
     "line": 3525,
     "where": "draft-pick",
     "text": "選べません",
-    "h": "d9a9f171"
+    "h": "fe8d1593"
    },
    {
-    "id": "ui.js:196431",
+    "id": "ui.js:196326",
     "line": 3547,
     "where": "answer-submit",
     "text": "アンサーできません",
-    "h": "6e6eae12"
+    "h": "8e937d01"
    },
    {
-    "id": "ui.js:196571",
+    "id": "ui.js:196466",
     "line": 3550,
     "where": "answer-submit",
     "text": "アンサー失敗！手番が終了します。差し出すキューブを選択してください",
-    "h": "7fa124e0"
+    "h": "e0f72558"
    },
    {
-    "id": "ui.js:196661",
+    "id": "ui.js:196556",
     "line": 3551,
     "where": "answer-submit",
     "text": "ステルスアンサー成功！隠れていたキューブを見破りました",
-    "h": "95a5076a"
+    "h": "da6f8205"
    },
    {
-    "id": "ui.js:196848",
+    "id": "ui.js:196743",
     "line": 3557,
     "where": "skip-call",
     "text": "コールできるブロックがあります",
-    "h": "c27b51ec"
+    "h": "6f166cff"
    },
    {
-    "id": "ui.js:197169",
+    "id": "ui.js:197064",
     "line": 3570,
     "where": "warp-done",
     "text": "先に移動先をタップしてください",
-    "h": "aa17f8f0"
+    "h": "5c4a45c8"
    },
    {
-    "id": "ui.js:198131",
+    "id": "ui.js:198026",
     "line": 3597,
     "where": "setupCell",
     "text": "先に形を選択してください",
-    "h": "2d836616"
+    "h": "33afdc9a"
    },
    {
-    "id": "ui.js:198223",
+    "id": "ui.js:198118",
     "line": 3599,
     "where": "setupCell",
     "text": "このフィールドには入らない形です",
-    "h": "f23419fd"
+    "h": "ceecbf84"
    },
    {
-    "id": "ui.js:198654",
+    "id": "ui.js:198549",
     "line": 3609,
     "where": "setupCell",
     "text": "◆トレジャーのセットも忘れずに",
-    "h": "20eed12a"
+    "h": "fa9329d7"
    },
    {
-    "id": "ui.js:199110",
+    "id": "ui.js:199005",
     "line": 3621,
     "where": "predCell",
     "text": "メモを外しました（もう一度押すと",
     "around": "メモを外しました（もう一度押すと…）",
-    "h": "d1650b8b"
+    "h": "70c55d19"
    },
    {
-    "id": "ui.js:199154",
+    "id": "ui.js:199049",
     "line": 3621,
     "where": "predCell",
     "text": "トレジャーコール",
-    "h": "f8f001fe"
+    "h": "f230af7b"
    },
    {
-    "id": "ui.js:199167",
+    "id": "ui.js:199062",
     "line": 3621,
     "where": "predCell",
     "text": "コール",
-    "h": "a4a1b0f3"
+    "h": "48ad621c"
    },
    {
-    "id": "ui.js:199333",
+    "id": "ui.js:199228",
     "line": 3628,
     "where": "predCell › case call",
     "text": "そのブロックはコールできません",
-    "h": "19dda1dc"
+    "h": "2ee7c633"
    },
    {
-    "id": "ui.js:199980",
+    "id": "ui.js:199875",
     "line": 3642,
     "where": "predCell › case answer",
     "text": "選択できるのは5ブロックまでです",
-    "h": "ed773ef7"
+    "h": "bc22dd39"
    },
    {
-    "id": "ui.js:200117",
+    "id": "ui.js:200012",
     "line": 3647,
     "where": "predCell › case treasure",
     "text": "そのブロックにはトレジャーコールできません",
-    "h": "e86e2d3b"
+    "h": "0f883c94"
    },
    {
-    "id": "ui.js:200428",
+    "id": "ui.js:200323",
     "line": 3656,
     "where": "predCell › case acid",
     "text": "撃破済みのブロックには使えません",
-    "h": "246392b6"
+    "h": "a89721b2"
    },
    {
-    "id": "ui.js:200651",
+    "id": "ui.js:200546",
     "line": 3662,
     "where": "predCell › case bazooka",
     "text": "撃破済みのブロックには使えません",
-    "h": "fb6b904d"
+    "h": "e3be0536"
    },
    {
-    "id": "ui.js:200759",
+    "id": "ui.js:200654",
     "line": 3665,
     "where": "predCell › case line",
     "text": "列（アルファベット）か行（数字）のラベルをタップしてください",
-    "h": "ffa9c8db"
+    "h": "1f6a05b9"
    },
    {
-    "id": "ui.js:200886",
+    "id": "ui.js:200781",
     "line": 3668,
     "where": "predCell › case pair",
     "text": "撃破済みのブロックは選べません",
-    "h": "3cd7e212"
+    "h": "d12d0281"
    },
    {
-    "id": "ui.js:201324",
+    "id": "ui.js:201219",
     "line": 3678,
     "where": "predCell",
     "text": "このターンのコールは済んでいます。アンサーするかターンエンドしてください",
-    "h": "49fb9baa"
+    "h": "352c623d"
    },
    {
-    "id": "ui.js:201803",
+    "id": "ui.js:201698",
     "line": 3692,
     "where": "ownCell › case warp-place",
     "text": "ワープする自分のキューブの、まだ当たっていないブロックを選択してください",
-    "h": "7f174634"
+    "h": "7b8dcbd8"
    },
    {
-    "id": "ui.js:201887",
+    "id": "ui.js:201782",
     "line": 3693,
     "where": "ownCell › case warp-place",
     "text": "ステルス中のキューブはワープできません",
-    "h": "a5389e9b"
+    "h": "b89a7a07"
    },
    {
-    "id": "ui.js:201955",
+    "id": "ui.js:201850",
     "line": 3694,
     "where": "ownCell › case warp-place",
     "text": "そのキューブはすでにワープを待っています",
-    "h": "bc415dcd"
+    "h": "76999d6f"
    },
    {
-    "id": "ui.js:202034",
+    "id": "ui.js:201929",
     "line": 3695,
     "where": "ownCell › case warp-place",
     "text": "トリガーブロックは、まだ当たっていないブロックから選択してください",
-    "h": "da47bab8"
+    "h": "0853a89f"
    },
    {
-    "id": "ui.js:202133",
+    "id": "ui.js:202028",
     "line": 3696,
     "where": "ownCell › case warp-place",
     "text": "このキューブには、移動先にできる空きブロックがありません",
-    "h": "733a17a6"
+    "h": "f51e1868"
    },
    {
-    "id": "ui.js:202723",
+    "id": "ui.js:202618",
     "line": 3707,
     "where": "ownCell › case warp-place",
     "text": "そこには置けません",
-    "h": "892ee081"
+    "h": "e1890c98"
    },
    {
-    "id": "ui.js:203004",
+    "id": "ui.js:202899",
     "line": 3716,
     "where": "ownCell › case stealth-pick",
     "text": "ステルスにする自分のキューブを選択してください",
-    "h": "c45e72b7"
+    "h": "6615a2c2"
    },
    {
-    "id": "ui.js:203073",
+    "id": "ui.js:202968",
     "line": 3717,
     "where": "ownCell › case stealth-pick",
     "text": "そのキューブはすでにステルス中です",
-    "h": "79caa374"
+    "h": "edf0dcb3"
    },
    {
-    "id": "ui.js:203144",
+    "id": "ui.js:203039",
     "line": 3718,
     "where": "ownCell › case stealth-pick",
     "text": "見破られたキューブには使えません",
-    "h": "8831f378"
+    "h": "0c18f4ba"
    },
    {
-    "id": "ui.js:203217",
+    "id": "ui.js:203112",
     "line": 3719,
     "where": "ownCell › case stealth-pick",
     "text": "トリガーブロックは、まだ当たっていないブロックから選択してください",
-    "h": "0a215a7b"
+    "h": "55e311c0"
    },
    {
-    "id": "ui.js:203459",
+    "id": "ui.js:203354",
     "line": 3725,
     "where": "ownCell › case sacrifice",
     "text": "差し出す自分のキューブを選択してください",
-    "h": "ce5ff694"
+    "h": "5c65c82a"
    },
    {
-    "id": "ui.js:203625",
+    "id": "ui.js:203520",
     "line": 3731,
     "where": "ownCell",
     "text": "コールは相手フィールドで行います",
-    "h": "cc9df8ac"
+    "h": "ef7ce8b8"
    },
    {
-    "id": "ui.js:206793",
+    "id": "ui.js:206688",
     "line": 3809,
     "where": "handleAnswerPointerDown",
     "text": "選択できるのは5ブロックまでです",
-    "h": "3b370de1"
+    "h": "64ab2157"
    },
    {
-    "id": "ui.js:207936",
+    "id": "ui.js:207831",
     "line": 3845,
     "where": "handleAnswerPointerMove",
     "text": "選択できるのは5ブロックまでです",
-    "h": "f71e2e83"
+    "h": "501dd7d5"
    },
    {
-    "id": "ui.js:209959",
+    "id": "ui.js:209854",
     "line": 3901,
     "where": "setupDragMove",
     "text": "5ブロックまでです",
-    "h": "d47470b8"
+    "h": "095c3038"
    },
    {
-    "id": "ui.js:210642",
+    "id": "ui.js:210537",
     "line": 3923,
     "where": "setupDragEnd",
     "text": "置けない形です（R型・L型・T型・Z型のどれかを描いてください）",
-    "h": "b55f2827"
+    "h": "73e6f4e7"
    },
    {
-    "id": "ui.js:210795",
+    "id": "ui.js:210690",
     "line": 3925,
     "where": "setupDragEnd",
     "text": "ブロックのリソースが枯渇しています",
     "around": "…ブロックのリソースが枯渇しています",
-    "h": "0bea6e51"
+    "h": "7fb14d48"
    },
    {
-    "id": "ui.js:211128",
+    "id": "ui.js:211023",
     "line": 3931,
     "where": "setupDragEnd",
     "text": "◆トレジャーのセットを行ってください",
-    "h": "d3ef4f7f"
+    "h": "4ea3dca0"
    },
    {
-    "id": "ui.js:249651",
+    "id": "ui.js:249546",
     "line": 4598,
     "where": "restore",
     "text": "ルールが更新されたため、大会を最初からやり直してください",
-    "h": "68fcfdc2"
+    "h": "2f770894"
    },
    {
-    "id": "ui.js:250051",
+    "id": "ui.js:249946",
     "line": 4608,
     "where": "restore",
     "text": "ルールが更新されたため、対戦を最初からやり直してください",
-    "h": "80becdb9"
+    "h": "004aebaf"
    }
   ]
  }

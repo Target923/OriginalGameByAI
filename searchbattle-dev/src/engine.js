@@ -603,7 +603,7 @@
           if (w) { w.reticle = c; w.reticleT = t; }
         } else me.kb.calls.push({ c, t, r: 'o' });
         res = { r: 'wp', late: true };
-        this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープレティクル（ワープで逃げたキューブ）`, null, 'hit');
+        this._log(pi, `${me.name}：${this.coord(c)}をコール → ワープレティクル（ワープしたキューブ）`, null, 'hit');
       } else if (first) {
         v.oo += 1;
         p.oonums.push(v.oo);
@@ -641,7 +641,7 @@
   Game.prototype.skipCall = function (pi) {
     if (!this._myTurn(pi, ['item', 'call']) || this.hasCallable(pi)) return { ok: false, reason: 'コールできるブロックがあります' };
     this.sub = 'answer';
-    this._log(pi, `${this.players[pi].name}：コールできるブロックがないため、コールを飛ばした`, null, 'call');
+    this._log(pi, `${this.players[pi].name}：コール可能なブロックがないため、コールをスキップ`, null, 'call');
     return { ok: true };
   };
 
@@ -649,7 +649,7 @@
     if (!this._myTurn(pi, ['answer'])) return { ok: false, reason: 'アンサーできる状態ではありません' };
     cells = Array.from(new Set(cells)).sort((a, b) => a - b);
     const key = identifyShape(cells, this.N);
-    if (!key) return { ok: false, reason: 'R型・L型・T型のいずれかの形で宣言してください' };
+    if (!key) return { ok: false, reason: 'R型・L型・T型・Z型のいずれかの形状で宣言してください' };
     const me = this.players[pi], foe = this.foeOf(pi);
     const mask = maskOf(cells);
     this._tick();
@@ -660,7 +660,7 @@
       // ワープを待っているキューブを当てた（v15）：撃破されずに、決めておいた移動先へ逃げる。移動先のヒント（レティクル）は出ない。
       //  アンサーは正しいので失敗ではなく（差し出しなし）、手番も続く（アンサー成功と同じ）
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true, escaped: true });
-      this._log(pi, `${me.name}：アンサー成功（${where}）→ ワープで逃げられた`, null, 'kill', null, { cells: cells.slice() });
+      this._log(pi, `${me.name}：アンサー成功（${where}）→ ワープで回避された`, null, 'kill', null, { cells: cells.slice() });
       this._warpFire(target, 'answer', pi);
       this.lastAction = { kind: 'answer', pi, ok: true, escaped: true, cells };
       return { ok: true, success: true, escaped: true, ended: false };
@@ -682,7 +682,7 @@
     for (const p of hidden) sMask |= p.mask;
     if (sMask && (mask & ~sMask) === 0) {
       this._emit({ type: 'answer', actor: pi, owner: foe.idx, cells, success: true, stealth: true });
-      this._log(pi, `${me.name}：ステルスアンサー（${where}）→ ステルスを見破った`, null, 'kill', null, { cells: cells.slice() });
+      this._log(pi, `${me.name}：ステルスアンサー（${where}）→ ステルス解除`, null, 'kill', null, { cells: cells.slice() });
       this._revealAll(foe.idx, hidden.filter((p) => p.mask & mask), pi, cells);
       this.lastAction = { kind: 'answer', pi, ok: true, stealth: true, cells };
       const ended = this._checkEnd();
@@ -700,7 +700,7 @@
   Game.prototype.sacrifice = function (pi, pieceId) {
     if (!(this.phase === 'play' && this.sub === 'sacrifice' && this.pending && this.pending.who === pi)) return { ok: false };
     const p = this.players[pi].pieces.find((x) => x.id === pieceId && x.alive);
-    if (!p) return { ok: false, reason: '生きている自分のキューブを選んでください' };
+    if (!p) return { ok: false, reason: '生存している自分のキューブを選択してください' };
     // 隠れているステルスのキューブを差し出したら、そのキューブだけ公開する（ほかのステルスはそのまま）
     if (p.stealth) this._revealStealth(pi, [p]);
     // ワープを待っているキューブを差し出しても、ワープは発動しない（自分で差し出すので逃げられない。v15）
@@ -756,11 +756,11 @@
       me.kb.occs.push({ c, t, cat: null });
     }
     this._emit({ type: 'treasure', actor: pi, owner: foe.idx, c, r });
-    const label = r === 'H' ? (this.treasureSteal ? `的中！（宝石を1つ奪う +${this.treasurePts}pt）` : this.treasurePts ? `的中！（+${this.treasurePts}pt）` : '的中！') : r === 'N' ? 'ニア' : '外れ';
+    const label = r === 'H' ? (this.treasureSteal ? `的中！（宝石を1つ奪取 +${this.treasurePts}pt）` : this.treasurePts ? `的中！（+${this.treasurePts}pt）` : '的中！') : r === 'N' ? 'ニア' : '外れ';
     const left = this.treasureLeft(pi);
     this._log(pi, `${me.name}：${this.coord(c)}にトレジャーコール → ${label}${r === 'H' ? '' : `（残り${left}回）`}`, null, r === 'H' ? 'treasure' : 'tcall');
     if (r !== 'H' && left === 0) {
-      this._log(pi, `${me.name}：トレジャーチャンスを使い切りました（トレジャー失敗）`, null, 'tcall');
+      this._log(pi, `${me.name}：トレジャーチャンス終了（トレジャー失敗）`, null, 'tcall');
       this._emit({ type: 'tfail', actor: pi });
     }
     this.lastAction = { kind: 'treasure', pi, c, r };
@@ -921,7 +921,7 @@
     const t = this.clock;
     for (const c of answered || []) me.kb.occs.push({ c, t, cat: null, turn: this.turn, src: 'stealth' });
     this._emit({ type: 'reveal', actor, owner, cells: turned.slice(), fixed: fx.fixed, counts: fx.counts });
-    this._log(actor, `${me.name}：ステルスを見破った（${turned.length ? `×→STEALTH HIT：${coordList(turned, this.N)}` : '隠れていたヒットはなし'}）`, null, 'kill');
+    this._log(actor, `${me.name}：ステルス解除（${turned.length ? `×→STEALTH HIT：${coordList(turned, this.N)}` : '隠れていたヒットなし'}）`, null, 'kill');
     for (const p of pieces) {
       if (p.alive && p.hitMask === p.mask) {
         this._destroy(p, 'destroy');
@@ -985,7 +985,7 @@
     kb.warps.push(w);
     this._emit({ type: 'warpfire', owner: p.owner, actor, by, full: !!full, size: full ? p.size : null, from: shown.slice(), trigger: by === 'trigger' ? plan.trigger : null, reticle, treasureMoved: hadT, ownerPriv: { oldCells, newCells: p.cells.slice() } });
     const tl = hadT ? '・トレジャーログがリセット' : '';
-    const pubTxt = `${owner.name}：ワープ発動（移動前 ${coordList(shown, N)}${reticle >= 0 ? `・ワープレティクル ${this.coord(reticle)}` : '・移動先は不明'}）${tl}`;
+    const pubTxt = `${owner.name}：ワープ発動（移動前 ${coordList(shown, N)}${reticle >= 0 ? `・ワープレティクル ${this.coord(reticle)}` : '・ワープ先は不明'}）${tl}`;
     const privTxt = `${owner.name}：ワープ発動（移動前 ${coordList(oldCells, N)} → 移動後 ${coordList(p.cells, N)}）${tl}`;
     this._log(p.owner, pubTxt, privTxt, 'item', 'warp');
     // 1ブロックのキューブ（バズーカの破片）は、移動先のレティクルで全ブロックに当たったことになるので、そこで撃破
@@ -1154,7 +1154,7 @@
 
   Game.prototype.useItem = function (pi, key, params) {
     const st = this.itemStatus(pi, key);
-    if (!st.usable) return { ok: false, reason: 'いまはアイテムを使えません' };
+    if (!st.usable) return { ok: false, reason: '現在アイテムは使用できません' };
     const val = this.validateItem(pi, key, params);
     if (!val.ok) return val;
     const me = this.players[pi], foe = this.foeOf(pi);
@@ -1195,7 +1195,7 @@
         // acidSize（測定用の試し。2026-11-04）：酸をかけたキューブのブロック数も教える（サーチサイズと同じ事実）
         me.kb.occs.push(Object.assign({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' }, this.acidSize ? { size: p.size } : {}));
         result.hit = true;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドマーク（次の手番から自動コール）`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドアイコン付与（次の手番から自動コール）`, null, 'item', key);
         break;
       }
       case 'cross': {
@@ -1253,7 +1253,7 @@
         } else {
           me.kb.sums.push({ t, turn: this.turn, nd: true });
           result.nd = true;
-          this._log(pi, `${me.name}：${name}${tag} → NoData（狙えるキューブがない）`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}${tag} → NoData（対象キューブなし）`, null, 'item', key);
         }
         break;
       }
@@ -1300,7 +1300,7 @@
         const same = !!pa && pa === pb;
         me.kb.pairs.push({ t, turn: this.turn, a: params.a, b: params.b, same });
         result.same = same;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.a)}と${this.coord(params.b)}）→ ${same ? '同じキューブ' : '同じキューブではない'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.a)}と${this.coord(params.b)}）→ ${same ? '同じキューブ' : '別のキューブ'}`, null, 'item', key);
         break;
       }
       case 'node': {
@@ -1338,8 +1338,8 @@
         me.kb.splits.push({ t, turn: this.turn, c: params.cell, killed: sp.killed.slice() });
         result.hit = true;
         result.killed = sp.killed;
-        const kill = sp.killed.length ? `ヒット済みの${sp.killed.length}ブロックを撃破（${coordList(sp.killed, N)}）` : 'ヒット済みのブロックはなし';
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックのキューブに分解・${kill}`, null, 'item', key);
+        const kill = sp.killed.length ? `コール済の${sp.killed.length}ブロックを撃破（${coordList(sp.killed, N)}）` : 'コール済のブロックなし';
+        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックずつに分解・${kill}`, null, 'item', key);
         result.ended = this._checkEnd();
         break;
       }
@@ -1350,7 +1350,7 @@
         p.warpPlan = { at: t, trigger: params.cell, t: val.t, r0: params.r0, c0: params.c0, cells: val.cells.slice(), mask: val.mask };
         foe.kb.warpUses.push({ t });
         result.cells = p.cells.slice();
-        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → 移動先 ${coordList(val.cells, N)}）`, 'item', key);
+        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → ワープ先 ${coordList(val.cells, N)}）`, 'item', key);
         break;
       }
       case 'stealth': {
@@ -1530,10 +1530,10 @@
   const TOUR_START = 80;
   // CPUの性格（大会での置き方・アイテムの使い方。中身の方針はCPUの側で持つ）。名前と説明は画面に出す
   const TOUR_PERSONAS = {
-    mass: { name: '物量型', desc: '毎試合キューブを多く置き、盤面を埋める' },
-    save: { name: 'キューブ温存型', desc: '序盤は2ブロックを少なく置き、3・4ブロックを3試合目と決勝に温存する' },
-    steady: { name: '堅実型', desc: '3・4ブロックのキューブで毎試合厚く置く' },
-    items: { name: 'アイテム浪費型', desc: 'アイテムを惜しまず使い、序盤から押し切る' },
+    mass: { name: '物量型', desc: '毎試合キューブを大量に配置し、盤面を埋める' },
+    save: { name: 'キューブ温存型', desc: '序盤は2ブロックを少数配置し、3/4ブロックを3試合目と決勝まで温存する' },
+    steady: { name: '堅実型', desc: '毎試合3/4ブロックのキューブを厚く配置する' },
+    items: { name: 'アイテム浪費型', desc: 'アイテムを惜しまず使用し、序盤から押し切る' },
   };
   // 宝石（v12.6の終わり）：1人4つ（1つ5点）持って始め、各試合1つをトレジャーとして置く。相手に見つけられたら、その宝石は相手のものになる
   const TOUR_GEMS = 4;

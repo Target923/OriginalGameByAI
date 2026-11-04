@@ -218,13 +218,13 @@
     let h = '';
     for (let i = 0; i < n; i++) h += i >= n - d ? GEM_ICON.replace('class="gm"', 'class="gm new"') : GEM_ICON;
     for (let i = 0; i < -d; i++) h += GEM_ICON.replace('class="gm"', 'class="gm lost"');
-    const tip = `宝石${n}つ（1つ${E.Tour.GEM_PTS}点）${d > 0 ? `・この試合で${d}つ奪った` : d < 0 ? `・この試合で${-d}つ奪われた` : ''}`;
+    const tip = `宝石${n}つ（1つ${E.Tour.GEM_PTS}点）${d > 0 ? `・この試合で${d}つ奪取` : d < 0 ? `・この試合で${-d}つ喪失` : ''}`;
     return `<span class="st-gems" aria-label="${tip}" data-tip="${tip}">${h || '<em>宝石なし</em>'}</span>`;
   };
   // 試合の結果の「宝石」の欄：見つけて奪った宝石（＋）と、見つけられて奪われた宝石（−・点線）
   const gemCellHTML = (g, i) => {
     const got = !!g.players[i].view.treasureFound, lost = !!g.players[1 - i].view.treasureFound;
-    const tip = got && lost ? '見つけて1つ奪い、見つけられて1つ奪われた' : got ? '見つけて1つ奪った' : lost ? '見つけられて1つ奪われた' : 'どちらも見つけられなかった';
+    const tip = got && lost ? '1つ奪取・1つ喪失' : got ? '1つ奪取' : lost ? '1つ喪失' : '双方発見なし';
     const html = (got ? `<span class="gx up">+${GEM_ICON}</span>` : '') + (lost ? `<span class="gx down">−${GEM_ICON.replace('class="gm"', 'class="gm lost"')}</span>` : '');
     return `<td class="gems" data-tip="${tip}" aria-label="${tip}">${html || '0'}</td>`;
   };
@@ -1393,7 +1393,7 @@
     if (r.draw) { verdict = 'DRAW'; cls = 'draw'; sub = '両者全滅で引き分け'; }
     else if (oneSide()) { verdict = r.winner === me ? 'VICTORY' : 'DEFEAT'; cls = r.winner === me ? '' : 'lose'; sub = r.winner === me ? 'あなたの勝ち！' : `${g.players[r.winner].name}の勝ち`; }
     else { verdict = 'WINNER'; sub = `${g.players[r.winner].name}の勝ち！`; }
-    const note = r.draw ? '両者全滅で引き分けです。' : '相手のキューブをすべて撃破しました。';
+    const note = r.draw ? '両者全滅で引き分けです。' : '相手のキューブを全撃破しました。';
     let table, foot;
     if (app.tour) {
       // 大会：撃破で奪う・勝利で奪う・トレジャーで増える。試合の結果はまだ大会に反映していないので、持ち点は今の点＋増減
@@ -1411,7 +1411,7 @@
           <tbody>${rows}</tbody>
         </table></div>`;
       const loser = r.draw ? -1 : 1 - r.winner;
-      foot = `<p class="note">撃破＝撃破したキューブのブロック数を相手から奪った分、被撃破＝撃破されて奪われた分。${loser >= 0 ? `勝者は負けた側から勝利点${g.victoryPts || TourE.VICTORY}ptを奪います（予選1試合目から ${vicText()}）。` : ''}${g.speedBonus ? `スピード＝予選で早いターンに負けたときの減点（スピードペナルティ。${speedText()}。減った点は相手に渡りません）。${loser >= 0 && TourE.speedFor(g.turn) ? `${g.turn}ターン目に決着したので、負けた側は${TourE.speedFor(g.turn)}pt減点です。` : ''}` : ''}宝石＝トレジャーを見つけて相手から奪った宝石（1つ${TourE.GEM_PTS}pt）。1pt＝1万円。</p>`;
+      foot = `<p class="note">撃破＝相手から奪取したブロック数、被撃破＝相手に奪取されたブロック数。${loser >= 0 ? `勝者は敗者から勝利点${g.victoryPts || TourE.VICTORY}ptを奪取（予選1試合目から ${vicText()}）。` : ''}${g.speedBonus ? `スピード＝予選の早期敗北による減点（スピードペナルティ。${speedText()}。減点分は相手に渡りません）。${loser >= 0 && TourE.speedFor(g.turn) ? `${g.turn}ターン目に決着のため、敗者は${TourE.speedFor(g.turn)}pt減点。` : ''}` : ''}宝石＝トレジャー発見で相手から奪取した宝石（1つ${TourE.GEM_PTS}pt）。1pt＝1万円。</p>`;
     } else {
       // 単発の試合は勝ち負けだけ（点数は出さない）
       const rows = [0, 1].map((i) => {
@@ -1430,7 +1430,7 @@
     // オンライン対戦の「もう一度」は審判のホストが始める（ゲストは待つ）
     const netAgain = !app.net ? '' : app.net.gone
       ? `<p class="note warn net-note">${esc(app.net.foe || '相手')}が退出しました。</p>`
-      : app.net.role === 'host' ? '<button class="btn primary" data-act="restart">もう一度</button>' : '<p class="note net-note">もう一度対戦するときは、部屋を作った人が始めます。</p>';
+      : app.net.role === 'host' ? '<button class="btn primary" data-act="restart">もう一度</button>' : '<p class="note net-note">再戦は部屋の作成者が開始します。</p>';
     const acts = app.tour
       ? `<button class="btn primary" data-act="tour-back">${g.rules.kind === 'final' ? '大会の結果へ' : '大会の途中経過へ'}</button>${view}`
       : app.net
@@ -1561,8 +1561,8 @@
   }
   function rarePickHTML(T) {
     const on = rarePick(T);
-    return `<div class="rare-pick"><h3>持ちこむレアアイテムを2つ選んでください<small class="rp-count">RARE ITEMS（${on.length}/2）</small></h3>
-      <p class="note">ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。</p>
+    return `<div class="rare-pick"><h3>持ち込むレアアイテムを2つ選択してください<small class="rp-count">RARE ITEMS（${on.length}/2）</small></h3>
+      <p class="note">ベース8種類と選択したレア2種類を各2つ（計20個）所持して大会に参加します。CPUが持ち込むレアは名前の下に表示されます。</p>
       <div class="rare-cards">${(E.RARE_ITEMS || []).map((k) => `<button type="button" class="item-card rare${on.indexOf(k) >= 0 ? ' on' : ''}" data-act="tour-rare" data-key="${k}" aria-pressed="${on.indexOf(k) >= 0}">${ICON[k]}<b>${esc(ITEMS[k].name)}</b><span>${esc(ITEMS[k].desc)}</span></button>`).join('')}</div></div>`;
   }
   function startTour() {
@@ -1580,12 +1580,12 @@
     const T = app.tour;
     if (!T) return;
     if (T.stage === 'final-hub') {
-      if (!T.finalChoice) { toast('先攻かドラフト先行権を選んでください', 'warn'); return; }
+      if (!T.finalChoice) { toast('先攻/ドラフト先行権を選択してください', 'warn'); return; }
       const [f1, f2] = T.finalists;
       const opp = f1 === 0 ? f2 : f1;
       // 予選1位が「先攻」なら1位が先攻、「ドラフト先行権」なら1位が後攻（ドラフトは後攻から）
       const firstId = T.finalChoice === 'first' ? f1 : f2;
-      if (!T.players[0].finalRare) { toast('決勝で補充するレアを選んでください', 'warn'); return; }
+      if (!T.players[0].finalRare) { toast('決勝で補充するレアを選択してください', 'warn'); return; }
       TourE.setFinalRare(T, opp, AI.tourChooseFinalRare(T, opp));
       T.stage = 'final';
       tourMakePlans(T, 'final');
@@ -1749,7 +1749,7 @@
       const champ = T.champion === x.id;
       const rec = `${p.wins}勝${p.losses}敗${p.draws ? p.draws + '分' : ''}`;
       const q = p.pts;
-      const bk = `はじめ${q.start}・撃破で奪った+${q.take}・奪われた−${q.taken}・勝利で奪った+${q.vicWon}・奪われた−${q.vicLost}${(q.spdWon | 0) ? `・スピードで奪った+${q.spdWon | 0}` : ''}${(q.spdLost | 0) ? `・スピードペナルティ−${q.spdLost | 0}` : ''}・宝石${p.gems | 0}つ（${(p.gems | 0) * TourE.GEM_PTS}点）`;
+      const bk = `初期${q.start}・撃破奪取+${q.take}・被撃破−${q.taken}・勝利奪取+${q.vicWon}・敗北−${q.vicLost}${(q.spdWon | 0) ? `・スピード奪取+${q.spdWon | 0}` : ''}${(q.spdLost | 0) ? `・スピードペナルティ−${q.spdLost | 0}` : ''}・宝石${p.gems | 0}つ（${(p.gems | 0) * TourE.GEM_PTS}点）`;
       const line = showLine && i === 2 ? '<div class="st-line" aria-hidden="true"><span>決勝ライン</span></div>' : '';
       return `${line}<div class="st-row${x.id === 0 ? ' me' : ''}${isFin ? ' fin' : ''}${champ ? ' champ' : ''}" style="--i:${i};--shift:${prev ? old - x.rank : 0}" data-id="${x.id}">
         <div class="st-rank"><b${prev && old !== x.rank ? ` data-rk="${x.rank}"` : ''}>${prev ? old : x.rank}</b>${prev && chg ? `<i class="chg ${chg > 0 ? 'up' : 'down'}">${chg > 0 ? '▲' : '▼'}${Math.abs(chg)}</i>` : ''}</div>
@@ -1763,7 +1763,7 @@
       <h3 class="ptitle">順位表<small>STANDINGS</small></h3>
       <div class="st-head" aria-hidden="true"><span>順位</span><span>名前</span><span>持ち点</span><span>キューブ</span><span>アイテム</span></div>
       <div class="st-body">${rows}</div>
-      <p class="note">持ち点は${TourE.START + TourE.GEMS * TourE.GEM_PTS}点（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）で始め、撃破したブロック数・勝利点（${vicText()}）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（${speedText()}）で減点されます（1pt＝1万円）。アイテムの数字は所持数。${T.stage === 'done' ? '順位は決勝の結果（優勝・準優勝）と予選の順位。' : T.stage === 'final-hub' ? '順位は予選の結果。' : '同点は勝ち数 → 撃破ブロック数 → 抽選の順。上位2名が決勝へ。'}</p>
+      <p class="note">初期持ち点は${TourE.START + TourE.GEMS * TourE.GEM_PTS}点（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）。撃破したブロック数・勝利点（${vicText()}）・宝石（トレジャー）を相手と奪い合います。予選で早期敗北すると、スピードペナルティ（${speedText()}）で減点されます（1pt＝1万円）。アイテムの数字は所持数。${T.stage === 'done' ? '順位は決勝の結果（優勝・準優勝）と予選の順位。' : T.stage === 'final-hub' ? '順位は予選の結果。' : '同点は勝ち数 → 撃破ブロック数 → 抽選の順。上位2名が決勝へ。'}</p>
     </section>`;
   }
 
@@ -1776,7 +1776,7 @@
       return `<div class="mc-p${win ? ' win' : ''}${id === 0 ? ' me' : ''}">${avatar(id)}<b>${tname(id)}</b><span class="mc-pt${pt.total < 0 ? ' minus' : ''}" data-tip="${esc(`撃破で奪った${sg(pt.take)}・奪われた${sg(-pt.taken)}・勝利${sg(pt.victory)}${pt.speed ? `・スピード${sg(pt.speed)}` : ''}・宝石${pt.gems ? sg(pt.gems) + 'つ' : '±0'}`)}">${sg(pt.total)}<small>pt</small></span>${win ? `<em>WIN${pt.victory ? ` +${pt.victory}` : ''}</em>` : ''}</div>`;
     };
     const label = r.kind === 'final' ? '決勝' : `予選 第${r.round + 1}試合`;
-    const lost = (k) => r.lost[k].length ? `${r.lost[k].join('・')}ブロックを失う` : '失ったキューブなし';
+    const lost = (k) => r.lost[k].length ? `${r.lost[k].join('・')}ブロック喪失` : '喪失キューブなし';
     const sub = r.draw ? '引き分け' : `${tname(r.winner)}の勝ち・${r.turns}ターン`;
     return `<article class="mcard${sim ? ' sim' : ''}${r.a === 0 || r.b === 0 ? ' mine' : ''}">
       <p class="mc-h">${label}${sim ? '<span class="mc-tag">CPU同士・シミュレーション</span>' : ''}</p>
@@ -1810,7 +1810,7 @@
     if (T.stage === 'intro') {
       hero = `<p class="eyebrow">SEARCH BATTLE TOURNAMENT</p>
         <h2 class="tour-title glitch-in">大会スタート</h2>
-        <p class="tour-lede">4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は<b>${TourE.START + TourE.GEMS * TourE.GEM_PTS}点</b>（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに <b>${vicText()}点</b>を奪います。予選で${TourE.SPEED.length - 1}ターン目までに負けると（トレジャーチャンスを使い切る前）、<b>スピードペナルティ</b>（1ターン目${TourE.SPEED[1]}点〜${TourE.SPEED.length - 1}ターン目${TourE.SPEED[TourE.SPEED.length - 1]}点）で持ち点が減ります（相手には渡りません）。トレジャーを見つけると相手の宝石を1つ奪えます。</p>
+        <p class="tour-lede">4人総当たりの予選3試合（4×4）。持ち点上位2名が決勝（5×5）へ進出。初期持ち点は<b>${TourE.START + TourE.GEMS * TourE.GEM_PTS}点</b>（宝石${TourE.GEMS}つ・1つ${TourE.GEM_PTS}点を含む）。撃破したキューブのブロック数を相手から奪取し、勝利するとさらに <b>${vicText()}点</b>を奪取。予選で${TourE.SPEED.length - 1}ターン目までに敗北すると、<b>スピードペナルティ</b>（1ターン目${TourE.SPEED[1]}点〜${TourE.SPEED.length - 1}ターン目${TourE.SPEED[TourE.SPEED.length - 1]}点）で減点されます（相手には渡りません）。トレジャーを発見すると相手の宝石を1つ奪取できます。</p>
         <div class="entrants">${T.players.map((p, i) => {
           const pk = TourE.persona(T, p.id), ps = pk && TourE.PERSONAS[pk];
           const rr = p.cpu && p.rares ? `<span class="ent-rares" aria-label="持ちこむレア">${p.rares.map((k) => `<i data-tip="${esc(ITEMS[k].name)}">${ICON[k]}</i>`).join('')}</span>` : '';
@@ -1829,15 +1829,15 @@
       const q = T.finalists.indexOf(0) >= 0;
       hero = q
         ? `<p class="eyebrow">QUALIFIED</p><h2 class="tour-title big-banner win">${myRank}位通過！</h2>
-           <p class="tour-lede">決勝の相手は <b>${tname(T.finalists[0] === 0 ? T.finalists[1] : T.finalists[0])}</b>。${myRank === 1 ? '予選1位なので、先攻かドラフト先行権を選べます。' : '先攻・後攻は予選1位が選びます。'}</p>`
+           <p class="tour-lede">決勝の相手は <b>${tname(T.finalists[0] === 0 ? T.finalists[1] : T.finalists[0])}</b>。${myRank === 1 ? '予選1位のため、先攻/ドラフト先行権を選択できます。' : '先攻/後攻は予選1位が選択します。'}</p>`
         : `<p class="eyebrow">ELIMINATED</p><h2 class="tour-title big-banner lose">${myRank}位で予選敗退…</h2>
-           <p class="tour-lede">決勝は ${tname(T.finalists[0])} と ${tname(T.finalists[1])}。CPUどうしの決勝を見届けます。</p>`;
+           <p class="tour-lede">決勝は ${tname(T.finalists[0])} vs ${tname(T.finalists[1])}。CPU同士の決勝を観戦します。</p>`;
       results = `<div class="mcards">${lastRound(ROUNDS - 1).map((r) => matchCardHTML(T, r, r.a !== 0 && r.b !== 0)).join('')}</div>`;
       next = q
         ? '<button class="btn primary big" data-act="tour-next">決勝へ進む</button>'
         : (app.tourSim
           ? `<button class="btn primary big" data-act="tour-next" disabled>決勝をシミュレーション中…（${app.tourSim.turn}ターン目）</button>`
-          : '<button class="btn primary big" data-act="tour-next">決勝を見届ける</button><button class="btn ghost" data-act="tour-end">メイン画面へ</button>');
+          : '<button class="btn primary big" data-act="tour-next">決勝を観戦する</button><button class="btn ghost" data-act="tour-end">メイン画面へ</button>');
     } else if (T.stage === 'final-hub') {
       const [f1, f2] = T.finalists;
       const opp = f1 === 0 ? f2 : f1;
@@ -1848,15 +1848,15 @@
           <button type="button" class="choice${T.finalChoice === 'draft' ? ' on' : ''}" data-act="tour-choose" data-v="draft" aria-pressed="${T.finalChoice === 'draft'}"><b>ドラフト先行権</b><small>後攻になり、ドラフトを先に取る</small></button>
         </div>`;
       } else {
-        choice = `<p class="tour-lede">${tname(f1)}（予選1位）は<b>${T.finalChoice === 'first' ? '先攻' : 'ドラフト先行権'}</b>を選びました。あなたは${T.finalChoice === 'first' ? '後攻で、ドラフトを先に取ります' : '先攻です'}。</p>`;
+        choice = `<p class="tour-lede">${tname(f1)}（予選1位）は<b>${T.finalChoice === 'first' ? '先攻' : 'ドラフト先行権'}</b>を選択しました。あなたは${T.finalChoice === 'first' ? '後攻で、ドラフトを先に取ります' : '先攻です'}。</p>`;
       }
       const me0 = T.players[0];
-      const rareChoice = `<p class="tour-lede">決勝で補充するレアを1つ選んでください。</p><div class="choice-btns" role="radiogroup" aria-label="決勝で補充するレア">${(me0.rares || []).map((k) =>
+      const rareChoice = `<p class="tour-lede">決勝で補充するレアを1つ選択してください。</p><div class="choice-btns" role="radiogroup" aria-label="決勝で補充するレア">${(me0.rares || []).map((k) =>
         `<button type="button" class="choice${me0.finalRare === k ? ' on' : ''}" data-act="tour-final-rare" data-key="${k}" aria-pressed="${me0.finalRare === k}"><b>${ICON[k]} ${esc(ITEMS[k].name)}</b><small>${esc(ITEMS[k].desc)}</small></button>`).join('')}</div>`;
       hero = `<p class="eyebrow">GRAND FINAL</p><h2 class="tour-title">決勝 ${avatar(0)} あなた vs ${avatar(opp)} ${tname(opp)}</h2>
-        <p class="tour-lede">5×5。予選の残りのアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。</p>
+        <p class="tour-lede">5×5。予選の残りアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。相手を全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。</p>
         ${choice}${rareChoice}`;
-      next = `<button class="btn primary big" data-act="tour-next" ${T.finalChoice && me0.finalRare ? '' : 'disabled'}>決勝を始める</button>`;
+      next = `<button class="btn primary big" data-act="tour-next" ${T.finalChoice && me0.finalRare ? '' : 'disabled'}>決勝開始</button>`;
     } else if (T.stage === 'done') {
       const won = T.champion === 0;
       const inFinal = T.finalists.indexOf(0) >= 0;
@@ -2752,9 +2752,9 @@
   const nextPaint = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 
   function openReplay(rec, title) {
-    if (!rec || rec.v !== E.VERSION || !rec.actions) { toast('この試合のリプレイは、今のバージョンでは再生できません'); return; }
+    if (!rec || rec.v !== E.VERSION || !rec.actions) { toast('この試合のリプレイは、現在のバージョンでは再生できません'); return; }
     let tl;
-    try { tl = E.replayFrames(rec); } catch (e) { console.warn('replay failed', e); toast('リプレイを再生できませんでした'); return; }
+    try { tl = E.replayFrames(rec); } catch (e) { console.warn('replay failed', e); toast('リプレイの再生に失敗しました'); return; }
     if (!tl.frames.length) { toast('リプレイの記録がありません'); return; }
     // ログの行 → その行が出た場面
     const logFrame = tl.final.log.map((e, i) => { let f = 0; while (f < tl.frames.length - 1 && tl.frames[f].log <= i) f++; return f; });
@@ -2957,7 +2957,7 @@ self.onmessage = function (e) {
       return `<section class="panel ${k === 0 ? 'own' : 'enemy'} rp-field"><div class="fhead"><b>${esc(def)}のフィールド</b><span class="rp-left">残り${g.living(k).length}キューブ</span></div>${chips}${intelTagsHTML(intel, k === 1)}${board}${cubes}</section>`;
     };
     document.getElementById('rp-stage').innerHTML = field(0) + field(1);
-    document.getElementById('rp-note').textContent = '数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。';
+    document.getElementById('rp-note').textContent = '数字＝この時点の情報で相手がキューブの配置を特定できる確率（目安。◎のないキューブは0%）。';
     // ログ：いまの場面まで。対戦画面と同じく、左＝相手（1番）、右＝あなた（0番）のアクションに分ける（誰のでもない行は両方に薄く出す）。いまの場面の行を強調
     for (const k of [0, 1]) {
       document.getElementById('rp-lh' + k).textContent = `${g.players[k].name}のアクション`;
@@ -3221,7 +3221,7 @@ self.onmessage = function (e) {
       }
     } catch (e) {
       console.error(e);
-      toast('CPUの処理でエラーが起きました', 'warn');
+      toast('CPUの処理でエラーが発生しました', 'warn');
     }
     if (app.game !== g) return;
     app.busy = false;
@@ -3405,7 +3405,7 @@ self.onmessage = function (e) {
     'tour-next'() {
       const T = app.tour;
       if (!T || app.busy) return;
-      if (T.stage === 'intro' && !T.players[0].rares) { toast('持ちこむレアアイテムを2つ選んでください', 'warn'); return; }
+      if (T.stage === 'intro' && !T.players[0].rares) { toast('持ち込むレアアイテムを2つ選択してください', 'warn'); return; }
       if (T.stage === 'intro' || T.stage === 'hub' || T.stage === 'final-hub') tourStartMatch();
       else if (T.stage === 'qualify' && T.finalists.indexOf(0) >= 0) tourEnterFinalHub();
       else if (T.stage === 'qualify') tourWatchFinal();
