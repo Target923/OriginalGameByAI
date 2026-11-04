@@ -1127,15 +1127,13 @@
     root.innerHTML = `
       <div class="wrap title-screen">
         <header class="hud">
-          <p class="eyebrow">Tactical search battle</p>
+          <span aria-hidden="true"></span>
           <div class="row">${soundBtnHTML()}<button class="btn ghost" data-act="sim-open">シミュレーター</button><button class="btn ghost" data-act="rules">ルールを見る</button></div>
         </header>
         <section class="hero">
           <div>
             <h1 class="logo">サーチバトル</h1>
             <div class="logo-sub">SEARCH BATTLE</div>
-            <p class="tagline">座標を当てるのではない。敵の構造を透視し、自らの情報を対価に勝利を買い取れ。</p>
-            <p class="lede">サイバー空間に浮かぶ相手フィールドから、メタリックなキューブを探り当てます。◎は新しいキューブを捉えた合図。形が読めたらアンサーで一気に撃破します。</p>
             <ul class="legend" aria-label="記号の意味">
               <li><span class="lg ink-oo">${MARK.oo}</span>ファーストヒット</li>
               <li><span class="lg ink-o">${MARK.o}</span>ヒット</li>
