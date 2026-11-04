@@ -1561,6 +1561,9 @@
       //    コールを2回ほど酸に取られる分の損が大きい。だから 4×4 では使わない（acidMinN 既定5）
       //   決勝5×5（138局面）：全体 +2.2（誤差4.0）。H 3以上 +10.0（誤差5.8）・H 1未満 −13.3（誤差9.6）。R ではほとんど差がない。
       //    だから 5×5 では、情報の少ないキューブ（H 3以上）に使う（acidH 既定3.0、acidR 既定1.5）
+      //  v15.13（自動コールがランダムに。ユーザーの決定）で測り直した：予選4×4 −11.1（ブロック数が分かっているキューブでも −13.6）。
+      //   決勝5×5（138局面）全体 +7.6（誤差3.7）、H 3以上 +15.0（誤差5.2）、ブロック数が分かっている（サーチサイズのあと）+17.5（誤差6.6）。
+      //   だから 5×5 では、情報の少ないキューブか、ブロック数が分かっているキューブに使う（acidSizeKnown。既定 true）
       //  acidHuntMax：見つけていないキューブの見込みがこれを超えるときは使わない（既定は制限なし）
       //  acidInfoMax：ほかの絞り込みアイテムの割れ方（bestH）がこれ以上なら、そちらを先に使う（既定は制限なし）
       //  policy.acid：'target'（既定。上の使い方）／'old'（v15.8 の使い方：割れ方 2.5 以上・5×5 だけ）／'none'（使わない）
@@ -1584,6 +1587,8 @@
         const minR = pol.acidR != null ? pol.acidR : 1.5;
         const minH = pol.acidH != null ? pol.acidH : 3.0;
         const hw = pol.acidHW != null ? pol.acidHW : 0.5;
+        const maxSizeH = pol.acidSizeH != null ? pol.acidSizeH : 99;   // ブロック数の割れ方がこれ以下のキューブだけ
+        const sizeKnown = pol.acidSizeKnown !== false;
         let hitM = 0;
         for (const u of ctx.U) hitM |= bit(u.c);
         let ab = null;
@@ -1600,11 +1605,18 @@
           });
           if (!(tw > 0)) continue;
           const R = rem / tw, h = entropy(w), v = R + hw * h;
-          if (R >= minR && h >= minH && (!ab || v > ab.v)) ab = { v, c: g.c, R, h };
+          // ブロック数の割れ方（0＝ブロック数が分かっている。サーチサイズとの組み合わせ）
+          const sw = {};
+          g.cands.forEach((cd, k) => { if (w[k] > 0) sw[cd.size] = (sw[cd.size] || 0) + w[k]; });
+          const sizeH = entropy(sw);
+          // 情報の少ないキューブ（H が acidH 以上）か、ブロック数が分かっているキューブ（サーチサイズとの組み合わせ。acidSizeKnown）
+          const pick = h >= minH || (sizeKnown && sizeH < 0.01);
+          if (R >= minR && pick && sizeH <= maxSizeH && (!ab || v > ab.v)) ab = { v, c: g.c, R, h, sizeH };
         }
         // acidHook：測定用（tools/acid_probe.js）。局面の特徴を渡して、使うかどうかを外から決める
         if (ab && pol.acidHook) {
           ab.turn = game.turn; ab.N = N; ab.hunt = A.hunt.Etotal || 0; ab.bestH = bestH; ab.groups = uncertain.length;
+          ab.sizeH = ab.sizeH || 0;
           if (!pol.acidHook(game, pi, ab)) ab = null;
         }
         if (ab) return { key: 'acid', params: { cell: ab.c } };

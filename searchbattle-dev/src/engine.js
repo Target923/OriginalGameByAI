@@ -49,12 +49,13 @@
   // 31：v15.5 レアアイテム「ホーミングミサイル」（homing）
   // 30：v15.4 ドラフトを配置の前に（試合のはじめにドラフト）
   // 29：v15.2 ワープの通知（最後のコールがトリガーなら「自動撃破後、ワープ発動」）と、アンサーで逃げたキューブのトリガーのワープレティクル
-  const VERSION = 35;
+  // 36：v15.13 アシッドの自動コールは、酸のブロックのあと、そのキューブのまだ当たっていないブロックからランダムに（ユーザーの決定）
+  const VERSION = 36;
   // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
   //  acid：アシッド（v15.8。レア。ユーザーの案）
-  // アシッドの自動コールの選び方（2026-11-04。既定は今のルールの adjacent。random はユーザーの案で、試しの段階）：'random'＝そのキューブのまだ当たっていないブロックからランダム／'adjacent'＝当たったブロックに隣り合うブロックを読み順に（v15.8〜）。
+  // アシッドの自動コールの選び方（v15.13 から random。ユーザーの案と決定）：'random'＝そのキューブのまだ当たっていないブロックからランダム／'adjacent'＝当たったブロックに隣り合うブロックを読み順に（v15.8〜）。
   //  測定ツールは game.acidPick で切り替えられる
-  const ACID_PICK = 'adjacent';
+  const ACID_PICK = 'random';
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid', 'warp', 'stealth'];
   const RARE_ITEMS = ['bazooka', 'homing', 'cross', 'acid'];
   // ベースアイテム（レア以外の8種類）。大会（v15.9。ユーザーの案）は、ベース8種類＋各自が事前に選ぶレア2種類を2つずつ（20個）
@@ -69,7 +70,7 @@
     pair: { name: 'ペアショット', desc: '選んだ2ブロックが同じキューブか分かる' },
     node: { name: 'ノードショット', desc: '選んだブロックから、同じキューブが上下左右にいくつつながっているか分かる（0〜3）' },
     bazooka: { name: 'バズーカ', desc: '選んだブロックのキューブを1ブロックずつに分解する。当たっていたブロックはその場で撃破' },
-    acid: { name: 'アシッド', desc: '選んだブロックのキューブに酸をかける。次の手番から、コールの代わりにそのキューブを1ブロックずつ自動でコールし、撃破まで溶かす' },
+    acid: { name: 'アシッド', desc: '選んだブロックのキューブに酸をかける。次の手番から、コールの代わりに、そのキューブのブロックをランダムに1つずつ自動でコールし、撃破まで溶かす（サーチサイズでブロック数が分かっていれば、早くアンサーできる）' },
     cross: { name: 'クロスボム', desc: '選んだブロックと上下左右の十字（5ブロック）に、すっぽり収まるキューブを撃破する' },
     homing: { name: 'ホーミングミサイル', desc: '相手のキューブを1つ自動で選び、そのブロックの番号（A-1から読み順に1〜）の合計が分かる' },
     warp: { name: 'ワープ', desc: 'キューブにトリガーと移動先を決めておく。トリガーをコールされるか、アンサーで当てられると移動する' },
@@ -1717,7 +1718,7 @@
   };
 
   const api = {
-    VERSION, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, BASE_ITEMS,
+    VERSION, ACID_PICK, COLS, STOCK, CATS, SHAPES, SHAPES_BY_SIZE, ORIENT, ITEM_KEYS, ITEMS, RARE_ITEMS, BASE_ITEMS,
     bit, popcount, bitsOf, maskOf, crossMask, cellsFor, rotationOf, placements, identifyShape, matchPlacement, coord, coordList, lineMask, lineLabel, blockDist, nodeDegree, makeRules, Game, Tour, replayGame, replayFrames,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

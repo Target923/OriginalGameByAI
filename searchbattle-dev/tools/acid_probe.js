@@ -47,7 +47,7 @@ function runOne(E, AI, rules, seed, K) {
   const P = seed % 2;
   // 1. 使える局面を記録する
   const feats = [];
-  const base = playGame(E, AI, rules, seed, P, (g, pi, ab) => { feats.push({ R: ab.R, h: ab.h, hunt: ab.hunt, turn: ab.turn, bestH: ab.bestH, groups: ab.groups }); return false; });
+  const base = playGame(E, AI, rules, seed, P, (g, pi, ab) => { feats.push({ R: ab.R, h: ab.h, hunt: ab.hunt, turn: ab.turn, bestH: ab.bestH, groups: ab.groups, sizeH: ab.sizeH }); return false; });
   if (base == null || !feats.length) return null;
   const pick = mulberry32(seed * 31 + 7);
   const d = Math.floor(pick() * feats.length);
@@ -116,6 +116,7 @@ function report() {
     H: by('H', (f) => f.h, [['<1', 0, 1], ['1-2', 1, 2], ['2-3', 2, 3], ['>=3', 3, 99]]),
     hunt: by('hunt', (f) => f.hunt, [['<0.3', 0, 0.3], ['0.3-0.8', 0.3, 0.8], ['0.8-1.5', 0.8, 1.5], ['>=1.5', 1.5, 99]]),
     turn: by('turn', (f) => f.turn, [['1-3', 1, 4], ['4-6', 4, 7], ['7-9', 7, 10], ['10-', 10, 99]]),
+    sizeH: by('sizeH', (f) => f.sizeH || 0, [['=0（ブロック数が分かる）', 0, 0.01], ['0-1', 0.01, 1], ['>=1', 1, 99]]),
     bestH: by('bestH', (f) => f.bestH, [['<=0.6', 0, 0.61], ['0.6-1.5', 0.61, 1.5], ['>=1.5', 1.5, 99]]),
   };
   console.log(JSON.stringify(out, null, 1));

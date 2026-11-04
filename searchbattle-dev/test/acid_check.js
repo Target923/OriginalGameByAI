@@ -33,8 +33,8 @@ E.Game.prototype._acidTick = function () {
   let exp = -1;
   if ((maskBefore & (1 << acid.cell)) && !(hitBefore & (1 << acid.cell))) exp = acid.cell;
   else for (const x of cellsBefore.slice().sort((a, b) => a - b)) { if (hitBefore & (1 << x)) continue; if (cellsBefore.some((y) => (hitBefore & (1 << y)) && Math.abs(Math.floor(x / N) - Math.floor(y / N)) + Math.abs(x % N - y % N) === 1)) { exp = x; break; } }
-  // ランダム（2026-11-04 の試し。game.acidPick＝'random' のとき）：アシッドマークのブロックのあとは、そのキューブのまだ当たっていないブロックのどれか
-  const random = this.acidPick === 'random';
+  // ランダム（v15.13 から既定。game.acidPick で切り替えられる）：アシッドマークのブロックのあとは、そのキューブのまだ当たっていないブロックのどれか
+  const random = (this.acidPick || E.ACID_PICK) === 'random';
   if (random && exp !== acid.cell) { if (!cellsBefore.includes(c) || (hitBefore & (1 << c))) bad('wrong-cell', { c, cells: cellsBefore }); }
   else if (c !== exp) bad('wrong-cell', { c, exp, cells: cellsBefore });
   if (this.phase === 'play' && this.cur === this.players.indexOf(me) && this.sub !== 'answer' && this.sub !== 'sacrifice') bad('sub-after', { sub: this.sub });
