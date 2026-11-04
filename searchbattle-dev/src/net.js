@@ -71,7 +71,7 @@
   // ---------------- ② 伏せる ----------------
   // 撃破された相手のキューブのうち、ゲストに送ってよい項目（撃破されたキューブは公開済み）。
   //  送らないもの：fromId（バズーカの破片の元のキューブ＝元の形が分かる）、stealth（どれをステルスにしたか）、placedAt など
-  const DEAD_FIELDS = ['id', 'owner', 'shape', 'size', 'cat', 'isAdd', 'frag', 't', 'r0', 'c0', 'cells', 'mask', 'alive', 'hitMask', 'hitOrder', 'oonums', 'cause', 'deadAt'];
+  const DEAD_FIELDS = ['id', 'owner', 'shape', 'size', 'cat', 'frag', 't', 'r0', 'c0', 'cells', 'mask', 'alive', 'hitMask', 'hitOrder', 'oonums', 'cause', 'deadAt'];
 
   // 対戦（Game）を、送れる形（ただのデータ）に写す。乱数の関数（rng）は送れないので外す。
   //  JSON にして戻すと、関数と undefined の項目が消え、元の対戦とつながりのない「写し」になる

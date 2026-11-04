@@ -24,10 +24,9 @@
   function currentCounts(kb, N) {
     const res = { all: null, size: {}, cat: {}, lines: [] };
     const matchDead = (q, d) => q.kind === 'all' || (q.kind === 'size' ? d.size === q.value : d.cat === q.value);
-    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'R型');
     for (const q of kb.counts) {
       if (q.kind === 'line') {
-        if (kb.warps.some((w) => w.t > q.t) || kb.adds.some((a) => a.t > q.t)) continue;
+        if (kb.warps.some((w) => w.t > q.t)) continue;
         // サーチライン＝その列・行にかかっているキューブの数 k と、そのブロックの数 n（v12.12）。その後に撃破されたキューブの分を引く。
         // その後にバズーカの分解があると、破片の数だけキューブが増える（分解されたキューブがかかっていたかは分からない）ので、k は使わない
         const lm = lineMask(q.line, q.index, N);
@@ -45,7 +44,6 @@
       if ((kb.splits || []).some((sp) => sp.t > q.t)) continue;
       let n = q.n;
       for (const d of kb.deads) if (d.t > q.t && matchDead(q, d)) n--;
-      for (const a of kb.adds) if (a.t > q.t && matchAdd(q)) n++;
       if (q.kind === 'all') res.all = n;
       else if (q.kind === 'size') res.size[q.value] = n;
       else res.cat[q.value] = n;
@@ -156,7 +154,7 @@
     const occMaskBefore = (t0) => { let m = 0; for (const o of occs) if (o.t < t0) m |= bit(o.c); return m; };
 
     const deadSetup = { 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const d of kb.deads) if (!d.isAdd && d.size >= 2) deadSetup[d.size]++;
+    for (const d of kb.deads) if (d.size >= 2) deadSetup[d.size]++;
     const stockBound = {};
     for (const s of [2, 3, 4, 5]) stockBound[s] = kb.stock[s] - deadSetup[s];
     const PL = placements(N);
@@ -165,18 +163,16 @@
 
     const groupIndexByNum = new Map(groups.filter((g) => !g.q).map((g, i) => [g.num, i]));
 
-    // ワープ・アッドで動いたキューブの追跡（索敵用の近似）
+    // ワープで動いたキューブの追跡（索敵用の近似）
     const wEnt = [];
-    const addEnt = kb.adds.map((a) => ({ t: a.t, col: a.col, alive: true }));
     const sortedWarps = kb.warps.slice().sort((a, b) => a.t - b.t);
     for (const w of sortedWarps) {
       // トリガーで発動したワープ（v15）は、移動後のレティクルがグループ（見つかったキューブ）になるので、ここでは追わない（形も分からない）
       if (!w.key) continue;
       if (w.size === 1) {
         const col = bitsOf(w.oldMask)[0] % N;
-        const pick = addEnt.filter((a) => a.alive && a.t < w.t && a.col === col).pop()
-          || wEnt.filter((e) => e.alive && e.key === 'A1' && e.t < w.t).pop()
-          || addEnt.filter((a) => a.alive && a.t < w.t).pop();
+        // 1ブロックのキューブ（バズーカの破片）のワープ
+        const pick = wEnt.filter((e) => e.alive && e.key === 'A1' && e.t < w.t).pop();
         if (pick) pick.alive = false;
       } else {
         const neverMoved = !(w.oldMask & (xMaskBetween(-1, w.t) | oldMaskBefore(w.t)));
@@ -188,14 +184,6 @@
       wEnt.push({ t: w.t, key: w.key, size: w.size, cat: w.cat, oldMask: w.oldMask, treasure: !!w.treasure, alive: true });
     }
     for (const d of kb.deads.slice().sort((a, b) => a.t - b.t)) {
-      if (d.isAdd) {
-        const col = bitsOf(d.mask)[0] % N;
-        const pick = addEnt.filter((a) => a.alive && a.t < d.t && a.col === col).pop()
-          || wEnt.filter((e) => e.alive && e.key === 'A1' && e.t < d.t).pop()
-          || addEnt.filter((a) => a.alive && a.t < d.t).pop();
-        if (pick) pick.alive = false;
-        continue;
-      }
       const cands = wEnt.filter((e) => e.alive && e.key === d.key && e.t < d.t && !(d.mask & e.oldMask) && !(d.mask & xMaskBetween(e.t, d.t)));
       const neverMoved = !(d.mask & (xMaskBetween(-1, d.t) | oldMaskBefore(d.t)));
       if (cands.length && !neverMoved) cands[cands.length - 1].alive = false;
@@ -205,7 +193,7 @@
       N, NN, kb, PL, explained, deadMask, oldMaskAll, xs, xMaskAll, xMaskAfter, xMaskBetween, oldMaskAfter, oldMaskBefore,
       counts, lineZeroMask, lineMax, U, Ucell, groups, oList, ooMask, hitMask, occs, occMaskBefore,
       deadSetup, stockBound, sizeAllowed, catAllowed, groupIndexByNum, pairs, splits, fragPossible: splits.length > 0, fragMask, stealthTimes, unrevealed,
-      wEnt: wEnt.filter((e) => e.alive), addEnt: addEnt.filter((a) => a.alive),
+      wEnt: wEnt.filter((e) => e.alive),
     };
   }
 
@@ -796,7 +784,7 @@
       if (ex) { if (o.cat) ex.cat = o.cat; if (o.size) ex.size = o.size; if (o.deg != null) ex.deg = o.deg; continue; }
       occPseudo.push({ c: o.c, t: o.t, cat: o.cat || null, size: o.size || 0, deg: o.deg != null ? o.deg : null });
     }
-    const relocAlive = ctx.wEnt.length + ctx.addEnt.length;
+    const relocAlive = ctx.wEnt.length;
     // 見つかったキューブの数（Stealth hit は新しいキューブである見込みの分だけ数える）
     const nG = ctx.groups.reduce((a, g) => a + (g.q ? (g.pReal != null ? g.pReal : 0.5) : 1), 0);
 
@@ -875,7 +863,7 @@
     const entP = [];
     for (const e of ctx.wEnt) {
       if (e.size < 2) {
-        // ワープしたアッド：1ブロックの候補
+        // ワープした1ブロックのキューブ（バズーカの破片）：1ブロックの候補
         const forb = ctx.xMaskAfter(e.t) | ctx.deadMask | e.oldMask | ctx.oldMaskAfter(e.t) | ctx.hitMask | certainCover;
         const cells = [];
         for (let c = 0; c < NN; c++) if (!(forb & bit(c))) cells.push(c);
@@ -894,16 +882,6 @@
       const scale = (hitLater ? 0.5 : 1) / V;
       for (let c = 0; c < NN; c++) p[c] *= scale;
       entP.push({ p, ent: e });
-    }
-    // アッド（列だけ分かっている）
-    for (const a of ctx.addEnt) {
-      const forb = ctx.xMaskAfter(a.t) | ctx.deadMask | ctx.oldMaskAfter(a.t) | ctx.hitMask | certainCover;
-      const cells = [];
-      for (let r = 0; r < N; r++) { const c = r * N + a.col; if (!(forb & bit(c))) cells.push(c); }
-      if (!cells.length) continue;
-      const p = new Float64Array(NN);
-      for (const c of cells) p[c] = 1 / cells.length;
-      entP.push({ p, ent: a, isAdd: true });
     }
     // 位置の分かっている未ヒットキューブ
     for (const o of occPseudo) {
@@ -1308,9 +1286,8 @@
     let any = false;
     for (let c = 0; c < NN; c++) if (occ[c] > 0) { any = true; break; }
     if (!any) {
-      for (const d of kb.deads) if (!d.isAdd) for (const c of d.cells) occ[c] = Math.max(occ[c], 0.8);
+      for (const d of kb.deads) for (const c of d.cells) occ[c] = Math.max(occ[c], 0.8);
       for (let c = 0; c < NN; c++) occ[c] = Math.max(occ[c], A.targetP[c], A.hunt.P[c] * 0.9);
-      for (const e of A.hunt.entP) if (e.isAdd) for (let c = 0; c < NN; c++) occ[c] = Math.max(0, occ[c] - e.p[c] * 0.5);
     }
     const sameKnown = (x, y) => {
       for (const d of kb.deads) if ((d.mask & bit(x)) && (d.mask & bit(y))) return 1;
@@ -1368,7 +1345,6 @@
     const ex = exposure(game, pi);
     let p = 1;
     for (const piece of game.living(pi)) {
-      if (piece.isAdd) continue;
       const e = ex.get(piece.id);
       p *= e ? e.danger : 0;
       if (p <= 0) break;
@@ -1709,7 +1685,7 @@
         if (bzH && pol.bzWarp != null && bzH.eh >= pol.bzWarp) {
           const foeWarp = game.itemStatus(1 - pi, 'warp');
           const fp = game.players[1 - pi];
-          if (foeWarp.inPlay && (foeWarp.have > 0 || (fp.used.warp && fp.wallet >= 3))) return { key: 'bazooka', params: { cell: bzH.cell } };
+          if (foeWarp.inPlay && foeWarp.have > 0) return { key: 'bazooka', params: { cell: bzH.cell } };
         }
       }
       if (best) return best;
@@ -1816,8 +1792,6 @@
 
   function chooseSacrifice(game, pi) {
     const living = game.living(pi);
-    const add = living.find((p) => p.isAdd);
-    if (add) return add.id;
     let ex = null;
     try { ex = exposure(game, pi); } catch (e) { ex = null; }
     living.sort((a, b) => {

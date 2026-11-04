@@ -27,7 +27,7 @@ const EV_KEYS = {
   answer: ['cells', 'success', 'stealth', 'probe', 'escaped'], reveal: ['cells', 'fixed', 'counts'], tchance: ['left', 'max'], treasure: ['c', 'r'], tfail: [], over: ['result'],
   // ワープの発動（v15）：移動前の分かっているブロック（from）・トリガー・移動先のレティクル。移動前の全部と移動後は ownerPriv（持ち主だけ）
   warpfire: ['by', 'full', 'size', 'from', 'trigger', 'reticle', 'treasureMoved'],
-  item: ['key', 'rebuy', 'n', 'kind', 'value', 'line', 'index', 'k', 'cell', 'size', 'cat', 'a', 'b', 'same', 'oldCells', 'treasureMoved', 'hit', 'killed', 'sum', 'nd', 'area', 'miss', 'kills', 'escaped'],
+  item: ['key', 'n', 'kind', 'value', 'line', 'index', 'k', 'cell', 'size', 'cat', 'a', 'b', 'same', 'oldCells', 'treasureMoved', 'hit', 'killed', 'sum', 'nd', 'area', 'miss', 'kills', 'escaped'],
 };
 const LOG_KEYS = ['id', 'turn', 'actor', 'text', 'priv', 'kind', 'key', 'cells'];
 const LA_KEYS = ['kind', 'pi', 'c', 'res', 'ok', 'cells', 'key', 'r', 'result', 'stealth', 'probe', 'escaped'];

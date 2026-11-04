@@ -43,7 +43,7 @@ function check(G, tag) {
   // バズーカ：分解された個体は残っておらず、破片は1マス。トレジャーの持ち主は今ある個体（生きているか撃破済み）
   for (const P of G.players) {
     for (const sp of P.splitPieces) if (P.pieces.some((p) => p.id === sp.id)) fail('split-still-there', { tag, sp });
-    for (const p of P.pieces) if (p.frag && (p.size !== 1 || p.cells.length !== 1 || p.shape !== 'A1' || p.isAdd)) fail('frag-shape', { tag, p });
+    for (const p of P.pieces) if (p.frag && (p.size !== 1 || p.cells.length !== 1 || p.shape !== 'A1')) fail('frag-shape', { tag, p });
     if (P.treasure && !P.pieces.some((p) => p.id === P.treasure.pieceId && p.cells.indexOf(P.treasure.cell) >= 0)) fail('treasure-owner', { tag, t: P.treasure });
   }
   for (const P of G.players) {
@@ -128,7 +128,7 @@ for (let gi = 0; gi < N_GAMES; gi++) {
     if (process.env.INV_ONLY && process.env.INV_ONLY !== gi + ':' + rules) continue;
     CUR = gi + ':' + rules;
     const rng = mulberry32(9100 + gi * 7 + (rules === 'final' ? 3 : 0));
-    let G = new E.Game({ rules, rng, cpu: [true, true], wallet: 15 });
+    let G = new E.Game({ rules, rng, cpu: [true, true] });
     AI.setup(G, 0); AI.setup(G, 1); G.finishSetup(0); G.finishSetup(1);
     while (G.phase === 'draft') { const pi = G.draftTurn(); G.draftPick(pi, AI.draftPick(G, pi)); }
     stats.games++;

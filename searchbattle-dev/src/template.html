@@ -182,7 +182,6 @@ h1, h2, h3 { text-wrap: balance; }
 .ichip.spent, .chips.enemy .ichip.spent { --ic: var(--dim); background: none; box-shadow: none; }
 .ichip.spent svg { opacity: .8; }
 .ichip.spent::after { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 1.5px; background: var(--dim); transform: rotate(-35deg); }
-.ichip.rebuy, .chips.enemy .ichip.rebuy { --ic: var(--amber); }
 .itemhead .ichip { width: 36px; height: 36px; }
 @media (max-width: 520px) { .ichip { width: 27px; height: 27px; } .ichip svg { width: 16px; height: 16px; } .chips { gap: 6px 4px; } .chiprow { gap: 6px; } }
 /* ツールチップ（本文の外、最前面） */
@@ -253,7 +252,6 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.eb::before { border-bottom-width: 2px; }
 .cell.pc.el::before { border-left-width: 2px; }
 .cell.pc.er::before { border-right-width: 2px; }
-.cell.pc.addpc::before { border-style: dashed; }
 /* バズーカで分解された1ブロックのキューブ：元のキューブの色のまま、ひびを入れる */
 .cell.pc.frag { background-image: linear-gradient(118deg, transparent 46%, rgba(10, 14, 24, .55) 47%, transparent 49%), linear-gradient(28deg, transparent 60%, rgba(10, 14, 24, .45) 61%, transparent 63%),
     linear-gradient(160deg, color-mix(in srgb, var(--pcc) 40%, var(--steel-1)) 0%, color-mix(in srgb, var(--pcc) 58%, var(--steel-3)) 68%, color-mix(in srgb, var(--pcc) 38%, var(--steel-4)) 100%); }

@@ -12,7 +12,7 @@
 
   // base はインデックス順を保ったまま回転・反転する（トレジャー位置の追従に使う）
   const SHAPES = {
-    A1: { size: 1, cat: 'R型', name: 'アッド', base: [[0, 0]] },
+    A1: { size: 1, cat: 'R型', name: '1ブロックのキューブ', base: [[0, 0]] },   // バズーカで分解された破片だけが使う（配置はできない）
     D2: { size: 2, cat: 'R型', name: '1×2', base: [[0, 0], [0, 1]] },
     I3: { size: 3, cat: 'R型', name: '1×3', base: [[0, 0], [0, 1], [0, 2]] },
     L3: { size: 3, cat: 'L型', name: 'L型', base: [[0, 0], [1, 0], [1, 1]] },
@@ -164,7 +164,7 @@
 
   function coord(c, N) { return COLS[c % N] + '-' + (Math.floor(c / N) + 1); }
   // 配置画面でなぞって選んだブロックの組から、形・向き・置く位置を逆算する（配置できる形でなければ null）。
-  // 1ブロック（アッド）は配置で使わないので除く
+  // 1ブロック（バズーカの破片）は配置で使わないので除く
   function matchPlacement(cells, N) {
     if (!cells || cells.length < 2) return null;
     const rc = cells.map((c) => [Math.floor(c / N), c % N]);
@@ -178,7 +178,7 @@
     return null;
   }
   // ログ用のキューブの呼び名（バズーカで分解されたものは「1ブロックのキューブ」）
-  function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
+  function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.size + 'ブロックのキューブ'; }
   // ログ用：ブロックを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
   function coordList(cells, N) { return cells.slice().sort((a, b) => a - b).map((c) => coord(c, N)).join('・'); }
   // 十字（クロスボム）：中心と上下左右（盤の外は除く）
@@ -276,14 +276,14 @@
     const cpu = opts.cpu || [false, false];
     const stocks = opts.stocks || [];
     const inv = opts.inventory || [];
-    this.players = [0, 1].map((i) => this._newPlayer(i, names[i], !!cpu[i], opts.wallet || 0, stocks[i], inv[i]));
+    this.players = [0, 1].map((i) => this._newPlayer(i, names[i], !!cpu[i], stocks[i], inv[i]));
     // 相手が置けるキューブの数（大会では公開情報）を推論に使う
     for (const i of [0, 1]) this.players[i].kb.stock = Object.assign({}, this.players[1 - i].stock);
     // ドラフトがある試合は、配置の前にドラフトをする（v15.4。ユーザーの希望：取ったアイテムを見てから置ける。大会の決勝も同じ）
     if (this.draftEach > 0) this._initDraft();
   }
 
-  Game.prototype._newPlayer = function (i, name, isCPU, wallet, stock, inv) {
+  Game.prototype._newPlayer = function (i, name, isCPU, stock, inv) {
     const NN = this.NN;
     const items = {};
     for (const k of ITEM_KEYS) {
@@ -297,8 +297,8 @@
       idx: i, name, isCPU, stock: st,
       pieces: [], nextId: 1, treasure: null, setupDone: false,
       splitPieces: [],   // バズーカで分解された元のキューブ（大会では次の試合で元の形に戻す）
-      items, used: {}, wallet, rebuys: 0,
-      score: { attack: 0, survival: 0, treasure: 0, rebuy: 0, total: 0 },
+      items, used: {},
+      score: { attack: 0, survival: 0, treasure: 0, total: 0 },
       // 相手盤面についての自分の記録（予想盤面）
       view: {
         marks: new Array(NN).fill(null), dead: new Array(NN).fill(null), tlog: new Array(NN).fill(null),
@@ -356,7 +356,7 @@
   // ---------------- 配置 ----------------
   Game.prototype.stockLeft = function (pi, size) {
     const P = this.players[pi];
-    const used = P.pieces.filter((p) => !p.isAdd && p.size === size).length;
+    const used = P.pieces.filter((p) => p.size === size).length;
     return ((P.stock && P.stock[size]) || 0) - used;
   };
   Game.prototype.checkPlacement = function (pi, key, t, r0, c0) {
@@ -383,7 +383,7 @@
   //  途中のキューブを外しても、ほかのキューブの色・柄が変わらないようにするため（外した番号は、次に置くキューブが使う）。
   //  画面は col を 1〜8 の色・柄に当てはめる（ui.js の colorIndex）。バズーカの破片は元のキューブの番号を受け継ぐ
   Game.prototype._freeCol = function (P) {
-    const used = new Set(P.pieces.filter((p) => !p.isAdd && !p.frag && p.col).map((p) => p.col));
+    const used = new Set(P.pieces.filter((p) => !p.frag && p.col).map((p) => p.col));
     for (const sp of P.splitPieces || []) if (sp.col) used.add(sp.col);
     let k = 1;
     while (used.has(k)) k++;
@@ -392,7 +392,7 @@
   Game.prototype._makePiece = function (P, key, t, r0, c0, cells) {
     const sh = SHAPES[key];
     return {
-      id: P.nextId++, owner: P.idx, shape: key, size: sh.size, cat: sh.cat, isAdd: key === 'A1',
+      id: P.nextId++, owner: P.idx, shape: key, size: sh.size, cat: sh.cat,
       t, r0, c0, cells, mask: maskOf(cells), alive: true, hitMask: 0, hitOrder: [], oonums: [], cause: null,
       placedAt: this.clock, deadAt: null,
     };
@@ -622,7 +622,7 @@
       // 全ブロックに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない。見破りで撃破済みなら何もしない）
       if (p.alive && p.hitMask === p.mask && !p.stealth) {
         this._destroy(p, 'destroy');
-        res.destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
+        res.destroyed = { size: p.size, cells: p.cells.slice() };
         this._log(pi, `${me.name}：${pieceName(p)}を撃破（${coordList(p.cells, this.N)}）`, null, 'kill');
       }
     }
@@ -992,7 +992,7 @@
     let destroyed = null;
     if (p.hitMask === p.mask) {
       this._destroy(p, 'destroy');
-      destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
+      destroyed = { size: p.size, cells: p.cells.slice() };
       this._log(actor, `${A.name}：${pieceName(p)}を撃破（${coordList(p.cells, N)}）`, null, 'kill');
     }
     return { shown, reticle, destroyed };
@@ -1004,13 +1004,13 @@
     piece.cause = cause;
     piece.deadAt = this._tick();
     const viewer = this.players[1 - piece.owner];
-    for (const c of piece.cells) viewer.view.dead[c] = { pieceId: piece.id, size: piece.size, shape: piece.shape, cause, isAdd: piece.isAdd, frag: !!piece.frag };
+    for (const c of piece.cells) viewer.view.dead[c] = { pieceId: piece.id, size: piece.size, shape: piece.shape, cause, frag: !!piece.frag };
     viewer.kb.deads.push({
       cells: piece.cells.slice(), mask: piece.mask, size: piece.size, cat: piece.cat, key: piece.shape,
-      isAdd: piece.isAdd, frag: !!piece.frag, t: this.clock, cause,
+      frag: !!piece.frag, t: this.clock, cause,
     });
-    if (!piece.isAdd) viewer.score.attack += piece.size;
-    this._emit({ type: 'destroy', owner: piece.owner, cells: piece.cells.slice(), size: piece.size, isAdd: piece.isAdd, key: piece.shape, cause });
+    viewer.score.attack += piece.size;
+    this._emit({ type: 'destroy', owner: piece.owner, cells: piece.cells.slice(), size: piece.size, key: piece.shape, cause });
   };
 
   Game.prototype._checkEnd = function () {
@@ -1022,8 +1022,8 @@
     this.pending = null;
     const winner = !a0 && !a1 ? -1 : (a0 ? 0 : 1);
     for (const P of this.players) {
-      P.score.survival = P.pieces.filter((p) => p.alive && !p.isAdd).reduce((s, p) => s + p.size, 0);
-      P.score.total = P.score.attack + P.score.survival + P.score.treasure - P.score.rebuy;
+      P.score.survival = P.pieces.filter((p) => p.alive).reduce((s, p) => s + p.size, 0);
+      P.score.total = P.score.attack + P.score.survival + P.score.treasure;
     }
     let tiebreak = -1;
     if (winner === -1) {
@@ -1043,9 +1043,8 @@
     const have = inPlay ? (P.items[key] || 0) : 0;
     // 大会の予選：1試合で同じ種類は1回まで（2つ持っていても、この試合ではもう使えない）
     const usedUp = !!(this.oncePerMatch && P.used[key]);
-    const canRebuy = inPlay && !usedUp && have <= 0 && !!P.used[key] && P.wallet >= 3;
     const inPhase = this._myTurn(pi, ['item', 'answer']) && !this.itemUsed;
-    return { inPlay, have, canRebuy, usedUp, usable: inPlay && inPhase && !usedUp && (have > 0 || canRebuy), rebuyNeeded: have <= 0 };
+    return { inPlay, have, usedUp, usable: inPlay && inPhase && !usedUp && have > 0 };
   };
 
   // ワープの移動先（v15）：キューブ p を、向き t・位置 (r0, c0) に置けるか。
@@ -1159,16 +1158,11 @@
     if (!val.ok) return val;
     const me = this.players[pi], foe = this.foeOf(pi);
     const fromSub = this.sub;
-    if (st.rebuyNeeded) {
-      me.wallet -= 3; me.score.rebuy += 3; me.rebuys += 1;
-    } else {
-      me.items[key] -= 1;
-    }
+    me.items[key] -= 1;
     me.used[key] = true;
     this.itemUsed = true;
     const t = this._tick();
     const name = ITEMS[key].name;
-    const tag = st.rebuyNeeded ? '（再購入）' : '';
     const N = this.N;
     let result = { ok: true, key };
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
@@ -1183,7 +1177,7 @@
         if (!p) {
           me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'acid' });
           result.nd = true;
-          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
           break;
         }
         p.acid = true;
@@ -1195,7 +1189,7 @@
         // acidSize（測定用の試し。2026-11-04）：酸をかけたキューブのブロック数も教える（サーチサイズと同じ事実）
         me.kb.occs.push(Object.assign({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' }, this.acidSize ? { size: p.size } : {}));
         result.hit = true;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドアイコン付与（次の手番から自動コール）`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ アシッドアイコン付与（次の手番から自動コール）`, null, 'item', key);
         break;
       }
       case 'cross': {
@@ -1205,16 +1199,16 @@
         //  （「自動撃破後、ワープ発動」。移動前のブロックは全部 W付きの×）。隠れているステルスのキューブには効かない
         const area = crossMask(params.cell, N);
         const hit = livingFoe.filter((p) => (p.mask & ~area) === 0);
-        const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, area: bitsOf(area), miss: !hit.length, kills: hit.filter((p) => !p.warpPlan).length, escaped: hit.filter((p) => p.warpPlan).length };
+        const ev = { type: 'item', actor: pi, key, cell: params.cell, owner: foe.idx, area: bitsOf(area), miss: !hit.length, kills: hit.filter((p) => !p.warpPlan).length, escaped: hit.filter((p) => p.warpPlan).length };
         this._emit(ev);
         emitted = true;
         if (!hit.length) {
           me.kb.crossMiss.push({ t, turn: this.turn, c: params.cell, mask: area });
           result.miss = true;
-          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
           break;
         }
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 命中`   /* 数は出さない（命中か不発かだけ。ユーザーの希望） */, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ 命中`   /* 数は出さない（命中か不発かだけ。ユーザーの希望） */, null, 'item', key);
         result.kills = 0; result.escaped = 0;
         for (const p of hit) {
           if (p.warpPlan) {
@@ -1249,11 +1243,11 @@
           me.kb.sums.push({ t, turn: this.turn, sum });
           result.sum = sum;
           if (this.actions) this._recParams = { target: target.id };
-          this._log(pi, `${me.name}：${name}${tag} → 合計 ${sum}`, null, 'item', key);
+          this._log(pi, `${me.name}：${name} → 合計 ${sum}`, null, 'item', key);
         } else {
           me.kb.sums.push({ t, turn: this.turn, nd: true });
           result.nd = true;
-          this._log(pi, `${me.name}：${name}${tag} → NoData（対象キューブなし）`, null, 'item', key);
+          this._log(pi, `${me.name}：${name} → NoData（対象キューブなし）`, null, 'item', key);
         }
         break;
       }
@@ -1262,7 +1256,7 @@
         me.kb.counts.push({ t, turn: this.turn, kind: params.kind, value: params.value, n });
         result.n = n;
         const what = params.kind === 'cat' ? params.value : params.value + 'ブロック';
-        this._log(pi, `${me.name}：${name}${tag}（${what}）→ 残り${n}キューブ`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${what}）→ 残り${n}キューブ`, null, 'item', key);
         break;
       }
       case 'line': {
@@ -1275,7 +1269,7 @@
         me.kb.counts.push({ t, turn: this.turn, kind: 'line', line: params.line, index: params.index, n, k });
         result.n = n;
         result.k = k;
-        this._log(pi, `${me.name}：${name}${tag}（${lineLabel(params.line, params.index)}）→ 残り${k}キューブ / ${n}ブロック`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${lineLabel(params.line, params.index)}）→ 残り${k}キューブ / ${n}ブロック`, null, 'item', key);
         break;
       }
       case 'number': {
@@ -1284,7 +1278,7 @@
         if (size) me.kb.occs.push({ c: params.cell, t, cat: null, size, turn: this.turn, src: 'number' });
         else me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'number' });
         result.size = size;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${size ? size + 'ブロック' : 'NoData'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ ${size ? size + 'ブロック' : 'NoData'}`, null, 'item', key);
         break;
       }
       case 'shape': {
@@ -1292,7 +1286,7 @@
         const cat = p ? p.cat : null;
         if (cat) me.kb.occs.push({ c: params.cell, t, cat, turn: this.turn, src: 'shape' }); else me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'shape' });
         result.cat = cat;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${cat || 'NoData'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ ${cat || 'NoData'}`, null, 'item', key);
         break;
       }
       case 'pair': {
@@ -1300,7 +1294,7 @@
         const same = !!pa && pa === pb;
         me.kb.pairs.push({ t, turn: this.turn, a: params.a, b: params.b, same });
         result.same = same;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.a)}と${this.coord(params.b)}）→ ${same ? '同じキューブ' : '別のキューブ'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.a)}と${this.coord(params.b)}）→ ${same ? '同じキューブ' : '別のキューブ'}`, null, 'item', key);
         break;
       }
       case 'node': {
@@ -1311,17 +1305,17 @@
         if (k == null) me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'node' });
         else me.kb.occs.push({ c: params.cell, t, cat: null, deg: k, turn: this.turn, src: 'node' });
         result.k = k;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${k == null ? 'NoData' : 'つながり' + k}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ ${k == null ? 'NoData' : 'つながり' + k}`, null, 'item', key);
         break;
       }
       case 'bazooka': {
         // そのブロックのキューブを1ブロックのキューブに分解する。ヒット済みのブロックはその場で撃破。空きブロックと、隠れているステルスのキューブは NoData
         const p = this._seenAt(foe.idx, params.cell);
-        const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, hit: !!p, killed: [] };
+        const ev = { type: 'item', actor: pi, key, cell: params.cell, owner: foe.idx, hit: !!p, killed: [] };
         if (!p) {
           me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'bazooka' });
           result.hit = false;
-          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
           this._emit(ev);
           emitted = true;
           break;
@@ -1339,7 +1333,7 @@
         result.hit = true;
         result.killed = sp.killed;
         const kill = sp.killed.length ? `コール済の${sp.killed.length}ブロックを撃破（${coordList(sp.killed, N)}）` : 'コール済のブロックなし';
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックずつに分解・${kill}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ キューブを1ブロックずつに分解・${kill}`, null, 'item', key);
         result.ended = this._checkEnd();
         break;
       }
@@ -1350,7 +1344,7 @@
         p.warpPlan = { at: t, trigger: params.cell, t: val.t, r0: params.r0, c0: params.c0, cells: val.cells.slice(), mask: val.mask };
         foe.kb.warpUses.push({ t });
         result.cells = p.cells.slice();
-        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → ワープ先 ${coordList(val.cells, N)}）`, 'item', key);
+        this._log(pi, `${me.name}：${name}`, `${me.name}：${name}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → ワープ先 ${coordList(val.cells, N)}）`, 'item', key);
         break;
       }
       case 'stealth': {
@@ -1364,11 +1358,11 @@
         p.stealthNo = me.stealthCount;
         foe.kb.stealths.push({ t, num: p.stealthNo });   // num：ステルスの番号（STEALTH HIT に出るので相手も知る）
         result.cells = p.cells.slice();
-        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
+        this._log(pi, `${me.name}：${name}`, `${me.name}：${name}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
         break;
       }
     }
-    const pub = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded };
+    const pub = { type: 'item', actor: pi, key };
     if (key === 'cube' || key === 'line') { pub.n = result.n; }
     if (key === 'cube') { pub.kind = params.kind; pub.value = params.value; }
     if (key === 'line') { pub.line = params.line; pub.index = params.index; pub.k = result.k; }
@@ -1401,7 +1395,6 @@
     const frags = [];
     for (const c of piece.cells) {
       const f = this._makePiece(P, 'A1', 0, Math.floor(c / N), c % N, [c]);
-      f.isAdd = false;
       f.frag = true;
       f.fromId = piece.id;
       f.col = piece.col;   // 破片は元のキューブの色・柄のまま
@@ -1423,9 +1416,9 @@
   Game.prototype.summary = function () {
     return this.players.map((P) => {
       const lost = [];
-      for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lost.push(p.size);
+      for (const p of P.pieces) if (!p.frag && !p.alive) lost.push(p.size);
       for (const sp of P.splitPieces) if (!P.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)) lost.push(sp.size);
-      const placed = P.pieces.filter((p) => !p.frag && !p.isAdd).map((p) => p.size).concat(P.splitPieces.map((sp) => sp.size));
+      const placed = P.pieces.filter((p) => !p.frag).map((p) => p.size).concat(P.splitPieces.map((sp) => sp.size));
       const used = Object.keys(P.used).filter((k) => P.used[k]);
       return {
         name: P.name, attack: P.score.attack, survival: P.score.survival, treasure: P.score.treasure,

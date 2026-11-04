@@ -64,7 +64,7 @@ for (let k = 0; k < n; k++) {
     for (let i = 0; i < 2; i++) {
       const plan = g.setupPlan && g.setupPlan[i];
       // バズーカで分解された元の個体は splitPieces に移っている
-      const placed = g.players[i].pieces.filter((q) => !q.frag && !q.isAdd).concat(g.players[i].splitPieces).map((q) => q.size).sort((x, y) => x - y);
+      const placed = g.players[i].pieces.filter((q) => !q.frag).concat(g.players[i].splitPieces).map((q) => q.size).sort((x, y) => x - y);
       st.placedPieces[kind === 'final' ? 'final' : 'prelim'] += placed.length;
       if (!plan) continue;
       st.planned++; st.planWhy[plan.why] = (st.planWhy[plan.why] || 0) + 1;

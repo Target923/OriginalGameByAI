@@ -344,7 +344,7 @@
     const kb = g.players[observer].kb;
     const view = g.players[observer].view;
     const warpedAfter = (t) => kb.warps.some((w) => w.t > t);
-    const relocatedAfter = (t) => kb.warps.some((w) => w.t > t) || kb.adds.some((a) => a.t > t);
+    const relocatedAfter = (t) => kb.warps.some((w) => w.t > t);
     // 個数の調査（サーチキューブ・サーチライン）は、アイテム欄の下にタグで並べる
     const tags = [];
     const latest = new Map();
@@ -379,7 +379,7 @@
       const split = (kb.splits || []).some((sp) => sp.t > q.t);
       let n = q.n;
       // 1ブロック（バズーカの破片）を調べたときは、破片の撃破で減らす
-      for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && !d.isAdd && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
+      for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
       n = Math.max(0, n);
       // サーチキューブは言葉のまま（「3ブロック 残り 2キューブ」。v14.5 で「体」を「キューブ」に）。短い C・B はサーチラインだけ
       const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
@@ -492,17 +492,16 @@
   // キューブの色：置いたときに付いた番号（col。engine の _freeCol）で決める。途中のキューブを外しても、ほかのキューブの色は変わらない。
   //  バズーカの破片は元のキューブの色のまま。col のない古い対戦（ページの更新で引き継いだもの）は、置いた並び（id順）で決める
   function colorIndex(P, piece) {
-    if (piece.isAdd) return 0;
     if (piece.col) return ((piece.col - 1) % 8) + 1;
     const id = piece.frag ? piece.fromId : piece.id;
-    const ids = P.pieces.filter((p) => !p.isAdd && !p.frag).map((p) => p.id).concat((P.splitPieces || []).map((p) => p.id)).sort((a, b) => a - b);
+    const ids = P.pieces.filter((p) => !p.frag).map((p) => p.id).concat((P.splitPieces || []).map((p) => p.id)).sort((a, b) => a - b);
     return (Math.max(0, ids.indexOf(id)) % 8) + 1;
   }
   // キューブの柄：色と同じ番号（置いた順）で、色ごとに違う素材の質感（御影石・大理石・木目など）をブロックに薄く重ねる。
   //  色の見え方に特性がある人でも、質感でどのキューブかを見分けられるようにするため（色だけに頼らない）。
   //  絵は template.html の .pm1〜.pm8（tools/tile_patterns.py で作る）。見分けにくい色どうし（青と紫など）が、違う系統の質感になるように選んである。
   //  c（ブロックの番号）から、ブロックごとの向き（v0〜v3）と見える位置（--ox・--oy）を決める。本物のタイルのように1枚ずつ表情を変えるため
-  //  （ブロックの番号だけで決めるので、描き直しても変わらない）。アッド（0番）は1ブロックなので柄を付けない
+  //  （ブロックの番号だけで決めるので、描き直しても変わらない）。0番は柄を付けない
   function patHTML(ci, c) {
     if (!ci) return '';
     const h = Math.imul((c | 0) + 1, 0x9E3779B1) >>> 0;   // ブロックの番号を、ばらけた数に変える
@@ -612,7 +611,6 @@
       }
       if (p) {
         cls += ' pc' + edgeClasses(p.mask, c, N);
-        if (p.isAdd) cls += ' addpc';
         if (p.frag) cls += ' frag';
         const held = !!(app.acidHold && app.acidHold.has(pi + ':' + c));   // 撃破の演出まで撃破前の見た目にしておく（v15.12）
         if (!p.alive && !held) cls += ' dead';
@@ -728,10 +726,9 @@
     const st = g.itemStatus(pi, k);
     const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy && !netWaiting();
     let cls = isRare(k) ? 'ichip bz' : 'ichip', bd = '', state;
-    if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = st.have > 0 ? `この試合では使用済` : 'この試合では使用済'; }
+    if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = 'この試合では使用済'; }
     else if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
-    else if (interactive && P.used[k] && P.wallet >= 3) { cls += ' rebuy'; bd = '3pt'; state = '使用済・3ptで再購入できる'; }
-    else { cls += ' spent'; state = P.used[k] ? (P.wallet >= 3 ? '使用済（3ptで再購入できる）' : '使用済') : 'なし'; }
+    else { cls += ' spent'; state = P.used[k] ? '使用済' : 'なし'; }
     const usable = phaseOK && st.usable;
     if (usable) cls += ' usable';
     if (interactive && app.ui && app.ui.item === k) cls += ' active';
@@ -862,8 +859,7 @@
 
   function itemHead(k, extra) {
     const g = G(), v = viewer();
-    const rebuy = g.itemStatus(v, k).rebuyNeeded ? `<p class="note warn">手持ちがないため、3ptで再購入して使います（残り ${g.players[v].wallet}pt）。</p>` : '';
-    return `<div class="itemhead"><span class="ichip active${isRare(k) ? ' bz' : ''}">${ICON[k]}</span><div><b>${esc(ITEMS[k].name)}</b><p class="note ih-desc">${esc(extra || ITEMS[k].desc)}</p>${rebuy}</div></div>`;
+    return `<div class="itemhead"><span class="ichip active${isRare(k) ? ' bz' : ''}">${ICON[k]}</span><div><b>${esc(ITEMS[k].name)}</b><p class="note ih-desc">${esc(extra || ITEMS[k].desc)}</p></div></div>`;
   }
 
   // 進行表示ブロック：上の段に直前の出来事、下の段に説明（左）とボタン（右）。
@@ -974,7 +970,7 @@
     const g = G();
     const me = g.players[v], foe = g.players[1 - v];
     const myLive = me.pieces.filter((p) => p.alive);
-    const myCells = myLive.filter((p) => !p.isAdd).reduce((s, p) => s + p.size, 0);
+    const myCells = myLive.reduce((s, p) => s + p.size, 0);
     const foeLeft = '<span class="unk" title="相手の残りキューブ数は分かりません">？</span>';
     const T = app.tour;
     const tre = (P) => {
@@ -1190,7 +1186,7 @@
   //  （破片は1ブロックのキューブとして撃破を知らせるだけ。元のキューブを倒しきったこと・そのブロック数は、試合の結果で分かる）
   function heldCubes(P, hideSplit) {
     const lostNow = { 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lostNow[p.size]++;
+    for (const p of P.pieces) if (!p.frag && !p.alive) lostNow[p.size]++;
     if (!hideSplit) for (const sp of P.splitPieces || []) if (!P.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)) lostNow[sp.size]++;
     return `<div class="st-cubes held">${[2, 3, 4, 5].map((s) => cubePips(s, { on: Math.max(0, (P.stock[s] || 0) - lostNow[s]), gone: lostNow[s], label: '所持' })).join('')}</div>`;
   }
@@ -1414,7 +1410,7 @@
       // 単発の試合は勝ち負けだけ（点数は出さない）
       const rows = [0, 1].map((i) => {
         const P = g.players[i], F = g.players[1 - i];
-        const killed = F.pieces.filter((p) => !p.alive && !p.frag && !p.isAdd).length + F.splitPieces.filter((sp) => !F.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)).length;
+        const killed = F.pieces.filter((p) => !p.alive && !p.frag).length + F.splitPieces.filter((sp) => !F.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)).length;
         const alive = P.pieces.filter((p) => p.alive).length;
         return `<tr><th scope="row">${esc(P.name)}</th><td>${killed}キューブ</td><td>${P.view.treasureFound ? '発見' : '—'}</td><td>${alive}キューブ</td></tr>`;
       }).join('');

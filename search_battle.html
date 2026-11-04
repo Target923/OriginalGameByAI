@@ -182,7 +182,6 @@ h1, h2, h3 { text-wrap: balance; }
 .ichip.spent, .chips.enemy .ichip.spent { --ic: var(--dim); background: none; box-shadow: none; }
 .ichip.spent svg { opacity: .8; }
 .ichip.spent::after { content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 1.5px; background: var(--dim); transform: rotate(-35deg); }
-.ichip.rebuy, .chips.enemy .ichip.rebuy { --ic: var(--amber); }
 .itemhead .ichip { width: 36px; height: 36px; }
 @media (max-width: 520px) { .ichip { width: 27px; height: 27px; } .ichip svg { width: 16px; height: 16px; } .chips { gap: 6px 4px; } .chiprow { gap: 6px; } }
 /* ツールチップ（本文の外、最前面） */
@@ -253,7 +252,6 @@ h1, h2, h3 { text-wrap: balance; }
 .cell.pc.eb::before { border-bottom-width: 2px; }
 .cell.pc.el::before { border-left-width: 2px; }
 .cell.pc.er::before { border-right-width: 2px; }
-.cell.pc.addpc::before { border-style: dashed; }
 /* バズーカで分解された1ブロックのキューブ：元のキューブの色のまま、ひびを入れる */
 .cell.pc.frag { background-image: linear-gradient(118deg, transparent 46%, rgba(10, 14, 24, .55) 47%, transparent 49%), linear-gradient(28deg, transparent 60%, rgba(10, 14, 24, .45) 61%, transparent 63%),
     linear-gradient(160deg, color-mix(in srgb, var(--pcc) 40%, var(--steel-1)) 0%, color-mix(in srgb, var(--pcc) 58%, var(--steel-3)) 68%, color-mix(in srgb, var(--pcc) 38%, var(--steel-4)) 100%); }
@@ -1289,7 +1287,7 @@ body.replaying #app { display: none; }
 
   // base はインデックス順を保ったまま回転・反転する（トレジャー位置の追従に使う）
   const SHAPES = {
-    A1: { size: 1, cat: 'R型', name: 'アッド', base: [[0, 0]] },
+    A1: { size: 1, cat: 'R型', name: '1ブロックのキューブ', base: [[0, 0]] },   // バズーカで分解された破片だけが使う（配置はできない）
     D2: { size: 2, cat: 'R型', name: '1×2', base: [[0, 0], [0, 1]] },
     I3: { size: 3, cat: 'R型', name: '1×3', base: [[0, 0], [0, 1], [0, 2]] },
     L3: { size: 3, cat: 'L型', name: 'L型', base: [[0, 0], [1, 0], [1, 1]] },
@@ -1441,7 +1439,7 @@ body.replaying #app { display: none; }
 
   function coord(c, N) { return COLS[c % N] + '-' + (Math.floor(c / N) + 1); }
   // 配置画面でなぞって選んだブロックの組から、形・向き・置く位置を逆算する（配置できる形でなければ null）。
-  // 1ブロック（アッド）は配置で使わないので除く
+  // 1ブロック（バズーカの破片）は配置で使わないので除く
   function matchPlacement(cells, N) {
     if (!cells || cells.length < 2) return null;
     const rc = cells.map((c) => [Math.floor(c / N), c % N]);
@@ -1455,7 +1453,7 @@ body.replaying #app { display: none; }
     return null;
   }
   // ログ用のキューブの呼び名（バズーカで分解されたものは「1ブロックのキューブ」）
-  function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.isAdd ? 'アッド' : p.size + 'ブロックのキューブ'; }
+  function pieceName(p) { return p.frag ? '1ブロックのキューブ' : p.size + 'ブロックのキューブ'; }
   // ログ用：ブロックを読み順（A-1, B-1, …, A-2, …）に並べて「・」でつなぐ
   function coordList(cells, N) { return cells.slice().sort((a, b) => a - b).map((c) => coord(c, N)).join('・'); }
   // 十字（クロスボム）：中心と上下左右（盤の外は除く）
@@ -1553,14 +1551,14 @@ body.replaying #app { display: none; }
     const cpu = opts.cpu || [false, false];
     const stocks = opts.stocks || [];
     const inv = opts.inventory || [];
-    this.players = [0, 1].map((i) => this._newPlayer(i, names[i], !!cpu[i], opts.wallet || 0, stocks[i], inv[i]));
+    this.players = [0, 1].map((i) => this._newPlayer(i, names[i], !!cpu[i], stocks[i], inv[i]));
     // 相手が置けるキューブの数（大会では公開情報）を推論に使う
     for (const i of [0, 1]) this.players[i].kb.stock = Object.assign({}, this.players[1 - i].stock);
     // ドラフトがある試合は、配置の前にドラフトをする（v15.4。ユーザーの希望：取ったアイテムを見てから置ける。大会の決勝も同じ）
     if (this.draftEach > 0) this._initDraft();
   }
 
-  Game.prototype._newPlayer = function (i, name, isCPU, wallet, stock, inv) {
+  Game.prototype._newPlayer = function (i, name, isCPU, stock, inv) {
     const NN = this.NN;
     const items = {};
     for (const k of ITEM_KEYS) {
@@ -1574,8 +1572,8 @@ body.replaying #app { display: none; }
       idx: i, name, isCPU, stock: st,
       pieces: [], nextId: 1, treasure: null, setupDone: false,
       splitPieces: [],   // バズーカで分解された元のキューブ（大会では次の試合で元の形に戻す）
-      items, used: {}, wallet, rebuys: 0,
-      score: { attack: 0, survival: 0, treasure: 0, rebuy: 0, total: 0 },
+      items, used: {},
+      score: { attack: 0, survival: 0, treasure: 0, total: 0 },
       // 相手盤面についての自分の記録（予想盤面）
       view: {
         marks: new Array(NN).fill(null), dead: new Array(NN).fill(null), tlog: new Array(NN).fill(null),
@@ -1633,7 +1631,7 @@ body.replaying #app { display: none; }
   // ---------------- 配置 ----------------
   Game.prototype.stockLeft = function (pi, size) {
     const P = this.players[pi];
-    const used = P.pieces.filter((p) => !p.isAdd && p.size === size).length;
+    const used = P.pieces.filter((p) => p.size === size).length;
     return ((P.stock && P.stock[size]) || 0) - used;
   };
   Game.prototype.checkPlacement = function (pi, key, t, r0, c0) {
@@ -1660,7 +1658,7 @@ body.replaying #app { display: none; }
   //  途中のキューブを外しても、ほかのキューブの色・柄が変わらないようにするため（外した番号は、次に置くキューブが使う）。
   //  画面は col を 1〜8 の色・柄に当てはめる（ui.js の colorIndex）。バズーカの破片は元のキューブの番号を受け継ぐ
   Game.prototype._freeCol = function (P) {
-    const used = new Set(P.pieces.filter((p) => !p.isAdd && !p.frag && p.col).map((p) => p.col));
+    const used = new Set(P.pieces.filter((p) => !p.frag && p.col).map((p) => p.col));
     for (const sp of P.splitPieces || []) if (sp.col) used.add(sp.col);
     let k = 1;
     while (used.has(k)) k++;
@@ -1669,7 +1667,7 @@ body.replaying #app { display: none; }
   Game.prototype._makePiece = function (P, key, t, r0, c0, cells) {
     const sh = SHAPES[key];
     return {
-      id: P.nextId++, owner: P.idx, shape: key, size: sh.size, cat: sh.cat, isAdd: key === 'A1',
+      id: P.nextId++, owner: P.idx, shape: key, size: sh.size, cat: sh.cat,
       t, r0, c0, cells, mask: maskOf(cells), alive: true, hitMask: 0, hitOrder: [], oonums: [], cause: null,
       placedAt: this.clock, deadAt: null,
     };
@@ -1899,7 +1897,7 @@ body.replaying #app { display: none; }
       // 全ブロックに当たったら撃破（隠れているステルスのキューブは、見破られるまで撃破しない。見破りで撃破済みなら何もしない）
       if (p.alive && p.hitMask === p.mask && !p.stealth) {
         this._destroy(p, 'destroy');
-        res.destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
+        res.destroyed = { size: p.size, cells: p.cells.slice() };
         this._log(pi, `${me.name}：${pieceName(p)}を撃破（${coordList(p.cells, this.N)}）`, null, 'kill');
       }
     }
@@ -2269,7 +2267,7 @@ body.replaying #app { display: none; }
     let destroyed = null;
     if (p.hitMask === p.mask) {
       this._destroy(p, 'destroy');
-      destroyed = { size: p.size, cells: p.cells.slice(), isAdd: p.isAdd };
+      destroyed = { size: p.size, cells: p.cells.slice() };
       this._log(actor, `${A.name}：${pieceName(p)}を撃破（${coordList(p.cells, N)}）`, null, 'kill');
     }
     return { shown, reticle, destroyed };
@@ -2281,13 +2279,13 @@ body.replaying #app { display: none; }
     piece.cause = cause;
     piece.deadAt = this._tick();
     const viewer = this.players[1 - piece.owner];
-    for (const c of piece.cells) viewer.view.dead[c] = { pieceId: piece.id, size: piece.size, shape: piece.shape, cause, isAdd: piece.isAdd, frag: !!piece.frag };
+    for (const c of piece.cells) viewer.view.dead[c] = { pieceId: piece.id, size: piece.size, shape: piece.shape, cause, frag: !!piece.frag };
     viewer.kb.deads.push({
       cells: piece.cells.slice(), mask: piece.mask, size: piece.size, cat: piece.cat, key: piece.shape,
-      isAdd: piece.isAdd, frag: !!piece.frag, t: this.clock, cause,
+      frag: !!piece.frag, t: this.clock, cause,
     });
-    if (!piece.isAdd) viewer.score.attack += piece.size;
-    this._emit({ type: 'destroy', owner: piece.owner, cells: piece.cells.slice(), size: piece.size, isAdd: piece.isAdd, key: piece.shape, cause });
+    viewer.score.attack += piece.size;
+    this._emit({ type: 'destroy', owner: piece.owner, cells: piece.cells.slice(), size: piece.size, key: piece.shape, cause });
   };
 
   Game.prototype._checkEnd = function () {
@@ -2299,8 +2297,8 @@ body.replaying #app { display: none; }
     this.pending = null;
     const winner = !a0 && !a1 ? -1 : (a0 ? 0 : 1);
     for (const P of this.players) {
-      P.score.survival = P.pieces.filter((p) => p.alive && !p.isAdd).reduce((s, p) => s + p.size, 0);
-      P.score.total = P.score.attack + P.score.survival + P.score.treasure - P.score.rebuy;
+      P.score.survival = P.pieces.filter((p) => p.alive).reduce((s, p) => s + p.size, 0);
+      P.score.total = P.score.attack + P.score.survival + P.score.treasure;
     }
     let tiebreak = -1;
     if (winner === -1) {
@@ -2320,9 +2318,8 @@ body.replaying #app { display: none; }
     const have = inPlay ? (P.items[key] || 0) : 0;
     // 大会の予選：1試合で同じ種類は1回まで（2つ持っていても、この試合ではもう使えない）
     const usedUp = !!(this.oncePerMatch && P.used[key]);
-    const canRebuy = inPlay && !usedUp && have <= 0 && !!P.used[key] && P.wallet >= 3;
     const inPhase = this._myTurn(pi, ['item', 'answer']) && !this.itemUsed;
-    return { inPlay, have, canRebuy, usedUp, usable: inPlay && inPhase && !usedUp && (have > 0 || canRebuy), rebuyNeeded: have <= 0 };
+    return { inPlay, have, usedUp, usable: inPlay && inPhase && !usedUp && have > 0 };
   };
 
   // ワープの移動先（v15）：キューブ p を、向き t・位置 (r0, c0) に置けるか。
@@ -2436,16 +2433,11 @@ body.replaying #app { display: none; }
     if (!val.ok) return val;
     const me = this.players[pi], foe = this.foeOf(pi);
     const fromSub = this.sub;
-    if (st.rebuyNeeded) {
-      me.wallet -= 3; me.score.rebuy += 3; me.rebuys += 1;
-    } else {
-      me.items[key] -= 1;
-    }
+    me.items[key] -= 1;
     me.used[key] = true;
     this.itemUsed = true;
     const t = this._tick();
     const name = ITEMS[key].name;
-    const tag = st.rebuyNeeded ? '（再購入）' : '';
     const N = this.N;
     let result = { ok: true, key };
     const livingFoe = this.living(foe.idx).filter((p) => !p.stealth);   // 隠れているステルスのキューブは数えない（v14）
@@ -2460,7 +2452,7 @@ body.replaying #app { display: none; }
         if (!p) {
           me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'acid' });
           result.nd = true;
-          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
           break;
         }
         p.acid = true;
@@ -2472,7 +2464,7 @@ body.replaying #app { display: none; }
         // acidSize（測定用の試し。2026-11-04）：酸をかけたキューブのブロック数も教える（サーチサイズと同じ事実）
         me.kb.occs.push(Object.assign({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' }, this.acidSize ? { size: p.size } : {}));
         result.hit = true;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドアイコン付与（次の手番から自動コール）`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ アシッドアイコン付与（次の手番から自動コール）`, null, 'item', key);
         break;
       }
       case 'cross': {
@@ -2482,16 +2474,16 @@ body.replaying #app { display: none; }
         //  （「自動撃破後、ワープ発動」。移動前のブロックは全部 W付きの×）。隠れているステルスのキューブには効かない
         const area = crossMask(params.cell, N);
         const hit = livingFoe.filter((p) => (p.mask & ~area) === 0);
-        const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, area: bitsOf(area), miss: !hit.length, kills: hit.filter((p) => !p.warpPlan).length, escaped: hit.filter((p) => p.warpPlan).length };
+        const ev = { type: 'item', actor: pi, key, cell: params.cell, owner: foe.idx, area: bitsOf(area), miss: !hit.length, kills: hit.filter((p) => !p.warpPlan).length, escaped: hit.filter((p) => p.warpPlan).length };
         this._emit(ev);
         emitted = true;
         if (!hit.length) {
           me.kb.crossMiss.push({ t, turn: this.turn, c: params.cell, mask: area });
           result.miss = true;
-          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ 不発`, null, 'item', key);
           break;
         }
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ 命中`   /* 数は出さない（命中か不発かだけ。ユーザーの希望） */, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ 命中`   /* 数は出さない（命中か不発かだけ。ユーザーの希望） */, null, 'item', key);
         result.kills = 0; result.escaped = 0;
         for (const p of hit) {
           if (p.warpPlan) {
@@ -2526,11 +2518,11 @@ body.replaying #app { display: none; }
           me.kb.sums.push({ t, turn: this.turn, sum });
           result.sum = sum;
           if (this.actions) this._recParams = { target: target.id };
-          this._log(pi, `${me.name}：${name}${tag} → 合計 ${sum}`, null, 'item', key);
+          this._log(pi, `${me.name}：${name} → 合計 ${sum}`, null, 'item', key);
         } else {
           me.kb.sums.push({ t, turn: this.turn, nd: true });
           result.nd = true;
-          this._log(pi, `${me.name}：${name}${tag} → NoData（対象キューブなし）`, null, 'item', key);
+          this._log(pi, `${me.name}：${name} → NoData（対象キューブなし）`, null, 'item', key);
         }
         break;
       }
@@ -2539,7 +2531,7 @@ body.replaying #app { display: none; }
         me.kb.counts.push({ t, turn: this.turn, kind: params.kind, value: params.value, n });
         result.n = n;
         const what = params.kind === 'cat' ? params.value : params.value + 'ブロック';
-        this._log(pi, `${me.name}：${name}${tag}（${what}）→ 残り${n}キューブ`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${what}）→ 残り${n}キューブ`, null, 'item', key);
         break;
       }
       case 'line': {
@@ -2552,7 +2544,7 @@ body.replaying #app { display: none; }
         me.kb.counts.push({ t, turn: this.turn, kind: 'line', line: params.line, index: params.index, n, k });
         result.n = n;
         result.k = k;
-        this._log(pi, `${me.name}：${name}${tag}（${lineLabel(params.line, params.index)}）→ 残り${k}キューブ / ${n}ブロック`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${lineLabel(params.line, params.index)}）→ 残り${k}キューブ / ${n}ブロック`, null, 'item', key);
         break;
       }
       case 'number': {
@@ -2561,7 +2553,7 @@ body.replaying #app { display: none; }
         if (size) me.kb.occs.push({ c: params.cell, t, cat: null, size, turn: this.turn, src: 'number' });
         else me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'number' });
         result.size = size;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${size ? size + 'ブロック' : 'NoData'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ ${size ? size + 'ブロック' : 'NoData'}`, null, 'item', key);
         break;
       }
       case 'shape': {
@@ -2569,7 +2561,7 @@ body.replaying #app { display: none; }
         const cat = p ? p.cat : null;
         if (cat) me.kb.occs.push({ c: params.cell, t, cat, turn: this.turn, src: 'shape' }); else me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'shape' });
         result.cat = cat;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${cat || 'NoData'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ ${cat || 'NoData'}`, null, 'item', key);
         break;
       }
       case 'pair': {
@@ -2577,7 +2569,7 @@ body.replaying #app { display: none; }
         const same = !!pa && pa === pb;
         me.kb.pairs.push({ t, turn: this.turn, a: params.a, b: params.b, same });
         result.same = same;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.a)}と${this.coord(params.b)}）→ ${same ? '同じキューブ' : '別のキューブ'}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.a)}と${this.coord(params.b)}）→ ${same ? '同じキューブ' : '別のキューブ'}`, null, 'item', key);
         break;
       }
       case 'node': {
@@ -2588,17 +2580,17 @@ body.replaying #app { display: none; }
         if (k == null) me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'node' });
         else me.kb.occs.push({ c: params.cell, t, cat: null, deg: k, turn: this.turn, src: 'node' });
         result.k = k;
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ ${k == null ? 'NoData' : 'つながり' + k}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ ${k == null ? 'NoData' : 'つながり' + k}`, null, 'item', key);
         break;
       }
       case 'bazooka': {
         // そのブロックのキューブを1ブロックのキューブに分解する。ヒット済みのブロックはその場で撃破。空きブロックと、隠れているステルスのキューブは NoData
         const p = this._seenAt(foe.idx, params.cell);
-        const ev = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded, cell: params.cell, owner: foe.idx, hit: !!p, killed: [] };
+        const ev = { type: 'item', actor: pi, key, cell: params.cell, owner: foe.idx, hit: !!p, killed: [] };
         if (!p) {
           me.kb.empties.push({ c: params.cell, t, turn: this.turn, src: 'bazooka' });
           result.hit = false;
-          this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
+          this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ NoData`, null, 'item', key);
           this._emit(ev);
           emitted = true;
           break;
@@ -2616,7 +2608,7 @@ body.replaying #app { display: none; }
         result.hit = true;
         result.killed = sp.killed;
         const kill = sp.killed.length ? `コール済の${sp.killed.length}ブロックを撃破（${coordList(sp.killed, N)}）` : 'コール済のブロックなし';
-        this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ キューブを1ブロックずつに分解・${kill}`, null, 'item', key);
+        this._log(pi, `${me.name}：${name}（${this.coord(params.cell)}）→ キューブを1ブロックずつに分解・${kill}`, null, 'item', key);
         result.ended = this._checkEnd();
         break;
       }
@@ -2627,7 +2619,7 @@ body.replaying #app { display: none; }
         p.warpPlan = { at: t, trigger: params.cell, t: val.t, r0: params.r0, c0: params.c0, cells: val.cells.slice(), mask: val.mask };
         foe.kb.warpUses.push({ t });
         result.cells = p.cells.slice();
-        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → ワープ先 ${coordList(val.cells, N)}）`, 'item', key);
+        this._log(pi, `${me.name}：${name}`, `${me.name}：${name}（${coordList(p.cells, N)} のキューブ・トリガー ${this.coord(params.cell)} → ワープ先 ${coordList(val.cells, N)}）`, 'item', key);
         break;
       }
       case 'stealth': {
@@ -2641,11 +2633,11 @@ body.replaying #app { display: none; }
         p.stealthNo = me.stealthCount;
         foe.kb.stealths.push({ t, num: p.stealthNo });   // num：ステルスの番号（STEALTH HIT に出るので相手も知る）
         result.cells = p.cells.slice();
-        this._log(pi, `${me.name}：${name}${tag}`, `${me.name}：${name}${tag}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
+        this._log(pi, `${me.name}：${name}`, `${me.name}：${name}（${coordList(p.cells, N)} のキューブ）`, 'item', key);
         break;
       }
     }
-    const pub = { type: 'item', actor: pi, key, rebuy: st.rebuyNeeded };
+    const pub = { type: 'item', actor: pi, key };
     if (key === 'cube' || key === 'line') { pub.n = result.n; }
     if (key === 'cube') { pub.kind = params.kind; pub.value = params.value; }
     if (key === 'line') { pub.line = params.line; pub.index = params.index; pub.k = result.k; }
@@ -2678,7 +2670,6 @@ body.replaying #app { display: none; }
     const frags = [];
     for (const c of piece.cells) {
       const f = this._makePiece(P, 'A1', 0, Math.floor(c / N), c % N, [c]);
-      f.isAdd = false;
       f.frag = true;
       f.fromId = piece.id;
       f.col = piece.col;   // 破片は元のキューブの色・柄のまま
@@ -2700,9 +2691,9 @@ body.replaying #app { display: none; }
   Game.prototype.summary = function () {
     return this.players.map((P) => {
       const lost = [];
-      for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lost.push(p.size);
+      for (const p of P.pieces) if (!p.frag && !p.alive) lost.push(p.size);
       for (const sp of P.splitPieces) if (!P.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)) lost.push(sp.size);
-      const placed = P.pieces.filter((p) => !p.frag && !p.isAdd).map((p) => p.size).concat(P.splitPieces.map((sp) => sp.size));
+      const placed = P.pieces.filter((p) => !p.frag).map((p) => p.size).concat(P.splitPieces.map((sp) => sp.size));
       const used = Object.keys(P.used).filter((k) => P.used[k]);
       return {
         name: P.name, attack: P.score.attack, survival: P.score.survival, treasure: P.score.treasure,
@@ -3077,7 +3068,7 @@ body.replaying #app { display: none; }
   // ---------------- ② 伏せる ----------------
   // 撃破された相手のキューブのうち、ゲストに送ってよい項目（撃破されたキューブは公開済み）。
   //  送らないもの：fromId（バズーカの破片の元のキューブ＝元の形が分かる）、stealth（どれをステルスにしたか）、placedAt など
-  const DEAD_FIELDS = ['id', 'owner', 'shape', 'size', 'cat', 'isAdd', 'frag', 't', 'r0', 'c0', 'cells', 'mask', 'alive', 'hitMask', 'hitOrder', 'oonums', 'cause', 'deadAt'];
+  const DEAD_FIELDS = ['id', 'owner', 'shape', 'size', 'cat', 'frag', 't', 'r0', 'c0', 'cells', 'mask', 'alive', 'hitMask', 'hitOrder', 'oonums', 'cause', 'deadAt'];
 
   // 対戦（Game）を、送れる形（ただのデータ）に写す。乱数の関数（rng）は送れないので外す。
   //  JSON にして戻すと、関数と undefined の項目が消え、元の対戦とつながりのない「写し」になる
@@ -3600,10 +3591,9 @@ body.replaying #app { display: none; }
   function currentCounts(kb, N) {
     const res = { all: null, size: {}, cat: {}, lines: [] };
     const matchDead = (q, d) => q.kind === 'all' || (q.kind === 'size' ? d.size === q.value : d.cat === q.value);
-    const matchAdd = (q) => q.kind === 'all' || (q.kind === 'size' ? q.value === 1 : q.value === 'R型');
     for (const q of kb.counts) {
       if (q.kind === 'line') {
-        if (kb.warps.some((w) => w.t > q.t) || kb.adds.some((a) => a.t > q.t)) continue;
+        if (kb.warps.some((w) => w.t > q.t)) continue;
         // サーチライン＝その列・行にかかっているキューブの数 k と、そのブロックの数 n（v12.12）。その後に撃破されたキューブの分を引く。
         // その後にバズーカの分解があると、破片の数だけキューブが増える（分解されたキューブがかかっていたかは分からない）ので、k は使わない
         const lm = lineMask(q.line, q.index, N);
@@ -3621,7 +3611,6 @@ body.replaying #app { display: none; }
       if ((kb.splits || []).some((sp) => sp.t > q.t)) continue;
       let n = q.n;
       for (const d of kb.deads) if (d.t > q.t && matchDead(q, d)) n--;
-      for (const a of kb.adds) if (a.t > q.t && matchAdd(q)) n++;
       if (q.kind === 'all') res.all = n;
       else if (q.kind === 'size') res.size[q.value] = n;
       else res.cat[q.value] = n;
@@ -3732,7 +3721,7 @@ body.replaying #app { display: none; }
     const occMaskBefore = (t0) => { let m = 0; for (const o of occs) if (o.t < t0) m |= bit(o.c); return m; };
 
     const deadSetup = { 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const d of kb.deads) if (!d.isAdd && d.size >= 2) deadSetup[d.size]++;
+    for (const d of kb.deads) if (d.size >= 2) deadSetup[d.size]++;
     const stockBound = {};
     for (const s of [2, 3, 4, 5]) stockBound[s] = kb.stock[s] - deadSetup[s];
     const PL = placements(N);
@@ -3741,18 +3730,16 @@ body.replaying #app { display: none; }
 
     const groupIndexByNum = new Map(groups.filter((g) => !g.q).map((g, i) => [g.num, i]));
 
-    // ワープ・アッドで動いたキューブの追跡（索敵用の近似）
+    // ワープで動いたキューブの追跡（索敵用の近似）
     const wEnt = [];
-    const addEnt = kb.adds.map((a) => ({ t: a.t, col: a.col, alive: true }));
     const sortedWarps = kb.warps.slice().sort((a, b) => a.t - b.t);
     for (const w of sortedWarps) {
       // トリガーで発動したワープ（v15）は、移動後のレティクルがグループ（見つかったキューブ）になるので、ここでは追わない（形も分からない）
       if (!w.key) continue;
       if (w.size === 1) {
         const col = bitsOf(w.oldMask)[0] % N;
-        const pick = addEnt.filter((a) => a.alive && a.t < w.t && a.col === col).pop()
-          || wEnt.filter((e) => e.alive && e.key === 'A1' && e.t < w.t).pop()
-          || addEnt.filter((a) => a.alive && a.t < w.t).pop();
+        // 1ブロックのキューブ（バズーカの破片）のワープ
+        const pick = wEnt.filter((e) => e.alive && e.key === 'A1' && e.t < w.t).pop();
         if (pick) pick.alive = false;
       } else {
         const neverMoved = !(w.oldMask & (xMaskBetween(-1, w.t) | oldMaskBefore(w.t)));
@@ -3764,14 +3751,6 @@ body.replaying #app { display: none; }
       wEnt.push({ t: w.t, key: w.key, size: w.size, cat: w.cat, oldMask: w.oldMask, treasure: !!w.treasure, alive: true });
     }
     for (const d of kb.deads.slice().sort((a, b) => a.t - b.t)) {
-      if (d.isAdd) {
-        const col = bitsOf(d.mask)[0] % N;
-        const pick = addEnt.filter((a) => a.alive && a.t < d.t && a.col === col).pop()
-          || wEnt.filter((e) => e.alive && e.key === 'A1' && e.t < d.t).pop()
-          || addEnt.filter((a) => a.alive && a.t < d.t).pop();
-        if (pick) pick.alive = false;
-        continue;
-      }
       const cands = wEnt.filter((e) => e.alive && e.key === d.key && e.t < d.t && !(d.mask & e.oldMask) && !(d.mask & xMaskBetween(e.t, d.t)));
       const neverMoved = !(d.mask & (xMaskBetween(-1, d.t) | oldMaskBefore(d.t)));
       if (cands.length && !neverMoved) cands[cands.length - 1].alive = false;
@@ -3781,7 +3760,7 @@ body.replaying #app { display: none; }
       N, NN, kb, PL, explained, deadMask, oldMaskAll, xs, xMaskAll, xMaskAfter, xMaskBetween, oldMaskAfter, oldMaskBefore,
       counts, lineZeroMask, lineMax, U, Ucell, groups, oList, ooMask, hitMask, occs, occMaskBefore,
       deadSetup, stockBound, sizeAllowed, catAllowed, groupIndexByNum, pairs, splits, fragPossible: splits.length > 0, fragMask, stealthTimes, unrevealed,
-      wEnt: wEnt.filter((e) => e.alive), addEnt: addEnt.filter((a) => a.alive),
+      wEnt: wEnt.filter((e) => e.alive),
     };
   }
 
@@ -4372,7 +4351,7 @@ body.replaying #app { display: none; }
       if (ex) { if (o.cat) ex.cat = o.cat; if (o.size) ex.size = o.size; if (o.deg != null) ex.deg = o.deg; continue; }
       occPseudo.push({ c: o.c, t: o.t, cat: o.cat || null, size: o.size || 0, deg: o.deg != null ? o.deg : null });
     }
-    const relocAlive = ctx.wEnt.length + ctx.addEnt.length;
+    const relocAlive = ctx.wEnt.length;
     // 見つかったキューブの数（Stealth hit は新しいキューブである見込みの分だけ数える）
     const nG = ctx.groups.reduce((a, g) => a + (g.q ? (g.pReal != null ? g.pReal : 0.5) : 1), 0);
 
@@ -4451,7 +4430,7 @@ body.replaying #app { display: none; }
     const entP = [];
     for (const e of ctx.wEnt) {
       if (e.size < 2) {
-        // ワープしたアッド：1ブロックの候補
+        // ワープした1ブロックのキューブ（バズーカの破片）：1ブロックの候補
         const forb = ctx.xMaskAfter(e.t) | ctx.deadMask | e.oldMask | ctx.oldMaskAfter(e.t) | ctx.hitMask | certainCover;
         const cells = [];
         for (let c = 0; c < NN; c++) if (!(forb & bit(c))) cells.push(c);
@@ -4470,16 +4449,6 @@ body.replaying #app { display: none; }
       const scale = (hitLater ? 0.5 : 1) / V;
       for (let c = 0; c < NN; c++) p[c] *= scale;
       entP.push({ p, ent: e });
-    }
-    // アッド（列だけ分かっている）
-    for (const a of ctx.addEnt) {
-      const forb = ctx.xMaskAfter(a.t) | ctx.deadMask | ctx.oldMaskAfter(a.t) | ctx.hitMask | certainCover;
-      const cells = [];
-      for (let r = 0; r < N; r++) { const c = r * N + a.col; if (!(forb & bit(c))) cells.push(c); }
-      if (!cells.length) continue;
-      const p = new Float64Array(NN);
-      for (const c of cells) p[c] = 1 / cells.length;
-      entP.push({ p, ent: a, isAdd: true });
     }
     // 位置の分かっている未ヒットキューブ
     for (const o of occPseudo) {
@@ -4884,9 +4853,8 @@ body.replaying #app { display: none; }
     let any = false;
     for (let c = 0; c < NN; c++) if (occ[c] > 0) { any = true; break; }
     if (!any) {
-      for (const d of kb.deads) if (!d.isAdd) for (const c of d.cells) occ[c] = Math.max(occ[c], 0.8);
+      for (const d of kb.deads) for (const c of d.cells) occ[c] = Math.max(occ[c], 0.8);
       for (let c = 0; c < NN; c++) occ[c] = Math.max(occ[c], A.targetP[c], A.hunt.P[c] * 0.9);
-      for (const e of A.hunt.entP) if (e.isAdd) for (let c = 0; c < NN; c++) occ[c] = Math.max(0, occ[c] - e.p[c] * 0.5);
     }
     const sameKnown = (x, y) => {
       for (const d of kb.deads) if ((d.mask & bit(x)) && (d.mask & bit(y))) return 1;
@@ -4944,7 +4912,6 @@ body.replaying #app { display: none; }
     const ex = exposure(game, pi);
     let p = 1;
     for (const piece of game.living(pi)) {
-      if (piece.isAdd) continue;
       const e = ex.get(piece.id);
       p *= e ? e.danger : 0;
       if (p <= 0) break;
@@ -5285,7 +5252,7 @@ body.replaying #app { display: none; }
         if (bzH && pol.bzWarp != null && bzH.eh >= pol.bzWarp) {
           const foeWarp = game.itemStatus(1 - pi, 'warp');
           const fp = game.players[1 - pi];
-          if (foeWarp.inPlay && (foeWarp.have > 0 || (fp.used.warp && fp.wallet >= 3))) return { key: 'bazooka', params: { cell: bzH.cell } };
+          if (foeWarp.inPlay && foeWarp.have > 0) return { key: 'bazooka', params: { cell: bzH.cell } };
         }
       }
       if (best) return best;
@@ -5392,8 +5359,6 @@ body.replaying #app { display: none; }
 
   function chooseSacrifice(game, pi) {
     const living = game.living(pi);
-    const add = living.find((p) => p.isAdd);
-    if (add) return add.id;
     let ex = null;
     try { ex = exposure(game, pi); } catch (e) { ex = null; }
     living.sort((a, b) => {
@@ -6971,7 +6936,7 @@ window.SBAudio = (function () {
     const kb = g.players[observer].kb;
     const view = g.players[observer].view;
     const warpedAfter = (t) => kb.warps.some((w) => w.t > t);
-    const relocatedAfter = (t) => kb.warps.some((w) => w.t > t) || kb.adds.some((a) => a.t > t);
+    const relocatedAfter = (t) => kb.warps.some((w) => w.t > t);
     // 個数の調査（サーチキューブ・サーチライン）は、アイテム欄の下にタグで並べる
     const tags = [];
     const latest = new Map();
@@ -7006,7 +6971,7 @@ window.SBAudio = (function () {
       const split = (kb.splits || []).some((sp) => sp.t > q.t);
       let n = q.n;
       // 1ブロック（バズーカの破片）を調べたときは、破片の撃破で減らす
-      for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && !d.isAdd && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
+      for (const d of kb.deads) if (d.t > q.t && (!d.frag || (q.kind === 'size' && q.value === 1)) && (q.kind === 'size' ? d.size === q.value : d.cat === q.value)) n--;
       n = Math.max(0, n);
       // サーチキューブは言葉のまま（「3ブロック 残り 2キューブ」。v14.5 で「体」を「キューブ」に）。短い C・B はサーチラインだけ
       const label = q.kind === 'size' ? q.value + 'ブロック' : q.value;
@@ -7119,17 +7084,16 @@ window.SBAudio = (function () {
   // キューブの色：置いたときに付いた番号（col。engine の _freeCol）で決める。途中のキューブを外しても、ほかのキューブの色は変わらない。
   //  バズーカの破片は元のキューブの色のまま。col のない古い対戦（ページの更新で引き継いだもの）は、置いた並び（id順）で決める
   function colorIndex(P, piece) {
-    if (piece.isAdd) return 0;
     if (piece.col) return ((piece.col - 1) % 8) + 1;
     const id = piece.frag ? piece.fromId : piece.id;
-    const ids = P.pieces.filter((p) => !p.isAdd && !p.frag).map((p) => p.id).concat((P.splitPieces || []).map((p) => p.id)).sort((a, b) => a - b);
+    const ids = P.pieces.filter((p) => !p.frag).map((p) => p.id).concat((P.splitPieces || []).map((p) => p.id)).sort((a, b) => a - b);
     return (Math.max(0, ids.indexOf(id)) % 8) + 1;
   }
   // キューブの柄：色と同じ番号（置いた順）で、色ごとに違う素材の質感（御影石・大理石・木目など）をブロックに薄く重ねる。
   //  色の見え方に特性がある人でも、質感でどのキューブかを見分けられるようにするため（色だけに頼らない）。
   //  絵は template.html の .pm1〜.pm8（tools/tile_patterns.py で作る）。見分けにくい色どうし（青と紫など）が、違う系統の質感になるように選んである。
   //  c（ブロックの番号）から、ブロックごとの向き（v0〜v3）と見える位置（--ox・--oy）を決める。本物のタイルのように1枚ずつ表情を変えるため
-  //  （ブロックの番号だけで決めるので、描き直しても変わらない）。アッド（0番）は1ブロックなので柄を付けない
+  //  （ブロックの番号だけで決めるので、描き直しても変わらない）。0番は柄を付けない
   function patHTML(ci, c) {
     if (!ci) return '';
     const h = Math.imul((c | 0) + 1, 0x9E3779B1) >>> 0;   // ブロックの番号を、ばらけた数に変える
@@ -7239,7 +7203,6 @@ window.SBAudio = (function () {
       }
       if (p) {
         cls += ' pc' + edgeClasses(p.mask, c, N);
-        if (p.isAdd) cls += ' addpc';
         if (p.frag) cls += ' frag';
         const held = !!(app.acidHold && app.acidHold.has(pi + ':' + c));   // 撃破の演出まで撃破前の見た目にしておく（v15.12）
         if (!p.alive && !held) cls += ' dead';
@@ -7355,10 +7318,9 @@ window.SBAudio = (function () {
     const st = g.itemStatus(pi, k);
     const phaseOK = interactive && g.phase === 'play' && g.cur === pi && (g.sub === 'item' || g.sub === 'answer') && !g.itemUsed && !app.busy && !netWaiting();
     let cls = isRare(k) ? 'ichip bz' : 'ichip', bd = '', state;
-    if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = st.have > 0 ? `この試合では使用済` : 'この試合では使用済'; }
+    if (st.usedUp) { cls += ' spent'; bd = st.have > 0 ? '×' + st.have : ''; state = 'この試合では使用済'; }
     else if (st.have > 0) { bd = st.have > 1 ? '×' + st.have : ''; state = `残り${st.have}`; }
-    else if (interactive && P.used[k] && P.wallet >= 3) { cls += ' rebuy'; bd = '3pt'; state = '使用済・3ptで再購入できる'; }
-    else { cls += ' spent'; state = P.used[k] ? (P.wallet >= 3 ? '使用済（3ptで再購入できる）' : '使用済') : 'なし'; }
+    else { cls += ' spent'; state = P.used[k] ? '使用済' : 'なし'; }
     const usable = phaseOK && st.usable;
     if (usable) cls += ' usable';
     if (interactive && app.ui && app.ui.item === k) cls += ' active';
@@ -7489,8 +7451,7 @@ window.SBAudio = (function () {
 
   function itemHead(k, extra) {
     const g = G(), v = viewer();
-    const rebuy = g.itemStatus(v, k).rebuyNeeded ? `<p class="note warn">手持ちがないため、3ptで再購入して使います（残り ${g.players[v].wallet}pt）。</p>` : '';
-    return `<div class="itemhead"><span class="ichip active${isRare(k) ? ' bz' : ''}">${ICON[k]}</span><div><b>${esc(ITEMS[k].name)}</b><p class="note ih-desc">${esc(extra || ITEMS[k].desc)}</p>${rebuy}</div></div>`;
+    return `<div class="itemhead"><span class="ichip active${isRare(k) ? ' bz' : ''}">${ICON[k]}</span><div><b>${esc(ITEMS[k].name)}</b><p class="note ih-desc">${esc(extra || ITEMS[k].desc)}</p></div></div>`;
   }
 
   // 進行表示ブロック：上の段に直前の出来事、下の段に説明（左）とボタン（右）。
@@ -7601,7 +7562,7 @@ window.SBAudio = (function () {
     const g = G();
     const me = g.players[v], foe = g.players[1 - v];
     const myLive = me.pieces.filter((p) => p.alive);
-    const myCells = myLive.filter((p) => !p.isAdd).reduce((s, p) => s + p.size, 0);
+    const myCells = myLive.reduce((s, p) => s + p.size, 0);
     const foeLeft = '<span class="unk" title="相手の残りキューブ数は分かりません">？</span>';
     const T = app.tour;
     const tre = (P) => {
@@ -7817,7 +7778,7 @@ window.SBAudio = (function () {
   //  （破片は1ブロックのキューブとして撃破を知らせるだけ。元のキューブを倒しきったこと・そのブロック数は、試合の結果で分かる）
   function heldCubes(P, hideSplit) {
     const lostNow = { 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const p of P.pieces) if (!p.frag && !p.isAdd && !p.alive) lostNow[p.size]++;
+    for (const p of P.pieces) if (!p.frag && !p.alive) lostNow[p.size]++;
     if (!hideSplit) for (const sp of P.splitPieces || []) if (!P.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)) lostNow[sp.size]++;
     return `<div class="st-cubes held">${[2, 3, 4, 5].map((s) => cubePips(s, { on: Math.max(0, (P.stock[s] || 0) - lostNow[s]), gone: lostNow[s], label: '所持' })).join('')}</div>`;
   }
@@ -8041,7 +8002,7 @@ window.SBAudio = (function () {
       // 単発の試合は勝ち負けだけ（点数は出さない）
       const rows = [0, 1].map((i) => {
         const P = g.players[i], F = g.players[1 - i];
-        const killed = F.pieces.filter((p) => !p.alive && !p.frag && !p.isAdd).length + F.splitPieces.filter((sp) => !F.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)).length;
+        const killed = F.pieces.filter((p) => !p.alive && !p.frag).length + F.splitPieces.filter((sp) => !F.pieces.some((f) => f.frag && f.fromId === sp.id && f.alive)).length;
         const alive = P.pieces.filter((p) => p.alive).length;
         return `<tr><th scope="row">${esc(P.name)}</th><td>${killed}キューブ</td><td>${P.view.treasureFound ? '発見' : '—'}</td><td>${alive}キューブ</td></tr>`;
       }).join('');

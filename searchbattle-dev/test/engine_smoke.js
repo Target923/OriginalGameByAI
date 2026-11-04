@@ -57,6 +57,6 @@ for (let g=0; g<400; g++) {
   if (G.phase!=='over') { console.log('not over', G.phase, G.sub, G.turn); errors++; }
   games++; turns+=G.turn; if (G.result&&G.result.draw) draws++; fired += G.players.reduce((a,P)=>a+P.splitPieces.length,0);
   // invariants
-  for (const P of G.players) { const s=P.score; if (s.total !== s.attack+s.survival+s.treasure-s.rebuy) errors++; }
+  for (const P of G.players) { const s=P.score; if (s.total !== s.attack+s.survival+s.treasure) errors++; }
 }
 console.log({games, errors, draws, skips, bz, fired, avgTurns: (turns/games).toFixed(1)});
