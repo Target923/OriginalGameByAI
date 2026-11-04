@@ -1,0 +1,2334 @@
+{
+ "category": "3_ログ・結果・大会",
+ "about": "対戦ログ・試合の結果・リプレイ・大会の画面と順位表・CPUの性格。text だけを書き換えてください（くわしくは README.md）",
+ "engineVersion": 36,
+ "extractedAt": "2026-11-04",
+ "count": 280,
+ "files": {
+  "src/engine.js": [
+   {
+    "id": "engine.js:8726",
+    "line": 183,
+    "where": "coordList",
+    "text": "・",
+    "h": "a22300c9"
+   },
+   {
+    "id": "engine.js:9253",
+    "line": 199,
+    "where": "lineLabel",
+    "text": "行",
+    "h": "390a1c08"
+   },
+   {
+    "id": "engine.js:9273",
+    "line": 199,
+    "where": "lineLabel",
+    "text": "列",
+    "h": "e491b8e6"
+   },
+   {
+    "id": "engine.js:13021",
+    "line": 275,
+    "where": "Game",
+    "text": "プレイヤー1",
+    "h": "85b3eca2"
+   },
+   {
+    "id": "engine.js:13031",
+    "line": 275,
+    "where": "Game",
+    "text": "プレイヤー2",
+    "h": "ce34e024"
+   },
+   {
+    "id": "engine.js:23700",
+    "line": 517,
+    "where": "_startPlay",
+    "text": "試合開始。先攻は",
+    "h": "ef291f14"
+   },
+   {
+    "id": "engine.js:24670",
+    "line": 541,
+    "where": "call › reason",
+    "text": "コールできる状態ではありません",
+    "h": "a6707013"
+   },
+   {
+    "id": "engine.js:24752",
+    "line": 542,
+    "where": "call › reason",
+    "text": "そのブロックはコールできません",
+    "h": "96a59894"
+   },
+   {
+    "id": "engine.js:25093",
+    "line": 552,
+    "where": "call",
+    "text": "：{{1}}をコール → ×",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "a867870b"
+   },
+   {
+    "id": "engine.js:25807",
+    "line": 564,
+    "where": "call",
+    "text": "：{{1}}をコール →",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "c886569c"
+   },
+   {
+    "id": "engine.js:25856",
+    "line": 564,
+    "where": "call",
+    "text": "を自動撃破後、ワープ発動",
+    "h": "235bb59a"
+   },
+   {
+    "id": "engine.js:25873",
+    "line": 564,
+    "where": "call",
+    "text": "ワープ発動（トリガー）",
+    "h": "73c6af9d"
+   },
+   {
+    "id": "engine.js:26875",
+    "line": 580,
+    "where": "call",
+    "text": "：{{1}}をコール → STEALTH HIT {{2}}（トリガー）",
+    "vars": [
+     "this.coord(c)",
+     "p.stealthNo"
+    ],
+    "h": "3ae7a229"
+   },
+   {
+    "id": "engine.js:27284",
+    "line": 587,
+    "where": "call",
+    "text": "：{{1}}をコール → ×",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "eb6415e4"
+   },
+   {
+    "id": "engine.js:27612",
+    "line": 593,
+    "where": "call",
+    "text": "：{{1}}をコール → STEALTH HIT",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "66e641ff"
+   },
+   {
+    "id": "engine.js:28307",
+    "line": 606,
+    "where": "call",
+    "text": "：{{1}}をコール → ワープレティクル（ワープで逃げたキューブ）",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "aff82bdd"
+   },
+   {
+    "id": "engine.js:28618",
+    "line": 613,
+    "where": "call",
+    "text": "：{{1}}をコール → ◎",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "6e47cdc2"
+   },
+   {
+    "id": "engine.js:28821",
+    "line": 618,
+    "where": "call",
+    "text": "：{{1}}をコール → ○",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "4869c8bf"
+   },
+   {
+    "id": "engine.js:29355",
+    "line": 626,
+    "where": "call",
+    "text": "：{{1}}を撃破（{{2}}）",
+    "vars": [
+     "pieceName(p)",
+     "coordList(p.cells, this.N)"
+    ],
+    "h": "770a6d17"
+   },
+   {
+    "id": "engine.js:29967",
+    "line": 642,
+    "where": "skipCall › reason",
+    "text": "コールできるブロックがあります",
+    "h": "708f6568"
+   },
+   {
+    "id": "engine.js:30055",
+    "line": 644,
+    "where": "skipCall",
+    "text": "：コールできるブロックがないため、コールを飛ばした",
+    "h": "ebde9651"
+   },
+   {
+    "id": "engine.js:30246",
+    "line": 649,
+    "where": "answer › reason",
+    "text": "アンサーできる状態ではありません",
+    "h": "7859fe15"
+   },
+   {
+    "id": "engine.js:30418",
+    "line": 652,
+    "where": "answer › reason",
+    "text": "R型・L型・T型のいずれかの形で宣言してください",
+    "h": "7eb1c3d6"
+   },
+   {
+    "id": "engine.js:31029",
+    "line": 663,
+    "where": "answer",
+    "text": "：アンサー成功（{{1}}）→ ワープで逃げられた",
+    "vars": [
+     "where"
+    ],
+    "h": "6feca48d"
+   },
+   {
+    "id": "engine.js:31623",
+    "line": 673,
+    "where": "answer",
+    "text": "：アンサー成功（{{1}}）",
+    "vars": [
+     "where"
+    ],
+    "h": "b59327a2"
+   },
+   {
+    "id": "engine.js:32332",
+    "line": 685,
+    "where": "answer",
+    "text": "：ステルスアンサー（{{1}}）→ ステルスを見破った",
+    "vars": [
+     "where"
+    ],
+    "h": "1097d402"
+   },
+   {
+    "id": "engine.js:32850",
+    "line": 693,
+    "where": "answer",
+    "text": "：アンサー失敗（{{1}}）",
+    "vars": [
+     "where"
+    ],
+    "h": "c58f8fe7"
+   },
+   {
+    "id": "engine.js:33410",
+    "line": 703,
+    "where": "sacrifice › reason",
+    "text": "生きている自分のキューブを選んでください",
+    "h": "4adc6712"
+   },
+   {
+    "id": "engine.js:33701",
+    "line": 709,
+    "where": "sacrifice",
+    "text": "：ペナルティで{{1}}を公開・撃破（{{2}}）",
+    "vars": [
+     "pieceName(p)",
+     "coordList(p.cells, this.N)"
+    ],
+    "h": "461b70a2"
+   },
+   {
+    "id": "engine.js:34854",
+    "line": 739,
+    "where": "treasureCall › reason",
+    "text": "そのブロックにはトレジャーコールできません",
+    "h": "4f31609c"
+   },
+   {
+    "id": "engine.js:35677",
+    "line": 759,
+    "where": "treasureCall",
+    "text": "的中！（宝石を1つ奪う +{{1}}pt）",
+    "vars": [
+     "this.treasurePts"
+    ],
+    "h": "8a79ddc2"
+   },
+   {
+    "id": "engine.js:35736",
+    "line": 759,
+    "where": "treasureCall",
+    "text": "的中！（+{{1}}pt）",
+    "vars": [
+     "this.treasurePts"
+    ],
+    "h": "1b2a7457"
+   },
+   {
+    "id": "engine.js:35768",
+    "line": 759,
+    "where": "treasureCall",
+    "text": "的中！",
+    "h": "91a5596c"
+   },
+   {
+    "id": "engine.js:35789",
+    "line": 759,
+    "where": "treasureCall",
+    "text": "ニア",
+    "h": "e44ef21a"
+   },
+   {
+    "id": "engine.js:35796",
+    "line": 759,
+    "where": "treasureCall",
+    "text": "外れ",
+    "h": "452a4820"
+   },
+   {
+    "id": "engine.js:35870",
+    "line": 761,
+    "where": "treasureCall",
+    "text": "：{{1}}にトレジャーコール →",
+    "vars": [
+     "this.coord(c)"
+    ],
+    "h": "9afc3520"
+   },
+   {
+    "id": "engine.js:35927",
+    "line": 761,
+    "where": "treasureCall",
+    "text": "（残り{{1}}回）",
+    "vars": [
+     "left"
+    ],
+    "h": "141b3919"
+   },
+   {
+    "id": "engine.js:36051",
+    "line": 763,
+    "where": "treasureCall",
+    "text": "：トレジャーチャンスを使い切りました（トレジャー失敗）",
+    "h": "73172b55"
+   },
+   {
+    "id": "engine.js:39096",
+    "line": 829,
+    "where": "_acidTick",
+    "text": "：アシッドで自動コール",
+    "h": "0f143c7f"
+   },
+   {
+    "id": "engine.js:44415",
+    "line": 924,
+    "where": "_revealAll",
+    "text": "：ステルスを見破った（",
+    "around": "…：ステルスを見破った（…）",
+    "h": "a962d469"
+   },
+   {
+    "id": "engine.js:44445",
+    "line": 924,
+    "where": "_revealAll",
+    "text": "×→STEALTH HIT：",
+    "h": "ab6cffbe"
+   },
+   {
+    "id": "engine.js:44492",
+    "line": 924,
+    "where": "_revealAll",
+    "text": "隠れていたヒットはなし",
+    "h": "cb74add1"
+   },
+   {
+    "id": "engine.js:44672",
+    "line": 928,
+    "where": "_revealAll",
+    "text": "：{{1}}を撃破（{{2}}）",
+    "vars": [
+     "pieceName(p)",
+     "coordList(p.cells, this.N)"
+    ],
+    "h": "504a8720"
+   },
+   {
+    "id": "engine.js:48089",
+    "line": 987,
+    "where": "_warpFire",
+    "text": "・トレジャーログがリセット",
+    "h": "0e00957a"
+   },
+   {
+    "id": "engine.js:48143",
+    "line": 988,
+    "where": "_warpFire",
+    "text": "：ワープ発動（移動前",
+    "around": "…：ワープ発動（移動前 ……）…",
+    "h": "e76df483"
+   },
+   {
+    "id": "engine.js:48194",
+    "line": 988,
+    "where": "_warpFire",
+    "text": "・ワープレティクル",
+    "h": "8913ffca"
+   },
+   {
+    "id": "engine.js:48231",
+    "line": 988,
+    "where": "_warpFire",
+    "text": "・移動先は不明",
+    "h": "ced9831d"
+   },
+   {
+    "id": "engine.js:48283",
+    "line": 989,
+    "where": "_warpFire",
+    "text": "：ワープ発動（移動前 {{1}} → 移動後 {{2}}）",
+    "vars": [
+     "coordList(oldCells, N)",
+     "coordList(p.cells, N)"
+    ],
+    "h": "ea99b77a"
+   },
+   {
+    "id": "engine.js:48680",
+    "line": 996,
+    "where": "_warpFire",
+    "text": "：{{1}}を撃破（{{2}}）",
+    "vars": [
+     "pieceName(p)",
+     "coordList(p.cells, N)"
+    ],
+    "h": "961d250d"
+   },
+   {
+    "id": "engine.js:50588",
+    "line": 1035,
+    "where": "_checkEnd",
+    "text": "両者全滅で引き分け",
+    "h": "b73e9ae2"
+   },
+   {
+    "id": "engine.js:50630",
+    "line": 1035,
+    "where": "_checkEnd",
+    "text": "の勝利",
+    "h": "da09cb4a"
+   },
+   {
+    "id": "engine.js:57496",
+    "line": 1157,
+    "where": "useItem › reason",
+    "text": "いまはアイテムを使えません",
+    "h": "a2ba90ca"
+   },
+   {
+    "id": "engine.js:57957",
+    "line": 1171,
+    "where": "useItem",
+    "text": "（再購入）",
+    "h": "1d11ab4d"
+   },
+   {
+    "id": "engine.js:58726",
+    "line": 1186,
+    "where": "useItem › case acid",
+    "text": "：{{1}}{{2}}（{{3}}）→ NoData",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.cell)"
+    ],
+    "h": "c00bba31"
+   },
+   {
+    "id": "engine.js:59439",
+    "line": 1198,
+    "where": "useItem › case acid",
+    "text": "：{{1}}{{2}}（{{3}}）→ アシッドマーク（次の手番から自動コール）",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.cell)"
+    ],
+    "h": "130a8c1d"
+   },
+   {
+    "id": "engine.js:60435",
+    "line": 1214,
+    "where": "useItem › case cross",
+    "text": "：{{1}}{{2}}（{{3}}）→ 不発",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.cell)"
+    ],
+    "h": "0b83530e"
+   },
+   {
+    "id": "engine.js:60564",
+    "line": 1217,
+    "where": "useItem › case cross",
+    "text": "：{{1}}{{2}}（{{3}}）→ 命中",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.cell)"
+    ],
+    "h": "1bb28a05"
+   },
+   {
+    "id": "engine.js:60808",
+    "line": 1221,
+    "where": "useItem › case cross",
+    "text": "：{{1}}を自動撃破後、ワープ発動",
+    "vars": [
+     "pieceName(p)"
+    ],
+    "h": "e1b6a970"
+   },
+   {
+    "id": "engine.js:61043",
+    "line": 1227,
+    "where": "useItem › case cross",
+    "text": "：{{1}}を撃破（{{2}}）",
+    "vars": [
+     "pieceName(p)",
+     "coordList(p.cells, N)"
+    ],
+    "h": "55f50c1f"
+   },
+   {
+    "id": "engine.js:62284",
+    "line": 1252,
+    "where": "useItem › case homing",
+    "text": "：{{1}}{{2}} → 合計",
+    "vars": [
+     "name",
+     "tag"
+    ],
+    "h": "facd9739"
+   },
+   {
+    "id": "engine.js:62474",
+    "line": 1256,
+    "where": "useItem › case homing",
+    "text": "：{{1}}{{2}} → NoData（狙えるキューブがない）",
+    "vars": [
+     "name",
+     "tag"
+    ],
+    "h": "0a86b632"
+   },
+   {
+    "id": "engine.js:62904",
+    "line": 1264,
+    "where": "useItem › case cube",
+    "text": "ブロック",
+    "h": "b4f01ec0"
+   },
+   {
+    "id": "engine.js:62944",
+    "line": 1265,
+    "where": "useItem › case cube",
+    "text": "：{{1}}{{2}}（{{3}}）→ 残り{{4}}キューブ",
+    "vars": [
+     "name",
+     "tag",
+     "what",
+     "n"
+    ],
+    "h": "00380f6c"
+   },
+   {
+    "id": "engine.js:63550",
+    "line": 1278,
+    "where": "useItem › case line",
+    "text": "：{{1}}{{2}}（{{3}}）→ 残り{{4}}キューブ / {{5}}ブロック",
+    "vars": [
+     "name",
+     "tag",
+     "lineLabel(params.line, params.index)",
+     "k",
+     "n"
+    ],
+    "h": "d01c7d19"
+   },
+   {
+    "id": "engine.js:64105",
+    "line": 1287,
+    "where": "useItem › case number",
+    "text": "ブロック",
+    "h": "9be048a3"
+   },
+   {
+    "id": "engine.js:64915",
+    "line": 1303,
+    "where": "useItem › case pair",
+    "text": "：{{1}}{{2}}（{{3}}と{{4}}）→",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.a)",
+     "this.coord(params.b)"
+    ],
+    "h": "19f39d28"
+   },
+   {
+    "id": "engine.js:64990",
+    "line": 1303,
+    "where": "useItem › case pair",
+    "text": "同じキューブ",
+    "h": "2cf0b81f"
+   },
+   {
+    "id": "engine.js:65001",
+    "line": 1303,
+    "where": "useItem › case pair",
+    "text": "同じキューブではない",
+    "h": "a9ea0232"
+   },
+   {
+    "id": "engine.js:65661",
+    "line": 1314,
+    "where": "useItem › case node",
+    "text": "つながり",
+    "h": "a0767bf1"
+   },
+   {
+    "id": "engine.js:66185",
+    "line": 1324,
+    "where": "useItem › case bazooka",
+    "text": "：{{1}}{{2}}（{{3}}）→ NoData",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.cell)"
+    ],
+    "h": "7c879557"
+   },
+   {
+    "id": "engine.js:67026",
+    "line": 1341,
+    "where": "useItem › case bazooka",
+    "text": "ヒット済みの{{1}}ブロックを撃破（{{2}}）",
+    "vars": [
+     "sp.killed.length",
+     "coordList(sp.killed, N)"
+    ],
+    "h": "e3e3be62"
+   },
+   {
+    "id": "engine.js:67091",
+    "line": 1341,
+    "where": "useItem › case bazooka",
+    "text": "ヒット済みのブロックはなし",
+    "h": "0071e8a1"
+   },
+   {
+    "id": "engine.js:67140",
+    "line": 1342,
+    "where": "useItem › case bazooka",
+    "text": "：{{1}}{{2}}（{{3}}）→ キューブを1ブロックのキューブに分解・",
+    "vars": [
+     "name",
+     "tag",
+     "this.coord(params.cell)"
+    ],
+    "h": "c21268b9"
+   },
+   {
+    "id": "engine.js:67757",
+    "line": 1353,
+    "where": "useItem › case warp",
+    "text": "：{{1}}{{2}}（{{3}} のキューブ・トリガー {{4}} → 移動先 {{5}}）",
+    "vars": [
+     "name",
+     "tag",
+     "coordList(p.cells, N)",
+     "this.coord(params.cell)",
+     "coordList(val.cells, N)"
+    ],
+    "h": "8d1389f2"
+   },
+   {
+    "id": "engine.js:68444",
+    "line": 1367,
+    "where": "useItem › case stealth",
+    "text": "：{{1}}{{2}}（{{3}} のキューブ）",
+    "vars": [
+     "name",
+     "tag",
+     "coordList(p.cells, N)"
+    ],
+    "h": "f02b72af"
+   },
+   {
+    "id": "engine.js:77004",
+    "line": 1533,
+    "where": "mass › name",
+    "text": "物量型",
+    "h": "b92bb856"
+   },
+   {
+    "id": "engine.js:77017",
+    "line": 1533,
+    "where": "mass › desc",
+    "text": "毎試合キューブを多く置き、盤面を埋める",
+    "h": "cdeb1e3e"
+   },
+   {
+    "id": "engine.js:77060",
+    "line": 1534,
+    "where": "save › name",
+    "text": "キューブ温存型",
+    "h": "341c946d"
+   },
+   {
+    "id": "engine.js:77077",
+    "line": 1534,
+    "where": "save › desc",
+    "text": "序盤は2ブロックを少なく置き、3・4ブロックを3試合目と決勝に温存する",
+    "h": "2d2fea56"
+   },
+   {
+    "id": "engine.js:77138",
+    "line": 1535,
+    "where": "steady › name",
+    "text": "堅実型",
+    "h": "a181254e"
+   },
+   {
+    "id": "engine.js:77151",
+    "line": 1535,
+    "where": "steady › desc",
+    "text": "3・4ブロックのキューブで毎試合厚く置く",
+    "h": "1325f8a4"
+   },
+   {
+    "id": "engine.js:77196",
+    "line": 1536,
+    "where": "items › name",
+    "text": "アイテム浪費型",
+    "h": "225b34fb"
+   },
+   {
+    "id": "engine.js:77213",
+    "line": 1536,
+    "where": "items › desc",
+    "text": "アイテムを惜しまず使い、序盤から押し切る",
+    "h": "d1ed91ec"
+   },
+   {
+    "id": "engine.js:79379",
+    "line": 1583,
+    "where": "create",
+    "text": "あなた",
+    "h": "959d8db6"
+   },
+   {
+    "id": "engine.js:83936",
+    "line": 1660,
+    "where": "matchOpts › label",
+    "text": "決勝",
+    "h": "3315ab9f"
+   },
+   {
+    "id": "engine.js:83943",
+    "line": 1660,
+    "where": "matchOpts › label",
+    "text": "予選 第{{1}}試合",
+    "vars": [
+     "T.round + 1"
+    ],
+    "h": "88539e02"
+   }
+  ],
+  "src/ui.js": [
+   {
+    "id": "ui.js:13833",
+    "line": 221,
+    "where": "gemsHTML",
+    "text": "宝石{{1}}つ（1つ{{2}}点）",
+    "vars": [
+     "n",
+     "E.Tour.GEM_PTS"
+    ],
+    "h": "966c1329"
+   },
+   {
+    "id": "ui.js:13873",
+    "line": 221,
+    "where": "gemsHTML",
+    "text": "・この試合で{{1}}つ奪った",
+    "vars": [
+     "d"
+    ],
+    "h": "5de504ee"
+   },
+   {
+    "id": "ui.js:13900",
+    "line": 221,
+    "where": "gemsHTML",
+    "text": "・この試合で{{1}}つ奪われた",
+    "vars": [
+     "-d"
+    ],
+    "h": "082a8f11"
+   },
+   {
+    "id": "ui.js:14010",
+    "line": 222,
+    "where": "gemsHTML",
+    "text": "宝石なし",
+    "h": "bc2b2c65"
+   },
+   {
+    "id": "ui.js:14249",
+    "line": 227,
+    "where": "gemCellHTML",
+    "text": "見つけて1つ奪い、見つけられて1つ奪われた",
+    "h": "28e68b43"
+   },
+   {
+    "id": "ui.js:14281",
+    "line": 227,
+    "where": "gemCellHTML",
+    "text": "見つけて1つ奪った",
+    "h": "47c40f99"
+   },
+   {
+    "id": "ui.js:14302",
+    "line": 227,
+    "where": "gemCellHTML",
+    "text": "見つけられて1つ奪われた",
+    "h": "19a9f47e"
+   },
+   {
+    "id": "ui.js:14319",
+    "line": 227,
+    "where": "gemCellHTML",
+    "text": "どちらも見つけられなかった",
+    "h": "becc0567"
+   },
+   {
+    "id": "ui.js:14731",
+    "line": 232,
+    "where": "speedText",
+    "text": "1ターン目に負けると{{1}}点の減点、2〜{{2}}ターン目は",
+    "vars": [
+     "S[1]",
+     "n"
+    ],
+    "around": "1ターン目に負けると…点の減点、2〜…ターン目は…点、…ターン目から0",
+    "h": "4e2a0d85"
+   },
+   {
+    "id": "ui.js:14783",
+    "line": 232,
+    "where": "speedText",
+    "text": "・",
+    "h": "142efc7e"
+   },
+   {
+    "id": "ui.js:14787",
+    "line": 232,
+    "where": "speedText",
+    "text": "点、{{1}}ターン目から0",
+    "vars": [
+     "n + 1"
+    ],
+    "around": "1ターン目に負けると…点の減点、2〜…ターン目は…点、…ターン目から0",
+    "h": "fa39adf8"
+   },
+   {
+    "id": "ui.js:14870",
+    "line": 233,
+    "where": "vicText",
+    "text": "・",
+    "h": "04c37844"
+   },
+   {
+    "id": "ui.js:14877",
+    "line": 233,
+    "where": "vicText",
+    "text": "・決勝",
+    "h": "684445e4"
+   },
+   {
+    "id": "ui.js:29350",
+    "line": 473,
+    "where": "probeLabel",
+    "text": "つながり",
+    "h": "72e8ce75"
+   },
+   {
+    "id": "ui.js:79193",
+    "line": 1287,
+    "where": "picks",
+    "text": "まだありません",
+    "h": "c885fb58"
+   },
+   {
+    "id": "ui.js:86052",
+    "line": 1393,
+    "where": "resultHTML",
+    "text": "DRAW",
+    "h": "c30339e1"
+   },
+   {
+    "id": "ui.js:86080",
+    "line": 1393,
+    "where": "resultHTML",
+    "text": "両者全滅で引き分け",
+    "h": "ac789034"
+   },
+   {
+    "id": "ui.js:86149",
+    "line": 1394,
+    "where": "resultHTML",
+    "text": "VICTORY",
+    "h": "bccc078e"
+   },
+   {
+    "id": "ui.js:86161",
+    "line": 1394,
+    "where": "resultHTML",
+    "text": "DEFEAT",
+    "h": "69f61535"
+   },
+   {
+    "id": "ui.js:86232",
+    "line": 1394,
+    "where": "resultHTML",
+    "text": "あなたの勝ち！",
+    "h": "c44886d5"
+   },
+   {
+    "id": "ui.js:86271",
+    "line": 1394,
+    "where": "resultHTML",
+    "text": "の勝ち",
+    "h": "b30eb179"
+   },
+   {
+    "id": "ui.js:86301",
+    "line": 1395,
+    "where": "resultHTML",
+    "text": "WINNER",
+    "h": "c618739b"
+   },
+   {
+    "id": "ui.js:86344",
+    "line": 1395,
+    "where": "resultHTML",
+    "text": "の勝ち！",
+    "h": "cf7b24ba"
+   },
+   {
+    "id": "ui.js:86380",
+    "line": 1396,
+    "where": "resultHTML",
+    "text": "両者全滅で引き分けです。",
+    "h": "c8a468d3"
+   },
+   {
+    "id": "ui.js:86397",
+    "line": 1396,
+    "where": "resultHTML",
+    "text": "相手のキューブをすべて撃破しました。",
+    "h": "7a591bb1"
+   },
+   {
+    "id": "ui.js:87396",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "撃破",
+    "around": "撃破 被撃破 勝利 … 宝石 増減 持ち点 …",
+    "h": "658ecbc6"
+   },
+   {
+    "id": "ui.js:87407",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "被撃破",
+    "around": "撃破 被撃破 勝利 … 宝石 増減 持ち点 …",
+    "h": "28938f43"
+   },
+   {
+    "id": "ui.js:87419",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "勝利",
+    "around": "撃破 被撃破 勝利 … 宝石 増減 持ち点 …",
+    "h": "84a8cd36"
+   },
+   {
+    "id": "ui.js:87448",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "スピード",
+    "h": "a36b8781"
+   },
+   {
+    "id": "ui.js:87468",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "宝石",
+    "around": "撃破 被撃破 勝利 … 宝石 増減 持ち点 …",
+    "h": "99e20ecf"
+   },
+   {
+    "id": "ui.js:87479",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "増減",
+    "around": "撃破 被撃破 勝利 … 宝石 増減 持ち点 …",
+    "h": "c6acbd55"
+   },
+   {
+    "id": "ui.js:87490",
+    "line": 1410,
+    "where": "resultHTML",
+    "text": "持ち点",
+    "around": "撃破 被撃破 勝利 … 宝石 増減 持ち点 …",
+    "h": "5cdb14de"
+   },
+   {
+    "id": "ui.js:87648",
+    "line": 1414,
+    "where": "resultHTML",
+    "text": "撃破＝撃破したキューブのブロック数を相手から奪った分、被撃破＝撃破されて奪われた分。",
+    "around": "撃破＝撃破したキューブのブロック数を相手から奪った分、被撃破＝撃破されて奪われた分。……宝石＝トレジャーを見つけて相手から奪った宝石（1つ…pt）。1pt＝1万円。",
+    "h": "44368a94"
+   },
+   {
+    "id": "ui.js:87706",
+    "line": 1414,
+    "where": "resultHTML",
+    "text": "勝者は負けた側から勝利点{{1}}ptを奪います（予選1試合目から {{2}}）。",
+    "vars": [
+     "g.victoryPts || TourE.VICTORY",
+     "vicText()"
+    ],
+    "h": "a84d6a7f"
+   },
+   {
+    "id": "ui.js:87806",
+    "line": 1414,
+    "where": "resultHTML",
+    "text": "スピード＝予選で早いターンに負けたときの減点（スピードペナルティ。{{1}}。減った点は相手に渡りません）。",
+    "vars": [
+     "speedText()"
+    ],
+    "h": "1d2c968d"
+   },
+   {
+    "id": "ui.js:87920",
+    "line": 1414,
+    "where": "resultHTML",
+    "text": "ターン目に決着したので、負けた側は{{1}}pt減点です。",
+    "vars": [
+     "TourE.speedFor(g.turn)"
+    ],
+    "h": "c60cf394"
+   },
+   {
+    "id": "ui.js:87983",
+    "line": 1414,
+    "where": "resultHTML",
+    "text": "宝石＝トレジャーを見つけて相手から奪った宝石（1つ{{1}}pt）。1pt＝1万円。",
+    "vars": [
+     "TourE.GEM_PTS"
+    ],
+    "around": "撃破＝撃破したキューブのブロック数を相手から奪った分、被撃破＝撃破されて奪われた分。……宝石＝トレジャーを見つけて相手から奪った宝石（1つ…pt）。1pt＝1万円。",
+    "h": "40cb89a3"
+   },
+   {
+    "id": "ui.js:88499",
+    "line": 1421,
+    "where": "resultHTML",
+    "text": "キューブ",
+    "around": "… …キューブ … …キューブ",
+    "h": "7168753a"
+   },
+   {
+    "id": "ui.js:88538",
+    "line": 1421,
+    "where": "resultHTML",
+    "text": "発見",
+    "h": "91f03cc5"
+   },
+   {
+    "id": "ui.js:88565",
+    "line": 1421,
+    "where": "resultHTML",
+    "text": "キューブ",
+    "around": "… …キューブ … …キューブ",
+    "h": "5706830f"
+   },
+   {
+    "id": "ui.js:88695",
+    "line": 1424,
+    "where": "resultHTML",
+    "text": "撃破",
+    "around": "撃破 トレジャー 残ったキューブ …",
+    "h": "aaf3e36b"
+   },
+   {
+    "id": "ui.js:88706",
+    "line": 1424,
+    "where": "resultHTML",
+    "text": "トレジャー",
+    "around": "撃破 トレジャー 残ったキューブ …",
+    "h": "d02a4fe3"
+   },
+   {
+    "id": "ui.js:88720",
+    "line": 1424,
+    "where": "resultHTML",
+    "text": "残ったキューブ",
+    "around": "撃破 トレジャー 残ったキューブ …",
+    "h": "8bd758a9"
+   },
+   {
+    "id": "ui.js:88904",
+    "line": 1429,
+    "where": "resultHTML",
+    "text": "リプレイ",
+    "h": "bf9536b5"
+   },
+   {
+    "id": "ui.js:88955",
+    "line": 1429,
+    "where": "resultHTML",
+    "text": "フィールドで答え合わせ",
+    "h": "6200be93"
+   },
+   {
+    "id": "ui.js:89130",
+    "line": 1432,
+    "where": "resultHTML",
+    "text": "相手",
+    "h": "acf79864"
+   },
+   {
+    "id": "ui.js:89135",
+    "line": 1432,
+    "where": "resultHTML",
+    "text": "が退出しました。",
+    "h": "52273abc"
+   },
+   {
+    "id": "ui.js:89231",
+    "line": 1433,
+    "where": "resultHTML",
+    "text": "もう一度",
+    "h": "2113a361"
+   },
+   {
+    "id": "ui.js:89274",
+    "line": 1433,
+    "where": "resultHTML",
+    "text": "もう一度対戦するときは、部屋を作った人が始めます。",
+    "h": "ae2087bd"
+   },
+   {
+    "id": "ui.js:89420",
+    "line": 1435,
+    "where": "resultHTML",
+    "text": "大会の結果へ",
+    "h": "cd7b1ad6"
+   },
+   {
+    "id": "ui.js:89431",
+    "line": 1435,
+    "where": "resultHTML",
+    "text": "大会の途中経過へ",
+    "h": "0566463f"
+   },
+   {
+    "id": "ui.js:89550",
+    "line": 1437,
+    "where": "resultHTML",
+    "text": "退出する",
+    "h": "a42f010c"
+   },
+   {
+    "id": "ui.js:89623",
+    "line": 1438,
+    "where": "resultHTML",
+    "text": "もう一度",
+    "around": "もう一度 … 設定に戻る",
+    "h": "e3008454"
+   },
+   {
+    "id": "ui.js:89689",
+    "line": 1438,
+    "where": "resultHTML",
+    "text": "設定に戻る",
+    "around": "もう一度 … 設定に戻る",
+    "h": "d6fb56b5"
+   },
+   {
+    "id": "ui.js:94507",
+    "line": 1499,
+    "where": "avatar",
+    "text": "YOU",
+    "h": "ed8763d9"
+   },
+   {
+    "id": "ui.js:96732",
+    "line": 1547,
+    "where": "refreshTourChoices",
+    "text": "RARE ITEMS（{{1}}/2）",
+    "vars": [
+     "picks.length"
+    ],
+    "h": "ea126f5a"
+   },
+   {
+    "id": "ui.js:97659",
+    "line": 1564,
+    "where": "rarePickHTML",
+    "text": "持ちこむレアアイテムを2つ選んでください",
+    "around": "持ちこむレアアイテムを2つ選んでください RARE ITEMS（…/2） ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。 …",
+    "h": "75433057"
+   },
+   {
+    "id": "ui.js:97703",
+    "line": 1564,
+    "where": "rarePickHTML",
+    "text": "RARE ITEMS（{{1}}/2）",
+    "vars": [
+     "on.length"
+    ],
+    "around": "持ちこむレアアイテムを2つ選んでください RARE ITEMS（…/2） ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。 …",
+    "h": "a082eae4"
+   },
+   {
+    "id": "ui.js:97765",
+    "line": 1565,
+    "where": "rarePickHTML",
+    "text": "ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。",
+    "around": "持ちこむレアアイテムを2つ選んでください RARE ITEMS（…/2） ベース8種類と、選んだレア2種類を2つずつ（合わせて20個）持って大会を戦います。CPUの持ちこむレアは上の名前の下に出ています。 …",
+    "h": "b8f34f77"
+   },
+   {
+    "id": "ui.js:98633",
+    "line": 1583,
+    "where": "tourStartMatch",
+    "text": "先攻かドラフト先行権を選んでください",
+    "h": "24ec4115"
+   },
+   {
+    "id": "ui.js:98904",
+    "line": 1588,
+    "where": "tourStartMatch",
+    "text": "決勝で補充するレアを選んでください",
+    "h": "6e0fb39d"
+   },
+   {
+    "id": "ui.js:99274",
+    "line": 1594,
+    "where": "tourStartMatch",
+    "text": "GRAND FINAL ・ 決勝",
+    "h": "89710088"
+   },
+   {
+    "id": "ui.js:99618",
+    "line": 1602,
+    "where": "tourStartMatch",
+    "text": "PRELIMINARY {{1}} ・ 予選 第{{2}}試合",
+    "vars": [
+     "T.round + 1",
+     "T.round + 1"
+    ],
+    "h": "982f4d26"
+   },
+   {
+    "id": "ui.js:103362",
+    "line": 1684,
+    "where": "tourWatchFinal",
+    "text": "決勝をシミュレーション中…（{{1}}ターン目）",
+    "vars": [
+     "g.turn"
+    ],
+    "h": "65bbc516"
+   },
+   {
+    "id": "ui.js:105748",
+    "line": 1734,
+    "where": "crit",
+    "text": "勝ち数",
+    "h": "5786c621"
+   },
+   {
+    "id": "ui.js:105786",
+    "line": 1734,
+    "where": "crit",
+    "text": "撃破ブロック数",
+    "h": "88b6ecb0"
+   },
+   {
+    "id": "ui.js:105798",
+    "line": 1734,
+    "where": "crit",
+    "text": "抽選",
+    "h": "3898738c"
+   },
+   {
+    "id": "ui.js:106044",
+    "line": 1739,
+    "where": "tieTag",
+    "text": "と同点・{{1}}で",
+    "vars": [
+     "crit(x.id, list[j].id)"
+    ],
+    "h": "81220124"
+   },
+   {
+    "id": "ui.js:106085",
+    "line": 1739,
+    "where": "tieTag",
+    "text": "上",
+    "h": "79bb9629"
+   },
+   {
+    "id": "ui.js:106091",
+    "line": 1739,
+    "where": "tieTag",
+    "text": "下",
+    "h": "260cf186"
+   },
+   {
+    "id": "ui.js:106180",
+    "line": 1740,
+    "where": "tieTag",
+    "text": "同点",
+    "h": "8246c53f"
+   },
+   {
+    "id": "ui.js:106585",
+    "line": 1750,
+    "where": "standingsHTML",
+    "text": "勝{{1}}敗",
+    "vars": [
+     "p.losses"
+    ],
+    "h": "8387dd14"
+   },
+   {
+    "id": "ui.js:106621",
+    "line": 1750,
+    "where": "standingsHTML",
+    "text": "分",
+    "h": "b7f654e7"
+   },
+   {
+    "id": "ui.js:106673",
+    "line": 1752,
+    "where": "standingsHTML",
+    "text": "はじめ{{1}}・撃破で奪った+{{2}}・奪われた−{{3}}・勝利で奪った+{{4}}・奪われた−",
+    "vars": [
+     "q.start",
+     "q.take",
+     "q.taken",
+     "q.vicWon"
+    ],
+    "h": "14c5ad0a"
+   },
+   {
+    "id": "ui.js:106776",
+    "line": 1752,
+    "where": "standingsHTML",
+    "text": "・スピードで奪った+",
+    "h": "4146200f"
+   },
+   {
+    "id": "ui.js:106829",
+    "line": 1752,
+    "where": "standingsHTML",
+    "text": "・スピードペナルティ−",
+    "h": "84f472de"
+   },
+   {
+    "id": "ui.js:106863",
+    "line": 1752,
+    "where": "standingsHTML",
+    "text": "・宝石{{1}}つ（{{2}}点）",
+    "vars": [
+     "p.gems | 0",
+     "(p.gems | 0) * TourE.GEM_PTS"
+    ],
+    "around": "はじめ…・撃破で奪った+…・奪われた−…・勝利で奪った+…・奪われた−………・宝石…つ（…点）",
+    "h": "556a06f5"
+   },
+   {
+    "id": "ui.js:107005",
+    "line": 1753,
+    "where": "standingsHTML",
+    "text": "決勝ライン",
+    "h": "6a1fdcb1"
+   },
+   {
+    "id": "ui.js:107599",
+    "line": 1756,
+    "where": "standingsHTML",
+    "text": "・",
+    "h": "4cd72a01"
+   },
+   {
+    "id": "ui.js:107624",
+    "line": 1756,
+    "where": "standingsHTML",
+    "text": "・",
+    "h": "57bcf496"
+   },
+   {
+    "id": "ui.js:107644",
+    "line": 1756,
+    "where": "standingsHTML",
+    "text": "優勝",
+    "h": "af7badad"
+   },
+   {
+    "id": "ui.js:107666",
+    "line": 1756,
+    "where": "standingsHTML",
+    "text": "・決勝",
+    "h": "54b67b48"
+   },
+   {
+    "id": "ui.js:108212",
+    "line": 1763,
+    "where": "standingsHTML",
+    "text": "順位表",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "b01855a6"
+   },
+   {
+    "id": "ui.js:108222",
+    "line": 1763,
+    "where": "standingsHTML",
+    "text": "STANDINGS",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "0b23b54a"
+   },
+   {
+    "id": "ui.js:108297",
+    "line": 1764,
+    "where": "standingsHTML",
+    "text": "順位",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "563b7f5c"
+   },
+   {
+    "id": "ui.js:108312",
+    "line": 1764,
+    "where": "standingsHTML",
+    "text": "名前",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "bc860eac"
+   },
+   {
+    "id": "ui.js:108327",
+    "line": 1764,
+    "where": "standingsHTML",
+    "text": "持ち点",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "c2a81504"
+   },
+   {
+    "id": "ui.js:108343",
+    "line": 1764,
+    "where": "standingsHTML",
+    "text": "キューブ",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "caa3727a"
+   },
+   {
+    "id": "ui.js:108360",
+    "line": 1764,
+    "where": "standingsHTML",
+    "text": "アイテム",
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "88bc4f66"
+   },
+   {
+    "id": "ui.js:108441",
+    "line": 1766,
+    "where": "standingsHTML",
+    "text": "持ち点は{{1}}点（宝石{{2}}つ・1つ{{3}}点を含む）で始め、撃破したブロック数・勝利点（{{4}}）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（{{5}}）で減点されます（1pt＝1万円）。アイテムの数字は所持数。",
+    "vars": [
+     "TourE.START + TourE.GEMS * TourE.GEM_PTS",
+     "TourE.GEMS",
+     "TourE.GEM_PTS",
+     "vicText()",
+     "speedText()"
+    ],
+    "around": "順位表 STANDINGS 順位 名前 持ち点 キューブ アイテム … 持ち点は…点（宝石…つ・1つ…点を含む）で始め、撃破したブロック数・勝利点（…）・宝石（トレジャー）を相手から奪い合います。予選で早いターンに負けると、スピードペナルティ（…）で減点されます（1pt＝1万円）。アイテムの数字は所持数。…",
+    "h": "33f2dbb2"
+   },
+   {
+    "id": "ui.js:108675",
+    "line": 1766,
+    "where": "standingsHTML",
+    "text": "順位は決勝の結果（優勝・準優勝）と予選の順位。",
+    "h": "4d316fc0"
+   },
+   {
+    "id": "ui.js:108729",
+    "line": 1766,
+    "where": "standingsHTML",
+    "text": "順位は予選の結果。",
+    "h": "b0f6eba5"
+   },
+   {
+    "id": "ui.js:108743",
+    "line": 1766,
+    "where": "standingsHTML",
+    "text": "同点は勝ち数 → 撃破ブロック数 → 抽選の順。上位2名が決勝へ。",
+    "h": "1f44cbed"
+   },
+   {
+    "id": "ui.js:109521",
+    "line": 1778,
+    "where": "matchCardHTML",
+    "text": "決勝",
+    "h": "55bf5ba5"
+   },
+   {
+    "id": "ui.js:109528",
+    "line": 1778,
+    "where": "matchCardHTML",
+    "text": "予選 第{{1}}試合",
+    "vars": [
+     "r.round + 1"
+    ],
+    "h": "01a8309a"
+   },
+   {
+    "id": "ui.js:109613",
+    "line": 1779,
+    "where": "lost",
+    "text": "・",
+    "h": "1256b6df"
+   },
+   {
+    "id": "ui.js:109617",
+    "line": 1779,
+    "where": "lost",
+    "text": "ブロックを失う",
+    "h": "3f5a464d"
+   },
+   {
+    "id": "ui.js:109629",
+    "line": 1779,
+    "where": "lost",
+    "text": "失ったキューブなし",
+    "h": "65d0d3cc"
+   },
+   {
+    "id": "ui.js:109667",
+    "line": 1780,
+    "where": "matchCardHTML",
+    "text": "引き分け",
+    "h": "4b6c68ef"
+   },
+   {
+    "id": "ui.js:109694",
+    "line": 1780,
+    "where": "matchCardHTML",
+    "text": "の勝ち・{{1}}ターン",
+    "vars": [
+     "r.turns"
+    ],
+    "h": "4c37e897"
+   },
+   {
+    "id": "ui.js:109870",
+    "line": 1782,
+    "where": "matchCardHTML",
+    "text": "CPU同士・シミュレーション",
+    "h": "c6d47514"
+   },
+   {
+    "id": "ui.js:110230",
+    "line": 1786,
+    "where": "matchCardHTML",
+    "text": "▶ リプレイ",
+    "h": "c2d0ed4c"
+   },
+   {
+    "id": "ui.js:110350",
+    "line": 1787,
+    "where": "matchCardHTML",
+    "text": "SIMULATING",
+    "h": "9c9d71de"
+   },
+   {
+    "id": "ui.js:110652",
+    "line": 1795,
+    "where": "historyHTML",
+    "text": "決勝",
+    "h": "8e045291"
+   },
+   {
+    "id": "ui.js:110659",
+    "line": 1795,
+    "where": "historyHTML",
+    "text": "予選",
+    "h": "403b4a3b"
+   },
+   {
+    "id": "ui.js:110706",
+    "line": 1796,
+    "where": "historyHTML",
+    "text": "引き分け",
+    "h": "ee785d20"
+   },
+   {
+    "id": "ui.js:110733",
+    "line": 1796,
+    "where": "historyHTML",
+    "text": "の勝ち",
+    "h": "1fe82f7f"
+   },
+   {
+    "id": "ui.js:110918",
+    "line": 1797,
+    "where": "historyHTML",
+    "text": "・{{1}}ターン",
+    "vars": [
+     "r.turns"
+    ],
+    "around": "… … vs … …・…ターン …",
+    "h": "d59af5bd"
+   },
+   {
+    "id": "ui.js:111039",
+    "line": 1797,
+    "where": "historyHTML",
+    "text": "▶ リプレイ",
+    "h": "afd1353e"
+   },
+   {
+    "id": "ui.js:111194",
+    "line": 1799,
+    "where": "historyHTML",
+    "text": "試合の記録",
+    "around": "試合の記録 REPLAY …",
+    "h": "551fb0a6"
+   },
+   {
+    "id": "ui.js:111206",
+    "line": 1799,
+    "where": "historyHTML",
+    "text": "REPLAY",
+    "around": "試合の記録 REPLAY …",
+    "h": "b6dc15fc"
+   },
+   {
+    "id": "ui.js:111699",
+    "line": 1811,
+    "where": "renderTour",
+    "text": "SEARCH BATTLE TOURNAMENT",
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "8ca7173d"
+   },
+   {
+    "id": "ui.js:111769",
+    "line": 1812,
+    "where": "renderTour",
+    "text": "大会スタート",
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "fce0fab1"
+   },
+   {
+    "id": "ui.js:111810",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は",
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "a6ccae6c"
+   },
+   {
+    "id": "ui.js:111902",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "点",
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "5daf7364"
+   },
+   {
+    "id": "ui.js:111907",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "（宝石{{1}}つ・1つ{{2}}点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに",
+    "vars": [
+     "TourE.GEMS",
+     "TourE.GEM_PTS"
+    ],
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "72eefe67"
+   },
+   {
+    "id": "ui.js:111995",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "点",
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "9e4b8c37"
+   },
+   {
+    "id": "ui.js:112000",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "を奪います。予選で{{1}}ターン目までに負けると（トレジャーチャンスを使い切る前）、",
+    "vars": [
+     "TourE.SPEED.length - 1"
+    ],
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "076ed367"
+   },
+   {
+    "id": "ui.js:112066",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "スピードペナルティ",
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "aa3f054f"
+   },
+   {
+    "id": "ui.js:112079",
+    "line": 1813,
+    "where": "renderTour",
+    "text": "（1ターン目{{1}}点〜{{2}}ターン目{{3}}点）で持ち点が減ります（相手には渡りません）。トレジャーを見つけると相手の宝石を1つ奪えます。",
+    "vars": [
+     "TourE.SPEED[1]",
+     "TourE.SPEED.length - 1",
+     "TourE.SPEED[TourE.SPEED.length - 1]"
+    ],
+    "around": "SEARCH BATTLE TOURNAMENT 大会スタート 4人の総当たりで予選を3試合（4×4）。持ち点の上位2名が決勝（5×5）へ進みます。持ち点は …点 （宝石…つ・1つ…点を含む）から。撃破したキューブのブロック数を相手から奪い、勝てばさらに …点 を奪います。予選で…ターン目までに負けると（トレジャーチャ…",
+    "h": "2f5a1a6a"
+   },
+   {
+    "id": "ui.js:112730",
+    "line": 1817,
+    "where": "renderTour",
+    "text": "CPU",
+    "h": "39bec59e"
+   },
+   {
+    "id": "ui.js:112738",
+    "line": 1817,
+    "where": "renderTour",
+    "text": "プレイヤー",
+    "h": "3af48628"
+   },
+   {
+    "id": "ui.js:112885",
+    "line": 1820,
+    "where": "renderTour",
+    "text": "第{{1}}試合",
+    "vars": [
+     "r + 1"
+    ],
+    "h": "1d2a804e"
+   },
+   {
+    "id": "ui.js:113113",
+    "line": 1821,
+    "where": "renderTour",
+    "text": "第1試合へ（vs {{1}}）",
+    "vars": [
+     "tname(tourOpponent(T))"
+    ],
+    "h": "38f63280"
+   },
+   {
+    "id": "ui.js:113229",
+    "line": 1823,
+    "where": "renderTour",
+    "text": "PRELIMINARY {{1}} / {{2}} CLEAR",
+    "vars": [
+     "T.round",
+     "ROUNDS"
+    ],
+    "around": "PRELIMINARY … / … CLEAR 予選 第…試合 終了 いま …位 （…pt）。次は第…試合、相手は … です。",
+    "h": "b963866a"
+   },
+   {
+    "id": "ui.js:113305",
+    "line": 1824,
+    "where": "renderTour",
+    "text": "予選 第{{1}}試合 終了",
+    "vars": [
+     "T.round"
+    ],
+    "around": "PRELIMINARY … / … CLEAR 予選 第…試合 終了 いま …位 （…pt）。次は第…試合、相手は … です。",
+    "h": "0bb67817"
+   },
+   {
+    "id": "ui.js:113359",
+    "line": 1825,
+    "where": "renderTour",
+    "text": "いま",
+    "around": "PRELIMINARY … / … CLEAR 予選 第…試合 終了 いま …位 （…pt）。次は第…試合、相手は … です。",
+    "h": "0dcfa63d"
+   },
+   {
+    "id": "ui.js:113385",
+    "line": 1825,
+    "where": "renderTour",
+    "text": "位",
+    "around": "PRELIMINARY … / … CLEAR 予選 第…試合 終了 いま …位 （…pt）。次は第…試合、相手は … です。",
+    "h": "7b00067a"
+   },
+   {
+    "id": "ui.js:113390",
+    "line": 1825,
+    "where": "renderTour",
+    "text": "（{{1}}pt）。次は第{{2}}試合、相手は",
+    "vars": [
+     "TourE.total(me)",
+     "T.round + 1"
+    ],
+    "around": "PRELIMINARY … / … CLEAR 予選 第…試合 終了 いま …位 （…pt）。次は第…試合、相手は … です。",
+    "h": "ce444714"
+   },
+   {
+    "id": "ui.js:113470",
+    "line": 1825,
+    "where": "renderTour",
+    "text": "です。",
+    "around": "PRELIMINARY … / … CLEAR 予選 第…試合 終了 いま …位 （…pt）。次は第…試合、相手は … です。",
+    "h": "392d5b27"
+   },
+   {
+    "id": "ui.js:113683",
+    "line": 1827,
+    "where": "renderTour",
+    "text": "第{{1}}試合へ（vs {{2}}）",
+    "vars": [
+     "T.round + 1",
+     "tname(tourOpponent(T))"
+    ],
+    "h": "41eaf6d3"
+   },
+   {
+    "id": "ui.js:113873",
+    "line": 1831,
+    "where": "renderTour",
+    "text": "QUALIFIED",
+    "around": "QUALIFIED …位通過！ 決勝の相手は … 。…",
+    "h": "4dadfb27"
+   },
+   {
+    "id": "ui.js:113933",
+    "line": 1831,
+    "where": "renderTour",
+    "text": "位通過！",
+    "around": "QUALIFIED …位通過！ 決勝の相手は … 。…",
+    "h": "d0c198f3"
+   },
+   {
+    "id": "ui.js:113975",
+    "line": 1832,
+    "where": "renderTour",
+    "text": "決勝の相手は",
+    "around": "QUALIFIED …位通過！ 決勝の相手は … 。…",
+    "h": "d6f8c834"
+   },
+   {
+    "id": "ui.js:114072",
+    "line": 1832,
+    "where": "renderTour",
+    "text": "予選1位なので、先攻かドラフト先行権を選べます。",
+    "h": "dcc37406"
+   },
+   {
+    "id": "ui.js:114101",
+    "line": 1832,
+    "where": "renderTour",
+    "text": "先攻・後攻は予選1位が選びます。",
+    "h": "f5c7ed02"
+   },
+   {
+    "id": "ui.js:114155",
+    "line": 1833,
+    "where": "renderTour",
+    "text": "ELIMINATED",
+    "around": "ELIMINATED …位で予選敗退… 決勝は … と …。CPUどうしの決勝を見届けます。",
+    "h": "5024e2c0"
+   },
+   {
+    "id": "ui.js:114217",
+    "line": 1833,
+    "where": "renderTour",
+    "text": "位で予選敗退…",
+    "around": "ELIMINATED …位で予選敗退… 決勝は … と …。CPUどうしの決勝を見届けます。",
+    "h": "cebb62eb"
+   },
+   {
+    "id": "ui.js:114262",
+    "line": 1834,
+    "where": "renderTour",
+    "text": "決勝は {{1}} と {{2}}。CPUどうしの決勝を見届けます。",
+    "vars": [
+     "tname(T.finalists[0])",
+     "tname(T.finalists[1])"
+    ],
+    "around": "ELIMINATED …位で予選敗退… 決勝は … と …。CPUどうしの決勝を見届けます。",
+    "h": "a558bf56"
+   },
+   {
+    "id": "ui.js:114555",
+    "line": 1837,
+    "where": "renderTour",
+    "text": "決勝へ進む",
+    "h": "15f7b969"
+   },
+   {
+    "id": "ui.js:114669",
+    "line": 1839,
+    "where": "renderTour",
+    "text": "決勝をシミュレーション中…（{{1}}ターン目）",
+    "vars": [
+     "app.tourSim.turn"
+    ],
+    "h": "03dd0b62"
+   },
+   {
+    "id": "ui.js:114784",
+    "line": 1840,
+    "where": "renderTour",
+    "text": "決勝を見届ける",
+    "h": "3edd3821"
+   },
+   {
+    "id": "ui.js:114846",
+    "line": 1840,
+    "where": "renderTour",
+    "text": "メイン画面へ",
+    "h": "77fc8489"
+   },
+   {
+    "id": "ui.js:115278",
+    "line": 1847,
+    "where": "renderTour",
+    "text": "先攻",
+    "around": "先攻 先にコールする ドラフト先行権 後攻になり、ドラフトを先に取る",
+    "h": "5a7d42ff"
+   },
+   {
+    "id": "ui.js:115291",
+    "line": 1847,
+    "where": "renderTour",
+    "text": "先にコールする",
+    "around": "先攻 先にコールする ドラフト先行権 後攻になり、ドラフトを先に取る",
+    "h": "d46efcf0"
+   },
+   {
+    "id": "ui.js:115489",
+    "line": 1848,
+    "where": "renderTour",
+    "text": "ドラフト先行権",
+    "around": "先攻 先にコールする ドラフト先行権 後攻になり、ドラフトを先に取る",
+    "h": "bd531cbf"
+   },
+   {
+    "id": "ui.js:115507",
+    "line": 1848,
+    "where": "renderTour",
+    "text": "後攻になり、ドラフトを先に取る",
+    "around": "先攻 先にコールする ドラフト先行権 後攻になり、ドラフトを先に取る",
+    "h": "7e70e537"
+   },
+   {
+    "id": "ui.js:115623",
+    "line": 1851,
+    "where": "renderTour",
+    "text": "（予選1位）は",
+    "around": "…（予選1位）は … を選びました。あなたは…。",
+    "h": "9a47a94b"
+   },
+   {
+    "id": "ui.js:115664",
+    "line": 1851,
+    "where": "renderTour",
+    "text": "先攻",
+    "h": "287b4dc2"
+   },
+   {
+    "id": "ui.js:115671",
+    "line": 1851,
+    "where": "renderTour",
+    "text": "ドラフト先行権",
+    "h": "28d8a810"
+   },
+   {
+    "id": "ui.js:115684",
+    "line": 1851,
+    "where": "renderTour",
+    "text": "を選びました。あなたは",
+    "around": "…（予選1位）は … を選びました。あなたは…。",
+    "h": "fe9ddd08"
+   },
+   {
+    "id": "ui.js:115726",
+    "line": 1851,
+    "where": "renderTour",
+    "text": "後攻で、ドラフトを先に取ります",
+    "h": "9a7930f4"
+   },
+   {
+    "id": "ui.js:115746",
+    "line": 1851,
+    "where": "renderTour",
+    "text": "先攻です",
+    "h": "1a15c80c"
+   },
+   {
+    "id": "ui.js:115847",
+    "line": 1854,
+    "where": "renderTour",
+    "text": "決勝で補充するレアを1つ選んでください。",
+    "h": "851d6102"
+   },
+   {
+    "id": "ui.js:116268",
+    "line": 1856,
+    "where": "renderTour",
+    "text": "GRAND FINAL",
+    "around": "GRAND FINAL 決勝 … あなた vs … … 5×5。予選の残りのアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。 ……",
+    "h": "1dbcf976"
+   },
+   {
+    "id": "ui.js:116306",
+    "line": 1856,
+    "where": "renderTour",
+    "text": "決勝 {{1}} あなた vs",
+    "vars": [
+     "avatar(0)"
+    ],
+    "around": "GRAND FINAL 決勝 … あなた vs … … 5×5。予選の残りのアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。 ……",
+    "h": "37f2a224"
+   },
+   {
+    "id": "ui.js:116392",
+    "line": 1857,
+    "where": "renderTour",
+    "text": "5×5。予選の残りのアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。",
+    "around": "GRAND FINAL 決勝 … あなた vs … … 5×5。予選の残りのアイテム＋ドラフト（ベース8種類から4つずつ、後攻から）＋自分のレア2種類のどちらか1つ。全滅させた側が優勝し、賞金は優勝者の持ち点×1万円です。 ……",
+    "h": "6c26e00e"
+   },
+   {
+    "id": "ui.js:116632",
+    "line": 1859,
+    "where": "renderTour",
+    "text": "決勝を始める",
+    "h": "74762dcb"
+   },
+   {
+    "id": "ui.js:116937",
+    "line": 1865,
+    "where": "renderTour",
+    "text": "CHAMPION",
+    "around": "CHAMPION 優勝！ 賞金 … 万円",
+    "h": "24fe70e6"
+   },
+   {
+    "id": "ui.js:116988",
+    "line": 1865,
+    "where": "renderTour",
+    "text": "優勝！",
+    "around": "CHAMPION 優勝！ 賞金 … 万円",
+    "h": "8ca91b62"
+   },
+   {
+    "id": "ui.js:117013",
+    "line": 1865,
+    "where": "renderTour",
+    "text": "賞金",
+    "around": "CHAMPION 優勝！ 賞金 … 万円",
+    "h": "94f9647b"
+   },
+   {
+    "id": "ui.js:117073",
+    "line": 1865,
+    "where": "renderTour",
+    "text": "万円",
+    "around": "CHAMPION 優勝！ 賞金 … 万円",
+    "h": "f14fdb09"
+   },
+   {
+    "id": "ui.js:117133",
+    "line": 1866,
+    "where": "renderTour",
+    "text": "RUNNER-UP",
+    "around": "RUNNER-UP 準優勝 優勝は …（賞金 …万円）。",
+    "h": "118f0a5d"
+   },
+   {
+    "id": "ui.js:117187",
+    "line": 1866,
+    "where": "renderTour",
+    "text": "準優勝",
+    "around": "RUNNER-UP 準優勝 優勝は …（賞金 …万円）。",
+    "h": "09ecb75e"
+   },
+   {
+    "id": "ui.js:117216",
+    "line": 1866,
+    "where": "renderTour",
+    "text": "優勝は {{1}}（賞金 {{2}}万円）。",
+    "vars": [
+     "tname(T.champion)",
+     "prize"
+    ],
+    "around": "RUNNER-UP 準優勝 優勝は …（賞金 …万円）。",
+    "h": "eab80ecc"
+   },
+   {
+    "id": "ui.js:117301",
+    "line": 1867,
+    "where": "renderTour",
+    "text": "CHAMPION",
+    "around": "CHAMPION …… 優勝 賞金 …万円（持ち点×1万円）。あなたは …位 でした。",
+    "h": "142f62e7"
+   },
+   {
+    "id": "ui.js:117429",
+    "line": 1867,
+    "where": "renderTour",
+    "text": "優勝",
+    "around": "CHAMPION …… 優勝 賞金 …万円（持ち点×1万円）。あなたは …位 でした。",
+    "h": "3e343d77"
+   },
+   {
+    "id": "ui.js:117466",
+    "line": 1868,
+    "where": "renderTour",
+    "text": "賞金 {{1}}万円（持ち点×1万円）。あなたは {{2}}位 でした。",
+    "vars": [
+     "prize",
+     "place"
+    ],
+    "around": "CHAMPION …… 優勝 賞金 …万円（持ち点×1万円）。あなたは …位 でした。",
+    "h": "59e52337"
+   },
+   {
+    "id": "ui.js:117734",
+    "line": 1871,
+    "where": "renderTour",
+    "text": "メイン画面へ",
+    "h": "415705bf"
+   },
+   {
+    "id": "ui.js:117796",
+    "line": 1873,
+    "where": "renderTour",
+    "text": "大会",
+    "around": "大会 … あなた ……pt",
+    "h": "2c843c9e"
+   },
+   {
+    "id": "ui.js:117875",
+    "line": 1873,
+    "where": "renderTour",
+    "text": "FINAL",
+    "h": "06542dd3"
+   },
+   {
+    "id": "ui.js:117963",
+    "line": 1873,
+    "where": "renderTour",
+    "text": "あなた",
+    "around": "大会 … あなた ……pt",
+    "h": "6bdf7497"
+   },
+   {
+    "id": "ui.js:118000",
+    "line": 1873,
+    "where": "renderTour",
+    "text": "位・",
+    "h": "d7e5632d"
+   },
+   {
+    "id": "ui.js:160496",
+    "line": 2755,
+    "where": "openReplay",
+    "text": "この試合のリプレイは、今のバージョンでは再生できません",
+    "h": "b6ec761d"
+   },
+   {
+    "id": "ui.js:160640",
+    "line": 2757,
+    "where": "openReplay",
+    "text": "リプレイを再生できませんでした",
+    "h": "13c48eb1"
+   },
+   {
+    "id": "ui.js:160705",
+    "line": 2758,
+    "where": "openReplay",
+    "text": "リプレイの記録がありません",
+    "h": "9458e178"
+   },
+   {
+    "id": "ui.js:161934",
+    "line": 2787,
+    "where": "replaySkeleton",
+    "text": "REPLAY",
+    "around": "REPLAY … ✕ ⏮ ◀ ▶ 自動再生 ▶ ⏭ 1手 手番",
+    "h": "8c3007de"
+   },
+   {
+    "id": "ui.js:162932",
+    "line": 2800,
+    "where": "replaySkeleton",
+    "text": "▶ 自動再生",
+    "around": "REPLAY … ✕ ⏮ ◀ ▶ 自動再生 ▶ ⏭ 1手 手番",
+    "h": "db2c52d5"
+   },
+   {
+    "id": "ui.js:163254",
+    "line": 2803,
+    "where": "replaySkeleton",
+    "text": "1手",
+    "around": "REPLAY … ✕ ⏮ ◀ ▶ 自動再生 ▶ ⏭ 1手 手番",
+    "h": "e9442f00"
+   },
+   {
+    "id": "ui.js:163320",
+    "line": 2803,
+    "where": "replaySkeleton",
+    "text": "手番",
+    "around": "REPLAY … ✕ ⏮ ◀ ▶ 自動再生 ▶ ⏭ 1手 手番",
+    "h": "e1505d17"
+   },
+   {
+    "id": "ui.js:168275",
+    "line": 2919,
+    "where": "pctOverlay",
+    "text": "確定",
+    "h": "a3caecda"
+   },
+   {
+    "id": "ui.js:169812",
+    "line": 2945,
+    "where": "renderReplay",
+    "text": "開始",
+    "h": "3c870081"
+   },
+   {
+    "id": "ui.js:169829",
+    "line": 2945,
+    "where": "renderReplay",
+    "text": "ターン目",
+    "h": "5419a08a"
+   },
+   {
+    "id": "ui.js:171136",
+    "line": 2960,
+    "where": "renderReplay",
+    "text": "数字＝相手がこの時点の情報で、そのキューブの置き方を言い当てられる確率（目安。◎のないキューブは0%）。",
+    "h": "00496e62"
+   },
+   {
+    "id": "ui.js:171383",
+    "line": 2963,
+    "where": "renderReplay",
+    "text": "のアクション",
+    "h": "7222a109"
+   },
+   {
+    "id": "ui.js:171989",
+    "line": 2970,
+    "where": "renderReplay",
+    "text": "まだありません",
+    "h": "0ab23136"
+   },
+   {
+    "id": "ui.js:172450",
+    "line": 2979,
+    "where": "renderReplay",
+    "text": "❚❚ 停止",
+    "h": "39e7477d"
+   },
+   {
+    "id": "ui.js:172460",
+    "line": 2979,
+    "where": "renderReplay",
+    "text": "▶ 自動再生",
+    "h": "51557129"
+   },
+   {
+    "id": "ui.js:182540",
+    "line": 3220,
+    "where": "cpuRun",
+    "text": "CPU: no progress in",
+    "h": "4903e6de"
+   },
+   {
+    "id": "ui.js:182642",
+    "line": 3224,
+    "where": "cpuRun",
+    "text": "CPUの処理でエラーが起きました",
+    "h": "10416fcf"
+   },
+   {
+    "id": "ui.js:188112",
+    "line": 3354,
+    "where": "replay-open",
+    "text": "決勝",
+    "h": "96a6c8dd"
+   },
+   {
+    "id": "ui.js:188119",
+    "line": 3354,
+    "where": "replay-open",
+    "text": "予選 第{{1}}試合",
+    "vars": [
+     "r.round + 1"
+    ],
+    "h": "842a9214"
+   },
+   {
+    "id": "ui.js:190689",
+    "line": 3408,
+    "where": "tour-next",
+    "text": "持ちこむレアアイテムを2つ選んでください",
+    "h": "b346b6e0"
+   },
+   {
+    "id": "ui.js:242961",
+    "line": 4475,
+    "where": "left",
+    "text": "相手が退出しました",
+    "h": "dbb9f669"
+   }
+  ]
+ }
+}

@@ -8,8 +8,8 @@
 //  apply：編集した JSON を読み、text が書き出したときと変わったものだけをソースに書き戻す。
 //   書き出したあとにソースが変わって、その文言の場所が合わなくなったものは書き戻さずに知らせる。
 //  使い方:
-//   node tools/texts.js extract [--out texts/texts.json]
-//   node tools/texts.js apply texts/texts.json [--dry]
+//   node tools/texts.js extract [--out texts]            （texts フォルダに、カテゴリごとの JSON を書く）
+//   node tools/texts.js apply texts [--dry]               （フォルダごと。ファイルを並べてもよい）
 //  JS の読み取りに acorn を使う（なければ `npm i acorn acorn-walk`。置き場所は環境変数 SB_DEPS でも指定できる）
 const fs = require('fs');
 const path = require('path');
@@ -23,7 +23,7 @@ const JA = /[぀-ヿ㐀-鿿！-｠　-〿]/;
 const EN = /^(?=.*[A-Z]{2})[A-Z][A-Za-z0-9 !?'’.:\-…/&+%#()]*$/;
 // 句読点だけの切れ端（「）」「：」）と、コードの記号（列の文字・正規化の名前など）は外す
 const LETTER = /[\u3040-\u30ff\u3400-\u9fffA-Za-z\uff21-\uff3a\uff41-\uff5a]/;
-const NOT_TEXT = /^(ABCDE.*|NFK?[CD])$/;
+const NOT_TEXT = /^(ABCDE.*|NFK?[CD]|BUTTON|INPUT|SELECT|TEXTAREA)$/;
 const isText = (s) => { const t = s.trim(); if (!LETTER.test(t) || NOT_TEXT.test(t)) return false; return JA.test(t) || (t.length >= 3 && EN.test(t)); };
 
 function req(name) {
@@ -32,6 +32,21 @@ function req(name) {
   console.error(`${name} が見つかりません。npm i acorn acorn-walk を実行するか、SB_DEPS にその場所を入れてください`);
   process.exit(1);
 }
+// カテゴリ（2026-11-04。ユーザーの依頼：目に触れる順に分けて編集する）。where のいちばん外の名前で決める。どれにも入らないものは「5_その他」
+const CATEGORIES = [
+  { name: '1_ルールとアイテム', note: 'ルール画面・アイテムとキューブの名前と説明', test: (f, w) =>
+    (f === 'src/ui.js' && /^(rulesModal|itemHead|chipHTML|stepsHTML)$/.test(w)) || f === 'src/template.html' ||
+    (f === 'src/engine.js' && /^(acid|bazooka|cross|cube|homing|line|node|number|pair|shape|stealth|warp|makeRules|pieceName|[A-Z]\d|\(top\))$/.test(w)) },
+  { name: '2_タイトル・配置・対戦', note: 'タイトル・キューブの配置・ドラフト・対戦中の案内と演出の文字・エラーの知らせ', test: (f, w) =>
+    (f === 'src/ui.js' && /^(renderTitle|renderSetup|setupCell|setupDrag\w*|setup-done|renderDraft|draft-pick|renderBattle|dockHTML|phaseText|playItem|startItem|play|hudHTML|ownBoard|ownCell|predBoard|predCell|intelFor|intelTagsHTML|cellTagHTML|cubeMenuHTML|memoBarHTML|toggleMemo|fieldChips|field|side|scoreHTML|answer-submit|handleAnswer\w*|skip-call|warp\w*|useItem|cubePips|held|heldCubes|setSound|sfx|quitModal|startGame|itemCountHTML|itemsHTML|itemsSummary|foeName|acid|bazooka|node|number|shape|x|o|t|btn|tre|row|all|off|icnt|random|restore|warp-done)$/.test(w)) ||
+    (f === 'src/engine.js' && /^(validateItem|checkPlacement|placePiece|finishSetup|draftPick|setTreasure|_warpDest)$/.test(w)) },
+  { name: '3_ログ・結果・大会', note: '対戦ログ・試合の結果・リプレイ・大会の画面と順位表・CPUの性格', test: (f, w) =>
+    (f === 'src/engine.js' && /^(call|answer|useItem|treasureCall|_warpFire|_revealAll|_checkEnd|_startPlay|_acidTick|sacrifice|skipCall|lineLabel|coordList|matchOpts|create|std|mass|save|steady|items|Game)$/.test(w)) ||
+    (f === 'src/ui.js' && /^(resultHTML|historyHTML|renderReplay|replaySkeleton|openReplay|replay-open|pctOverlay|probeLabel|renderTour|standingsHTML|matchCardHTML|rarePickHTML|tour\w*|gemsHTML|gemCellHTML|tieTag|vicText|speedText|refreshTourChoices|cpuRun|lost|left|picks|crit|avatar|tour-next)$/.test(w)) },
+  { name: '4_シミュレーター・オンライン', note: 'シミュレーター画面・オンライン対戦のロビーと知らせ', test: (f, w) =>
+    f === 'src/sim.js' || f === 'src/net.js' || (f === 'src/ui.js' && /^(sim\w*|renderSim|renderLobby|lobbyJoin|net\w*|guestPrecheck|ng|version|full|timeout)$/.test(w)) },
+];
+const categoryOf = (e) => { const w = (e.where || '(top)').split(' › ')[0]; const c = CATEGORIES.find((k) => k.test(e.file, w)); return c ? c.name : '5_その他'; };
 const hash = (s) => crypto.createHash('sha1').update(s).digest('hex').slice(0, 8);
 const lineOf = (src, off) => src.slice(0, off).split('\n').length;
 
@@ -78,6 +93,9 @@ function runEntry(run) {
   return { text, vars, a: part[0].a, b: part[part.length - 1].b };
 }
 
+// プログラムの中で見分けるのに使っている文字（形の分類 R型・L型・T型・Z型 など）。書き換えるとゲームが壊れるので、そのものだけの文字列は書き出さない
+//  （文の中に出てくるのはかまわない）。engine.js の CATS から読む
+const KEY_WORDS = new Set((/const CATS = \[([^\]]*)\]/.exec(fs.readFileSync(path.join(ROOT, 'src/engine.js'), 'utf8')) || [, ''])[1].split(',').map((x) => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean));
 function extractJS(file) {
   const acorn = req('acorn'), walk = req('acorn-walk');
   const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -109,7 +127,11 @@ function extractJS(file) {
   walk.fullAncestor(ast, (node, _st, anc) => {
     if (node.type === 'Literal' && typeof node.value === 'string') {
       const raw = src.slice(node.start + 1, node.end - 1);
-      if (!isText(raw)) return;
+      if (!isText(raw) || KEY_WORDS.has(raw)) return;
+      // オブジェクトのキー（{ 'R型': … }）は書き換えるとゲームが壊れるので書き出さない
+      const par = anc[anc.length - 2];
+      if (par && par.type === 'Property' && par.key === node && !par.computed) return;
+      if (par && par.type === 'MemberExpression' && par.property === node) return;
       const q = src[node.start];
       const chars = [];
       for (let i = 0; i < raw.length; i++) chars.push({ ch: raw[i], a: node.start + 1 + i, b: node.start + 2 + i });
@@ -183,32 +205,44 @@ const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 ? args[i
 
 if (args[0] === 'extract') {
   const all = extractAll();
-  const files = {};
+  let engineV = null;
+  try { engineV = +(/const VERSION = (\d+)/.exec(fs.readFileSync(path.join(ROOT, 'src/engine.js'), 'utf8')) || [])[1]; } catch (e) { /* なし */ }
+  const outDir = opt('out', path.join(ROOT, 'texts'));
+  fs.mkdirSync(outDir, { recursive: true });
+  // 前に書き出したカテゴリのファイルを消してから書く（カテゴリの名前を変えたときに古いファイルが残らないように）
+  for (const f of fs.readdirSync(outDir)) if (/\.json$/.test(f)) fs.unlinkSync(path.join(outDir, f));
+  const byCat = {};
   for (const e of all) {
-    (files[e.file] || (files[e.file] = [])).push(Object.assign(
+    const cat = categoryOf(e);
+    const doc = byCat[cat] || (byCat[cat] = { files: {}, count: 0 });
+    (doc.files[e.file] || (doc.files[e.file] = [])).push(Object.assign(
       { id: `${path.basename(e.file)}:${e.a}`, line: e.line, where: e.where, text: e.text },
       e.vars.length ? { vars: e.vars } : {},
       e.around ? { around: e.around } : {},
       { h: hash(e.file + '\0' + e.a + '\0' + e.text) }));
+    doc.count++;
   }
-  let engineV = null;
-  try { engineV = +(/const VERSION = (\d+)/.exec(fs.readFileSync(path.join(ROOT, 'src/engine.js'), 'utf8')) || [])[1]; } catch (e) { /* なし */ }
-  const doc = {
-    about: [
-      'サーチバトルの画面に出る文言の一覧（tools/texts.js extract で作成）。text だけを書き換えてください。',
-      '{{1}}・{{2}} は名前や数などの差し込みです。文の中で場所を動かしてよいですが、消したり増やしたりはしないでください。',
-      'id・line・where・vars・around・h は書き戻しに使うので変えないでください（where はその文言がコードのどこにあるかの目安。around は、文が差し込みで分かれているときの前後の文で、… が別の文言や差し込み）。',
-      '書き換えたら node tools/texts.js apply <このファイル> でソースに戻します（変わったものだけ）。',
-    ],
-    engineVersion: engineV, extractedAt: new Date().toISOString().slice(0, 10), count: all.length, files,
-  };
-  const outPath = opt('out', path.join(ROOT, 'texts', 'texts.json'));
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(doc, null, 1) + '\n');
-  const per = Object.entries(files).map(([f, l]) => `${f} ${l.length}`).join('・');
-  console.log(`${all.length} 件を書き出しました（${per}）→ ${outPath}`);
+  const names = CATEGORIES.map((c) => c.name).concat(['5_その他']);
+  const notes = Object.fromEntries(CATEGORIES.map((c) => [c.name, c.note]).concat([['5_その他', 'どの画面にも分けられなかった細かい文言']]));
+  const lines = [];
+  for (const cat of names) {
+    const doc = byCat[cat];
+    if (!doc) continue;
+    const out = { category: cat, about: notes[cat] + '。text だけを書き換えてください（くわしくは README.md）', engineVersion: engineV, extractedAt: new Date().toISOString().slice(0, 10), count: doc.count, files: doc.files };
+    fs.writeFileSync(path.join(outDir, cat + '.json'), JSON.stringify(out, null, 1) + '\n');
+    lines.push(`${cat} ${doc.count}`);
+  }
+  console.log(`${all.length} 件を書き出しました（${lines.join('・')}）→ ${outDir}`);
 } else if (args[0] === 'apply') {
-  const doc = JSON.parse(fs.readFileSync(args[1], 'utf8'));
+  // フォルダ（中の .json を全部）か、JSON ファイルを何個でも
+  const inputs = [];
+  for (const a of args.slice(1)) {
+    if (a.startsWith('--')) continue;
+    if (fs.statSync(a).isDirectory()) for (const f of fs.readdirSync(a).sort()) { if (/\.json$/.test(f)) inputs.push(path.join(a, f)); }
+    else inputs.push(a);
+  }
+  const doc = { files: {} };
+  for (const f of inputs) for (const [k, list] of Object.entries(JSON.parse(fs.readFileSync(f, 'utf8')).files)) (doc.files[k] || (doc.files[k] = [])).push(...list);
   const dry = args.includes('--dry');
   const cur = new Map(extractAll().map((e) => [`${path.basename(e.file)}:${e.a}`, e]));
   const edits = {};
@@ -243,5 +277,5 @@ if (args[0] === 'extract') {
   console.log(`${dry ? '（試し）' : ''}書き戻し ${changed} 件・場所が合わない ${stale} 件・札が合わない ${bad} 件`);
   if (stale || bad) process.exitCode = 1;
 } else {
-  console.log('使い方: node tools/texts.js extract [--out texts/texts.json] ／ node tools/texts.js apply <JSON> [--dry]');
+  console.log('使い方: node tools/texts.js extract [--out texts] ／ node tools/texts.js apply <フォルダか JSON …> [--dry]');
 }
