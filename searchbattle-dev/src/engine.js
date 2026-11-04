@@ -52,6 +52,9 @@
   const VERSION = 35;
   // homing：ホーミングミサイル（v15.5）、cross：クロスボム（v15.7）。どちらもレアアイテム（ユーザーの案）。レアは RARE_ITEMS
   //  acid：アシッド（v15.8。レア。ユーザーの案）
+  // アシッドの自動コールの選び方（2026-11-04。既定は今のルールの adjacent。random はユーザーの案で、試しの段階）：'random'＝そのキューブのまだ当たっていないブロックからランダム／'adjacent'＝当たったブロックに隣り合うブロックを読み順に（v15.8〜）。
+  //  測定ツールは game.acidPick で切り替えられる
+  const ACID_PICK = 'adjacent';
   const ITEM_KEYS = ['cube', 'line', 'number', 'shape', 'pair', 'node', 'bazooka', 'homing', 'cross', 'acid', 'warp', 'stealth'];
   const RARE_ITEMS = ['bazooka', 'homing', 'cross', 'acid'];
   // ベースアイテム（レア以外の8種類）。大会（v15.9。ユーザーの案）は、ベース8種類＋各自が事前に選ぶレア2種類を2つずつ（20個）
@@ -786,7 +789,17 @@
     let c = -1;
     if (p) {
       if ((p.mask & bit(me.acid.cell)) && !(p.hitMask & bit(me.acid.cell))) c = me.acid.cell;
-      else {
+      else if ((this.acidPick || ACID_PICK) === 'random') {
+        // ランダム（2026-11-04。ユーザーの案）：そのキューブのまだ当たっていないブロックから1つ。離れたブロックにも当たるので、形が早く決まる。
+        //  乱数はゲームの乱数を使わず、酸をかけた時刻・キューブ・当たった数から決める（リプレイ・オンラインでも同じブロックになる。
+        //  キューブの位置は相手に伏せられているので、相手には読めない）
+        const open = p.cells.filter((x) => !(p.hitMask & bit(x))).sort((a, b) => a - b);
+        if (open.length) {
+          let h = (me.acid.t * 2654435761) ^ (p.id * 40503) ^ (popcount(p.hitMask) * 2246822519) ^ (p.mask * 3266489917);
+          h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h = (h ^ (h >>> 16)) >>> 0;
+          c = open[h % open.length];
+        }
+      } else {
         for (const x of p.cells.slice().sort((a, b) => a - b)) {
           if (p.hitMask & bit(x)) continue;
           const nb = p.cells.some((y) => (p.hitMask & bit(y)) && Math.abs(Math.floor(x / N) - Math.floor(y / N)) + Math.abs((x % N) - (y % N)) === 1);
@@ -808,7 +821,7 @@
     //  （酸をかけたブロック自身を呼ぶ1回目は、まだそのブロックに当たっていないので、2つ目の事実は使わない）
     const known = [acidCell].concat(me.acid.dis || []);
     const before = [];
-    if (c !== acidCell) {
+    if (c !== acidCell && (this.acidPick || ACID_PICK) !== 'random') {
       const adj = (a, b) => Math.abs(Math.floor(a / N) - Math.floor(b / N)) + Math.abs((a % N) - (b % N)) === 1;
       for (let y = 0; y < c; y++) if (!me.view.marks[y] && known.some((k) => adj(k, y))) before.push(y);
     }
@@ -828,6 +841,8 @@
     }
     // 撃破・ワープで酸がなくなったとき
     if (!p.alive || !p.acid) { p.acid = false; me.acid = null; }
+    // acidExtra（測定用の試し。2026-11-04）：自動コールを手のコールとは別に足す（自動コールのあとも、ふつうにアイテム・コールができる）
+    if (this.acidExtra && this.phase === 'play' && this.sub === 'answer' && this.cur === me.idx) this.sub = 'item';
   };
 
   // ---------------- 撃破と終了 ----------------
@@ -1176,7 +1191,8 @@
         //  すでにコールして当たっているブロックなら、そこも酸で溶かしたブロックと同じ色（ヴェルデメーラ）にする（v15.10。ユーザーの指示）
         const am = me.view.marks[params.cell];
         if (am) { am.acidSrc = true; if (am.r !== 'x') am.acid = true; }
-        me.kb.occs.push({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' });
+        // acidSize（測定用の試し。2026-11-04）：酸をかけたキューブのブロック数も教える（サーチサイズと同じ事実）
+        me.kb.occs.push(Object.assign({ c: params.cell, t, cat: null, turn: this.turn, src: 'acid' }, this.acidSize ? { size: p.size } : {}));
         result.hit = true;
         this._log(pi, `${me.name}：${name}${tag}（${this.coord(params.cell)}）→ アシッドマーク（次の手番から自動コール）`, null, 'item', key);
         break;

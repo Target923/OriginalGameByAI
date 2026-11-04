@@ -28,6 +28,10 @@ function playGame(E, AI, rules, seed, P, hook) {
   T.round = 0;
   const G = new E.Game({ rules, rng, cpu: [true, true], setupPlan: [AI.tourSetupPlan(T, 0, rules), AI.tourSetupPlan(T, 1, rules)] });
   G.rules.draft = false;
+  // 試しのルール（環境変数）：SB_ACID_PICK＝自動コールの選び方（random／adjacent）、SB_ACID_SIZE=1＝酸をかけたときにブロック数も教える
+  if (process.env.SB_ACID_PICK) G.acidPick = process.env.SB_ACID_PICK;
+  if (process.env.SB_ACID_SIZE === '1') G.acidSize = true;
+  if (process.env.SB_ACID_EXTRA === '1') G.acidExtra = true;   // 自動コールを手のコールとは別に足す
   // 測る側は、しきい値なし（どんな局面でも候補を出す）で、使うかどうかは hook が決める
   AI.policy[P] = { acidR: 0, acidH: 0, acidMinN: 0, acidHuntMax: 99, acidHook: hook };
   AI.policy[1 - P] = { acid: 'none' };
